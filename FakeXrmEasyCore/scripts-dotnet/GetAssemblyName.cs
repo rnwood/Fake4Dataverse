@@ -1,1 +1,0 @@
-Console.WriteLine(System.Reflection.Assembly.LoadFile("/home/jordi/code/DynamicsValue/fake-xrm-easy-core/tests/FakeXrmEasy.Core.Tests/bin/FAKE_XRM_EASY_9/netcoreapp3.1/FakeXrmEasy.Core.Tests.dll").FullName);
