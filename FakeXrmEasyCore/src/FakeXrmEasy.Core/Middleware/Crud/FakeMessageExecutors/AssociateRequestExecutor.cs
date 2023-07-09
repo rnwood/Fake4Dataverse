@@ -1,0 +1,124 @@
+﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
+using System;
+using System.Linq;
+using FakeXrmEasy.Abstractions;
+using FakeXrmEasy.Abstractions.FakeMessageExecutors;
+
+namespace FakeXrmEasy.Middleware.Crud.FakeMessageExecutors
+{
+    /// <summary>
+    /// Implementation of the Associate Request
+    /// </summary>
+    public class AssociateRequestExecutor : IFakeMessageExecutor
+    {
+        /// <summary>
+        /// Returns true if request is of type AssociateRequest
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public bool CanExecute(OrganizationRequest request)
+        {
+            return request is AssociateRequest;
+        }
+
+        /// <summary>
+        /// Fake implementation of the AssociateRequest
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public OrganizationResponse Execute(OrganizationRequest request, IXrmFakedContext ctx)
+        {
+            var associateRequest = request as AssociateRequest;
+            var service = ctx.GetOrganizationService();
+
+            if (associateRequest == null)
+            {
+                throw new Exception("Only associate request can be processed!");
+            }
+
+            var associateRelationship = associateRequest.Relationship;
+            var relationShipName = associateRelationship.SchemaName;
+            var fakeRelationShip = ctx.GetRelationship(relationShipName);
+
+            if (fakeRelationShip == null)
+            {
+                throw new Exception(string.Format("Relationship {0} does not exist in the metadata cache", relationShipName));
+            }
+
+            if (associateRequest.Target == null)
+            {
+                throw new Exception("Association without target is invalid!");
+            }
+
+            foreach (var relatedEntityReference in associateRequest.RelatedEntities)
+            {
+                if (fakeRelationShip.RelationshipType == XrmFakedRelationship.FakeRelationshipType.ManyToMany)
+                {
+                    var isFrom1to2 = associateRequest.Target.LogicalName == fakeRelationShip.Entity1LogicalName
+                                         || relatedEntityReference.LogicalName != fakeRelationShip.Entity1LogicalName
+                                         || String.IsNullOrWhiteSpace(associateRequest.Target.LogicalName);
+                    var fromAttribute = isFrom1to2 ? fakeRelationShip.Entity1Attribute : fakeRelationShip.Entity2Attribute;
+                    var toAttribute = isFrom1to2 ? fakeRelationShip.Entity2Attribute : fakeRelationShip.Entity1Attribute;
+                    var fromEntityName = isFrom1to2 ? fakeRelationShip.Entity1LogicalName : fakeRelationShip.Entity2LogicalName;
+                    var toEntityName = isFrom1to2 ? fakeRelationShip.Entity2LogicalName : fakeRelationShip.Entity1LogicalName;
+
+                    //Check records exist
+                    var targetExists = ctx.CreateQuery(fromEntityName)
+                                                .Where(e => e.Id == associateRequest.Target.Id)
+                                                .FirstOrDefault() != null;
+
+                    if (!targetExists)
+                    {
+                        throw new Exception(string.Format("{0} with Id {1} doesn't exist", fromEntityName, associateRequest.Target.Id.ToString()));
+                    }
+
+                    var relatedExists = ctx.CreateQuery(toEntityName)
+                                                .Where(e => e.Id == relatedEntityReference.Id)
+                                                .FirstOrDefault() != null;
+
+                    if (!relatedExists)
+                    {
+                        throw new Exception(string.Format("{0} with Id {1} doesn't exist", toEntityName, relatedEntityReference.Id.ToString()));
+                    }
+
+                    var association = new Entity(fakeRelationShip.IntersectEntity)
+                    {
+                        Attributes = new AttributeCollection
+                        {
+                            { fromAttribute, associateRequest.Target.Id },
+                            { toAttribute, relatedEntityReference.Id }
+                        }
+                    };
+
+                    service.Create(association);
+                }
+                else
+                {
+                    //One to many
+                    //Get entity to update
+                    var entityToUpdate = new Entity(relatedEntityReference.LogicalName)
+                    {
+                        Id = relatedEntityReference.Id
+                    };
+
+                    entityToUpdate[fakeRelationShip.Entity2Attribute] = associateRequest.Target;
+                    service.Update(entityToUpdate);
+                }
+            }
+
+            return new AssociateResponse();
+        }
+
+        /// <summary>
+        /// Returns AssociateRequest
+        /// </summary>
+        /// <returns></returns>
+        public Type GetResponsibleRequestType()
+        {
+            return typeof(AssociateRequest);
+        }
+    }
+}
