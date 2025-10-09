@@ -12,7 +12,6 @@ using Xunit;
 
 namespace FakeXrmEasy.Tests.FakeContextTests.UpsertRequestTests
 {
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
     public class UpsertRequestTests
     {
         private readonly IXrmFakedContext _context;

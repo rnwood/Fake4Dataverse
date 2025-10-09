@@ -607,7 +607,6 @@ namespace FakeXrmEasy.Extensions.FetchXml
             //Otherwise, a single value was used
             if (value != null)
             {
-#if FAKE_XRM_EASY_2013 || FAKE_XRM_EASY_2015 || FAKE_XRM_EASY_2016 || FAKE_XRM_EASY_365 || FAKE_XRM_EASY_9
                 if (string.IsNullOrWhiteSpace(conditionEntityName))
                 {
                     return new ConditionExpression(attributeName, op, GetConditionExpressionValueCast(value, ctx, entityName, attributeName, op));
@@ -617,13 +616,8 @@ namespace FakeXrmEasy.Extensions.FetchXml
                     return new ConditionExpression(conditionEntityName, attributeName, op, GetConditionExpressionValueCast(value, ctx, entityName, attributeName, op));
                 }
 
-#else
-                return new ConditionExpression(attributeName, op, GetConditionExpressionValueCast(value, ctx, entityName, attributeName, op));
-           
-#endif
             }
 
-#if FAKE_XRM_EASY_2013 || FAKE_XRM_EASY_2015 || FAKE_XRM_EASY_2016 || FAKE_XRM_EASY_365 || FAKE_XRM_EASY_9
 
             if (string.IsNullOrWhiteSpace(conditionEntityName))
             {
@@ -633,9 +627,6 @@ namespace FakeXrmEasy.Extensions.FetchXml
             {
                 return new ConditionExpression(conditionEntityName, attributeName, op, values);
             }
-#else
-            return new ConditionExpression(attributeName, op, values);
-#endif
 
 
 
@@ -647,9 +638,7 @@ namespace FakeXrmEasy.Extensions.FetchXml
             if (t == typeof(int)
                 || t == typeof(int?)
                 || t.IsOptionSet()
-#if FAKE_XRM_EASY_9
                 || t.IsOptionSetValueCollection()
-#endif
             )
             {
                 int intValue = 0;

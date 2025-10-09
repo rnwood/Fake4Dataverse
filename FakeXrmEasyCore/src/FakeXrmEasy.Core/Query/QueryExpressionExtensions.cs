@@ -52,9 +52,7 @@ namespace FakeXrmEasy.Query
 
             var linkedEntities = new Dictionary<string, int>();
 
-#if  !FAKE_XRM_EASY
             ValidateAliases(qe, context as XrmFakedContext);
-#endif
 
             // Add as many Joins as linked entities
             foreach (var le in qe.LinkEntities)
@@ -106,7 +104,6 @@ namespace FakeXrmEasy.Query
             return query;
         }
 
-        #if !FAKE_XRM_EASY
         private static void ValidateAliases(QueryExpression qe, XrmFakedContext context)
         {
             if (qe.Criteria != null)

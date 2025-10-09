@@ -41,7 +41,6 @@ namespace FakeXrmEasy
                 }
             }
 
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
             if (record.Id == Guid.Empty && record.HasKeyAttributes())
             {
                 if (EntityMetadata.ContainsKey(record.LogicalName))
@@ -71,7 +70,6 @@ namespace FakeXrmEasy
                     throw new InvalidOperationException($"The requested key attributes do not exist for the entity {record.LogicalName}");
                 }
             }
-#endif
             /*
             if (validate && record.Id == Guid.Empty)
             {

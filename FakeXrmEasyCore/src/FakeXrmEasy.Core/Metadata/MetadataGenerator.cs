@@ -50,12 +50,10 @@ namespace FakeXrmEasy.Metadata
 
                     if (relationshipSchemaNameAttribute == null)
                     {
-#if !FAKE_XRM_EASY
                         if (property.PropertyType == typeof(byte[]))
                         {
                             metadata.SetFieldValue("_primaryImageAttribute", attributeLogicalNameAttribute.LogicalName);
                         }
-#endif
                         AttributeMetadata attributeMetadata;
                         if (attributeLogicalNameAttribute.LogicalName == "statecode")
                         {
@@ -206,19 +204,15 @@ namespace FakeXrmEasy.Metadata
                 booleanManaged.SetSealedPropertyValue("AttributeType", AttributeTypeCode.ManagedProperty);
                 return booleanManaged;
             }
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013
             else if (typeof(Guid) == propertyType)
             {
                 return new UniqueIdentifierAttributeMetadata();
             }
-#endif
-#if !FAKE_XRM_EASY
             else if (typeof(byte[]) == propertyType)
             {
 
                 return new ImageAttributeMetadata();
             }
-#endif
 #if FAKE_XRM_EASY_9
             else if (typeof(OptionSetValueCollection).IsAssignableFrom(propertyType))
             {
