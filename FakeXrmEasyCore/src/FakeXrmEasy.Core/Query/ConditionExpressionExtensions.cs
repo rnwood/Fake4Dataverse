@@ -32,7 +32,6 @@ namespace FakeXrmEasy.Query
                 if (context.ProxyTypesAssemblies.Count() > 0)
                 {
 
-#if FAKE_XRM_EASY_2013 || FAKE_XRM_EASY_2015 || FAKE_XRM_EASY_2016 || FAKE_XRM_EASY_365 || FAKE_XRM_EASY_9
                     if (c.EntityName != null)
                         cEntityName = qe.GetEntityNameFromAlias(c.EntityName);
                     else
@@ -45,15 +44,6 @@ namespace FakeXrmEasy.Query
                         }
                     }
 
-#else
-                    //CRM 2011
-                    if (c.AttributeName.IndexOf(".") >= 0)
-                    {
-                        var alias = c.AttributeName.Split('.')[0];
-                        cEntityName = qe.GetEntityNameFromAlias(alias);
-                        sAttributeName = c.AttributeName.Split('.')[1];
-                    }
-#endif
 
                     var earlyBoundType = context.FindReflectedType(cEntityName);
                     if (earlyBoundType != null)
@@ -100,7 +90,6 @@ namespace FakeXrmEasy.Query
 
             //If the attribute comes from a joined entity, then we need to access the attribute from the join
             //But the entity name attribute only exists >= 2013
-#if FAKE_XRM_EASY_2013 || FAKE_XRM_EASY_2015 || FAKE_XRM_EASY_2016 || FAKE_XRM_EASY_365 || FAKE_XRM_EASY_9
             string attributeName = "";
 
             //Do not prepend the entity name if the EntityLogicalName is the same as the QueryExpression main logical name
@@ -122,18 +111,6 @@ namespace FakeXrmEasy.Query
                             attributesProperty, "Item",
                             Expression.Constant(attributeName, typeof(string))
                             );
-#else
-            Expression containsAttributeExpression = Expression.Call(
-                attributesProperty,
-                typeof(AttributeCollection).GetMethod("ContainsKey", new Type[] { typeof(string) }),
-                Expression.Constant(c.CondExpression.AttributeName)
-                );
-
-            Expression getAttributeValueExpr = Expression.Property(
-                            attributesProperty, "Item",
-                            Expression.Constant(c.CondExpression.AttributeName, typeof(string))
-                            );
-#endif
 
 
 
@@ -254,13 +231,11 @@ namespace FakeXrmEasy.Query
                     }
                     operatorExpression = Expression.Not(c.ToBetweenExpression(getNonBasicValueExpr, containsAttributeExpression));
                     break;
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013
                 case ConditionOperator.OlderThanXMinutes:
                 case ConditionOperator.OlderThanXHours:
                 case ConditionOperator.OlderThanXDays:
                 case ConditionOperator.OlderThanXWeeks:
                 case ConditionOperator.OlderThanXYears:                  
-#endif
                 case ConditionOperator.OlderThanXMonths:
                     operatorExpression = c.ToOlderThanExpression(getNonBasicValueExpr, containsAttributeExpression);
                     break;
@@ -285,7 +260,6 @@ namespace FakeXrmEasy.Query
                 case ConditionOperator.InFiscalYear:
                     operatorExpression = c.ToBetweenDatesExpression(getNonBasicValueExpr, containsAttributeExpression, context);
                     break;
-#if FAKE_XRM_EASY_9
                 case ConditionOperator.ContainValues:
                     operatorExpression = c.ToContainsValuesExpression(getNonBasicValueExpr, containsAttributeExpression);
                     break;
@@ -293,7 +267,6 @@ namespace FakeXrmEasy.Query
                 case ConditionOperator.DoesNotContainValues:
                     operatorExpression = Expression.Not(c.ToContainsValuesExpression(getNonBasicValueExpr, containsAttributeExpression));
                     break;
-#endif
 
                 default:
                     throw new PullRequestException(string.Format("Operator {0} not yet implemented for condition expression", c.CondExpression.Operator.ToString()));

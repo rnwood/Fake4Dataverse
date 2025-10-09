@@ -30,7 +30,6 @@ namespace FakeXrmEasy.Query
                 case ConditionOperator.OlderThanXMonths:
                     toDate = DateTime.UtcNow.AddMonths(-valueToAdd);
                     break;
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013
                 case ConditionOperator.OlderThanXMinutes:      
                     toDate = DateTime.UtcNow.AddMinutes(-valueToAdd);
                     break;
@@ -46,7 +45,6 @@ namespace FakeXrmEasy.Query
                 case ConditionOperator.OlderThanXYears: 
                     toDate = DateTime.UtcNow.AddYears(-valueToAdd);
                     break;
-#endif
             }
                         
             return tc.ToOlderThanExpression(getAttributeValueExpr, containsAttributeExpr, toDate);
