@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master, dev ]
+
+env: 
+  dotnet-version: 3.1.201
+
+jobs:
+  build-abstractions:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.dotnet-version }}
+ 
+    - name: Build FakeXrmEasyAbstrations
+      run: |
+        cd FakeXrmEasyAbstrations
+        dotnet restore /p:Configuration=FAKE_XRM_EASY_9
+        dotnet build --configuration FAKE_XRM_EASY_9 --no-restore --framework netcoreapp3.1
+        
+    - name: Pack FakeXrmEasyAbstrations
+      run: |
+        cd FakeXrmEasyAbstrations
+        pwsh ./pack.ps1 -versionSuffix "ci.${{ github.run_number }}" -targetFrameworks "all"
+        
+    - name: Upload Abstractions Package
+      uses: actions/upload-artifact@v2
+      with:
+        name: abstractions-package
+        path: FakeXrmEasyAbstrations/nupkgs/*.nupkg
+
+  build-core:
+    needs: build-abstractions
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.dotnet-version }}
+        
+    - name: Download Abstractions Package
+      uses: actions/download-artifact@v2
+      with:
+        name: abstractions-package
+        path: local-packages
+ 
+    - name: Build FakeXrmEasyCore
+      run: |
+        cd FakeXrmEasyCore
+        dotnet restore /p:Configuration=FAKE_XRM_EASY_9
+        dotnet build --configuration FAKE_XRM_EASY_9 --no-restore --framework netcoreapp3.1
+        
+  build-fakexrmeasy:
+    needs: [build-abstractions, build-core]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: ${{ env.dotnet-version }}
+        
+    - name: Download Abstractions Package
+      uses: actions/download-artifact@v2
+      with:
+        name: abstractions-package
+        path: local-packages
+ 
+    - name: Build FakeXrmEasy
+      run: |
+        cd FakeXrmEasy
+        dotnet restore /p:Configuration=FAKE_XRM_EASY_9
+        dotnet build --configuration FAKE_XRM_EASY_9 --no-restore --framework netcoreapp3.1
