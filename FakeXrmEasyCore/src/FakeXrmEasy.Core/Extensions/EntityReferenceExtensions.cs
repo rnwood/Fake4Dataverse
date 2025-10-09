@@ -14,11 +14,7 @@ namespace FakeXrmEasy.Extensions
                 return false;
             }
 
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
             return er.KeyAttributes.Count > 0;
-#else
-            return false;
-#endif
         }
     }
 }

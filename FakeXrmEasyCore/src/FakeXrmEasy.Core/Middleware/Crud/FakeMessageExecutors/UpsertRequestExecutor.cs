@@ -5,8 +5,6 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using System;
 
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
-
 namespace FakeXrmEasy.Middleware.Crud.FakeMessageExecutors
 {
     public class UpsertRequestExecutor : IFakeMessageExecutor
@@ -51,4 +49,4 @@ namespace FakeXrmEasy.Middleware.Crud.FakeMessageExecutors
         }
     }
 }
-#endif
+

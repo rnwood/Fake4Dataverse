@@ -37,9 +37,6 @@ namespace FakeXrmEasy.Extensions
 
         public static void ApplyDateBehaviour(this Entity e, XrmFakedContext context)
         {
-#if FAKE_XRM_EASY || FAKE_XRM_EASY_2013
-            return; //Do nothing... DateBehavior wasn't available for versions <= 2013
-#else
 
             var entityMetadata = context.GetEntityMetadataByName(e.LogicalName);
 
@@ -67,7 +64,6 @@ namespace FakeXrmEasy.Extensions
                     break;
                 }
             }
-#endif
         }
 
         public static void ProjectAttributes(Entity e, Entity projected, LinkEntity le, IXrmFakedContext context)
@@ -222,13 +218,11 @@ namespace FakeXrmEasy.Extensions
                     clone.Name = CloneAttribute(original.Name) as string;
                 }
 
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
                 if (original.KeyAttributes != null)
                 {
                     clone.KeyAttributes = new KeyAttributeCollection();
                     clone.KeyAttributes.AddRange(original.KeyAttributes.Select(kvp => new KeyValuePair<string, object>(CloneAttribute(kvp.Key) as string, kvp.Value)).ToArray());
                 }
-#endif
                 return clone;
             }
             else if (type == typeof(BooleanManagedProperty))
@@ -261,7 +255,6 @@ namespace FakeXrmEasy.Extensions
                 var enumerable = attributeValue as IEnumerable<Entity>;
                 return enumerable.Select(e => e.Clone(e.GetType())).ToArray();
             }
-#if !FAKE_XRM_EASY
             else if (type == typeof(byte[]))
             {
                 var original = (attributeValue as byte[]);
@@ -269,15 +262,12 @@ namespace FakeXrmEasy.Extensions
                 original.CopyTo(copy, 0);
                 return copy;
             }
-#endif
-#if FAKE_XRM_EASY_9
             else if (attributeValue is OptionSetValueCollection)
             {
                 var original = (attributeValue as OptionSetValueCollection);
                 var copy = new OptionSetValueCollection(original.ToArray());
                 return copy;
             }
-#endif
             else if (type == typeof(int) || type == typeof(Int64))
                 return attributeValue; //Not a reference type
             else if (type == typeof(decimal))
@@ -319,12 +309,10 @@ namespace FakeXrmEasy.Extensions
             {
                 cloned[attKey] = e[attKey] != null ? CloneAttribute(e[attKey], context) : null;
             }
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
             foreach (var attKey in e.KeyAttributes.Keys)
             {
                 cloned.KeyAttributes[attKey] = e.KeyAttributes[attKey] != null ? CloneAttribute(e.KeyAttributes[attKey]) : null;
             }
-#endif
             return cloned;
         }
 
@@ -356,12 +344,10 @@ namespace FakeXrmEasy.Extensions
                 cloned[attKey] = e[attKey] != null ? CloneAttribute(e[attKey], context) : null;
             }
 
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
             foreach (var attKey in e.KeyAttributes.Keys)
             {
                 cloned.KeyAttributes[attKey] = e.KeyAttributes[attKey] != null ? CloneAttribute(e.KeyAttributes[attKey]) : null;
             }
-#endif
             return cloned;
         }
 
@@ -549,9 +535,7 @@ namespace FakeXrmEasy.Extensions
         public static EntityReference ToEntityReferenceWithKeyAttributes(this Entity e)
         {
             var result = e.ToEntityReference();
-#if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
             result.KeyAttributes = e.KeyAttributes;
-#endif
             return result;
         }
 
