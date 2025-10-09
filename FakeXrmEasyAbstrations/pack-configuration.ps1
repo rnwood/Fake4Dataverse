@@ -7,33 +7,7 @@ param (
 Write-Host "Packing configuration $($configuration)..."
 
 $project = "FakeXrmEasy.Abstractions"
-$packageId = $project;
-
-if($configuration -eq "FAKE_XRM_EASY_9")
-{
-  $packageId = $('"' + $project + '.v9"')
-}
-elseif($configuration -eq "FAKE_XRM_EASY_365")
-{
-  $packageId = $('"' + $project + '.v365"')
-}
-elseif($configuration -eq "FAKE_XRM_EASY_2016")
-{
-  $packageId = $('"' + $project + '.v2016"')
-}
-elseif($configuration -eq "FAKE_XRM_EASY_2015")
-{
-  $packageId = $('"' + $project + '.v2015"')
-}
-elseif($configuration -eq "FAKE_XRM_EASY_2013")
-{
-  $packageId = $('"' + $project + '.v2013"')
-}
-else 
-{
-  $packageId = $('"' + $project + '.v2011"')
-  Write-Host $packageId
-}
+$packageId = $('"' + $project + '.v9"')
 $tempNupkgFolder = './nupkgs'
 
 Write-Host "Packing assembly for targetFrameworks $($targetFrameworks)..."
