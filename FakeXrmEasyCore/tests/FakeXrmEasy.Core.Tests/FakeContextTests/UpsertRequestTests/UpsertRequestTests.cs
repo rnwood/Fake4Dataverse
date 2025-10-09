@@ -152,5 +152,4 @@ namespace FakeXrmEasy.Tests.FakeContextTests.UpsertRequestTests
             Assert.Equal(false, response.RecordCreated);
         }
     }
-#endif
 }
