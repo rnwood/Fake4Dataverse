@@ -4,16 +4,16 @@
     <TargetFrameworks>net8.0;net462</TargetFrameworks>
     <PackageId>Fake4Dataverse.Core</PackageId>
     <VersionPrefix>2.0.1</VersionPrefix>
-    <Authors>Jordi Montaña</Authors>
-    <Company>Dynamics Value</Company>
+    <Authors>Rob Wood (Fake4Dataverse fork); Jordi Montaña (original FakeXrmEasy)</Authors>
+    <Company>Rob Wood</Company>
     <Title>Fake4Dataverse Core</Title>
-    <PackageDescription>Fake4Dataverse is the open source test automation framework for .net core and the Power Platform. This is the core package containing a configurable middleware, crud operators, and query translation between FetchXml, QueryExpression, CRM LINQ, and QueryByAttribute.</PackageDescription>
-    <Copyright>(c) 2014 Jordi Montaña</Copyright>
+    <PackageDescription>Fake4Dataverse is the open source test automation framework for .net core and the Power Platform. This is the core package containing a configurable middleware, crud operators, and query translation between FetchXml, QueryExpression, CRM LINQ, and QueryByAttribute. Forked from FakeXrmEasy v2.0.1 (MIT License).</PackageDescription>
+    <Copyright>(c) 2014 Jordi Montaña (original FakeXrmEasy); (c) 2025 Rob Wood (Fake4Dataverse fork)</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageIcon>Fake4DataverseLogo_128x128.png</PackageIcon>
-    <PackageTags>dynamics;crm;365;unit testing;xrm;mock;mocking;fake;fakes;cds;common data service;power platform;Fake4Dataverse</PackageTags>
-    <RepositoryUrl>https://github.com/DynamicsValue/fake-xrm-easy-core</RepositoryUrl>
+    <PackageTags>dynamics;crm;365;unit testing;xrm;mock;mocking;fake;fakes;cds;common data service;power platform;Fake4Dataverse;dataverse</PackageTags>
+    <RepositoryUrl>https://github.com/rnwood/fake-xrm-free</RepositoryUrl>
     <Configurations>Debug;Release;FAKE_XRM_EASY_9</Configurations>
   </PropertyGroup>
 
