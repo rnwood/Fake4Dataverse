@@ -18,8 +18,8 @@ Based on the feature comparison in README.md, I've created comprehensive documen
 ### 🔴 High Priority (10 issues)
 Essential features for most testing scenarios:
 
-1. **Merge Request** - Entity merge operations
-2. **Hierarchical Query Operators** - Above, Under, ChildOf, etc.
+1. ~~**Merge Request** - Entity merge operations~~ ✅ **COMPLETED**
+2. ~~**Hierarchical Query Operators** - Above, Under, ChildOf, etc.~~ ✅ **COMPLETED**
 3. **Advanced Fiscal Period Operators** - Complete fiscal calendar support
 4. **Custom API Support** - Modern Dataverse Custom APIs
 5. **Custom Actions** - Process-based action support

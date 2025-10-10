@@ -16,7 +16,7 @@ This document contains GitHub issue templates for all features needed to achieve
 Implement the `MergeRequest` message executor to support entity merge operations in Dataverse/Dynamics 365.
 
 ### Current Status
-- ❌ Not implemented in Fake4Dataverse
+- ✅ **IMPLEMENTED** in Fake4Dataverse (as of 2025-10-10)
 - ✅ Available in FakeXrmEasy v2+
 - ⚠️ Limited in FakeXrmEasy v1
 
@@ -47,7 +47,7 @@ High - Common operation in CRM customizations
 Implement hierarchical query operators for querying parent-child relationships in entity hierarchies.
 
 ### Current Status
-- ❌ Not implemented in Fake4Dataverse
+- ✅ **IMPLEMENTED** in Fake4Dataverse (as of 2025-10-10)
 - ✅ Available in FakeXrmEasy v2+
 - ❌ Not available in FakeXrmEasy v1
 
@@ -997,9 +997,13 @@ Medium - Modern Dataverse patterns
 This document contains 30 GitHub issues covering all major feature gaps identified in the README.md feature comparison. Issues are organized by:
 
 **Priority Breakdown:**
-- High Priority: 10 issues (core functionality gaps)
+- High Priority: 10 issues (8 remaining, 2 completed ✅)
 - Medium Priority: 11 issues (important enhancements)
 - Low Priority: 9 issues (advanced/niche features)
+
+**Completed Issues:**
+- ✅ Issue #1: Merge Request (Implemented 2025-10-10)
+- ✅ Issue #2: Hierarchical Query Operators (Implemented 2025-10-10)
 
 **Category Breakdown:**
 - Message Executors: 6 issues
