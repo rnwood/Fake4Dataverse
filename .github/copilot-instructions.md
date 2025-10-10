@@ -168,6 +168,11 @@ The framework supports multiple Dynamics CRM/365 versions:
 - Update relevant README files
 - Consider impact on different CRM/365 versions
 - Add appropriate exception handling with `PullRequestException` for not-yet-implemented features
+- **Update feature parity tracking files**: When implementing a feature that addresses a parity issue, update:
+  - `FEATURE_PARITY_ISSUES.md` - Mark the issue as completed with ✅ and update status
+  - `QUICK_REFERENCE.md` - Mark the feature as completed in the priority lists
+  - `ISSUES_README.md` - Update completion counts and mark completed items
+  - `ISSUE_SUMMARY.txt` - Update the priority lists and completion statistics
 
 ## License
 

@@ -13,9 +13,9 @@ Based on: README.md Feature Comparison Table
 🔴 HIGH PRIORITY (10 issues)
    Core functionality gaps that significantly impact testing capabilities
    
-   1.  Merge Request - Entity merge operations
-   2.  Hierarchical Query Operators - Above, Under, ChildOf, etc.
-   3.  Advanced Fiscal Period Operators - Complete fiscal calendar
+   1.  ✅ Merge Request - Entity merge operations (COMPLETED 2025-10-10)
+   2.  ✅ Hierarchical Query Operators - Above, Under, ChildOf, etc. (COMPLETED 2025-10-10)
+   3.  ✅ Advanced Fiscal Period Operators - Complete fiscal calendar (COMPLETED 2025-10-10)
    4.  Custom API Support - Modern Dataverse Custom APIs
    5.  Custom Actions - Process-based action support
    6.  Calculated Fields - Field calculation simulation
@@ -148,6 +148,7 @@ Current Fake4Dataverse Features:
   • Plugin simulation (basic)
 
 After Implementing High Priority (10 issues):
+  • 3 completed, 7 remaining
   • Estimated 70% feature parity
   • Core testing scenarios covered
   • Essential business logic simulation

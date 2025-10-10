@@ -39,15 +39,16 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
 ### By Priority
 
 - **High Priority (10 issues)**: Core functionality gaps that significantly impact testing capabilities
-  - Merge operations
-  - Hierarchical queries
+  - ~~Merge operations~~ ✅
+  - ~~Hierarchical queries~~ ✅
+  - ~~Advanced fiscal periods~~ ✅
   - Custom APIs and Actions
   - Calculated/Rollup fields
   - Business rules
   - Duplicate detection
 
 - **Medium Priority (11 issues)**: Important enhancements that improve testing coverage
-  - Advanced fiscal periods
+  - ~~Advanced fiscal periods~~ ✅ (moved to completed)
   - Plugin pipeline improvements
   - Metadata enhancements
   - Security simulation
@@ -77,7 +78,7 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
 ### Recommended Order
 
 1. **Phase 1 - Core Functionality** (High Priority)
-   - Issues 1-10
+   - Issues 1-10 (3 completed ✅, 7 remaining)
    - Focus: Essential features for most testing scenarios
 
 2. **Phase 2 - Enhanced Testing** (Medium Priority)

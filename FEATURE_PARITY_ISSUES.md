@@ -86,30 +86,31 @@ High - Required for hierarchical data structures (Account hierarchies, etc.)
 Implement advanced fiscal period operators for date-based queries using fiscal calendars.
 
 ### Current Status
-- ⚠️ Basic support (InFiscalYear only) in Fake4Dataverse
+- ✅ **IMPLEMENTED** in Fake4Dataverse (as of 2025-10-10)
 - ✅ Full support in FakeXrmEasy v2+
 - ⚠️ Basic support in FakeXrmEasy v1
 
 ### Required Operators
-- `InFiscalPeriod` - Within specific fiscal period
-- `LastFiscalPeriod` - Previous fiscal period
-- `NextFiscalPeriod` - Next fiscal period
-- `LastFiscalYear` - Previous fiscal year
-- `NextFiscalYear` - Next fiscal year
-- `InFiscalPeriodAndYear` - Specific period and year
-- `InOrBeforeFiscalPeriodAndYear` - On or before specific period/year
-- `InOrAfterFiscalPeriodAndYear` - On or after specific period/year
+- `InFiscalPeriod` - Within specific fiscal period ✅
+- `LastFiscalPeriod` - Previous fiscal period ✅
+- `NextFiscalPeriod` - Next fiscal period ✅
+- `LastFiscalYear` - Previous fiscal year ✅
+- `NextFiscalYear` - Next fiscal year ✅
+- `InFiscalPeriodAndYear` - Specific period and year ✅
+- `InOrBeforeFiscalPeriodAndYear` - On or before specific period/year ✅
+- `InOrAfterFiscalPeriodAndYear` - On or after specific period/year ✅
 
 ### Requirements
-- Extend `ConditionExpressionExtensions` with fiscal period operators
-- Add fiscal calendar configuration support
-- Handle different fiscal year start dates
-- Support fiscal period definitions
-- Add comprehensive unit tests
+- Extend `ConditionExpressionExtensions` with fiscal period operators ✅
+- Add fiscal calendar configuration support ✅
+- Handle different fiscal year start dates ✅
+- Support fiscal period definitions ✅
+- Add comprehensive unit tests ✅
 
 ### Related Files
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/Query/ConditionExpressionExtensions.*.cs`
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/Extensions/DateTimeExtensions.cs`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/Query/ConditionExpressionExtensions.FiscalPeriod.cs` ✅
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/Extensions/XmlExtensionsForFetchXml.cs` ✅
+- `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/FetchXml/FiscalPeriodOperatorTests.cs` ✅
 
 ### Priority
 Medium - Important for financial reporting scenarios
@@ -997,17 +998,18 @@ Medium - Modern Dataverse patterns
 This document contains 30 GitHub issues covering all major feature gaps identified in the README.md feature comparison. Issues are organized by:
 
 **Priority Breakdown:**
-- High Priority: 10 issues (8 remaining, 2 completed ✅)
+- High Priority: 10 issues (7 remaining, 3 completed ✅)
 - Medium Priority: 11 issues (important enhancements)
 - Low Priority: 9 issues (advanced/niche features)
 
 **Completed Issues:**
 - ✅ Issue #1: Merge Request (Implemented 2025-10-10)
 - ✅ Issue #2: Hierarchical Query Operators (Implemented 2025-10-10)
+- ✅ Issue #3: Advanced Fiscal Period Operators (Implemented 2025-10-10)
 
 **Category Breakdown:**
 - Message Executors: 6 issues
-- Query Support: 3 issues
+- Query Support: 3 issues (1 completed ✅)
 - Plugin/Pipeline: 5 issues
 - Field Types: 2 issues
 - Business Logic: 3 issues

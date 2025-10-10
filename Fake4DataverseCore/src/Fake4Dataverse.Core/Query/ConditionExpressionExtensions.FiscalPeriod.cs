@@ -117,23 +117,42 @@ namespace Fake4Dataverse.Query
                 ? new DateTime(currentDate.Year, fiscalStartDate.Month, fiscalStartDate.Day)
                 : new DateTime(currentDate.Year - 1, fiscalStartDate.Month, fiscalStartDate.Day);
 
+            var fiscalYearEnd = fiscalYearStart.AddYears(1).AddDays(-1);
+            var totalDaysInFiscalYear = (fiscalYearEnd - fiscalYearStart).Days + 1;
             var daysSinceFiscalYearStart = (currentDate - fiscalYearStart).Days;
 
+            int periodsPerYear;
             switch (template)
             {
                 case FiscalYearSettings.Template.Annually:
                     return 1;
                 case FiscalYearSettings.Template.SemiAnnually:
-                    return daysSinceFiscalYearStart / 182 + 1; // ~6 months
+                    periodsPerYear = 2;
+                    break;
                 case FiscalYearSettings.Template.Quarterly:
-                    return daysSinceFiscalYearStart / 91 + 1;     // ~3 months
+                    periodsPerYear = 4;
+                    break;
                 case FiscalYearSettings.Template.Monthly:
-                    return daysSinceFiscalYearStart / 30 + 1;       // ~1 month
+                    periodsPerYear = 12;
+                    break;
                 case FiscalYearSettings.Template.FourWeek:
-                    return daysSinceFiscalYearStart / 28 + 1;      // 4 weeks
+                    periodsPerYear = 13;
+                    break;
                 default:
                     return 1;
             }
+
+            // Calculate which period we're in by dividing the fiscal year appropriately
+            double daysPerPeriod = (double)totalDaysInFiscalYear / periodsPerYear;
+            int currentPeriod = (int)Math.Floor(daysSinceFiscalYearStart / daysPerPeriod) + 1;
+            
+            // Ensure we don't exceed the number of periods
+            if (currentPeriod > periodsPerYear)
+            {
+                currentPeriod = periodsPerYear;
+            }
+
+            return currentPeriod;
         }
 
         /// <summary>
@@ -142,34 +161,29 @@ namespace Fake4Dataverse.Query
         private static (DateTime fromDate, DateTime toDate) GetFiscalPeriodDates(int fiscalYear, int period, DateTime fiscalStartDate, FiscalYearSettings.Template template)
         {
             var fiscalYearStart = new DateTime(fiscalYear, fiscalStartDate.Month, fiscalStartDate.Day);
+            var fiscalYearEnd = fiscalYearStart.AddYears(1).AddDays(-1);
+            var totalDaysInFiscalYear = (fiscalYearEnd - fiscalYearStart).Days + 1;
             
-            int periodDays;
             int periodsPerYear;
             
             switch (template)
             {
                 case FiscalYearSettings.Template.Annually:
-                    periodDays = 365;
                     periodsPerYear = 1;
                     break;
                 case FiscalYearSettings.Template.SemiAnnually:
-                    periodDays = 182;
                     periodsPerYear = 2;
                     break;
                 case FiscalYearSettings.Template.Quarterly:
-                    periodDays = 91;
                     periodsPerYear = 4;
                     break;
                 case FiscalYearSettings.Template.Monthly:
-                    periodDays = 30;
                     periodsPerYear = 12;
                     break;
                 case FiscalYearSettings.Template.FourWeek:
-                    periodDays = 28;
                     periodsPerYear = 13;
                     break;
                 default:
-                    periodDays = 365;
                     periodsPerYear = 1;
                     break;
             }
@@ -180,8 +194,25 @@ namespace Fake4Dataverse.Query
                 throw new ArgumentException($"Invalid fiscal period {period} for template {template}. Valid range: 1-{periodsPerYear}");
             }
 
-            var fromDate = fiscalYearStart.AddDays((period - 1) * periodDays);
-            var toDate = fromDate.AddDays(periodDays - 1);
+            // For annually, return the entire fiscal year
+            if (periodsPerYear == 1)
+            {
+                return (fiscalYearStart, fiscalYearEnd);
+            }
+
+            // Calculate period dates by dividing the fiscal year into equal periods
+            double daysPerPeriod = (double)totalDaysInFiscalYear / periodsPerYear;
+            int startDayOffset = (int)Math.Floor((period - 1) * daysPerPeriod);
+            int endDayOffset = (int)Math.Floor(period * daysPerPeriod) - 1;
+
+            // For the last period, make sure it includes all remaining days
+            if (period == periodsPerYear)
+            {
+                endDayOffset = totalDaysInFiscalYear - 1;
+            }
+
+            var fromDate = fiscalYearStart.AddDays(startDayOffset);
+            var toDate = fiscalYearStart.AddDays(endDayOffset);
 
             return (fromDate, toDate);
         }
