@@ -38,13 +38,10 @@
     <PackageReference Include="xunit.runner.console" Version="2.4.1" />
     <PackageReference Include="coverlet.collector" Version="1.2.1" />
   </ItemGroup>
-
-  <ItemGroup Condition="'$(Configuration)'=='FAKE_XRM_EASY_9'">
-    <PackageReference Include="FakeXrmEasy.Abstractions.v9" Version="2.0.1-*" />
-  </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\..\src\FakeXrmEasy.Core\FakeXrmEasy.Core.csproj" />
+    <ProjectReference Include="..\..\..\FakeXrmEasyAbstrations\src\FakeXrmEasy.Abstractions\FakeXrmEasy.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

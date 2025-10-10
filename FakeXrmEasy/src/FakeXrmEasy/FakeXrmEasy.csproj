@@ -46,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FakeXrmEasy.Abstractions.v9" Version="2.0.1-*" />
-    <PackageReference Include="FakeXrmEasy.Core.v9" Version="2.0.1-*" />
+    <ProjectReference Include="..\..\..\FakeXrmEasyAbstrations\src\FakeXrmEasy.Abstractions\FakeXrmEasy.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\FakeXrmEasyCore\src\FakeXrmEasy.Core\FakeXrmEasy.Core.csproj" />
   </ItemGroup>
 </Project>

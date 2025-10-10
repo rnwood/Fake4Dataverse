@@ -48,8 +48,8 @@
     <PackageReference Include="FakeItEasy" Version="6.0.0" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)'=='FAKE_XRM_EASY_9'">
-    <PackageReference Include="FakeXrmEasy.Abstractions.v9" Version="2.0.1-*" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\FakeXrmEasyAbstrations\src\FakeXrmEasy.Abstractions\FakeXrmEasy.Abstractions.csproj" />
   </ItemGroup>
 
 
