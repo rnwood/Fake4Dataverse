@@ -1,0 +1,278 @@
+name: Build and Publish
+
+on:
+  push:
+    branches: [ main, master, dev ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ main, master, dev ]
+
+env:
+  dotnet-version: 8.0.x
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.dotnet-version }}
+
+    - name: Determine Version Suffix
+      id: version
+      shell: pwsh
+      run: |
+        $versionSuffix = ""
+        $versionPrefix = ""
+        $isRelease = $false
+        $isPrereleaseTag = $false
+
+        # Check if this is a tag push
+        if ($env:GITHUB_REF -match '^refs/tags/(.+)$') {
+          $tag = $Matches[1]
+          Write-Host "Tag detected: $tag"
+
+          # Check if tag matches semantic version pattern (with optional prerelease suffix)
+          if ($tag -match '^(\d+\.\d+\.\d+)(-.*)?$') {
+            $versionPrefix = $Matches[1]
+            $prerelease = $Matches[2]
+
+            if ($prerelease) {
+              # Remove leading dash from prerelease suffix
+              $versionSuffix = $prerelease.Substring(1)
+              $isPrereleaseTag = $true
+              Write-Host "Prerelease tag with version: $versionPrefix, suffix: $versionSuffix"
+            } else {
+              # No suffix for release versions
+              $versionSuffix = ""
+              $isRelease = $true
+              Write-Host "Release tag with version: $versionPrefix"
+            }
+          } else {
+            Write-Host "::error::Tag '$tag' does not match semantic versioning pattern X.Y.Z or X.Y.Z-prerelease"
+            exit 1
+          }
+        }
+        # Check if this is a PR build
+        elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+          $prNumber = $env:GITHUB_REF -replace 'refs/pull/(\d+)/merge', '$1'
+          $date = Get-Date -Format "yyyyMMdd"
+          $runNumber = $env:GITHUB_RUN_NUMBER
+          # Use underscore instead of + for better compatibility
+          $versionSuffix = "ci-$date-$runNumber-pr$prNumber"
+          Write-Host "PR build with version suffix: $versionSuffix"
+        }
+        # Main/master branch build
+        else {
+          $date = Get-Date -Format "yyyyMMdd"
+          $runNumber = $env:GITHUB_RUN_NUMBER
+          $versionSuffix = "ci-$date-$runNumber"
+          Write-Host "Main branch build with version suffix: $versionSuffix"
+        }
+
+        # Output to GitHub Actions
+        "version_suffix=$versionSuffix" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        "version_prefix=$versionPrefix" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        "is_release=$isRelease" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        "is_prerelease=$(if ($isPrereleaseTag -or $versionSuffix) { 'true' } else { 'false' })" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+        Write-Host "Version prefix: $versionPrefix"
+        Write-Host "Version suffix: $versionSuffix"
+        Write-Host "Is release: $isRelease"
+        Write-Host "Is prerelease: $(if ($isPrereleaseTag -or $versionSuffix) { 'true' } else { 'false' })"
+
+    - name: Restore
+      run: dotnet restore Fake4DataverseFree.sln
+
+    - name: Build net8.0
+      run: dotnet build Fake4DataverseFree.sln --configuration Release --framework net8.0 --no-restore
+
+    - name: Test net8.0
+      run: dotnet test Fake4DataverseFree.sln --configuration Release --framework net8.0 --no-build --verbosity normal
+      continue-on-error: true
+
+    - name: Build net462
+      run: dotnet build Fake4DataverseFree.sln --configuration Release --framework net462 --no-restore
+
+    - name: Test net462
+      run: dotnet test Fake4DataverseFree.sln --configuration Release --framework net462 --no-build --verbosity normal
+      continue-on-error: true
+
+    - name: Pack Fake4Dataverse.Abstractions
+      shell: pwsh
+      run: |
+        $versionSuffix = "${{ steps.version.outputs.version_suffix }}"
+        $versionPrefix = "${{ steps.version.outputs.version_prefix }}"
+        Write-Host "Packing Fake4Dataverse.Abstractions"
+        Write-Host "  Version prefix: $versionPrefix"
+        Write-Host "  Version suffix: $versionSuffix"
+
+        $packArgs = @(
+          'Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Fake4Dataverse.Abstractions.csproj',
+          '--configuration', 'Release',
+          '--no-build',
+          '--output', './nupkgs'
+        )
+
+        if ($versionPrefix) {
+          $packArgs += '/p:VersionPrefix=' + $versionPrefix
+        }
+
+        if ($versionSuffix) {
+          $packArgs += '--version-suffix'
+          $packArgs += $versionSuffix
+        }
+
+        & dotnet pack $packArgs
+
+    - name: Pack Fake4Dataverse.Core
+      shell: pwsh
+      run: |
+        $versionSuffix = "${{ steps.version.outputs.version_suffix }}"
+        $versionPrefix = "${{ steps.version.outputs.version_prefix }}"
+        Write-Host "Packing Fake4Dataverse.Core"
+        Write-Host "  Version prefix: $versionPrefix"
+        Write-Host "  Version suffix: $versionSuffix"
+
+        $packArgs = @(
+          'Fake4DataverseCore/src/Fake4Dataverse.Core/Fake4Dataverse.Core.csproj',
+          '--configuration', 'Release',
+          '--no-build',
+          '--output', './nupkgs'
+        )
+
+        if ($versionPrefix) {
+          $packArgs += '/p:VersionPrefix=' + $versionPrefix
+        }
+
+        if ($versionSuffix) {
+          $packArgs += '--version-suffix'
+          $packArgs += $versionSuffix
+        }
+
+        & dotnet pack $packArgs
+
+    - name: Pack Fake4Dataverse
+      shell: pwsh
+      run: |
+        $versionSuffix = "${{ steps.version.outputs.version_suffix }}"
+        $versionPrefix = "${{ steps.version.outputs.version_prefix }}"
+        Write-Host "Packing Fake4Dataverse"
+        Write-Host "  Version prefix: $versionPrefix"
+        Write-Host "  Version suffix: $versionSuffix"
+
+        $packArgs = @(
+          'Fake4Dataverse/src/Fake4Dataverse/Fake4Dataverse.csproj',
+          '--configuration', 'Release',
+          '--no-build',
+          '--output', './nupkgs'
+        )
+
+        if ($versionPrefix) {
+          $packArgs += '/p:VersionPrefix=' + $versionPrefix
+        }
+
+        if ($versionSuffix) {
+          $packArgs += '--version-suffix'
+          $packArgs += $versionSuffix
+        }
+
+        & dotnet pack $packArgs
+
+    - name: Upload NuGet Packages as Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./nupkgs/*.nupkg
+
+    - name: Publish to NuGet
+      if: github.event_name != 'pull_request'
+      shell: pwsh
+      run: |
+        $packages = Get-ChildItem ./nupkgs/*.nupkg
+        foreach ($package in $packages) {
+          Write-Host "Publishing $($package.Name) to NuGet..."
+          dotnet nuget push $package.FullName `
+            --api-key ${{ secrets.NUGET_API_KEY }} `
+            --source https://api.nuget.org/v3/index.json `
+            --skip-duplicate
+        }
+
+    - name: Generate Release Notes
+      if: github.event_name != 'pull_request'
+      id: release_notes
+      shell: pwsh
+      run: |
+        $notes = @"
+        ## NuGet Packages
+
+        This release includes the following packages:
+
+        "@
+
+        $packages = Get-ChildItem ./nupkgs/*.nupkg
+        foreach ($package in $packages) {
+          $notes += "- $($package.Name)`n"
+        }
+
+        $notes += @"
+
+        ## Installation
+
+        Install via NuGet Package Manager or .NET CLI:
+
+        ``````
+        dotnet add package Fake4Dataverse.Abstractions
+        dotnet add package Fake4Dataverse.Core
+        dotnet add package Fake4Dataverse
+        ``````
+
+        "@
+
+        # Save to file for GitHub Release
+        $notes | Out-File -FilePath release-notes.txt
+
+        # Also output for use in next step (escape for GitHub Actions)
+        $escapedNotes = $notes -replace '%','%25' -replace '\n','%0A' -replace '\r','%0D'
+        "notes=$escapedNotes" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+    - name: Determine Release Tag
+      if: github.event_name != 'pull_request'
+      id: release_tag
+      shell: pwsh
+      run: |
+        if ($env:GITHUB_REF -match '^refs/tags/') {
+          # Use the existing tag
+          $tag = $env:GITHUB_REF_NAME
+          Write-Host "Using existing tag: $tag"
+        } else {
+          # Create a tag name for CI builds
+          $versionSuffix = "${{ steps.version.outputs.version_suffix }}"
+          $tag = "v4.0.0-$versionSuffix"
+          Write-Host "Creating CI tag: $tag"
+        }
+        "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+    - name: Create GitHub Release
+      if: github.event_name != 'pull_request'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./nupkgs/*.nupkg
+        body_path: release-notes.txt
+        prerelease: ${{ steps.version.outputs.is_prerelease }}
+        tag_name: ${{ steps.release_tag.outputs.tag }}
+        generate_release_notes: true
+        draft: false
+        make_latest: ${{ steps.version.outputs.is_release }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
