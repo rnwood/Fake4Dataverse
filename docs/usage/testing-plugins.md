@@ -559,6 +559,98 @@ public void Should_ExecuteAsync_Plugin_Synchronously()
 
 Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
 
+### Key Differences from FakeXrmEasy v2
+
+**Important**: The plugin pipeline implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
+
+1. **Explicit Registration**: Plugins must be explicitly registered using `PluginPipelineSimulator.RegisterPluginStep()`. There is no automatic plugin discovery from assemblies.
+
+2. **Manual Pipeline Control**: You have full control over when pipeline stages execute. By default, plugins do NOT execute during CRUD operations.
+
+3. **Opt-In Auto-Execution**: Enable `context.UsePipelineSimulation = true` to automatically execute registered plugins during Create/Update/Delete operations.
+
+4. **Direct Configuration**: Plugin configuration (secure/unsecure) is passed directly in the `PluginStepRegistration` object, not through external configuration files.
+
+5. **No Async Queuing**: Async plugins execute synchronously in tests (no queue simulation). This matches FakeXrmEasy v1 behavior.
+
+### Auto-Registration Mode (Recommended)
+
+Enable automatic plugin execution during CRUD operations by setting `UsePipelineSimulation = true`:
+
+```csharp
+[Fact]
+public void Should_AutoExecutePlugins_During_CrudOperations()
+{
+    // Arrange - Enable auto-execution
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true; // Enable auto-execution
+    
+    // Register plugins once
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(AccountNumberPlugin)
+    });
+    
+    var service = context.GetOrganizationService();
+    
+    // Act - Plugins automatically execute
+    var account = new Entity("account") { ["name"] = "Test Account" };
+    var id = service.Create(account); // AccountNumberPlugin executes automatically
+    
+    // Assert - Plugin effects are visible
+    var created = service.Retrieve("account", id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+    Assert.NotNull(created["accountnumber"]);
+}
+```
+
+**When to use auto-registration:**
+- Testing plugins as part of normal CRUD operations
+- Integration testing where plugins should behave like production
+- Testing plugin interactions and execution order
+- Most realistic plugin testing scenarios
+
+### Manual Pipeline Execution
+
+For fine-grained control, manually execute specific pipeline stages:
+
+```csharp
+[Fact]
+public void Should_ManuallyExecutePipelineStage()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    // Note: UsePipelineSimulation remains false (default)
+    
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(ValidationPlugin)
+    });
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // Act - Manually trigger specific pipeline stage
+    context.PluginPipelineSimulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Preoperation,
+        account);
+    
+    // Plugin executed only when explicitly called
+}
+```
+
+**When to use manual execution:**
+- Unit testing individual plugin behavior in isolation
+- Testing specific pipeline stages without full CRUD simulation
+- When you need precise control over execution timing
+- Testing plugin context properties
+
 ### Multiple Plugins Per Message
 
 You can now register multiple plugins for the same message, entity, and stage. Plugins execute in order based on their `ExecutionOrder` (rank) property.
@@ -817,6 +909,20 @@ public void Should_UnregisterPlugin()
 1. **Explicit Registration**: Plugins must be explicitly registered via `PluginPipelineSimulator.RegisterPluginStep()` 
 2. **Direct Control**: You have full control over when pipeline stages execute
 3. **Configuration**: Plugin configuration is passed directly in the registration
+4. **Auto-Execution**: Enable `UsePipelineSimulation = true` for automatic plugin execution during CRUD operations (similar to v2 behavior)
+
+**Comparison Table:**
+
+| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| Plugin Discovery | Automatic from assemblies | Manual registration required |
+| Pipeline Execution | Automatic during CRUD | Opt-in via `UsePipelineSimulation = true` |
+| Configuration | External config files | Inline in registration |
+| Manual Execution | Limited | Full control via `ExecutePipelineStage()` |
+| Multiple Plugins | ✅ Yes | ✅ Yes |
+| Execution Order | ✅ Yes | ✅ Yes |
+| Filtering Attributes | ✅ Yes | ✅ Yes |
+| Depth Tracking | ✅ Yes | ✅ Yes |
 
 ## Best Practices
 

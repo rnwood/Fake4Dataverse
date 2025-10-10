@@ -235,6 +235,42 @@ The framework supports Dynamics 365 / Dataverse v9 and later:
 - **Cross-reference** - Link to related documentation
 - **Keep it practical** - Focus on how to use features, not just what they are
 
+### Documenting Differences from FakeXrmEasy v2
+
+**IMPORTANT**: When implementing features that exist in FakeXrmEasy v2+ (commercial version), ALWAYS document how the Fake4Dataverse implementation differs:
+
+1. **In ALL relevant documentation** - Not just migration guides
+   - Include a "Key Differences from FakeXrmEasy v2" section in feature documentation
+   - Use comparison tables when multiple differences exist
+   - Be specific about setup steps, configuration, and behavior differences
+
+2. **In feature usage guides** (`/docs/usage/*.md`)
+   - Show both the Fake4Dataverse way AND explain how it differs from v2
+   - Include examples that highlight the differences
+   - Document any additional steps required in Fake4Dataverse
+
+3. **In migration guides** (`/docs/migration/*.md`)
+   - Provide detailed migration instructions
+   - Include before/after code examples
+   - Explain the rationale for differences when helpful
+
+4. **Example pattern for documenting differences:**
+   ```markdown
+   ### Key Differences from FakeXrmEasy v2
+
+   **Important**: The [feature name] in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
+
+   1. **[Difference category]**: [Description of what's different]
+   2. **[Another category]**: [Description]
+
+   **Comparison Table:**
+
+   | Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+   |---------|----------------|-------------------|
+   | [Aspect 1] | [v2 behavior] | [v4 behavior] |
+   | [Aspect 2] | [v2 behavior] | [v4 behavior] |
+   ```
+
 ### Documentation Structure
 - **Getting Started** - Quick wins, installation, first test
 - **Concepts** - Deep dives into architecture and design
