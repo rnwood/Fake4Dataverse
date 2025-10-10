@@ -15,7 +15,7 @@ using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.Plugins;
 
 #if FAKE_XRM_EASY_NETCORE
-using Microsoft.Powerplatform.Cds.Client;
+using Microsoft.PowerPlatform.Dataverse.Client;
 #else
 using Microsoft.Xrm.Tooling.Connector;
 #endif
@@ -99,7 +99,7 @@ namespace Fake4Dataverse
 
             // Connect to the CRM web service using a connection string.
 #if FAKE_XRM_EASY_NETCORE
-            var client = new CdsServiceClient(connectionString);
+            var client = new ServiceClient(connectionString);
 #else
             var client = new CrmServiceClient(connectionString);
 #endif
