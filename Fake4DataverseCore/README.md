@@ -14,12 +14,12 @@ Fake4Dataverse: Test Automation for Microsoft Dataverse and Power Platform
 
 |Version|Package Name|NuGet|
 |-----------|------|-----|
-|Dynamics v9 (>= 9.x)|Fake4Dataverse.9|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.9?v=1.55.0)](https://www.nuget.org/packages/Fake4Dataverse.9)|
-|Dynamics 365 (8.2.x)|Fake4Dataverse.365|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.365?v=1.55.0)](https://www.nuget.org/packages/Fake4Dataverse.365)|
-|Dynamics CRM 2016 ( >= 8.0 && <= 8.1)|Fake4Dataverse.2016|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.2016?v=1.55.0)](https://www.nuget.org/packages/Fake4Dataverse.2016)|
-|Dynamics CRM 2015 (7.x)|Fake4Dataverse.2015|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.2015?v=1.55.0)](https://www.nuget.org/packages/Fake4Dataverse.2015)|
-|Dynamics CRM 2013 (6.x)|Fake4Dataverse.2013|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.2013?v=1.55.0)](https://www.nuget.org/packages/Fake4Dataverse.2013)|
-|Dynamics CRM 2011 (5.x)|Fake4Dataverse|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse?v=1.55.0)](https://www.nuget.org/packages/Fake4Dataverse)|
+|Dynamics v9 (>= 9.x)|Fake4Dataverse.9|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.9?v=4.0.0)](https://www.nuget.org/packages/Fake4Dataverse.9)|
+|Dynamics 365 (8.2.x)|Fake4Dataverse.365|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.365?v=4.0.0)](https://www.nuget.org/packages/Fake4Dataverse.365)|
+|Dynamics CRM 2016 ( >= 8.0 && <= 8.1)|Fake4Dataverse.2016|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.2016?v=4.0.0)](https://www.nuget.org/packages/Fake4Dataverse.2016)|
+|Dynamics CRM 2015 (7.x)|Fake4Dataverse.2015|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.2015?v=4.0.0)](https://www.nuget.org/packages/Fake4Dataverse.2015)|
+|Dynamics CRM 2013 (6.x)|Fake4Dataverse.2013|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse.2013?v=4.0.0)](https://www.nuget.org/packages/Fake4Dataverse.2013)|
+|Dynamics CRM 2011 (5.x)|Fake4Dataverse|[![Nuget](https://buildstats.info/nuget/Fake4Dataverse?v=4.0.0)](https://www.nuget.org/packages/Fake4Dataverse)|
 
 Supports Dynamics CRM 2011, 2013, 2015, 2016, and Dynamics 365 (8.x and 9.x). <b>NOTE:</b> With the release of Dynamics 365 v9 we are changing the naming convention for new packages to match the major version.
 
@@ -29,7 +29,7 @@ The NuGet packages use semantic versioning like this:
 
     x.y.z  => Major.Minor.Patch
        
-x: stands for the major version. The package is very stable so that's why the major version didn't change yet.
+x: stands for the major version. The current major version is 4.
 
 y: minor version. Any minor updates add new functionality without breaking changes. An example of these would be a new operator or a new fake message executor.
 
