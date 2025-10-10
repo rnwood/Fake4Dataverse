@@ -7,7 +7,7 @@ on:
     branches: [ main, master, dev ]
 
 env: 
-  dotnet-version: 3.1.201
+  dotnet-version: 8.0.x
 
 jobs:
   build-all:
@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup .NET Core
+    - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.dotnet-version }}
@@ -25,16 +25,16 @@ jobs:
       run: |
         cd FakeXrmEasyAbstrations
         dotnet restore /p:Configuration=FAKE_XRM_EASY_9
-        dotnet build FakeXrmEasy.Abstractions.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework netcoreapp3.1
+        dotnet build FakeXrmEasy.Abstractions.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework net8.0
 
     - name: Build FakeXrmEasyCore
       run: |
         cd FakeXrmEasyCore
         dotnet restore /p:Configuration=FAKE_XRM_EASY_9
-        dotnet build FakeXrmEasy.Core.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework netcoreapp3.1
+        dotnet build FakeXrmEasy.Core.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework net8.0
         
     - name: Build FakeXrmEasy
       run: |
         cd FakeXrmEasy
         dotnet restore /p:Configuration=FAKE_XRM_EASY_9
-        dotnet build FakeXrmEasy.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework netcoreapp3.1
+        dotnet build FakeXrmEasy.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework net8.0
