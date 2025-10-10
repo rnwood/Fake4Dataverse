@@ -194,7 +194,6 @@ namespace FakeXrmEasy.Query
             }
             return matches;
         }
-#endif
 
 
         internal static string EnsureUniqueLinkedEntityAlias(IDictionary<string, int> linkedEntities, string entityName)

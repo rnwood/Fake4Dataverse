@@ -1,0 +1,8 @@
+# Local NuGet packages folder
+local-packages/
+
+# Build artifacts
+*.nupkg
+packages/
+bin/
+obj/

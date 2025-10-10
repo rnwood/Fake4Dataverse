@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net462</TargetFrameworks>
+    <TargetFrameworks>net8.0;net462</TargetFrameworks>
     <PackageId>FakeXrmEasy</PackageId>
     <VersionPrefix>2.0.0.1</VersionPrefix>
     <Authors>Jordi Montaña</Authors>
@@ -27,11 +27,11 @@
   </PropertyGroup>
 
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
-    <DefineConstants>$(DefineConstants);NETCOREAPP3_1;FAKE_XRM_EASY_NETCORE</DefineConstants>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <DefineConstants>$(DefineConstants);NET8_0;FAKE_XRM_EASY_NETCORE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="Microsoft.Powerplatform.Cds.Client" Version="0.0.1.11-Alpha" />
     <PackageReference Include="Microsoft.Dynamics.Sdk.Messages" Version="0.0.1.11-Alpha" />
   </ItemGroup>
@@ -46,7 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FakeXrmEasy.Abstractions.v9" Version="2.0.1-*" />
-    <PackageReference Include="FakeXrmEasy.Core.v9" Version="2.0.1-*" />
+    <ProjectReference Include="..\..\..\FakeXrmEasyAbstrations\src\FakeXrmEasy.Abstractions\FakeXrmEasy.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\FakeXrmEasyCore\src\FakeXrmEasy.Core\FakeXrmEasy.Core.csproj" />
   </ItemGroup>
 </Project>
