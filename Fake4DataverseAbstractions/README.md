@@ -1,7 +1,9 @@
 Fake4Dataverse.Abstractions
 ========================================================
 
-Abstractions for Fake Xrm Easy
+Abstractions for Fake4Dataverse - A fork of FakeXrmEasy
+
+**Note:** This is a fork of the original FakeXrmEasy project by Jordi Montaña. See the [main README](../README.md) for information about this fork and its relationship to the original project.
 
 |Build|Quality Gate|Coverage|Security|Maintainability|Reliability|
 |-----| ---------- | ------ | ------ | ------------- | --------- |
@@ -9,7 +11,7 @@ Abstractions for Fake Xrm Easy
 
 # Building
 
-In order to build this project you will need .NET Core 3.1 and PowerShell 7.
+In order to build this project you will need .NET 8.0 (or later) and PowerShell 7.
 
 ## Building on Windows
 
@@ -24,11 +26,11 @@ Once installed, run the following commands:
 
 The following will just build the solution
 
-    pwsh ./build
+    pwsh ./build.ps1 -targetFramework net8.0
 
 This command will build AND push the output package into a predefined local folder (this will create a local-packages folder where Fake4Dataverse.Abstractions will be pushed)
 
-    pwsh ./build-push-local
+    pwsh ./build-push-local.ps1 -targetFramework net8.0
 
 
 # Contributing

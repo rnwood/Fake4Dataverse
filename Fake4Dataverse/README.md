@@ -1,9 +1,11 @@
 
-# Fake4Dataverse: The Test Automation Framework for the Power Platform
+# Fake4Dataverse: Test Automation Framework for Microsoft Dataverse and Power Platform
+
+**Note:** This is a fork of the original FakeXrmEasy project by Jordi Montaña. See the [main README](../README.md) for information about this fork and its relationship to the original project.
 
 ## What's New in 2.x?
 
-  - Support for .net core 3.1. / Full .NET framework support with multi-targeting   
+  - Support for .net core 3.1 / .NET 8.0 / Full .NET framework support with multi-targeting   
   - Single original repo broken down into smaller, easier to maintain, repos
   - New semantinc versioning using prerelease suffixes [SemVer 2.0.0](https://docs.microsoft.com/en-us/nuget/concepts/package-versioning#semantic-versioning-200) 
   - Original FAKE build script has been redeveloped in Powershell Core for building both locally (build-local-push.ps1) and form GitHub actions, cross platform. 

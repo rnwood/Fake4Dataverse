@@ -1,16 +1,15 @@
-Fake Xrm Easy: TDD for Dynamics CRM and Dynamics 365 (or now Common Data Service for Apps) made simple
+Fake4Dataverse: Test Automation for Microsoft Dataverse and Power Platform
 =================================================================================
 
+**Note:** This is a fork of the original FakeXrmEasy project by Jordi Montaña. See the [main README](../README.md) for information about this fork and its relationship to the original project.
 
 |Build|Code Quality|
 |-----|------------|
 |![.NET Core](https://github.com/DynamicsValue/fake-xrm-easy-core/workflows/CI/badge.svg)|[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=DynamicsValue_fake-xrm-easy-core&metric=alert_status&token=275c67c8b62adac17e4e9a0ae210c77703d671d1)](https://sonarcloud.io/dashboard?id=DynamicsValue_fake-xrm-easy-core)||
 
-<b>Streamline unit testing</b> in Dynamics CRM by faking the `IOrganizationService` to work with an in-memory context.
+<b>Streamline unit testing</b> in Dataverse by faking the `IOrganizationService` to work with an in-memory context.
 
 <b>Drive your development</b> by unit testing any plugin, code activity, or 3rd party app using the `OrganizationService` easier and faster than ever before.
-
-<b>Note: To keep up to date with client-side unit testing version of this framework, please [have a look at this repo](http://github.com/jordimontana82/fake-xrm-easy-js) and samples in this other [sample code repo](http://github.com/jordimontana82/fake-xrm-easy-js-samples) </b>
 
 
 |Version|Package Name|NuGet|
@@ -38,33 +37,18 @@ z: patch. Any update to this number means new bug fixes for the existing functio
 
 ## Contributing
 
-Please consider the below guidelines for contributing to the project:
+Contributions are welcome! Please feel free to submit pull requests or open issues.
 
-* Priority: Given the overwhelming number of issues and pull requests, we'll review Pull Requests first, then any outstanding issues. We encourage you to resolve / extend issues by yourselves, as a community, and we'll prioritise those first because we know (as mantainers) the effort it takes. 
+When raising an issue:
+* <u>**Please provide a sample unit test**</u> to reproduce any issues detected where possible. This will speed up the resolution.
+* Attach all generated early bound typed entities required (if you're using early bound).
 
-    Please do [fork](https://github.com/jordimontana82/fake-xrm-easy/fork) the project and submit a [pull request](https://github.com/jordimontana82/fake-xrm-easy/pulls)
-    
-    We'll thank you forever and ever. 
-
-    If you don't know how to resolve something or are not familiar with pull requests, don't worry, raise the issue anyway. Those will be revised next.
-
-* When raising an issue:
-
-    * <u>**Please provide a sample unit test**</u> to reproduce any issues detected where possible. This will speed up the resolution.
-    * Attach all generated early bound typed entities required (if you're using early bound).
-
-* **If you're using the framework, please do [Star](https://github.com/jordimontana82/fake-xrm-easy/star) the project**, it'll give more visibility to the wider community to keep extending and improving it.
-
-## Donate 
-
-*  If you're a business / company who delivers solutions on top of the Power Platform, you can help make OSS sustainable while getting more visibility by becoming a sponsor. Please [reach out to me](https://github.com/jordimontana82) for sponsorship enquiries.
+**If you're using the framework, please do [Star the project](https://github.com/rnwood/fake-xrm-free)**
 
 ## Roadmap
 
-*  TODO:  Add support for date operators. See `ConditionOperator` implementation status [here](https://github.com/jordimontana82/fake-xrm-easy/blob/master/Fake4Dataverse.Tests.Shared/FakeContextTests/FetchXml/ConditionOperatorTests.cs#L19-L110). Feel free to add missing ones!
-*  TODO: Implement remaining CRM messages. To know which ones have been implemented so far, see `FakeMessageExecutor` implementation status [here](https://github.com/jordimontana82/fake-xrm-easy/tree/master/Fake4Dataverse.Shared/FakeMessageExecutors).
+*  TODO: Implement remaining Dataverse messages. To know which ones have been implemented so far, see `FakeMessageExecutor` implementation status.
 *  TODO: Increase test coverage.
-*  **NEW!** I'm planning a 2.x version, this version will contain all the major improvements I always thought of adding but that will introduce considerable breaking changes. If you want to join a private preview list, let me know.
 
 
 
