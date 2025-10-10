@@ -140,15 +140,47 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                                   </entity>
                             </fetch>";
 
-            // Calculate last fiscal period dates
+            // Calculate last fiscal period dates using the same logic as the implementation
             var fiscalYearStart = new DateTime(currentYear, 1, 1);
+            var fiscalYearEnd = fiscalYearStart.AddYears(1).AddDays(-1);
+            var totalDaysInFiscalYear = (fiscalYearEnd - fiscalYearStart).Days + 1;
             var daysSinceStart = (today - fiscalYearStart).Days;
-            var currentPeriod = daysSinceStart / 30 + 1;
-            var lastPeriod = currentPeriod > 1 ? currentPeriod - 1 : 12;
-            var lastPeriodYear = currentPeriod > 1 ? currentYear : currentYear - 1;
-
-            var lastPeriodStart = new DateTime(lastPeriodYear, 1, 1).AddDays((lastPeriod - 1) * 30);
-            var lastPeriodEnd = lastPeriodStart.AddDays(29);
+            
+            // Calculate current period using implementation's logic
+            double daysPerPeriod = (double)totalDaysInFiscalYear / 12; // Monthly = 12 periods
+            int currentPeriod = (int)Math.Floor(daysSinceStart / daysPerPeriod) + 1;
+            
+            // Calculate last period
+            int lastPeriod;
+            int lastPeriodYear;
+            if (currentPeriod > 1)
+            {
+                lastPeriod = currentPeriod - 1;
+                lastPeriodYear = currentYear;
+            }
+            else
+            {
+                lastPeriod = 12;
+                lastPeriodYear = currentYear - 1;
+            }
+            
+            // Calculate last period dates
+            var lastPeriodYearStart = new DateTime(lastPeriodYear, 1, 1);
+            var lastPeriodYearEnd = lastPeriodYearStart.AddYears(1).AddDays(-1);
+            var lastPeriodYearDays = (lastPeriodYearEnd - lastPeriodYearStart).Days + 1;
+            double lastPeriodDaysPerPeriod = (double)lastPeriodYearDays / 12;
+            
+            int lastPeriodStartOffset = (int)Math.Floor((lastPeriod - 1) * lastPeriodDaysPerPeriod);
+            int lastPeriodEndOffset = (int)Math.Floor(lastPeriod * lastPeriodDaysPerPeriod) - 1;
+            
+            // For the last period, make sure it includes all remaining days
+            if (lastPeriod == 12)
+            {
+                lastPeriodEndOffset = lastPeriodYearDays - 1;
+            }
+            
+            var lastPeriodStart = lastPeriodYearStart.AddDays(lastPeriodStartOffset);
+            var lastPeriodEnd = lastPeriodYearStart.AddDays(lastPeriodEndOffset);
 
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastPeriodStart };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastPeriodEnd };
@@ -359,12 +391,13 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             };
             query.Criteria.AddCondition("anniversary", ConditionOperator.InOrBeforeFiscalPeriodAndYear, 2, currentYear);
 
-            // Q2 of current year and before (approximately through day 181)
-            var q2End = new DateTime(currentYear, 1, 1).AddDays(181);
+            // Q2 of current year and before (ends at approximately day 182, which is around July 1)
+            // For a 365-day fiscal year starting Jan 1 with quarterly periods:
+            // Q1: days 0-91, Q2: days 92-182, Q3: days 183-273, Q4: days 274-364
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 1, 15) };      // Q1 - should be returned
-            var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = q2End };                                 // Q2 end - should be returned
+            var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 6, 30) };      // Q2 - should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear - 1, 12, 31) }; // Previous year - should be returned
-            var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 1) };       // Q3 - should not be returned
+            var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 15) };      // Q3 - should not be returned
             _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
 
             var collection = _service.RetrieveMultiple(query);
@@ -398,8 +431,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             };
             query.Criteria.AddCondition("anniversary", ConditionOperator.InFiscalPeriod, 2);
 
-            // H2 is approximately July-December (days 182-365)
-            var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 1) };   // H2 - should be returned
+            // H2 starts at approximately day 183 (after July 1)
+            // For a 365-day fiscal year starting Jan 1, H2 starts around July 2
+            var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 15) };   // H2 - should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 12, 31) }; // H2 - should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 3, 15) };  // H1 - should not be returned
             _context.Initialize(new[] { ct1, ct2, ct3 });
