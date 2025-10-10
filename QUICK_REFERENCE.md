@@ -20,7 +20,7 @@ Essential features for most testing scenarios:
 
 1. ~~**Merge Request** - Entity merge operations~~ ✅ **COMPLETED**
 2. ~~**Hierarchical Query Operators** - Above, Under, ChildOf, etc.~~ ✅ **COMPLETED**
-3. **Advanced Fiscal Period Operators** - Complete fiscal calendar support
+3. ~~**Advanced Fiscal Period Operators** - Complete fiscal calendar support~~ ✅ **COMPLETED**
 4. **Custom API Support** - Modern Dataverse Custom APIs
 5. **Custom Actions** - Process-based action support
 6. **Calculated Fields** - Field calculation simulation

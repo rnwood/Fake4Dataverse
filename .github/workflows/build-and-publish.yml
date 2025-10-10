@@ -13,7 +13,7 @@ env:
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
       packages: write
@@ -99,11 +99,9 @@ jobs:
 
     - name: Test net8.0
       run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --verbosity normal
-      continue-on-error: true
 
     - name: Test net462
       run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build --verbosity normal
-      continue-on-error: true
 
     - name: Pack Fake4Dataverse.Abstractions
       shell: pwsh

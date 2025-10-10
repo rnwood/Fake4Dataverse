@@ -32,7 +32,11 @@ namespace Fake4Dataverse.Extensions.FetchXml
             ConditionOperator.NextXMonths,
             ConditionOperator.NextXYears,
             ConditionOperator.NextXWeeks,
-            ConditionOperator.InFiscalYear
+            ConditionOperator.InFiscalYear,
+            ConditionOperator.InFiscalPeriod,
+            ConditionOperator.InFiscalPeriodAndYear,
+            ConditionOperator.InOrAfterFiscalPeriodAndYear,
+            ConditionOperator.InOrBeforeFiscalPeriodAndYear
         };
 
         public static bool IsAttributeTrue(this XElement elem, string attributeName)
@@ -560,6 +564,30 @@ namespace Fake4Dataverse.Extensions.FetchXml
                     break;
                 case "in-fiscal-year":
                     op = ConditionOperator.InFiscalYear;
+                    break;
+                case "in-fiscal-period":
+                    op = ConditionOperator.InFiscalPeriod;
+                    break;
+                case "in-fiscal-period-and-year":
+                    op = ConditionOperator.InFiscalPeriodAndYear;
+                    break;
+                case "in-or-after-fiscal-period-and-year":
+                    op = ConditionOperator.InOrAfterFiscalPeriodAndYear;
+                    break;
+                case "in-or-before-fiscal-period-and-year":
+                    op = ConditionOperator.InOrBeforeFiscalPeriodAndYear;
+                    break;
+                case "last-fiscal-period":
+                    op = ConditionOperator.LastFiscalPeriod;
+                    break;
+                case "next-fiscal-period":
+                    op = ConditionOperator.NextFiscalPeriod;
+                    break;
+                case "last-fiscal-year":
+                    op = ConditionOperator.LastFiscalYear;
+                    break;
+                case "next-fiscal-year":
+                    op = ConditionOperator.NextFiscalYear;
                     break;
 #if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013
                 case "olderthan-x-minutes":
