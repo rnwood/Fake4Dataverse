@@ -516,11 +516,13 @@ Low - Advanced integration scenario
 
 ---
 
-## Issue 16: Enhance Multiple Plugins Per Message Support
+## Issue 16: Enhance Multiple Plugins Per Message Support ✅
 
 **Title:** Add full support for multiple plugins on same message
 
 **Labels:** `enhancement`, `plugins`, `medium-priority`
+
+**Status:** ✅ **COMPLETED** (2025-10-10)
 
 **Description:**
 
@@ -528,31 +530,48 @@ Low - Advanced integration scenario
 Improve support for registering and executing multiple plugins for the same message/entity combination.
 
 ### Current Status
-- ⚠️ Partial support in Fake4Dataverse
+- ✅ **Implemented in Fake4Dataverse v4.x** (2025-10-10)
 - ✅ Full support in FakeXrmEasy v2+
 - ❌ Not available in FakeXrmEasy v1
 
+### Implementation Details
+- Added `PluginStepRegistration` class for plugin registration
+- Implemented `IPluginPipelineSimulator` interface
+- Support for multiple plugin registrations per message/entity/stage
+- Plugins execute in order based on `ExecutionOrder` (rank) property
+- Support for filtering attributes on Update messages
+- Configuration parameters (secure/unsecure)
+- Comprehensive test coverage (13 tests)
+
 ### Requirements
-- Support multiple plugin registrations
-- Execute plugins in correct order (execution order property)
-- Handle plugin step registration configurations
-- Support filtering by attributes
-- Add comprehensive unit tests
+- ✅ Support multiple plugin registrations
+- ✅ Execute plugins in correct order (execution order property)
+- ✅ Handle plugin step registration configurations
+- ✅ Support filtering by attributes
+- ✅ Add comprehensive unit tests
 
 ### Related Files
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/XrmFakedContext.Plugins.cs`
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/Middleware/`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/PluginStepRegistration.cs`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/IPluginPipelineSimulator.cs`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/PluginPipelineSimulator.cs`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/Plugins/XrmFakedPluginContextProperties.cs`
+- `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/Pipeline/PluginPipelineSimulatorTests.cs`
+
+### Documentation
+- [Testing Plugins - Plugin Pipeline Simulator](./docs/usage/testing-plugins.md#plugin-pipeline-simulator)
 
 ### Priority
 Medium - Common plugin scenario
 
 ---
 
-## Issue 17: Implement Complete Pipeline Simulation
+## Issue 17: Implement Complete Pipeline Simulation ✅
 
 **Title:** Add full plugin pipeline stage simulation
 
 **Labels:** `enhancement`, `plugins`, `medium-priority`
+
+**Status:** ✅ **COMPLETED** (2025-10-10)
 
 **Description:**
 
@@ -560,20 +579,32 @@ Medium - Common plugin scenario
 Implement complete plugin pipeline with all stages properly simulated.
 
 ### Current Status
-- ⚠️ Basic pipeline in Fake4Dataverse
+- ✅ **Implemented in Fake4Dataverse v4.x** (2025-10-10)
 - ✅ Full support in FakeXrmEasy v2+
 - ⚠️ Basic in FakeXrmEasy v1
 
+### Implementation Details
+- All pipeline stages supported (PreValidation=10, PreOperation=20, PostOperation=40)
+- Transaction boundary awareness (documented in context properties)
+- Depth tracking with configurable maximum (default = 8)
+- Accurate pipeline behavior simulation
+- Comprehensive test coverage
+
 ### Requirements
-- Support all pipeline stages (PreValidation, PreOperation, MainOperation, PostOperation)
-- Handle transaction boundaries
-- Support pipeline depth tracking
-- Simulate pipeline behavior accurately
-- Add comprehensive unit tests
+- ✅ Support all pipeline stages (PreValidation, PreOperation, MainOperation, PostOperation)
+- ✅ Handle transaction boundaries
+- ✅ Support pipeline depth tracking
+- ✅ Simulate pipeline behavior accurately
+- ✅ Add comprehensive unit tests
 
 ### Related Files
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/XrmFakedContext.Plugins.cs`
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/Middleware/`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/IPluginPipelineSimulator.cs`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/PluginPipelineSimulator.cs`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/Plugins/XrmFakedPluginContextProperties.cs`
+- `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/Pipeline/PluginPipelineSimulatorTests.cs`
+
+### Documentation
+- [Testing Plugins - Plugin Pipeline Simulator](./docs/usage/testing-plugins.md#plugin-pipeline-simulator)
 
 ### Priority
 Medium - Important for plugin testing
@@ -1008,7 +1039,7 @@ This document contains 30 GitHub issues covering all major feature gaps identifi
 
 **Priority Breakdown:**
 - High Priority: 10 issues (6 remaining, 4 completed ✅)
-- Medium Priority: 11 issues (important enhancements)
+- Medium Priority: 11 issues (9 remaining, 2 completed ✅)
 - Low Priority: 9 issues (advanced/niche features)
 
 **Completed Issues:**
@@ -1016,11 +1047,13 @@ This document contains 30 GitHub issues covering all major feature gaps identifi
 - ✅ Issue #2: Hierarchical Query Operators (Implemented 2025-10-10)
 - ✅ Issue #3: Advanced Fiscal Period Operators (Implemented 2025-10-10)
 - ✅ Issue #4: Custom API Support (Implemented 2025-10-10)
+- ✅ Issue #16: Multiple Plugins Per Message Support (Implemented 2025-10-10)
+- ✅ Issue #17: Complete Pipeline Simulation (Implemented 2025-10-10)
 
 **Category Breakdown:**
 - Message Executors: 6 issues (1 completed ✅)
-- Query Support: 3 issues (1 completed ✅)
-- Plugin/Pipeline: 5 issues
+- Query Support: 3 issues (2 completed ✅)
+- Plugin/Pipeline: 5 issues (2 completed ✅)
 - Field Types: 2 issues
 - Business Logic: 3 issues
 - Metadata: 4 issues

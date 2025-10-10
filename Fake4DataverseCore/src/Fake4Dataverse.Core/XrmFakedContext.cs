@@ -134,6 +134,9 @@ namespace Fake4Dataverse
 
             _proxyTypesAssemblies = new List<Assembly>();
 
+            // Initialize plugin context properties for plugin execution
+            PluginContextProperties = new Fake4Dataverse.Plugins.XrmFakedPluginContextProperties(this);
+
             // Initialize plugin pipeline simulator
             PluginPipelineSimulator = new PluginPipelineSimulator(this);
 

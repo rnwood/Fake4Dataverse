@@ -11,6 +11,7 @@ Plugin testing is one of the primary use cases for Fake4Dataverse. This guide sh
 - [Testing Plugin Images](#testing-plugin-images)
 - [Testing Plugin Steps](#testing-plugin-steps)
 - [Async Plugins](#async-plugins)
+- [Plugin Pipeline Simulator](#plugin-pipeline-simulator) **NEW**
 - [Best Practices](#best-practices)
 
 ## Quick Start
@@ -551,6 +552,271 @@ public void Should_ExecuteAsync_Plugin_Synchronously()
     // (not queued like in real Dataverse)
 }
 ```
+
+## Plugin Pipeline Simulator
+
+**New in v4.x (2025-10-10)**: Fake4Dataverse now includes comprehensive plugin pipeline simulation with support for multiple plugins per message/entity/stage combination.
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
+
+### Multiple Plugins Per Message
+
+You can now register multiple plugins for the same message, entity, and stage. Plugins execute in order based on their `ExecutionOrder` (rank) property.
+
+```csharp
+using Fake4Dataverse.Abstractions.Plugins;
+using Fake4Dataverse.Abstractions.Plugins.Enums;
+
+[Fact]
+public void Should_Execute_MultiplePlugins_InOrder()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register Plugin 1 (executes first)
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 1,  // Lower numbers execute first
+        PluginType = typeof(ValidationPlugin)
+    });
+    
+    // Register Plugin 2 (executes second)
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 2,
+        PluginType = typeof(EnrichmentPlugin)
+    });
+    
+    // Register Plugin 3 (executes third)
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 3,
+        PluginType = typeof(AuditPlugin)
+    });
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // Act - Execute pipeline stage
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Preoperation,
+        account);
+    
+    // Assert - All plugins executed in order
+    // Each plugin can modify the entity for the next plugin
+}
+```
+
+### Filtering Attributes (Update Message)
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/register-plug-in#filtering-attributes
+
+Plugins on Update messages can specify filtering attributes. The plugin only executes if one of the specified attributes was modified.
+
+```csharp
+[Fact]
+public void Should_OnlyExecute_WhenFilteredAttributeModified()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Plugin only executes when 'name' or 'revenue' changes
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Update",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(MyPlugin),
+        FilteringAttributes = new HashSet<string> { "name", "revenue" }
+    });
+    
+    var account = new Entity("account") { Id = Guid.NewGuid() };
+    
+    // Act 1 - Update 'name' (plugin executes)
+    var modifiedAttributes = new HashSet<string> { "name" };
+    simulator.ExecutePipelineStage(
+        "Update", "account", ProcessingStepStage.Preoperation,
+        account, modifiedAttributes);
+    
+    // Act 2 - Update 'telephone' only (plugin does NOT execute)
+    modifiedAttributes = new HashSet<string> { "telephone" };
+    simulator.ExecutePipelineStage(
+        "Update", "account", ProcessingStepStage.Preoperation,
+        account, modifiedAttributes);
+}
+```
+
+### Plugin Configuration
+
+Plugins can receive configuration parameters (secure and unsecure).
+
+```csharp
+simulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "Create",
+    PrimaryEntityName = "account",
+    Stage = ProcessingStepStage.Preoperation,
+    PluginType = typeof(ConfigurablePlugin),
+    UnsecureConfiguration = "Setting1=Value1",
+    SecureConfiguration = "ApiKey=SecretKey123"
+});
+```
+
+The plugin constructor receives these parameters:
+
+```csharp
+public class ConfigurablePlugin : IPlugin
+{
+    private readonly string _unsecureConfig;
+    private readonly string _secureConfig;
+    
+    public ConfigurablePlugin(string unsecureConfig, string secureConfig)
+    {
+        _unsecureConfig = unsecureConfig;
+        _secureConfig = secureConfig;
+    }
+    
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        // Use configuration
+    }
+}
+```
+
+### Complete Pipeline Simulation
+
+Execute plugins through all pipeline stages:
+
+```csharp
+[Fact]
+public void Should_Execute_CompletePluginPipeline()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register plugins for different stages
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Prevalidation,
+        ExecutionOrder = 1,
+        PluginType = typeof(PreValidationPlugin)
+    });
+    
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 1,
+        PluginType = typeof(PreOperationPlugin)
+    });
+    
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        ExecutionOrder = 1,
+        PluginType = typeof(PostOperationPlugin)
+    });
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // Act - Execute each pipeline stage
+    simulator.ExecutePipelineStage("Create", "account", 
+        ProcessingStepStage.Prevalidation, account);
+    
+    // Simulate main operation (Create)
+    account.Id = Guid.NewGuid();
+    context.Initialize(account);
+    
+    simulator.ExecutePipelineStage("Create", "account", 
+        ProcessingStepStage.Preoperation, account);
+    
+    simulator.ExecutePipelineStage("Create", "account", 
+        ProcessingStepStage.Postoperation, account);
+}
+```
+
+### Depth Tracking
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/best-practices/business-logic/avoid-recursive-loops
+
+The pipeline simulator tracks execution depth to prevent infinite loops. The default maximum depth is 8 (matching Dataverse).
+
+```csharp
+[Fact]
+public void Should_PreventInfiniteLoops()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Set max depth for testing
+    simulator.MaxDepth = 3;
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // This will throw if depth exceeds 3
+    var exception = Assert.Throws<InvalidPluginExecutionException>(() =>
+    {
+        simulator.ExecutePipelineStage(
+            "Create", "account", ProcessingStepStage.Preoperation,
+            account, currentDepth: 4);
+    });
+    
+    Assert.Contains("Maximum plugin execution depth", exception.Message);
+}
+```
+
+### Unregistering Plugins
+
+```csharp
+[Fact]
+public void Should_UnregisterPlugin()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    var registration = new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(MyPlugin)
+    };
+    
+    simulator.RegisterPluginStep(registration);
+    
+    // Remove the registration
+    simulator.UnregisterPluginStep(registration);
+    
+    // Or clear all registrations
+    simulator.ClearAllPluginSteps();
+}
+```
+
+### Migration Notes
+
+**From FakeXrmEasy v2.x**: The plugin pipeline simulation in Fake4Dataverse may have different setup compared to commercial FakeXrmEasy v2+:
+
+1. **Explicit Registration**: Plugins must be explicitly registered via `PluginPipelineSimulator.RegisterPluginStep()` 
+2. **Direct Control**: You have full control over when pipeline stages execute
+3. **Configuration**: Plugin configuration is passed directly in the registration
 
 ## Best Practices
 
