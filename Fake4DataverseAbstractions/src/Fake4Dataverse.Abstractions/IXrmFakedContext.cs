@@ -71,6 +71,11 @@ namespace Fake4Dataverse.Abstractions
 
         IXrmFakedPluginContextProperties PluginContextProperties { get; set; }
 
+        /// <summary>
+        /// Gets the plugin pipeline simulator for registering and executing plugins
+        /// </summary>
+        IPluginPipelineSimulator PluginPipelineSimulator { get; }
+
         void AddEntity(Entity e);
         void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false);
         Guid CreateEntity(Entity e);
