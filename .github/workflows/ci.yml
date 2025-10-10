@@ -25,11 +25,11 @@ jobs:
         dotnet-version: ${{ env.dotnet-version }}
  
     - name: Restore
-      run: dotnet restore FakeXrmFree.sln
+      run: dotnet restore Fake4DataverseFree.sln
 
     - name: Build ${{ matrix.framework }}
-      run: dotnet build FakeXrmFree.sln --configuration Debug --framework ${{ matrix.framework }} --no-restore
+      run: dotnet build Fake4DataverseFree.sln --configuration Debug --framework ${{ matrix.framework }} --no-restore
         
     - name: Test ${{ matrix.framework }}
-      run: dotnet test FakeXrmFree.sln --configuration Debug --framework ${{ matrix.framework }} --no-build --verbosity normal
+      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework ${{ matrix.framework }} --no-build --verbosity normal
       continue-on-error: true
