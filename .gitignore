@@ -6,3 +6,7 @@ local-packages/
 packages/
 bin/
 obj/
+
+# Test coverage
+coverage/
+*.opencover.xml

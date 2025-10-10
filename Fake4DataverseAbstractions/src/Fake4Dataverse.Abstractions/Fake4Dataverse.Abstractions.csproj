@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+   <PropertyGroup>
+    <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <PackageId>Fake4Dataverse.Abstractions</PackageId>
+    <VersionPrefix>2.0.1</VersionPrefix>
+    <Authors>Rob Wood (Fake4Dataverse fork); Jordi Montaña (original FakeXrmEasy)</Authors>
+    <Company>Rob Wood</Company>
+    <Title>Fake4Dataverse Abstractions</Title>
+    <PackageDescription>Fake4Dataverse is the open source test automation framework for .net core and the Power Platform. This is an abstractions package containing only interfaces. Forked from FakeXrmEasy v2.0.1 (MIT License).</PackageDescription>
+    <Copyright>(c) 2014 Jordi Montaña (original FakeXrmEasy); (c) 2025 Rob Wood (Fake4Dataverse fork)</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageIcon>Fake4DataverseLogo_128x128.png</PackageIcon>
+    <PackageTags>dynamics;crm;365;unit testing;xrm;mock;mocking;fake;fakes;cds;common data service;power platform;dataverse</PackageTags>
+    <RepositoryUrl>https://github.com/rnwood/fake-xrm-free</RepositoryUrl>
+    <Configurations>Debug;Release;FAKE_XRM_EASY_9</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    <None Include="../../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.Powerplatform.Cds.Client" Version="0.0.1.11-Alpha" />
+    <PackageReference Include="Microsoft.Dynamics.Sdk.Messages" Version="0.0.1.11-Alpha" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.0.5" />
+  </ItemGroup>
+
+</Project>
