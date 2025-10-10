@@ -586,6 +586,23 @@ namespace Fake4Dataverse.Extensions.FetchXml
                     op = ConditionOperator.DoesNotContainValues;
                     break;
 #endif
+                // Hierarchical operators
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/query-hierarchical-data
+                case "under":
+                    op = ConditionOperator.Under;
+                    break;
+                case "eq-or-under":
+                    op = ConditionOperator.UnderOrEqual;
+                    break;
+                case "not-under":
+                    op = ConditionOperator.NotUnder;
+                    break;
+                case "above":
+                    op = ConditionOperator.Above;
+                    break;
+                case "eq-or-above":
+                    op = ConditionOperator.AboveOrEqual;
+                    break;
                 default:
                     throw PullRequestException.FetchXmlOperatorNotImplemented(elem.GetAttribute("operator").Value);
             }
