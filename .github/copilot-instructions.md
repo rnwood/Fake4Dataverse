@@ -172,6 +172,13 @@ The framework supports multiple Dynamics CRM/365 versions:
 - Update relevant README files
 - Consider impact on different CRM/365 versions
 - Add appropriate exception handling with `PullRequestException` for not-yet-implemented features
+- **Document the feature in `docs/`**: Create comprehensive user documentation showing how to consume the feature
+  - Include overview with implementation date and issue reference
+  - Provide usage examples with code samples
+  - Document all parameters and options
+  - Include error scenarios and best practices
+  - Add links to Microsoft documentation
+  - Follow the pattern established in existing docs (see `docs/custom-api.md`, `docs/merge-request.md`, etc.)
 - **Update feature parity tracking files**: When implementing a feature that addresses a parity issue, update:
   - `FEATURE_PARITY_ISSUES.md` - Mark the issue as completed with ✅ and update status
   - `QUICK_REFERENCE.md` - Mark the feature as completed in the priority lists
