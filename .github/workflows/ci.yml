@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.dotnet-version }}
  
@@ -33,7 +33,7 @@ jobs:
         pwsh ./pack.ps1 -versionSuffix "ci.${{ github.run_number }}" -targetFrameworks "all"
         
     - name: Upload Abstractions Package
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: abstractions-package
         path: FakeXrmEasyAbstrations/nupkgs/*.nupkg
@@ -43,15 +43,15 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.dotnet-version }}
         
     - name: Download Abstractions Package
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: abstractions-package
         path: local-packages
@@ -67,15 +67,15 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.dotnet-version }}
         
     - name: Download Abstractions Package
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4
       with:
         name: abstractions-package
         path: local-packages
