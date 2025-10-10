@@ -23,23 +23,20 @@ Fake4Dataverse is designed for **testing only**. It simulates Dataverse in-memor
 ### Which Dataverse versions are supported?
 
 Fake4Dataverse supports:
-- Dynamics 365 / Dataverse (v9+)
-- Dynamics 365 (v8.2)
-- Dynamics CRM 2016 (v8.0-8.1)
-- Dynamics CRM 2015 (v7.x)
-- Dynamics CRM 2013 (v6.x)
-- Dynamics CRM 2011 (v5.x)
+- Dynamics 365 / Dataverse (v9 and later)
+
+> **Note**: This fork only supports Dynamics 365 v9+. For earlier versions (2011-2016, v8.x), please use the original FakeXrmEasy packages.
 
 ## Installation & Setup
 
 ### Which package should I install?
 
-For modern Dataverse/Dynamics 365:
+For Dynamics 365 / Dataverse v9+:
 ```bash
 dotnet add package Fake4Dataverse.9
 ```
 
-See the [Installation Guide](./getting-started/installation.md) for other versions.
+> **Note**: This fork only supports v9+. See the [Installation Guide](./installation.md) for more details.
 
 ### Do I need other packages?
 

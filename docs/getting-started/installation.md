@@ -14,14 +14,9 @@ Fake4Dataverse provides different packages based on your target Dynamics/Dataver
 
 | Dataverse/CRM Version | Package Name | NuGet |
 |----------------------|--------------|-------|
-| Dynamics v9 (>= 9.x) | `Fake4Dataverse.9` | [![NuGet](https://buildstats.info/nuget/Fake4Dataverse.9)](https://www.nuget.org/packages/Fake4Dataverse.9) |
-| Dynamics 365 (8.2.x) | `Fake4Dataverse.365` | [![NuGet](https://buildstats.info/nuget/Fake4Dataverse.365)](https://www.nuget.org/packages/Fake4Dataverse.365) |
-| Dynamics CRM 2016 (8.0-8.1) | `Fake4Dataverse.2016` | [![NuGet](https://buildstats.info/nuget/Fake4Dataverse.2016)](https://www.nuget.org/packages/Fake4Dataverse.2016) |
-| Dynamics CRM 2015 (7.x) | `Fake4Dataverse.2015` | [![NuGet](https://buildstats.info/nuget/Fake4Dataverse.2015)](https://www.nuget.org/packages/Fake4Dataverse.2015) |
-| Dynamics CRM 2013 (6.x) | `Fake4Dataverse.2013` | [![NuGet](https://buildstats.info/nuget/Fake4Dataverse.2013)](https://www.nuget.org/packages/Fake4Dataverse.2013) |
-| Dynamics CRM 2011 (5.x) | `Fake4Dataverse` | [![NuGet](https://buildstats.info/nuget/Fake4Dataverse)](https://www.nuget.org/packages/Fake4Dataverse) |
+| Dynamics 365 / Dataverse (v9+) | `Fake4Dataverse.9` | [![NuGet](https://buildstats.info/nuget/Fake4Dataverse.9)](https://www.nuget.org/packages/Fake4Dataverse.9) |
 
-> **💡 Tip**: For most modern projects using Dataverse or Dynamics 365, use `Fake4Dataverse.9`.
+> **💡 Note**: This fork supports Dynamics 365 / Dataverse v9 and later only. For earlier versions, use the original FakeXrmEasy packages.
 
 ## Core Packages
 
@@ -184,14 +179,13 @@ context.EnableProxyTypes(typeof(YourGeneratedEntity).Assembly);
 
 ### Issue: "NuGet package not found"
 
-**Solution**: Ensure you're using the correct package name for your CRM/Dataverse version. Check the [package list](#choosing-the-right-package) above.
+**Solution**: Ensure you're using `Fake4Dataverse.9` for Dynamics 365 / Dataverse v9+.
 
 ## Version Compatibility
 
 | Fake4Dataverse | .NET Core | .NET Framework | Dynamics SDK |
 |----------------|-----------|----------------|--------------|
-| 4.x | 3.1+ | 4.6.2+ | 9.x |
-| | 3.1+ | 4.6.2+ | 8.x (365) |
+| 4.x | 3.1+ | 4.6.2+ | 9.x+ |
 
 ## Next Steps
 

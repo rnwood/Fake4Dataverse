@@ -16,7 +16,7 @@ The project has comprehensive documentation in the `/docs/` directory:
 ### Documentation Organization
 
 1. **Getting Started** (`/docs/getting-started/`)
-   - `installation.md` - Installation instructions for different Dataverse/CRM versions
+   - `installation.md` - Installation instructions for Dataverse v9+
    - `quickstart.md` - Quick start guide with examples
    - `basic-concepts.md` - Core concepts and framework fundamentals
 
@@ -188,13 +188,10 @@ Implement `IFakeMessageExecutor` to handle specific CRM organization requests. L
 
 ## Version Support
 
-The framework supports multiple Dynamics CRM/365 versions:
-- Dynamics v9 (>= 9.x) - `FakeXrmEasy.9`
-- Dynamics 365 (8.2.x) - `FakeXrmEasy.365`
-- Dynamics CRM 2016 (8.0-8.1) - `FakeXrmEasy.2016`
-- Dynamics CRM 2015 (7.x) - `FakeXrmEasy.2015`
-- Dynamics CRM 2013 (6.x) - `FakeXrmEasy.2013`
-- Dynamics CRM 2011 (5.x) - `FakeXrmEasy`
+The framework supports Dynamics 365 / Dataverse v9 and later:
+- Dynamics 365 / Dataverse (v9+) - `Fake4Dataverse.9`
+
+**Note**: This fork only supports v9+. Earlier versions (CRM 2011-2016, Dynamics 365 v8.x) are not supported. For those versions, use the original FakeXrmEasy packages.
 
 ## Important Notes for Code Changes
 
@@ -208,7 +205,7 @@ The framework supports multiple Dynamics CRM/365 versions:
 ### When Adding New Features
 - Ensure compatibility with existing tests
 - Update relevant README files AND documentation in `/docs/`
-- Consider impact on different CRM/365 versions
+- Consider impact on Dynamics 365 / Dataverse v9+ versions
 - Add appropriate exception handling with `PullRequestException` for not-yet-implemented features
 - **Update feature parity tracking files**: When implementing a feature that addresses a parity issue, update:
   - `FEATURE_PARITY_ISSUES.md` - Mark the issue as completed with ✅ and update status
