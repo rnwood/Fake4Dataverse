@@ -42,7 +42,8 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
   - ~~Merge operations~~ ✅
   - ~~Hierarchical queries~~ ✅
   - ~~Advanced fiscal periods~~ ✅
-  - Custom APIs and Actions
+  - ~~Custom APIs~~ ✅
+  - Custom Actions
   - Calculated/Rollup fields
   - Business rules
   - Duplicate detection
@@ -78,7 +79,7 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
 ### Recommended Order
 
 1. **Phase 1 - Core Functionality** (High Priority)
-   - Issues 1-10 (3 completed ✅, 7 remaining)
+   - Issues 1-10 (4 completed ✅, 6 remaining)
    - Focus: Essential features for most testing scenarios
 
 2. **Phase 2 - Enhanced Testing** (Medium Priority)
