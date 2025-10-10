@@ -260,6 +260,16 @@ namespace Fake4Dataverse.Query
                 case ConditionOperator.InFiscalYear:
                     operatorExpression = c.ToBetweenDatesExpression(getNonBasicValueExpr, containsAttributeExpression, context);
                     break;
+                case ConditionOperator.InFiscalPeriod:
+                case ConditionOperator.InFiscalPeriodAndYear:
+                case ConditionOperator.InOrAfterFiscalPeriodAndYear:
+                case ConditionOperator.InOrBeforeFiscalPeriodAndYear:
+                case ConditionOperator.LastFiscalPeriod:
+                case ConditionOperator.NextFiscalPeriod:
+                case ConditionOperator.LastFiscalYear:
+                case ConditionOperator.NextFiscalYear:
+                    operatorExpression = c.ToFiscalPeriodExpression(getNonBasicValueExpr, containsAttributeExpression, context);
+                    break;
                 case ConditionOperator.ContainValues:
                     operatorExpression = c.ToContainsValuesExpression(getNonBasicValueExpr, containsAttributeExpression);
                     break;
