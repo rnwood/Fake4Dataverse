@@ -53,6 +53,32 @@ This fork:
 
 We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releasing it under the MIT License. His work has been instrumental to thousands of developers in the Dynamics 365 and Power Platform community. Please consider supporting his commercial and original version.
 
+## 📖 Documentation
+
+**Complete documentation is available at [docs/README.md](./docs/README.md)**
+
+### Quick Start
+- **[Installation Guide](./docs/getting-started/installation.md)** - Get Fake4Dataverse installed (v9+ only)
+- **[Quick Start](./docs/getting-started/quickstart.md)** - Your first test in 5 minutes
+- **[Basic Concepts](./docs/getting-started/basic-concepts.md)** - Understand the framework
+- **[FAQ](./docs/getting-started/faq.md)** - Common questions and troubleshooting
+
+### Core Guides
+- **[Testing Plugins](./docs/usage/testing-plugins.md)** - Comprehensive plugin testing patterns
+- **[CRUD Operations](./docs/usage/crud-operations.md)** - Create, Read, Update, Delete operations
+- **[Querying Data](./docs/usage/querying-data.md)** - LINQ and FetchXML queries
+- **[Batch Operations](./docs/usage/batch-operations.md)** - ExecuteMultiple and Transactions
+
+### Advanced Topics
+- **[XrmFakedContext](./docs/concepts/xrm-faked-context.md)** - Deep dive into the context
+- **[Middleware Architecture](./docs/concepts/middleware.md)** - Understanding the pipeline
+- **[Message Executors](./docs/messages/README.md)** - All supported Dataverse messages
+- **[Custom Executors](./docs/api/custom-executors.md)** - Creating your own executors
+
+### Migration
+- **[From FakeXrmEasy v1.x](./docs/migration/from-v1.md)** - Migrate from v1.x
+- **[From FakeXrmEasy v3.x](./docs/migration/from-v3.md)** - Migrate from commercial v3.x
+
 ## Project Structure
 
 This is a monorepo containing three main projects:
@@ -72,23 +98,7 @@ This is a monorepo containing three main projects:
 - **Purpose**: Legacy/compatibility package
 - **Former Name**: FakeXrmEasy
 
-## Getting Started
-
-### 📖 Documentation
-
-**Complete documentation is available at [docs/README.md](./docs/README.md)**
-
-Quick links:
-- **[Installation Guide](./docs/getting-started/installation.md)** - Get Fake4Dataverse installed
-- **[Quick Start](./docs/getting-started/quickstart.md)** - Your first test in 5 minutes
-- **[Basic Concepts](./docs/getting-started/basic-concepts.md)** - Understand the framework
-- **[Testing Plugins](./docs/usage/testing-plugins.md)** - Plugin testing patterns
-- **[Message Executors](./docs/messages/README.md)** - Supported Dataverse messages
-- **[Migration Guide](./Fake4Dataverse/README.md#migration-guide)** - Migrate from FakeXrmEasy
-
-### Project READMEs
-
-For project-specific information:
+For project-specific information, see:
 - [Fake4DataverseAbstractions README](./Fake4DataverseAbstractions/README.md)
 - [Fake4DataverseCore README](./Fake4DataverseCore/README.md)
 - [Fake4Dataverse README](./Fake4Dataverse/README.md)
