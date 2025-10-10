@@ -2,11 +2,22 @@
 
 ## About This Fork
 
-Fake4Dataverse is a fork of the Fake4Dataverse project, originally created by Jordi Montaña. This fork continues the development of the testing framework under the MIT License, based on the last version of Fake4Dataverse that was available under that license.
+Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi Montaña. This fork continues the development of the testing framework under the MIT License, based on the last version of FakeXrmEasy that was available under that license.
 
 **Author:** Rob Wood  
 **Original Author:** Jordi Montaña (@jordimontana)  
 **License:** MIT (see LICENSE.txt files in each project folder)
+
+### Fork Basis
+
+This fork is based on an early development version of FakeXrmEasy v2 (version 2.0.1), which was released under the MIT License. The original FakeXrmEasy project subsequently changed its licensing model. This fork preserves the last MIT-licensed version to ensure continued open-source availability for the community.
+
+**Original Repositories:**
+- Core: https://github.com/DynamicsValue/fake-xrm-easy-core
+- Abstractions: https://github.com/DynamicsValue/fake-xrm-easy-abstractions
+- Legacy: https://github.com/jordimontana82/fake-xrm-easy
+
+The original repositories were licensed under MIT at the time this fork was created, as evidenced by the LICENSE files in those repositories.
 
 ## Why This Fork?
 

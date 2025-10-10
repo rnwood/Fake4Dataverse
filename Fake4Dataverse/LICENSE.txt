@@ -1,11 +1,11 @@
 MIT License
 
-Copyright (c) 2014 Jordi Montaña (Original Fake4Dataverse)
+Copyright (c) 2014 Jordi Montaña (Original FakeXrmEasy)
 Copyright (c) 2025 Rob Wood (Fake4Dataverse fork)
 
-This project (Fake4Dataverse) is a fork of Fake4Dataverse, which was originally
+This project (Fake4Dataverse) is a fork of FakeXrmEasy, which was originally
 created by Jordi Montaña and released under the MIT License. This fork is based
-on the last version of Fake4Dataverse that was available under the MIT License.
+on the last version of FakeXrmEasy that was available under the MIT License.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
