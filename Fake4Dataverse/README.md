@@ -3,7 +3,7 @@
 
 **Note:** This is a fork of the original FakeXrmEasy project by Jordi Montaña. See the [main README](../README.md) for information about this fork and its relationship to the original project.
 
-## What's New in 2.x?
+## What's New in 4.x?
 
   - Support for .net core 3.1 / .NET 8.0 / Full .NET framework support with multi-targeting   
   - Single original repo broken down into smaller, easier to maintain, repos
@@ -19,7 +19,7 @@
 
 This section provides step-by-step guidance for migrating from FakeXrmEasy to Fake4Dataverse.
 
-### Migrating from FakeXrmEasy v1.x to Fake4Dataverse v2.x
+### Migrating from FakeXrmEasy v1.x to Fake4Dataverse v4.x
 
 If you're upgrading from FakeXrmEasy v1.x, follow these steps to migrate your tests:
 
@@ -31,9 +31,9 @@ Replace your FakeXrmEasy v1.x package with Fake4Dataverse packages:
 <!-- Remove v1.x packages -->
 <!-- <PackageReference Include="FakeXrmEasy" Version="1.x.x" /> -->
 
-<!-- Add v2.x packages -->
-<PackageReference Include="Fake4Dataverse.Abstractions" Version="2.0.0.1" />
-<PackageReference Include="Fake4Dataverse.Core" Version="2.0.0.1" />
+<!-- Add v4.x packages -->
+<PackageReference Include="Fake4Dataverse.Abstractions" Version="4.0.0" />
+<PackageReference Include="Fake4Dataverse.Core" Version="4.0.0" />
 <!-- Add other packages as needed: Plugins, Pipeline, Messages.Cds, Messages.Dynamics -->
 ```
 
@@ -45,7 +45,7 @@ var context = new XrmFakedContext();
 var service = context.GetOrganizationService();
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 using Fake4Dataverse.Middleware;
 
@@ -78,7 +78,7 @@ var service = context.GetOrganizationService();
 context.ProxyTypesAssembly = Assembly.GetAssembly(typeof(Account));
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 context.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
 
@@ -96,7 +96,7 @@ if (context.ProxyTypesAssemblies.Count() > 0)
 context.CallerId = new EntityReference("systemuser", Guid.NewGuid());
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 context.CallerProperties.CallerId = new EntityReference("systemuser", Guid.NewGuid());
 ```
@@ -109,7 +109,7 @@ context.FiscalYearSettings = new FiscalYearSettings();
 context.TimeZoneInfo = TimeZoneInfo.Local;
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 context.SetProperty<FiscalYearSettings>(new FiscalYearSettings());
 context.SetProperty<TimeZoneInfo>(TimeZoneInfo.Local);
@@ -125,7 +125,7 @@ var fiscalYearSettings = context.GetProperty<FiscalYearSettings>();
 context.ValidateReferences = true;
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 using Fake4Dataverse.Integrity;
 
@@ -154,7 +154,7 @@ var context = XrmFakedContextFactory.New(new IntegrityOptions()
 var tracingService = context.GetFakedTracingService();
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 // These methods have been moved to the Fake4Dataverse.Plugins package
 // Install: Fake4Dataverse.Plugins
@@ -174,7 +174,7 @@ public class MyCustomExecutor : IFakeMessageExecutor
 }
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
@@ -208,7 +208,7 @@ var relationship = new XrmFakeRelationship
 };
 ```
 
-**v2.x (New):**
+**v4.x (New):**
 ```csharp
 var relationship = new XrmFakeRelationship
 {
@@ -216,13 +216,13 @@ var relationship = new XrmFakeRelationship
 };
 ```
 
-### Migrating from FakeXrmEasy v3.x to Fake4Dataverse v2.x
+### Migrating from FakeXrmEasy v3.x to Fake4Dataverse v4.x
 
-**Important Note:** Fake4Dataverse is based on FakeXrmEasy v2.0.1 (the last MIT-licensed version). FakeXrmEasy v3.x is a commercial product that continued development after the license change. If you're migrating from v3.x to Fake4Dataverse v2.x, you are essentially moving from a more recent commercial version back to an earlier open-source version.
+**Important Note:** Fake4Dataverse is based on FakeXrmEasy v2.0.1 (the last MIT-licensed version). FakeXrmEasy v3.x is a commercial product that continued development after the license change. If you're migrating from v3.x to Fake4Dataverse v4.x, you are essentially moving from a more recent commercial version back to an earlier open-source version.
 
 #### Understanding the Migration Path
 
-Since v3.x was developed after v2.0.1, it likely includes features and improvements that are not present in Fake4Dataverse v2.x. This migration is about moving from commercial software to an open-source alternative, which may involve some trade-offs.
+Since v3.x was developed after v2.0.1, it likely includes features and improvements that are not present in Fake4Dataverse v4.x. This migration is about moving from commercial software to an open-source alternative, which may involve some trade-offs.
 
 #### Step 1: Assess Compatibility
 
@@ -231,27 +231,27 @@ Before migrating, determine if your codebase uses v3-specific features:
 1. **Review your test code** for any APIs or features introduced in v3.x
 2. **Check the v3.x changelog** (if available) to identify v3-specific features you're using
 3. **Make a list of dependencies** on v3-specific functionality
-4. **Consider alternatives** for v3-specific features in the open-source v2.x
+4. **Consider alternatives** for v3-specific features in the open-source v4.x
 
 #### Step 2: Update Package References
 
-Replace FakeXrmEasy v3.x packages with Fake4Dataverse v2.x packages:
+Replace FakeXrmEasy v3.x packages with Fake4Dataverse v4.x packages:
 
 ```xml
 <!-- Remove v3.x packages -->
 <!-- <PackageReference Include="FakeXrmEasy.v3.Core" Version="3.x.x" /> -->
 
-<!-- Add Fake4Dataverse v2.x packages -->
-<PackageReference Include="Fake4Dataverse.Abstractions" Version="2.0.0.1" />
-<PackageReference Include="Fake4Dataverse.Core" Version="2.0.0.1" />
+<!-- Add Fake4Dataverse v4.x packages -->
+<PackageReference Include="Fake4Dataverse.Abstractions" Version="4.0.0" />
+<PackageReference Include="Fake4Dataverse.Core" Version="4.0.0" />
 <!-- Add other packages as needed -->
 ```
 
 #### Step 3: Update Context Initialization
 
-If v3.x uses different initialization patterns, convert them to v2.x patterns:
+If v3.x uses different initialization patterns, convert them to v4.x patterns:
 
-**Fake4Dataverse v2.x approach:**
+**Fake4Dataverse v4.x approach:**
 ```csharp
 using Fake4Dataverse.Middleware;
 
@@ -277,16 +277,16 @@ Update all namespace imports:
 // Remove v3.x namespaces (if different)
 // using FakeXrmEasy.v3.*;
 
-// Add v2.x namespaces
+// Add v4.x namespaces
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Middleware.Crud;
 using Fake4Dataverse.Middleware.Messages;
 ```
 
-#### Step 5: Apply v1 → v2 Migration Steps
+#### Step 5: Apply v1 → v4 Migration Steps
 
-Since Fake4Dataverse v2.x is based on the v2.0.1 codebase, you'll need to ensure your code follows v2.x patterns. Review the "Migrating from FakeXrmEasy v1.x to Fake4Dataverse v2.x" section above and apply those patterns, particularly:
+Since Fake4Dataverse v4.x is based on the v2.0.1 codebase, you'll need to ensure your code follows v4.x patterns. Review the "Migrating from FakeXrmEasy v1.x to Fake4Dataverse v4.x" section above and apply those patterns, particularly:
 
 - Use `IXrmFakedContext` interface instead of concrete classes
 - Use factory methods for context initialization
@@ -319,9 +319,9 @@ public void TestExample()
 
 #### Step 7: Handle Missing Features
 
-If you encounter v3-specific features that don't exist in v2.x:
+If you encounter v3-specific features that don't exist in v4.x:
 
-1. **Check if there's a workaround** using v2.x APIs
+1. **Check if there's a workaround** using v4.x APIs
 2. **Simplify your tests** if the feature was purely for convenience
 3. **Contribute back** by opening an issue or pull request to add the feature to Fake4Dataverse
 4. **Consider alternatives** such as creating extension methods for missing functionality
@@ -333,7 +333,7 @@ public static class ContextExtensions
     // If a v3 feature is missing, you can create an extension method
     public static void ConfigureV3Feature(this IXrmFakedContext context)
     {
-        // Implement using available v2.x APIs
+        // Implement using available v4.x APIs
         // This is a placeholder - adjust based on actual needs
     }
 }
@@ -344,7 +344,7 @@ public static class ContextExtensions
 After migration:
 
 1. **Run your entire test suite** to identify issues
-2. **Fix failing tests** by adapting to v2.x APIs
+2. **Fix failing tests** by adapting to v4.x APIs
 3. **Compare behavior** with v3.x to ensure correctness
 4. **Document any workarounds** you had to implement
 5. **Report issues** on GitHub if you find bugs or missing critical features
@@ -354,7 +354,7 @@ After migration:
 While we cannot enumerate all v3.x features (as it's a commercial product), here are common areas where differences might exist:
 
 - **API surface changes**: v3.x may have introduced new APIs or changed existing ones
-- **Performance improvements**: v3.x may have optimizations not present in v2.x
+- **Performance improvements**: v3.x may have optimizations not present in v4.x
 - **Additional message executors**: v3.x may support more Dataverse messages out of the box
 - **Enhanced metadata support**: v3.x may have better metadata handling
 - **Improved query translation**: v3.x may support more complex LINQ or FetchXML queries
@@ -380,7 +380,7 @@ public void TestAccountCreation()
 }
 ```
 
-**After (v2.x):**
+**After (v4.x):**
 ```csharp
 [Fact]
 public void TestAccountCreation()
@@ -412,7 +412,7 @@ public void TestPlugin()
 }
 ```
 
-**After (v2.x):**
+**After (v4.x):**
 ```csharp
 [Fact]
 public void TestPlugin()
