@@ -10,7 +10,7 @@ Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi
 
 ### Fork Basis
 
-This fork is based on an early development version of FakeXrmEasy v2 (version 2.0.1), which was released under the MIT License. The original FakeXrmEasy project subsequently changed its licensing model. This fork preserves the last MIT-licensed version to ensure continued open-source availability for the community.
+This fork is based on an early development version of FakeXrmEasy v2, which was released under the MIT License. The original FakeXrmEasy project subsequently changed its licensing model. This fork preserves the last MIT-licensed version to ensure continued open-source availability for the community.
 
 **Original Repositories:**
 - Core: https://github.com/DynamicsValue/fake-xrm-easy-core
@@ -44,7 +44,7 @@ This fork serves several purposes:
 The original FakeXrmEasy was released under the MIT License, which means that version and all prior versions remain available under that license permanently. The license cannot be retroactively revoked. When Jordi Montaña chose to change the licensing model for future versions, previous MIT-licensed versions remained under the MIT License.
 
 This fork:
-- Is based on version 2.x, which was released under the MIT License
+- Is based on an early version 2.x, which was released under the MIT License
 - Properly acknowledges the original author (Jordi Montaña) in all LICENSE files
 - Maintains all original copyright notices as required by the MIT License
 - Continues to use the MIT License for all derivatives
@@ -52,6 +52,32 @@ This fork:
 ## Acknowledgments
 
 We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releasing it under the MIT License. His work has been instrumental to thousands of developers in the Dynamics 365 and Power Platform community. Please consider supporting his commercial and original version.
+
+## 📖 Documentation
+
+**Complete documentation is available at [docs/README.md](./docs/README.md)**
+
+### Quick Start
+- **[Installation Guide](./docs/getting-started/installation.md)** - Get Fake4Dataverse installed (v9+ only)
+- **[Quick Start](./docs/getting-started/quickstart.md)** - Your first test in 5 minutes
+- **[Basic Concepts](./docs/getting-started/basic-concepts.md)** - Understand the framework
+- **[FAQ](./docs/getting-started/faq.md)** - Common questions and troubleshooting
+
+### Core Guides
+- **[Testing Plugins](./docs/usage/testing-plugins.md)** - Comprehensive plugin testing patterns
+- **[CRUD Operations](./docs/usage/crud-operations.md)** - Create, Read, Update, Delete operations
+- **[Querying Data](./docs/usage/querying-data.md)** - LINQ and FetchXML queries
+- **[Batch Operations](./docs/usage/batch-operations.md)** - ExecuteMultiple and Transactions
+
+### Advanced Topics
+- **[XrmFakedContext](./docs/concepts/xrm-faked-context.md)** - Deep dive into the context
+- **[Middleware Architecture](./docs/concepts/middleware.md)** - Understanding the pipeline
+- **[Message Executors](./docs/messages/README.md)** - All supported Dataverse messages
+- **[Custom Executors](./docs/api/custom-executors.md)** - Creating your own executors
+
+### Migration
+- **[From FakeXrmEasy v1.x](./docs/migration/from-v1.md)** - Migrate from v1.x
+- **[From FakeXrmEasy v3.x](./docs/migration/from-v3.md)** - Migrate from commercial v3.x
 
 ## Project Structure
 
@@ -72,11 +98,7 @@ This is a monorepo containing three main projects:
 - **Purpose**: Legacy/compatibility package
 - **Former Name**: FakeXrmEasy
 
-## Getting Started
-
-**📚 Migrating from FakeXrmEasy?** Check out the comprehensive [Migration Guide](./Fake4Dataverse/README.md#migration-guide) for step-by-step instructions on migrating from FakeXrmEasy v1.x or v3.x to Fake4Dataverse v4.x.
-
-Please refer to the README files in each project folder for specific build instructions and usage examples:
+For project-specific information, see:
 - [Fake4DataverseAbstractions README](./Fake4DataverseAbstractions/README.md)
 - [Fake4DataverseCore README](./Fake4DataverseCore/README.md)
 - [Fake4Dataverse README](./Fake4Dataverse/README.md)
