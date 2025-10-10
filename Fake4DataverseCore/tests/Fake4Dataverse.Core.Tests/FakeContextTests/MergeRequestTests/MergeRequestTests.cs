@@ -55,6 +55,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Is_Executed_With_UpdateContent_Target_Is_Updated()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // UpdateContent: Additional entity attributes to be set during the merge
+            
             // Arrange
             var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
             var subordinateAccount = new Account { Id = Guid.NewGuid(), Name = "Subordinate Account" };
@@ -210,6 +213,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Has_Empty_SubordinateId_Exception_Is_Thrown()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // SubordinateId is required - the ID of the entity record from which to merge data
+            
             // Arrange
             var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
             _context.Initialize(new List<Entity> { targetAccount });
@@ -229,6 +235,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Target_Does_Not_Exist_Exception_Is_Thrown()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // Target is required - the target of the merge operation
+            
             // Arrange
             var nonExistentTargetId = Guid.NewGuid();
             var subordinateAccount = new Account { Id = Guid.NewGuid(), Name = "Subordinate Account" };
@@ -249,6 +258,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Subordinate_Does_Not_Exist_Exception_Is_Thrown()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // SubordinateId must reference an existing entity record
+            
             // Arrange
             var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
             var nonExistentSubordinateId = Guid.NewGuid();
@@ -269,6 +281,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Attempts_To_Merge_Entity_With_Itself_Exception_Is_Thrown()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // Target and SubordinateId must reference different entity records
+            
             // Arrange
             var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
             _context.Initialize(new List<Entity> { targetAccount });
@@ -288,6 +303,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Can_Execute_Is_Called_With_MergeRequest_Returns_True()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // Executor should handle MergeRequest message type
+            
             // Arrange
             var executor = new MergeRequestExecutor();
             var mergeRequest = new MergeRequest();
@@ -302,6 +320,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Can_Execute_Is_Called_With_Non_MergeRequest_Returns_False()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // Executor should only handle MergeRequest message type
+            
             // Arrange
             var executor = new MergeRequestExecutor();
             var retrieveRequest = new RetrieveMultipleRequest();
@@ -316,6 +337,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Get_Responsible_Request_Type_Is_Called_Returns_MergeRequest()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // Executor is responsible for MergeRequest message type
+            
             // Arrange
             var executor = new MergeRequestExecutor();
 

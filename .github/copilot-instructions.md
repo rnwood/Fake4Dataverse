@@ -97,6 +97,8 @@ This creates a `local-packages` folder with the built NuGet packages.
 - Test method names should be descriptive and follow the pattern: `Should_<expected_behavior>_When_<condition>`
 - Use Arrange-Act-Assert pattern in tests
 - Provide unit tests for bug fixes and new features
+- **Always include documentation references in test comments** - Reference the official Microsoft documentation URL that describes the behavior being tested
+- For Dataverse/CRM behaviors, include comments like `// Reference: https://learn.microsoft.com/en-us/dotnet/api/...` to document the source of expected behavior
 
 ### Exception Handling
 - Use `PullRequestException` for features not yet implemented to encourage community contributions
@@ -115,6 +117,14 @@ The framework uses a configurable middleware pipeline (inspired by ASP.NET Core)
 
 ### Message Executors
 Implement `IFakeMessageExecutor` to handle specific CRM organization requests. Located in `/FakeMessageExecutors/` directories.
+
+**When implementing Dataverse/CRM message executors:**
+1. **Research the behavior** - Always start by researching the official Microsoft documentation at https://learn.microsoft.com/en-us/dotnet/api/
+2. **Search for additional sources** - Look for blog articles, community posts, and other resources that describe the behavior in detail (but do not use FakeXrmEasy source code or tests)
+3. **Document all sources** - Reference the documentation URL in code comments and test comments
+4. **Implement all documented properties** - Ensure all properties and behaviors from the official API are implemented
+5. **Test all behaviors** - Create comprehensive tests covering all documented behaviors, edge cases, and error conditions
+6. **Include references in tests** - Every test should include a comment referencing the source documentation URL
 
 ## Contributing Guidelines
 
