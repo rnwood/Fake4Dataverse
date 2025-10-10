@@ -1,6 +1,6 @@
 # Fake4Dataverse: Test Automation Framework for Microsoft Dataverse and Power Platform
 
-## About This Fork
+## About This Project
 
 Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi Montaña. This fork continues the development of the testing framework under the MIT License, based on the last version of FakeXrmEasy that was available under that license.
 
@@ -17,7 +17,7 @@ This fork is based on an early development version of FakeXrmEasy v2 (version 2.
 - Abstractions: https://github.com/DynamicsValue/fake-xrm-easy-abstractions
 - Legacy: https://github.com/jordimontana82/fake-xrm-easy
 
-The original repositories were licensed under MIT at the time this fork was created, as evidenced by the LICENSE files in those repositories.
+The original repositories were licensed under MIT at the time this fork was created, as evidenced by the LICENSE files in those repositories in the commit we forked from (the history is preserved in this repo).
 
 ## Why This Fork?
 
@@ -31,7 +31,7 @@ This fork serves several purposes:
 
 3. **Modern Platform Support**: While respecting the original codebase, we aim to update and maintain compatibility with modern versions of Dataverse, Power Platform, and .NET.
 
-4. **Legal Clarity**: This fork is completely legal and in accordance with the MIT License under which the original Fake4Dataverse was released. The MIT License explicitly permits forking, modification, and redistribution of the code.
+4. **Legal Clarity**: This fork is completely legal and in accordance with the MIT License under which the original FakeXrmEasy was released. The MIT License explicitly permits forking, modification, and redistribution of the code.
 
 ## Is Forking from the Last MIT Version Legal?
 
@@ -41,7 +41,7 @@ This fork serves several purposes:
 - Modify the source code
 - Distribute modified versions
 
-The original Fake4Dataverse was released under the MIT License, which means that version and all prior versions remain available under that license permanently. The license cannot be retroactively revoked. When Jordi Montaña chose to change the licensing model for future versions, previous MIT-licensed versions remained under the MIT License.
+The original FakeXrmEasy was released under the MIT License, which means that version and all prior versions remain available under that license permanently. The license cannot be retroactively revoked. When Jordi Montaña chose to change the licensing model for future versions, previous MIT-licensed versions remained under the MIT License.
 
 This fork:
 - Is based on version 2.x, which was released under the MIT License
@@ -51,7 +51,7 @@ This fork:
 
 ## Acknowledgments
 
-We are deeply grateful to **Jordi Montaña** for creating Fake4Dataverse and releasing it under the MIT License. His work has been instrumental to thousands of developers in the Dynamics 365 and Power Platform community. This fork aims to honor that legacy by continuing to provide free, open-source testing tools to the community.
+We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releasing it under the MIT License. His work has been instrumental to thousands of developers in the Dynamics 365 and Power Platform community. Please consider supporting his commercial and original version.
 
 ## Project Structure
 
