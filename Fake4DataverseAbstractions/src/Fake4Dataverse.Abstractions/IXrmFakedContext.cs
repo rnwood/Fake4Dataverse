@@ -76,6 +76,13 @@ namespace Fake4Dataverse.Abstractions
         /// </summary>
         IPluginPipelineSimulator PluginPipelineSimulator { get; }
 
+        /// <summary>
+        /// Gets or sets whether pipeline simulation is enabled.
+        /// When true, plugins registered via PluginPipelineSimulator will automatically execute during CRUD operations.
+        /// Default is false.
+        /// </summary>
+        bool UsePipelineSimulation { get; set; }
+
         void AddEntity(Entity e);
         void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false);
         Guid CreateEntity(Entity e);
