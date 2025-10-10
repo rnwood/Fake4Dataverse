@@ -218,59 +218,64 @@ var relationship = new XrmFakeRelationship
 
 ### Migrating from FakeXrmEasy v3.x to Fake4Dataverse v2.x
 
-**Important Note:** Fake4Dataverse is based on FakeXrmEasy v2.0.1 (the last MIT-licensed version). If you're using the commercial FakeXrmEasy v3.x, this guide will help you migrate to the open-source Fake4Dataverse v2.x.
+**Important Note:** Fake4Dataverse is based on FakeXrmEasy v2.0.1 (the last MIT-licensed version). FakeXrmEasy v3.x is a commercial product that continued development after the license change. If you're migrating from v3.x to Fake4Dataverse v2.x, you are essentially moving from a more recent commercial version back to an earlier open-source version.
 
-#### Key Differences from v3.x
+#### Understanding the Migration Path
 
-Since Fake4Dataverse v2.x is based on an earlier version of FakeXrmEasy, you may need to account for features that were added in v3.x but are not present in Fake4Dataverse v2.x. Here are the main considerations:
+Since v3.x was developed after v2.0.1, it likely includes features and improvements that are not present in Fake4Dataverse v2.x. This migration is about moving from commercial software to an open-source alternative, which may involve some trade-offs.
 
-#### 1. Check Feature Availability
+#### Step 1: Assess Compatibility
 
-Before migrating from v3.x, verify that all features you're using are available in Fake4Dataverse v2.x. Review the feature set documented in the [Fake4DataverseCore README](../Fake4DataverseCore/README.md).
+Before migrating, determine if your codebase uses v3-specific features:
 
-#### 2. Context Initialization
+1. **Review your test code** for any APIs or features introduced in v3.x
+2. **Check the v3.x changelog** (if available) to identify v3-specific features you're using
+3. **Make a list of dependencies** on v3-specific functionality
+4. **Consider alternatives** for v3-specific features in the open-source v2.x
 
-If you're using v3.x-specific initialization patterns, adapt them to use the v2.x middleware approach:
+#### Step 2: Update Package References
 
-**v3.x patterns:**
-```csharp
-// v3.x may have different initialization patterns
-// Adapt them to the v2.x middleware approach shown below
+Replace FakeXrmEasy v3.x packages with Fake4Dataverse v2.x packages:
+
+```xml
+<!-- Remove v3.x packages -->
+<!-- <PackageReference Include="FakeXrmEasy.v3.Core" Version="3.x.x" /> -->
+
+<!-- Add Fake4Dataverse v2.x packages -->
+<PackageReference Include="Fake4Dataverse.Abstractions" Version="2.0.0.1" />
+<PackageReference Include="Fake4Dataverse.Core" Version="2.0.0.1" />
+<!-- Add other packages as needed -->
 ```
 
-**Fake4Dataverse v2.x (Target):**
+#### Step 3: Update Context Initialization
+
+If v3.x uses different initialization patterns, convert them to v2.x patterns:
+
+**Fake4Dataverse v2.x approach:**
 ```csharp
 using Fake4Dataverse.Middleware;
 
+// Option 1: Using factory
 var context = XrmFakedContextFactory.New();
 var service = context.GetOrganizationService();
+
+// Option 2: Using middleware builder for custom configuration
+var context = MiddlewareBuilder
+    .New()
+    .AddCrud()
+    .AddFakeMessageExecutors()
+    .UseCrud()
+    .UseMessages()
+    .Build();
 ```
 
-#### 3. API Changes
+#### Step 4: Update Namespace References
 
-Any v3-specific APIs will need to be replaced with their v2.x equivalents:
-
-- Review the v2.x API documentation in the package README files
-- Use the middleware builder pattern for customization
-- Leverage `GetProperty<T>()` and `SetProperty<T>()` for dynamic properties
-
-#### 4. Testing Strategy
-
-For a smooth migration:
-
-1. **Run your existing test suite** against FakeXrmEasy v3.x and document all passing tests
-2. **Create a feature compatibility list** of what you're currently using
-3. **Update one test file at a time** to Fake4Dataverse v2.x
-4. **Compare results** to ensure behavior consistency
-5. **Report any missing features** as GitHub issues to help improve Fake4Dataverse
-
-#### 5. Namespace Changes
-
-Update all namespace references:
+Update all namespace imports:
 
 ```csharp
-// Remove v3.x namespaces
-// using FakeXrmEasy.*;
+// Remove v3.x namespaces (if different)
+// using FakeXrmEasy.v3.*;
 
 // Add v2.x namespaces
 using Fake4Dataverse.Abstractions;
@@ -279,29 +284,82 @@ using Fake4Dataverse.Middleware.Crud;
 using Fake4Dataverse.Middleware.Messages;
 ```
 
-#### 6. Middleware Configuration
+#### Step 5: Apply v1 → v2 Migration Steps
 
-Leverage the flexible middleware system in v2.x:
+Since Fake4Dataverse v2.x is based on the v2.0.1 codebase, you'll need to ensure your code follows v2.x patterns. Review the "Migrating from FakeXrmEasy v1.x to Fake4Dataverse v2.x" section above and apply those patterns, particularly:
+
+- Use `IXrmFakedContext` interface instead of concrete classes
+- Use factory methods for context initialization
+- Use `context.CallerProperties.CallerId` instead of `context.CallerId`
+- Use `GetProperty<T>()` / `SetProperty<T>()` for dynamic properties
+- Use `EnableProxyTypes()` instead of `ProxyTypesAssembly`
+
+#### Step 6: Test Incrementally
+
+**Critical:** Migrate one test file at a time:
 
 ```csharp
-var context = MiddlewareBuilder
-    .New()
+// Example: Before (v3.x pattern - adapt as needed)
+// Note: Actual v3.x API may differ - adjust based on your code
+
+[Fact]
+public void TestExample()
+{
+    // If using v3-specific initialization, replace with:
+    var context = XrmFakedContextFactory.New();
+    var service = context.GetOrganizationService();
     
-    // Add middleware configuration
-    .AddCrud()
-    .AddFakeMessageExecutors()
+    // Your test logic
+    var account = new Account { Name = "Test" };
+    var id = service.Create(account);
     
-    // Define pipeline sequence
-    .UseCrud()
-    .UseMessages()
-    
-    .Build();
+    Assert.NotEqual(Guid.Empty, id);
+}
 ```
 
-This middleware approach allows you to:
-- Configure multiple behaviors per request
-- Customize pipeline execution order
-- Extend functionality without modifying core framework code
+#### Step 7: Handle Missing Features
+
+If you encounter v3-specific features that don't exist in v2.x:
+
+1. **Check if there's a workaround** using v2.x APIs
+2. **Simplify your tests** if the feature was purely for convenience
+3. **Contribute back** by opening an issue or pull request to add the feature to Fake4Dataverse
+4. **Consider alternatives** such as creating extension methods for missing functionality
+
+**Example: Creating an extension method for missing functionality**
+```csharp
+public static class ContextExtensions
+{
+    // If a v3 feature is missing, you can create an extension method
+    public static void ConfigureV3Feature(this IXrmFakedContext context)
+    {
+        // Implement using available v2.x APIs
+        // This is a placeholder - adjust based on actual needs
+    }
+}
+```
+
+#### Step 8: Validation Strategy
+
+After migration:
+
+1. **Run your entire test suite** to identify issues
+2. **Fix failing tests** by adapting to v2.x APIs
+3. **Compare behavior** with v3.x to ensure correctness
+4. **Document any workarounds** you had to implement
+5. **Report issues** on GitHub if you find bugs or missing critical features
+
+#### Common Differences to Be Aware Of
+
+While we cannot enumerate all v3.x features (as it's a commercial product), here are common areas where differences might exist:
+
+- **API surface changes**: v3.x may have introduced new APIs or changed existing ones
+- **Performance improvements**: v3.x may have optimizations not present in v2.x
+- **Additional message executors**: v3.x may support more Dataverse messages out of the box
+- **Enhanced metadata support**: v3.x may have better metadata handling
+- **Improved query translation**: v3.x may support more complex LINQ or FetchXML queries
+
+**Strategy:** Start with simple tests first, then progressively migrate more complex tests.
 
 ### Common Migration Scenarios
 
@@ -376,44 +434,3 @@ If you encounter issues during migration:
 1. Check the [Fake4DataverseCore README](../Fake4DataverseCore/README.md) for detailed documentation
 2. Review the [test examples](../Fake4DataverseCore/tests/) in the repository
 3. Open an issue on GitHub with a minimal reproduction case
-
-  ## Breaking changes summary from 1.x -> 2.x
-
-  - The major updates is that, since the release of Powerplatform.Cds.Client nuget package, we broke the original package into several smaller ones:
-
-      - Fake4Dataverse.Abstractions  (base package with abstractions - interfaces, poco, enums, etc)
-      - Fake4Dataverse.Core  ( the core of the framework, middleware, crud, query translation)
-      - Fake4Dataverse.Plugins
-      - Fake4Dataverse.Pipeline  (pipeline simulation behaviors, test interaction between plugins and react to messages)
-      - Fake4Dataverse.CodeActivities
-      - Fake4Dataverse.Messages.Cds   (CDS specific messages, this matches the separation introduced by MS)
-      - Fake4Dataverse.Messages.Dynamics (Dynamics specific messages, again, matches separation by MS)
-      - Fake4Dataverse (package with a default)
-      - Fake4Dataverse.Integration  (XrmRealContext moved to this separate package)
-
- - XrmFakedContext constructor is deprecated => use IXrmFakedContext interface directly and encouraging to use a factory method instead. The factory method can be used to put the middleware initialisation in the one place, to be easily maintained and reused across unit tests.
-
-  - Introduced PluginContextProperties: some methods to retrieve properties related to plugin context that were previously accessible from the XrmFakedContext class (GetFakedTracingService, GetServiceEndpointNotificationService, etc), have been refactored and moved into a new PluginContextProperties class / interface, available in the Fake4Dataverse.Plugins package (fake-xrm-easy-plugins repo)
-  
-  - New Middleware! Previously one could introduce any custom messages that would react to specific requests. This implementation was 1 to 1, meaning there could up to one fake message executor to react to one specific request... 
-  
-  We have now rewrittten the core of FakXrmEasy to introduce a new fully configurable middleware, inspired on aspnet core, that will make each request to be executed through a confiurable pipeline, effectively allowing multiple interactions / behaviors per request, plus the ability to define the order of execution of those yourself, without having to "touch" or mantain the "core" of the framework. This will allow for much more flexibility and much less maintenance involved.
-
-   - The middleware will allow you to extend the framework in a more flexible and easier way, while also
-   giving you the ability to customize the pipeline execution order, or to extend it to cater for your own needs.
-
-   - ProxyTypesAssembly is deprecated => use EnableProxyTypes() which allows multiple assemblies and ProxyTypesAssemblies.Count() > 0 to check if using early bound assemblies
-
-   - FiscalYearSettings and TimeZoneInfo settings have been moved to .Abstractions and will use the new GetProperty&lt;T&gt; / SetProperty&lt;T&gt; methods
-
-   - The enumeration in XrmFakeRelationship has been renamed to FakeRelationshipType, to meet Sonar quality rules
-
-   - IFakeMessageExecutor interface has been moved to Fake4Dataverse.Abstractions.FakeMessageExecutors and its Execute method must receive an IXrmFakedContext as opposed to a XrmFakedContext class
-
-   - CallerId => Moved to .CallerProperties.CallerId
-
-   - New IStatusAttributeMetadataRepository and IOptionSetMetadataRepository
-
-  - ValidateReferences public property has been moved to the middleware initialisation, defaulting to false while also adding the option to initialise it via .AddCrud(IIntegrityOptions)
-
-  - DateBehaviour has been removed since it belongs to Metadata, and so it will use now DateTimeBehaviors based on the injected EntityMetadata

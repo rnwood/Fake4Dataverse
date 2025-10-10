@@ -74,6 +74,8 @@ This is a monorepo containing three main projects:
 
 ## Getting Started
 
+**📚 Migrating from FakeXrmEasy?** Check out the comprehensive [Migration Guide](./Fake4Dataverse/README.md#migration-guide) for step-by-step instructions on migrating from FakeXrmEasy v1.x or v3.x to Fake4Dataverse v2.x.
+
 Please refer to the README files in each project folder for specific build instructions and usage examples:
 - [Fake4DataverseAbstractions README](./Fake4DataverseAbstractions/README.md)
 - [Fake4DataverseCore README](./Fake4DataverseCore/README.md)
