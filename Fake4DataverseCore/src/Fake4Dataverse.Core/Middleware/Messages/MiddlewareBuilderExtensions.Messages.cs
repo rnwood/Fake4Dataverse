@@ -18,14 +18,51 @@ namespace Fake4Dataverse.Middleware.Messages
             builder.Add(context => {
                 var service = context.GetOrganizationService();
                
-                var fakeMessageExecutorsDictionary = Assembly.GetExecutingAssembly()
+                var allExecutors = Assembly.GetExecutingAssembly()
                     .GetTypes()
                     .Where(t => t.GetInterfaces().Contains(typeof(IFakeMessageExecutor)))
                     .Select(t => Activator.CreateInstance(t) as IFakeMessageExecutor)
-                    .ToDictionary(t => t.GetResponsibleRequestType(), t => t);
+                    .ToList();
+
+                // Group executors by responsible request type
+                // For types with multiple executors (like OrganizationRequest), store them in a list
+                var fakeMessageExecutorsDictionary = new Dictionary<Type, IFakeMessageExecutor>();
+                var organizationRequestExecutors = new List<IFakeMessageExecutor>();
+
+                foreach (var executor in allExecutors)
+                {
+                    var requestType = executor.GetResponsibleRequestType();
+                    
+                    // Special handling for OrganizationRequest type - store in separate list
+                    // NavigateToNextEntityOrganizationRequestExecutor should be checked before CustomApiExecutor
+                    if (requestType == typeof(OrganizationRequest))
+                    {
+                        organizationRequestExecutors.Add(executor);
+                    }
+                    else if (!fakeMessageExecutorsDictionary.ContainsKey(requestType))
+                    {
+                        fakeMessageExecutorsDictionary.Add(requestType, executor);
+                    }
+                }
+
+                // Sort OrganizationRequest executors: specific executors before generic ones
+                // NavigateToNextEntityOrganizationRequestExecutor should be checked before CustomApiExecutor
+                organizationRequestExecutors.Sort((a, b) =>
+                {
+                    // CustomApiExecutor should come last
+                    if (a.GetType().Name == "CustomApiExecutor") return 1;
+                    if (b.GetType().Name == "CustomApiExecutor") return -1;
+                    return 0;
+                });
                     
                 var messageExecutors = new MessageExecutors(fakeMessageExecutorsDictionary);
                 context.SetProperty(messageExecutors);
+
+                // Store OrganizationRequest executors separately for CanExecute-based routing
+                if (organizationRequestExecutors.Count > 0)
+                {
+                    context.SetProperty(new OrganizationRequestExecutors(organizationRequestExecutors));
+                }
 
                 AddFakeAssociate(context, service);
                 AddFakeDisassociate(context, service);
@@ -115,7 +152,18 @@ namespace Fake4Dataverse.Middleware.Messages
             if(context.HasProperty<MessageExecutors>())
             {
                 var messageExecutors = context.GetProperty<MessageExecutors>();
-                return messageExecutors.ContainsKey(request.GetType());
+                if (messageExecutors.ContainsKey(request.GetType()))
+                {
+                    return true;
+                }
+            }
+
+            // Check if any OrganizationRequest executor can handle this request
+            if (request.GetType() == typeof(OrganizationRequest) && 
+                context.HasProperty<OrganizationRequestExecutors>())
+            {
+                var orgRequestExecutors = context.GetProperty<OrganizationRequestExecutors>();
+                return orgRequestExecutors.Any(executor => executor.CanExecute(request));
             }
             
             return false;
@@ -133,7 +181,24 @@ namespace Fake4Dataverse.Middleware.Messages
             }
 
             var messageExecutors = context.GetProperty<MessageExecutors>();
-            return messageExecutors[request.GetType()].Execute(request, context);            
+            if (messageExecutors.ContainsKey(request.GetType()))
+            {
+                return messageExecutors[request.GetType()].Execute(request, context);
+            }
+
+            // Handle OrganizationRequest with CanExecute-based routing
+            if (request.GetType() == typeof(OrganizationRequest) && 
+                context.HasProperty<OrganizationRequestExecutors>())
+            {
+                var orgRequestExecutors = context.GetProperty<OrganizationRequestExecutors>();
+                var executor = orgRequestExecutors.FirstOrDefault(e => e.CanExecute(request));
+                if (executor != null)
+                {
+                    return executor.Execute(request, context);
+                }
+            }
+
+            throw PullRequestException.NotImplementedOrganizationRequest(request.GetType());
         }
         
 
