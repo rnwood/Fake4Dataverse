@@ -19,6 +19,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Is_Executed_Subordinate_Entity_Is_Deleted()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // The subordinate record is deactivated (not deleted)
+            
             // Arrange
             var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
             var subordinateAccount = new Account { Id = Guid.NewGuid(), Name = "Subordinate Account" };
@@ -28,7 +31,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = targetAccount.ToEntityReference(),
-                SubordinateId = subordinateAccount.Id
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account") // UpdateContent is required
             };
 
             // Act
@@ -41,8 +45,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             // Target should still exist
             Assert.True(_context.ContainsEntity(targetAccount.LogicalName, targetAccount.Id));
             
-            // Subordinate should be deleted
-            Assert.False(_context.ContainsEntity(subordinateAccount.LogicalName, subordinateAccount.Id));
+            // Subordinate should still exist but be deactivated (statecode=1)
+            Assert.True(_context.ContainsEntity(subordinateAccount.LogicalName, subordinateAccount.Id));
+            var subordinateAfterMerge = _service.Retrieve(subordinateAccount.LogicalName, subordinateAccount.Id, new ColumnSet(true));
+            Assert.Equal(1, subordinateAfterMerge.GetAttributeValue<OptionSetValue>("statecode").Value);
+            Assert.Equal(2, subordinateAfterMerge.GetAttributeValue<OptionSetValue>("statuscode").Value);
         }
 
         [Fact]
@@ -79,6 +86,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Is_Executed_References_Are_Updated()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // All related records are reassigned to the target
+            
             // Arrange
             var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
             var subordinateAccount = new Account { Id = Guid.NewGuid(), Name = "Subordinate Account" };
@@ -94,7 +104,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = targetAccount.ToEntityReference(),
-                SubordinateId = subordinateAccount.Id
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account") // UpdateContent is required
             };
 
             // Act
@@ -111,6 +122,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Is_Executed_Multiple_References_Are_Updated()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // All related records are reassigned to the target
+            
             // Arrange
             var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
             var subordinateAccount = new Account { Id = Guid.NewGuid(), Name = "Subordinate Account" };
@@ -132,7 +146,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = targetAccount.ToEntityReference(),
-                SubordinateId = subordinateAccount.Id
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account") // UpdateContent is required
             };
 
             // Act
@@ -151,6 +166,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
         [Fact]
         public void When_Merge_Request_Has_Null_Target_Exception_Is_Thrown()
         {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            
             // Arrange
             var subordinateAccount = new Account { Id = Guid.NewGuid(), Name = "Subordinate Account" };
             _context.Initialize(new List<Entity> { subordinateAccount });
@@ -159,7 +176,31 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = null,
-                SubordinateId = subordinateAccount.Id
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account")
+            };
+
+            // Act & Assert
+            Assert.Throws<FaultException<OrganizationServiceFault>>(() => executor.Execute(mergeRequest, _context));
+        }
+
+        [Fact]
+        public void When_Merge_Request_Has_Null_UpdateContent_Exception_Is_Thrown()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // UpdateContent is required per Microsoft documentation
+            
+            // Arrange
+            var targetAccount = new Account { Id = Guid.NewGuid(), Name = "Target Account" };
+            var subordinateAccount = new Account { Id = Guid.NewGuid(), Name = "Subordinate Account" };
+            _context.Initialize(new List<Entity> { targetAccount, subordinateAccount });
+
+            var executor = new MergeRequestExecutor();
+            var mergeRequest = new MergeRequest
+            {
+                Target = targetAccount.ToEntityReference(),
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = null // This should throw error
             };
 
             // Act & Assert
@@ -177,7 +218,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = targetAccount.ToEntityReference(),
-                SubordinateId = Guid.Empty
+                SubordinateId = Guid.Empty,
+                UpdateContent = new Entity("account")
             };
 
             // Act & Assert
@@ -196,7 +238,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = new EntityReference("account", nonExistentTargetId),
-                SubordinateId = subordinateAccount.Id
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account")
             };
 
             // Act & Assert
@@ -215,7 +258,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = targetAccount.ToEntityReference(),
-                SubordinateId = nonExistentSubordinateId
+                SubordinateId = nonExistentSubordinateId,
+                UpdateContent = new Entity("account")
             };
 
             // Act & Assert
@@ -233,7 +277,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
             var mergeRequest = new MergeRequest
             {
                 Target = targetAccount.ToEntityReference(),
-                SubordinateId = targetAccount.Id
+                SubordinateId = targetAccount.Id,
+                UpdateContent = new Entity("account")
             };
 
             // Act & Assert
@@ -279,6 +324,121 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MergeRequestTests
 
             // Assert
             Assert.Equal(typeof(MergeRequest), requestType);
+        }
+
+        [Fact]
+        public void When_PerformParentingChecks_Is_True_And_Parents_Differ_Exception_Is_Thrown()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest.performparentingchecks
+            // When PerformParentingChecks is true, validates that parent records match
+            
+            // Arrange
+            var parentAccount1 = new Account { Id = Guid.NewGuid(), Name = "Parent Account 1" };
+            var parentAccount2 = new Account { Id = Guid.NewGuid(), Name = "Parent Account 2" };
+            var targetAccount = new Account 
+            { 
+                Id = Guid.NewGuid(), 
+                Name = "Target Account",
+                ParentAccountId = parentAccount1.ToEntityReference()
+            };
+            var subordinateAccount = new Account 
+            { 
+                Id = Guid.NewGuid(), 
+                Name = "Subordinate Account",
+                ParentAccountId = parentAccount2.ToEntityReference()
+            };
+
+            _context.Initialize(new List<Entity> { parentAccount1, parentAccount2, targetAccount, subordinateAccount });
+
+            var mergeRequest = new MergeRequest
+            {
+                Target = targetAccount.ToEntityReference(),
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account"),
+                PerformParentingChecks = true
+            };
+
+            // Act & Assert
+            Assert.Throws<FaultException<OrganizationServiceFault>>(() => _service.Execute(mergeRequest));
+        }
+
+        [Fact]
+        public void When_PerformParentingChecks_Is_True_And_Parents_Match_Merge_Succeeds()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest.performparentingchecks
+            // When PerformParentingChecks is true and parents match, merge should succeed
+            
+            // Arrange
+            var parentAccount = new Account { Id = Guid.NewGuid(), Name = "Parent Account" };
+            var targetAccount = new Account 
+            { 
+                Id = Guid.NewGuid(), 
+                Name = "Target Account",
+                ParentAccountId = parentAccount.ToEntityReference()
+            };
+            var subordinateAccount = new Account 
+            { 
+                Id = Guid.NewGuid(), 
+                Name = "Subordinate Account",
+                ParentAccountId = parentAccount.ToEntityReference()
+            };
+
+            _context.Initialize(new List<Entity> { parentAccount, targetAccount, subordinateAccount });
+
+            var mergeRequest = new MergeRequest
+            {
+                Target = targetAccount.ToEntityReference(),
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account"),
+                PerformParentingChecks = true
+            };
+
+            // Act
+            var response = _service.Execute(mergeRequest);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.IsType<MergeResponse>(response);
+        }
+
+        [Fact]
+        public void When_PerformParentingChecks_Is_False_And_Parents_Differ_Merge_Succeeds()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest.performparentingchecks
+            // When PerformParentingChecks is false (default), merge should succeed regardless of parent differences
+            
+            // Arrange
+            var parentAccount1 = new Account { Id = Guid.NewGuid(), Name = "Parent Account 1" };
+            var parentAccount2 = new Account { Id = Guid.NewGuid(), Name = "Parent Account 2" };
+            var targetAccount = new Account 
+            { 
+                Id = Guid.NewGuid(), 
+                Name = "Target Account",
+                ParentAccountId = parentAccount1.ToEntityReference()
+            };
+            var subordinateAccount = new Account 
+            { 
+                Id = Guid.NewGuid(), 
+                Name = "Subordinate Account",
+                ParentAccountId = parentAccount2.ToEntityReference()
+            };
+
+            _context.Initialize(new List<Entity> { parentAccount1, parentAccount2, targetAccount, subordinateAccount });
+
+            var mergeRequest = new MergeRequest
+            {
+                Target = targetAccount.ToEntityReference(),
+                SubordinateId = subordinateAccount.Id,
+                UpdateContent = new Entity("account"),
+                PerformParentingChecks = false // Explicitly set to false
+            };
+
+            // Act
+            var response = _service.Execute(mergeRequest);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.IsType<MergeResponse>(response);
         }
     }
 }

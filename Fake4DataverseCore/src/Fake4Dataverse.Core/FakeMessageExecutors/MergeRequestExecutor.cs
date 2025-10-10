@@ -20,6 +20,8 @@ namespace Fake4Dataverse.FakeMessageExecutors
         {
             var mergeRequest = (MergeRequest)request;
 
+            // Validate required parameters per Microsoft documentation
+            // Source: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
             if (mergeRequest.Target == null)
             {
                 throw FakeOrganizationServiceFaultFactory.New("Cannot merge without a target entity reference.");
@@ -28,6 +30,12 @@ namespace Fake4Dataverse.FakeMessageExecutors
             if (mergeRequest.SubordinateId == Guid.Empty)
             {
                 throw FakeOrganizationServiceFaultFactory.New("Cannot merge without a subordinate entity ID.");
+            }
+
+            // UpdateContent is required per Microsoft documentation
+            if (mergeRequest.UpdateContent == null)
+            {
+                throw FakeOrganizationServiceFaultFactory.New("UpdateContent is required for merge operation.");
             }
 
             var service = ctx.GetOrganizationService();
@@ -52,30 +60,44 @@ namespace Fake4Dataverse.FakeMessageExecutors
                 throw FakeOrganizationServiceFaultFactory.New("Cannot merge an entity with itself.");
             }
 
-            // Retrieve the subordinate entity to get its data
+            // Retrieve both entities to check parenting if needed
+            var targetEntity = service.Retrieve(target.LogicalName, target.Id, new ColumnSet(true));
             var subordinateEntity = service.Retrieve(target.LogicalName, subordinateId, new ColumnSet(true));
 
-            // Apply UpdateContent if provided (selective field merging)
-            if (updateContent != null && updateContent.Attributes.Count > 0)
+            // Perform parenting checks if requested
+            // Source: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest.performparentingchecks
+            if (mergeRequest.PerformParentingChecks)
             {
-                var targetUpdate = new Entity(target.LogicalName)
-                {
-                    Id = target.Id
-                };
-
-                foreach (var attr in updateContent.Attributes)
-                {
-                    targetUpdate[attr.Key] = attr.Value;
-                }
-
-                service.Update(targetUpdate);
+                PerformParentingValidation(targetEntity, subordinateEntity);
             }
+
+            // Apply UpdateContent to target (required per Microsoft documentation)
+            var targetUpdate = new Entity(target.LogicalName)
+            {
+                Id = target.Id
+            };
+
+            foreach (var attr in updateContent.Attributes)
+            {
+                targetUpdate[attr.Key] = attr.Value;
+            }
+
+            service.Update(targetUpdate);
 
             // Update all references pointing to the subordinate entity to point to the target
             UpdateReferences(ctx, target.LogicalName, subordinateId, target.Id);
 
-            // Delete the subordinate entity
-            service.Delete(target.LogicalName, subordinateId);
+            // Deactivate the subordinate entity (not delete) per Microsoft documentation
+            // Source: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest
+            // "The subordinate record is deactivated"
+            var deactivateSubordinate = new Entity(target.LogicalName)
+            {
+                Id = subordinateId
+            };
+            deactivateSubordinate["statecode"] = new OptionSetValue(1); // Inactive
+            deactivateSubordinate["statuscode"] = new OptionSetValue(2); // Inactive
+
+            service.Update(deactivateSubordinate);
 
             return new MergeResponse();
         }
@@ -83,6 +105,37 @@ namespace Fake4Dataverse.FakeMessageExecutors
         public Type GetResponsibleRequestType()
         {
             return typeof(MergeRequest);
+        }
+
+        /// <summary>
+        /// Validates parent records match when PerformParentingChecks is enabled
+        /// Source: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.mergerequest.performparentingchecks
+        /// </summary>
+        private void PerformParentingValidation(Entity targetEntity, Entity subordinateEntity)
+        {
+            // Common parent attributes to check based on entity type
+            var parentAttributes = new[] { "parentaccountid", "parentcustomerid", "masterid" };
+
+            foreach (var parentAttr in parentAttributes)
+            {
+                if (targetEntity.Contains(parentAttr) || subordinateEntity.Contains(parentAttr))
+                {
+                    var targetParent = targetEntity.GetAttributeValue<EntityReference>(parentAttr);
+                    var subordinateParent = subordinateEntity.GetAttributeValue<EntityReference>(parentAttr);
+
+                    // If both have parent values and they differ, throw error
+                    if (targetParent != null && subordinateParent != null)
+                    {
+                        if (targetParent.Id != subordinateParent.Id || targetParent.LogicalName != subordinateParent.LogicalName)
+                        {
+                            throw FakeOrganizationServiceFaultFactory.New(
+                                $"Cannot merge records with different parent records when PerformParentingChecks is enabled. " +
+                                $"Target parent: {targetParent.LogicalName}:{targetParent.Id}, " +
+                                $"Subordinate parent: {subordinateParent.LogicalName}:{subordinateParent.Id}");
+                        }
+                    }
+                }
+            }
         }
 
         private void UpdateReferences(IXrmFakedContext ctx, string entityName, Guid fromId, Guid toId)
