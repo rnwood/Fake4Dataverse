@@ -10,8 +10,11 @@ env:
   dotnet-version: 8.0.x
 
 jobs:
-  build-all:
+  build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        framework: [net8.0, net462]
     
     steps:
     - uses: actions/checkout@v4
@@ -21,20 +24,12 @@ jobs:
       with:
         dotnet-version: ${{ env.dotnet-version }}
  
-    - name: Build FakeXrmEasyAbstrations
-      run: |
-        cd FakeXrmEasyAbstrations
-        dotnet restore /p:Configuration=FAKE_XRM_EASY_9
-        dotnet build FakeXrmEasy.Abstractions.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework net8.0
+    - name: Restore
+      run: dotnet restore FakeXrmFree.sln
 
-    - name: Build FakeXrmEasyCore
-      run: |
-        cd FakeXrmEasyCore
-        dotnet restore /p:Configuration=FAKE_XRM_EASY_9
-        dotnet build FakeXrmEasy.Core.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework net8.0
+    - name: Build ${{ matrix.framework }}
+      run: dotnet build FakeXrmFree.sln --configuration Debug --framework ${{ matrix.framework }} --no-restore
         
-    - name: Build FakeXrmEasy
-      run: |
-        cd FakeXrmEasy
-        dotnet restore /p:Configuration=FAKE_XRM_EASY_9
-        dotnet build FakeXrmEasy.sln --configuration FAKE_XRM_EASY_9 --no-restore --framework net8.0
+    - name: Test ${{ matrix.framework }}
+      run: dotnet test FakeXrmFree.sln --configuration Debug --framework ${{ matrix.framework }} --no-build --verbosity normal
+      continue-on-error: true
