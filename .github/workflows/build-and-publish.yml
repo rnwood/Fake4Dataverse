@@ -94,18 +94,15 @@ jobs:
     - name: Restore
       run: dotnet restore Fake4DataverseFree.sln
 
-    - name: Build net8.0
-      run: dotnet build Fake4DataverseFree.sln --configuration Release --framework net8.0 --no-restore
+    - name: Build
+      run: dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
 
     - name: Test net8.0
-      run: dotnet test Fake4DataverseFree.sln --configuration Release --framework net8.0 --no-build --verbosity normal
+      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --verbosity normal
       continue-on-error: true
 
-    - name: Build net462
-      run: dotnet build Fake4DataverseFree.sln --configuration Release --framework net462 --no-restore
-
     - name: Test net462
-      run: dotnet test Fake4DataverseFree.sln --configuration Release --framework net462 --no-build --verbosity normal
+      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build --verbosity normal
       continue-on-error: true
 
     - name: Pack Fake4Dataverse.Abstractions
@@ -119,7 +116,7 @@ jobs:
 
         $packArgs = @(
           'Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Fake4Dataverse.Abstractions.csproj',
-          '--configuration', 'Release',
+          '--configuration', 'Debug',
           '--no-build',
           '--output', './nupkgs'
         )
@@ -146,7 +143,7 @@ jobs:
 
         $packArgs = @(
           'Fake4DataverseCore/src/Fake4Dataverse.Core/Fake4Dataverse.Core.csproj',
-          '--configuration', 'Release',
+          '--configuration', 'Debug',
           '--no-build',
           '--output', './nupkgs'
         )
@@ -173,7 +170,7 @@ jobs:
 
         $packArgs = @(
           'Fake4Dataverse/src/Fake4Dataverse/Fake4Dataverse.csproj',
-          '--configuration', 'Release',
+          '--configuration', 'Debug',
           '--no-build',
           '--output', './nupkgs'
         )
