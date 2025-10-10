@@ -65,7 +65,7 @@ jobs:
         }
         # Check if this is a PR build
         elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
-          $prNumber = $env:GITHUB_REF -replace 'refs/pull/(\d+)/merge', '$1'
+          $prNumber = $env:GITHUB_REF -replace '^refs/pull/(\d+)/merge$', '$1'
           $date = Get-Date -Format "yyyyMMdd"
           $runNumber = $env:GITHUB_RUN_NUMBER
           # Use underscore instead of + for better compatibility
