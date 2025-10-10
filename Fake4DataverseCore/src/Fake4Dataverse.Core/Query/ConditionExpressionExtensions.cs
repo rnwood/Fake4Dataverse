@@ -268,6 +268,14 @@ namespace Fake4Dataverse.Query
                     operatorExpression = Expression.Not(c.ToContainsValuesExpression(getNonBasicValueExpr, containsAttributeExpression));
                     break;
 
+                case ConditionOperator.Above:
+                case ConditionOperator.AboveOrEqual:
+                case ConditionOperator.Under:
+                case ConditionOperator.UnderOrEqual:
+                case ConditionOperator.NotUnder:
+                    operatorExpression = c.ToHierarchicalExpression(qe, context, getNonBasicValueExpr, containsAttributeExpression, entity);
+                    break;
+
                 default:
                     throw new PullRequestException(string.Format("Operator {0} not yet implemented for condition expression", c.CondExpression.Operator.ToString()));
 
