@@ -74,9 +74,21 @@ This is a monorepo containing three main projects:
 
 ## Getting Started
 
-**📚 Migrating from FakeXrmEasy?** Check out the comprehensive [Migration Guide](./Fake4Dataverse/README.md#migration-guide) for step-by-step instructions on migrating from FakeXrmEasy v1.x or v3.x to Fake4Dataverse v4.x.
+### 📖 Documentation
 
-Please refer to the README files in each project folder for specific build instructions and usage examples:
+**Complete documentation is available at [docs/README.md](./docs/README.md)**
+
+Quick links:
+- **[Installation Guide](./docs/getting-started/installation.md)** - Get Fake4Dataverse installed
+- **[Quick Start](./docs/getting-started/quickstart.md)** - Your first test in 5 minutes
+- **[Basic Concepts](./docs/getting-started/basic-concepts.md)** - Understand the framework
+- **[Testing Plugins](./docs/usage/testing-plugins.md)** - Plugin testing patterns
+- **[Message Executors](./docs/messages/README.md)** - Supported Dataverse messages
+- **[Migration Guide](./Fake4Dataverse/README.md#migration-guide)** - Migrate from FakeXrmEasy
+
+### Project READMEs
+
+For project-specific information:
 - [Fake4DataverseAbstractions README](./Fake4DataverseAbstractions/README.md)
 - [Fake4DataverseCore README](./Fake4DataverseCore/README.md)
 - [Fake4Dataverse README](./Fake4Dataverse/README.md)
