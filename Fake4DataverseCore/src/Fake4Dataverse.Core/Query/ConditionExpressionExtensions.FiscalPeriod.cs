@@ -9,12 +9,30 @@ namespace Fake4Dataverse.Query
     /// <summary>
     /// Extensions for fiscal period condition operators
     /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+    /// 
+    /// Fiscal period operators allow querying data based on fiscal calendar periods rather than calendar dates.
+    /// These operators work with the organization's fiscal year settings, which define the fiscal year start date
+    /// and how fiscal periods are structured (annually, semi-annually, quarterly, monthly, or in 4-week periods).
+    /// 
+    /// Key fiscal period operators:
+    /// - InFiscalPeriod: Records that fall within a specified fiscal period
+    /// - InFiscalPeriodAndYear: Records that fall within a specified fiscal period and year
+    /// - InOrAfterFiscalPeriodAndYear: Records on or after the start of a specified fiscal period and year
+    /// - InOrBeforeFiscalPeriodAndYear: Records on or before the end of a specified fiscal period and year
+    /// - LastFiscalPeriod: Records from the previous fiscal period
+    /// - NextFiscalPeriod: Records from the next fiscal period
+    /// - LastFiscalYear: Records from the previous fiscal year
+    /// - NextFiscalYear: Records from the next fiscal year
     /// </summary>
     public static partial class ConditionExpressionExtensions
     {
         /// <summary>
         /// Takes a condition expression for fiscal period operators and translates it into a 'between two dates' expression
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/fiscal-date-older-datetime-query-operators-fetchxml
+        /// 
+        /// Fiscal date and time query operators enable querying date and time values using fiscal periods defined
+        /// in the organization's fiscal year settings. The fiscal calendar allows organizations to use custom fiscal
+        /// periods that don't align with calendar years (e.g., fiscal year starting July 1 or October 1).
         /// </summary>
         internal static Expression ToFiscalPeriodExpression(this TypedConditionExpression tc, Expression getAttributeValueExpr, Expression containsAttributeExpr, IXrmFakedContext context)
         {
@@ -40,6 +58,8 @@ namespace Fake4Dataverse.Query
             {
                 case ConditionOperator.InFiscalPeriod:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // InFiscalPeriod: The value is within the specified fiscal period. Takes an integer value representing
+                    // the fiscal period number (1-based). Optionally can take a second parameter for the fiscal year.
                     var period = (int)c.Values[0];
                     var fiscalYearForPeriod = c.Values.Count > 1 ? (int)c.Values[1] : currentFiscalYear;
                     c.Values.Clear();
@@ -48,6 +68,8 @@ namespace Fake4Dataverse.Query
 
                 case ConditionOperator.InFiscalPeriodAndYear:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // InFiscalPeriodAndYear: The value is within the specified fiscal period and fiscal year.
+                    // Takes two integer values: the fiscal period number and the fiscal year.
                     var periodAndYear = (int)c.Values[0];
                     var yearForPeriodAndYear = (int)c.Values[1];
                     c.Values.Clear();
@@ -56,6 +78,8 @@ namespace Fake4Dataverse.Query
 
                 case ConditionOperator.InOrAfterFiscalPeriodAndYear:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // InOrAfterFiscalPeriodAndYear: The value is within or after the specified fiscal period and fiscal year.
+                    // Takes two integer values: the fiscal period number and the fiscal year.
                     var periodInOrAfter = (int)c.Values[0];
                     var yearInOrAfter = (int)c.Values[1];
                     c.Values.Clear();
@@ -65,6 +89,8 @@ namespace Fake4Dataverse.Query
 
                 case ConditionOperator.InOrBeforeFiscalPeriodAndYear:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // InOrBeforeFiscalPeriodAndYear: The value is within or before the specified fiscal period and fiscal year.
+                    // Takes two integer values: the fiscal period number and the fiscal year.
                     var periodInOrBefore = (int)c.Values[0];
                     var yearInOrBefore = (int)c.Values[1];
                     c.Values.Clear();
@@ -74,6 +100,8 @@ namespace Fake4Dataverse.Query
 
                 case ConditionOperator.LastFiscalPeriod:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // LastFiscalPeriod: The value is within the last fiscal period. This is relative to the current date
+                    // and fiscal calendar settings. No value parameter is required.
                     c.Values.Clear();
                     var (lastPeriodYear, lastPeriod) = GetPreviousFiscalPeriod(currentFiscalYear, currentFiscalPeriod, fiscalStartDate, fiscalPeriodTemplate);
                     (fromDate, toDate) = GetFiscalPeriodDates(lastPeriodYear, lastPeriod, fiscalStartDate, fiscalPeriodTemplate);
@@ -81,6 +109,8 @@ namespace Fake4Dataverse.Query
 
                 case ConditionOperator.NextFiscalPeriod:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // NextFiscalPeriod: The value is within the next fiscal period. This is relative to the current date
+                    // and fiscal calendar settings. No value parameter is required.
                     c.Values.Clear();
                     var (nextPeriodYear, nextPeriod) = GetNextFiscalPeriod(currentFiscalYear, currentFiscalPeriod, fiscalStartDate, fiscalPeriodTemplate);
                     (fromDate, toDate) = GetFiscalPeriodDates(nextPeriodYear, nextPeriod, fiscalStartDate, fiscalPeriodTemplate);
@@ -88,6 +118,8 @@ namespace Fake4Dataverse.Query
 
                 case ConditionOperator.LastFiscalYear:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // LastFiscalYear: The value is within the last fiscal year. This is relative to the current date
+                    // and fiscal calendar settings. No value parameter is required.
                     c.Values.Clear();
                     fromDate = new DateTime(currentFiscalYear - 1, fiscalStartDate.Month, fiscalStartDate.Day);
                     toDate = fromDate.Value.AddYears(1).AddDays(-1);
@@ -95,6 +127,8 @@ namespace Fake4Dataverse.Query
 
                 case ConditionOperator.NextFiscalYear:
                     // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+                    // NextFiscalYear: The value is within the next fiscal year. This is relative to the current date
+                    // and fiscal calendar settings. No value parameter is required.
                     c.Values.Clear();
                     fromDate = new DateTime(currentFiscalYear + 1, fiscalStartDate.Month, fiscalStartDate.Day);
                     toDate = fromDate.Value.AddYears(1).AddDays(-1);

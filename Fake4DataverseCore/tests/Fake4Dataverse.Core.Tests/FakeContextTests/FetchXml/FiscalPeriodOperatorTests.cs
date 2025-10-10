@@ -14,6 +14,15 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
     /// Tests for fiscal period condition operators
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/fiscal-date-older-datetime-query-operators-fetchxml
     /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+    /// 
+    /// Fiscal date and time query operators enable querying date and time values using fiscal periods defined in the
+    /// organization's fiscal year settings. These operators are particularly useful for financial reporting where the
+    /// fiscal year may not align with the calendar year.
+    /// 
+    /// The fiscal calendar settings include:
+    /// - Fiscal year start date (e.g., April 1, July 1, October 1)
+    /// - Fiscal period template: Annually (1 period), Semi-Annually (2 periods), Quarterly (4 periods), 
+    ///   Monthly (12 periods), or Four-Week (13 periods)
     /// </summary>
     public class FiscalPeriodOperatorTests
     {
@@ -29,6 +38,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_InFiscalPeriod_Quarterly_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // InFiscalPeriod: The value is within the specified fiscal period.
+            // This test verifies that records are correctly filtered to only those within Q2 (fiscal period 2)
+            // of a quarterly fiscal calendar starting January 1.
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -66,6 +78,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_InFiscalPeriodAndYear_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // InFiscalPeriodAndYear: The value is within the specified fiscal period and fiscal year.
+            // This test verifies filtering for records in fiscal period 1 (Q1) of a specific fiscal year
+            // when using a quarterly fiscal calendar.
             var today = DateTime.Today;
             var currentYear = today.Year;
             var targetYear = currentYear - 1;
@@ -103,6 +118,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_LastFiscalPeriod_Monthly_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // LastFiscalPeriod: The value is within the last fiscal period. This is calculated relative to the
+            // current date. For a monthly fiscal calendar, this returns records from the previous month
+            // of the fiscal calendar.
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -148,6 +166,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_NextFiscalPeriod_Quarterly_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // NextFiscalPeriod: The value is within the next fiscal period. This is calculated relative to the
+            // current date. For a quarterly fiscal calendar, this returns records from the next quarter.
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -193,6 +213,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_LastFiscalYear_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // LastFiscalYear: The value is within the last fiscal year. This is calculated relative to the
+            // current date and respects custom fiscal year start dates (e.g., April 1 fiscal year start).
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -235,6 +257,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_NextFiscalYear_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // NextFiscalYear: The value is within the next fiscal year. This is calculated relative to the
+            // current date and respects custom fiscal year start dates (e.g., July 1 fiscal year start).
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -277,6 +301,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_InOrAfterFiscalPeriodAndYear_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // InOrAfterFiscalPeriodAndYear: The value is within or after the specified fiscal period and fiscal year.
+            // This test verifies that records on or after the start of Q2 (fiscal period 2) are returned.
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -314,6 +340,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_InOrBeforeFiscalPeriodAndYear_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // InOrBeforeFiscalPeriodAndYear: The value is within or before the specified fiscal period and fiscal year.
+            // This test verifies that records on or before the end of Q2 (fiscal period 2) are returned.
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -351,6 +379,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void QueryExpression_Operator_InFiscalPeriod_SemiAnnually_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // InFiscalPeriod: The value is within the specified fiscal period.
+            // This test verifies semi-annual fiscal periods (H1 and H2) where H2 is approximately July-December.
             var today = DateTime.Today;
             var currentYear = today.Year;
             
@@ -385,6 +415,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void QueryExpression_Operator_LastFiscalYear_CustomStart_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
+            // LastFiscalYear: The value is within the last fiscal year.
+            // This test verifies the operator works correctly with a custom fiscal year start date (October 1),
+            // which is commonly used by governments and some organizations.
             var today = DateTime.Today;
             var currentYear = today.Year;
             

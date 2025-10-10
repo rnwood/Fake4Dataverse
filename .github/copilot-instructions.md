@@ -121,10 +121,14 @@ Implement `IFakeMessageExecutor` to handle specific CRM organization requests. L
 **When implementing Dataverse/CRM message executors:**
 1. **Research the behavior** - Always start by researching the official Microsoft documentation at https://learn.microsoft.com/en-us/dotnet/api/
 2. **Search for additional sources** - Look for blog articles, community posts, and other resources that describe the behavior in detail (but do not use FakeXrmEasy source code or tests)
-3. **Document all sources** - Reference the documentation URL in code comments and test comments
+3. **Document all sources with explanatory text** - **MANDATORY**: When referencing documentation URLs in code comments, you MUST include relevant explanatory text from the referenced documentation that describes what the feature/operator/behavior does. Simply providing a URL is not sufficient. Include:
+   - A brief description of what the feature/operator does
+   - Key parameters or values it accepts
+   - Expected behavior and results
+   - Example: Instead of just `// Reference: https://...`, write `// Reference: https://... \n// OperatorName: Description of what it does, what parameters it takes, and what it returns`
 4. **Implement all documented properties** - Ensure all properties and behaviors from the official API are implemented
 5. **Test all behaviors** - Create comprehensive tests covering all documented behaviors, edge cases, and error conditions
-6. **Include references in tests** - Every test should include a comment referencing the source documentation URL
+6. **Include references with explanations in tests** - Every test should include a comment referencing the source documentation URL AND a description of what behavior is being tested
 
 ## Contributing Guidelines
 
