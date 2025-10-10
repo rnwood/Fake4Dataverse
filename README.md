@@ -60,17 +60,17 @@ This is a monorepo containing three main projects:
 ### 1. Fake4DataverseAbstractions
 - **Location**: `/Fake4DataverseAbstractions/`
 - **Purpose**: Contains abstractions, interfaces, POCOs, enums, and base types used across the framework
-- **Former Name**: Fake4Dataverse.Abstractions
+- **Former Name**: FakeXrmEasy.Abstractions
 
 ### 2. Fake4DataverseCore  
 - **Location**: `/Fake4DataverseCore/`
 - **Purpose**: Core implementation including middleware, CRUD operations, query translation, and message executors
-- **Former Name**: Fake4Dataverse.Core
+- **Former Name**: FakeXrmEasy.Core
 
 ### 3. Fake4Dataverse (Legacy Package)
 - **Location**: `/Fake4Dataverse/`
 - **Purpose**: Legacy/compatibility package
-- **Former Name**: Fake4Dataverse
+- **Former Name**: FakeXrmEasy
 
 ## Getting Started
 
@@ -91,7 +91,7 @@ The following table compares the features available across different versions of
 
 | Feature | FakeXrmEasy v1 (MIT) | Fake4Dataverse (This Fork) | FakeXrmEasy v2+ (Commercial) |
 |---------|---------------------|---------------------------|------------------------------|
-| **License** | MIT | MIT | Commercial/Subscription |
+| **License** | MIT | MIT | Commercial/Subscription or reciprocal open source |
 | **Middleware Architecture** | ❌ No - Single executor per request | ✅ Yes - ASP.NET Core inspired | ✅ Yes - Enhanced middleware |
 | **Extensibility Model** | ⚠️ Limited | ✅ GetProperty/SetProperty pattern | ✅ Full extensibility |
 | **Pipeline Configuration** | ❌ Fixed pipeline | ✅ Configurable middleware pipeline | ✅ Advanced pipeline control |
