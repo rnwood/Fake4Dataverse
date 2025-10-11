@@ -30,6 +30,9 @@ namespace Fake4Dataverse.CloudFlows
             _flows = new Dictionary<string, ICloudFlowDefinition>(StringComparer.OrdinalIgnoreCase);
             _connectorHandlers = new Dictionary<string, IConnectorActionHandler>(StringComparer.OrdinalIgnoreCase);
             _executionHistory = new Dictionary<string, List<IFlowExecutionResult>>(StringComparer.OrdinalIgnoreCase);
+
+            // Register built-in Dataverse action handler
+            RegisterConnectorActionHandler("Dataverse", new DataverseActionHandler());
         }
 
         /// <summary>
