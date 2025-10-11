@@ -24,6 +24,7 @@ docs/
 │   ├── batch-operations.md           # ExecuteMultiple & Transactions (16KB)
 │   ├── testing-workflows.md          # Workflow activity testing
 │   ├── security-permissions.md       # Security testing patterns
+│   ├── calculated-fields.md          # Calculated field simulation (18KB)
 │   ├── custom-api.md                 # Custom API implementation
 │   ├── merge-request.md              # Merge request operations
 │   ├── hierarchical-queries.md       # Hierarchical query operators

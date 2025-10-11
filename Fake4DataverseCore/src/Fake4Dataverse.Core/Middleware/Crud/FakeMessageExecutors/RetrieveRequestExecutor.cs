@@ -52,6 +52,11 @@ namespace Fake4Dataverse.Middleware.Crud.FakeMessageExecutors
                 }
                 resultEntity.ApplyDateBehaviour(context);
 
+                // Evaluate calculated fields for the retrieved entity
+                // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields
+                // "Calculated columns are calculated in real-time when they are retrieved"
+                context.EvaluateCalculatedFieldsForEntity(resultEntity);
+
                 if (request.RelatedEntitiesQuery != null && request.RelatedEntitiesQuery.Count > 0)
                 {
                     foreach (var relatedEntitiesQuery in request.RelatedEntitiesQuery)

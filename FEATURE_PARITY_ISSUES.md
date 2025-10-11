@@ -205,11 +205,13 @@ High - Common customization pattern in Dynamics 365
 
 ---
 
-## Issue 6: Add Calculated Fields Simulation
+## Issue 6: Add Calculated Fields Simulation ✅
 
 **Title:** Implement calculated field evaluation and simulation
 
 **Labels:** `enhancement`, `field-types`, `high-priority`
+
+**Status:** ✅ **COMPLETED** - Implemented in v4.0.0
 
 **Description:**
 
@@ -217,24 +219,59 @@ High - Common customization pattern in Dynamics 365
 Add support for simulating calculated fields in Dataverse entities.
 
 ### Current Status
-- ❌ Not implemented in Fake4Dataverse
+- ✅ **Implemented in Fake4Dataverse v4.0.0**
 - ✅ Available in FakeXrmEasy v2+
 - ❌ Not available in FakeXrmEasy v1
 
-### Requirements
-- Support calculated field definition
-- Parse and evaluate calculated field formulas
-- Handle calculated field dependencies
-- Update calculated fields on entity retrieve
-- Support all calculated field data types
-- Add comprehensive unit tests
+### Implementation Details
+- **NCalc Integration**: Uses NCalc 1.3.8 for expression evaluation
+- **Supported Functions**: All Microsoft-documented functions (CONCAT, DIFFINDAYS, ADDDAYS, TRIMLEFT, TRIMRIGHT, etc.)
+- **Formula Preprocessing**: Converts `[fieldname]` syntax to NCalc variables
+- **Automatic Evaluation**: Calculated fields are evaluated on entity retrieve and update
+- **Documentation**: Comprehensive guide at `docs/usage/calculated-fields.md`
+
+### Implemented Features
+- ✅ Support calculated field definition
+- ✅ Parse and evaluate calculated field formulas
+- ✅ Handle calculated field dependencies
+- ✅ Update calculated fields on entity retrieve
+- ✅ Update calculated fields on entity update
+- ✅ Support all calculated field data types (string, number, date, boolean)
+- ✅ String functions: CONCAT, UPPER, LOWER, TRIM, TRIMLEFT, TRIMRIGHT, LEFT, RIGHT, MID, REPLACE, LEN
+- ✅ Date functions: DIFFINDAYS, DIFFINHOURS, DIFFINMINUTES, DIFFINMONTHS, DIFFINWEEKS, DIFFINYEARS
+- ✅ Date manipulation: ADDHOURS, ADDDAYS, ADDWEEKS, ADDMONTHS, ADDYEARS, SUBTRACTHOURS, SUBTRACTDAYS, SUBTRACTWEEKS, SUBTRACTMONTHS, SUBTRACTYEARS
+- ✅ Math functions: ROUND, ABS, FLOOR, CEILING
+- ✅ Logical functions: IF, ISNULL
+- ✅ Logical operators: AND, OR, NOT
+- ✅ Comparison operators: >, <, >=, <=, ==, !=
+- ✅ Null handling and type conversions
+- ✅ Circular dependency detection
+- ✅ Comprehensive unit tests
+- ✅ Complete documentation with examples
 
 ### Related Files
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/`
-- New: `Fake4DataverseCore/src/Fake4Dataverse.Core/CalculatedFields/`
+- ✅ `Fake4DataverseCore/src/Fake4Dataverse.Core/CalculatedFields/CalculatedFieldDefinition.cs`
+- ✅ `Fake4DataverseCore/src/Fake4Dataverse.Core/CalculatedFields/CalculatedFieldEvaluator.cs`
+- ✅ `Fake4DataverseCore/src/Fake4Dataverse.Core/CalculatedFields/DataverseFunctionExtensions.cs`
+- ✅ `Fake4DataverseCore/src/Fake4Dataverse.Core/XrmFakedContext.CalculatedFields.cs`
+- ✅ `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/CalculatedFields/CalculatedFieldBasicTests.cs`
+- ✅ `docs/usage/calculated-fields.md`
+
+### Documentation
+- [Calculated Fields Usage Guide](docs/usage/calculated-fields.md) - Comprehensive 18KB+ documentation
+- [Microsoft: Define Calculated Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields) - Official reference
+
+### FakeXrmEasy v2+ Equivalent
+**Note**: FakeXrmEasy v2+ has calculated field support but implementation details are in their commercial codebase. Our implementation is based on verified Microsoft documentation and provides similar functionality using the NCalc expression engine.
+
+**References**:
+- FakeXrmEasy v2+ calculated fields feature is documented as available but specific API documentation is in their commercial docs
+- Implementation approach differs: Fake4Dataverse uses explicit `RegisterCalculatedField()` calls vs FakeXrmEasy v2+ metadata-based registration
 
 ### Priority
 High - Common pattern for business logic
+
+**Completed:** 2025-10-11 (PR #22)
 
 ---
 
