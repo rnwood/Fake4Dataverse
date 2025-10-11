@@ -159,11 +159,13 @@ High - Modern Dataverse feature, recommended over Custom Actions
 
 ---
 
-## Issue 5: Implement Custom Actions Support
+## Issue 5: Implement Custom Actions Support ✅
 
 **Title:** Add full support for Custom Actions
 
 **Labels:** `enhancement`, `message-executor`, `high-priority`
+
+**Status:** ✅ **COMPLETED** (2025-10-11)
 
 **Description:**
 
@@ -171,21 +173,32 @@ High - Modern Dataverse feature, recommended over Custom Actions
 Implement full support for Custom Actions (process-based actions).
 
 ### Current Status
-- ❌ Not implemented in Fake4Dataverse (removed from v1)
+- ✅ **Implemented in Fake4Dataverse v4.x** (2025-10-11)
 - ✅ Available in FakeXrmEasy v2+
 - ⚠️ Limited in FakeXrmEasy v1
 
+### Implementation Details
+- Custom Actions are fully supported via the existing `CustomApiExecutor` infrastructure
+- Both Custom APIs (modern) and Custom Actions (legacy) use `OrganizationRequest` with custom message names
+- Plugins can be registered for custom action messages at any pipeline stage
+- Custom actions work through metadata (customapi entity) with:
+  - Entity-bound or global actions via `boundentitylogicalname` attribute
+  - Input/output parameters handled through OrganizationRequest/Response
+  - Enabled/disabled validation via `isenabled` attribute
+- Comprehensive test coverage (9 tests total) in `CustomActionPluginTests.cs`
+
 ### Requirements
-- Support custom action definition and registration
-- Handle action input/output parameters
-- Support both entity-bound and global actions
-- Handle action execution in plugin pipeline
-- Add middleware for action execution
-- Add comprehensive unit tests
+- ✅ Support custom action definition and registration
+- ✅ Handle action input/output parameters
+- ✅ Support both entity-bound and global actions
+- ✅ Handle action execution in plugin pipeline
+- ✅ Add middleware for action execution
+- ✅ Add comprehensive unit tests
 
 ### Related Files
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/FakeMessageExecutors/`
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/Middleware/`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/FakeMessageExecutors/CustomApiExecutor.cs` ✅
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/Middleware/Messages/MiddlewareBuilderExtensions.Messages.cs` ✅
+- `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/Pipeline/CustomActionPluginTests.cs` ✅
 
 ### Priority
 High - Common customization pattern in Dynamics 365
@@ -642,11 +655,13 @@ Medium - Important for complex workflows
 
 ---
 
-## Issue 19: Improve Pre/Post Image Support
+## Issue 19: Improve Pre/Post Image Support ✅
 
 **Title:** Enhance plugin pre/post image simulation
 
 **Labels:** `enhancement`, `plugins`, `medium-priority`
+
+**Status:** ✅ **COMPLETED** (2025-10-11)
 
 **Description:**
 
@@ -654,16 +669,45 @@ Medium - Important for complex workflows
 Enhance support for pre and post images in plugin context.
 
 ### Current Status
-- ⚠️ Basic support in Fake4Dataverse
+- ✅ **Full support implemented in Fake4Dataverse v4.x** (2025-10-11)
 - ✅ Full support in FakeXrmEasy v2+
 - ⚠️ Basic in FakeXrmEasy v1
 
+### Implementation Details
+- Created `PluginStepImageRegistration` class with comprehensive image configuration:
+  - Image name and entity alias
+  - Image type (PreImage, PostImage, or Both)
+  - Filtered attributes support
+  - Message validation (pre-images for Update/Delete, post-images for Create/Update)
+- Extended `PluginStepRegistration` with `PreImages` and `PostImages` collections
+- Updated `PluginPipelineSimulator` to automatically create images based on registration:
+  - Retrieves current entity state for pre-images on Update/Delete
+  - Uses target entity for post-images on Create/Update
+  - Applies attribute filters to reduce payload
+  - Supports multiple named images per registration
+- Comprehensive test coverage (10 tests) in `PluginImageTests.cs`:
+  - Pre-image creation for Update with all attributes
+  - Pre-image creation with filtered attributes
+  - Post-image creation for Create and Update
+  - Multiple images with different filters
+  - Both pre and post images simultaneously
+  - Message-specific validation (no pre-images for Create, no post-images for Delete)
+
 ### Requirements
-- Support image registration configurations
-- Handle filtered attributes in images
-- Ensure correct image snapshots at each stage
-- Support multiple images
-- Add comprehensive unit tests
+- ✅ Support image registration configurations
+- ✅ Handle filtered attributes in images
+- ✅ Ensure correct image snapshots at each stage
+- ✅ Support multiple images
+- ✅ Add comprehensive unit tests
+
+### Related Files
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/PluginStepImageRegistration.cs` ✅
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/PluginStepRegistration.cs` ✅
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/PluginPipelineSimulator.cs` ✅
+- `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/Pipeline/PluginImageTests.cs` ✅
+
+### Priority
+Medium - Common plugin pattern
 
 ### Related Files
 - `Fake4DataverseCore/src/Fake4Dataverse.Core/XrmFakedContext.Plugins.cs`
@@ -1038,8 +1082,8 @@ Medium - Modern Dataverse patterns
 This document contains 30 GitHub issues covering all major feature gaps identified in the README.md feature comparison. Issues are organized by:
 
 **Priority Breakdown:**
-- High Priority: 10 issues (6 remaining, 4 completed ✅)
-- Medium Priority: 11 issues (9 remaining, 2 completed ✅)
+- High Priority: 10 issues (4 remaining, 6 completed ✅)
+- Medium Priority: 11 issues (8 remaining, 3 completed ✅)
 - Low Priority: 9 issues (advanced/niche features)
 
 **Completed Issues:**
@@ -1047,13 +1091,15 @@ This document contains 30 GitHub issues covering all major feature gaps identifi
 - ✅ Issue #2: Hierarchical Query Operators (Implemented 2025-10-10)
 - ✅ Issue #3: Advanced Fiscal Period Operators (Implemented 2025-10-10)
 - ✅ Issue #4: Custom API Support (Implemented 2025-10-10)
+- ✅ Issue #5: Custom Actions Support (Implemented 2025-10-11)
 - ✅ Issue #16: Multiple Plugins Per Message Support (Implemented 2025-10-10)
 - ✅ Issue #17: Complete Pipeline Simulation (Implemented 2025-10-10)
+- ✅ Issue #19: Pre/Post Image Support (Implemented 2025-10-11)
 
 **Category Breakdown:**
-- Message Executors: 6 issues (1 completed ✅)
+- Message Executors: 6 issues (2 completed ✅)
 - Query Support: 3 issues (2 completed ✅)
-- Plugin/Pipeline: 5 issues (2 completed ✅)
+- Plugin/Pipeline: 5 issues (4 completed ✅)
 - Field Types: 2 issues
 - Business Logic: 3 issues
 - Metadata: 4 issues

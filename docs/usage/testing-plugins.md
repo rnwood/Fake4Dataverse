@@ -9,6 +9,12 @@ Plugin testing is one of the primary use cases for Fake4Dataverse. This guide sh
 - [Testing Plugin Messages](#testing-plugin-messages)
 - [Testing with Related Data](#testing-with-related-data)
 - [Testing Plugin Images](#testing-plugin-images)
+  - [Automatic Image Registration (Recommended)](#automatic-image-registration-recommended)
+  - [SPKL Image Attribute Auto-Discovery](#spkl-image-attribute-auto-discovery)
+  - [Filtered Attributes in Images](#filtered-attributes-in-images)
+  - [Multiple Named Images](#multiple-named-images)
+  - [Manual Image Creation (Legacy)](#manual-image-creation-legacy)
+  - [Message-Specific Image Availability](#message-specific-image-availability)
 - [Testing Plugin Steps](#testing-plugin-steps)
 - [Async Plugins](#async-plugins)
 - [Plugin Pipeline Simulator](#plugin-pipeline-simulator) **NEW**
@@ -407,13 +413,239 @@ public void Should_ProcessRelatedAccount_When_ContactCreated()
 
 ## Testing Plugin Images
 
-Pre-images and post-images provide snapshots of entity data.
+**New in v4.x (2025-10-11)**: Comprehensive pre/post image support with automatic image creation and SPKL attribute auto-discovery.
 
-### Pre-Image (Before Operation)
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
+
+Pre-images and post-images provide snapshots of entity data at different points in the pipeline:
+- **Pre-images**: Entity state before the core operation (available for Update, Delete)
+- **Post-images**: Entity state after the core operation (available for Create, Update)
+
+### Automatic Image Registration (Recommended)
+
+**New in v4.x**: Register images with plugin steps for automatic creation during pipeline execution.
+
+```csharp
+using Fake4Dataverse.Abstractions.Plugins;
+using Fake4Dataverse.Abstractions.Plugins.Enums;
+
+[Fact]
+public void Should_AutomaticallyCreateImages_WhenRegistered()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Initialize with original data
+    var accountId = Guid.NewGuid();
+    var originalAccount = new Entity("account")
+    {
+        Id = accountId,
+        ["name"] = "Original Name",
+        ["revenue"] = new Money(100000)
+    };
+    context.Initialize(originalAccount);
+    
+    // Register plugin with pre and post images
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Update",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(AuditPlugin),
+        PreImages = new List<PluginStepImageRegistration>
+        {
+            new PluginStepImageRegistration
+            {
+                Name = "PreImage",
+                EntityAlias = "PreImage",
+                ImageType = ProcessingStepImageType.PreImage,
+                Attributes = new HashSet<string> { "name", "revenue" } // Filtered attributes
+            }
+        },
+        PostImages = new List<PluginStepImageRegistration>
+        {
+            new PluginStepImageRegistration
+            {
+                Name = "PostImage",
+                EntityAlias = "PostImage",
+                ImageType = ProcessingStepImageType.PostImage,
+                Attributes = new HashSet<string>() // Empty = all attributes
+            }
+        }
+    });
+    
+    var service = context.GetOrganizationService();
+    
+    // Act - Update account (images automatically created)
+    var accountUpdate = new Entity("account")
+    {
+        Id = accountId,
+        ["name"] = "Updated Name"
+    };
+    service.Update(accountUpdate);
+    
+    // Plugin receives images automatically populated
+}
+```
+
+### SPKL Image Attribute Auto-Discovery
+
+**New in v4.x (2025-10-11)**: Use SPKL `CrmPluginRegistrationImage` attributes for automatic image registration.
+
+```csharp
+using SparkleXrm.Tasks;
+
+[CrmPluginRegistration("Update", "account", StageEnum.PreOperation, 
+    ExecutionModeEnum.Synchronous, "", "AuditPlugin", 1, IsolationModeEnum.Sandbox)]
+[CrmPluginRegistrationImage(
+    ImageTypeEnum.PreImage,           // PreImage, PostImage, or Both
+    "PreImage",                       // Image name (key in EntityImageCollection)
+    "name,revenue")]                  // Filtered attributes (comma-separated)
+[CrmPluginRegistrationImage(
+    ImageTypeEnum.PostImage,
+    "PostImage",
+    "")]                              // Empty = all attributes
+public class AuditPlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        var context = (IPluginExecutionContext)serviceProvider
+            .GetService(typeof(IPluginExecutionContext));
+        
+        // Images are automatically populated based on attributes
+        var preImage = context.PreEntityImages["PreImage"];
+        var postImage = context.PostEntityImages["PostImage"];
+        
+        // Pre-image contains only 'name' and 'revenue' (filtered)
+        string oldName = preImage.GetAttributeValue<string>("name");
+        Money oldRevenue = preImage.GetAttributeValue<Money>("revenue");
+        
+        // Post-image contains all attributes
+        string newName = postImage.GetAttributeValue<string>("name");
+    }
+}
+```
+
+**Auto-discover and register:**
+```csharp
+[Fact]
+public void Should_AutoDiscoverPlugins_WithImageAttributes()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Discover and register plugins with images
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(AuditPlugin).Assembly });
+    
+    // Images are automatically created during operations
+}
+```
+
+### Filtered Attributes in Images
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#filter-attributes
+
+Filtering attributes improves performance by including only necessary data in images:
 
 ```csharp
 [Fact]
-public void Should_AccessPreImage_In_Update()
+public void Should_CreateFilteredImages()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    var accountId = Guid.NewGuid();
+    var originalAccount = new Entity("account")
+    {
+        Id = accountId,
+        ["name"] = "Original Name",
+        ["revenue"] = new Money(100000),
+        ["telephone1"] = "555-0100",
+        ["emailaddress1"] = "test@example.com"
+    };
+    context.Initialize(originalAccount);
+    
+    // Register plugin with filtered pre-image (only name and revenue)
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Update",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(FilteredImagePlugin),
+        PreImages = new List<PluginStepImageRegistration>
+        {
+            new PluginStepImageRegistration
+            {
+                Name = "FilteredPreImage",
+                ImageType = ProcessingStepImageType.PreImage,
+                Attributes = new HashSet<string> { "name", "revenue" }
+            }
+        }
+    });
+    
+    var service = context.GetOrganizationService();
+    service.Update(new Entity("account") { Id = accountId, ["name"] = "Updated" });
+    
+    // Plugin receives pre-image with ONLY 'name' and 'revenue'
+    // telephone1 and emailaddress1 are NOT included
+}
+```
+
+### Multiple Named Images
+
+Register multiple images with different attribute filters:
+
+```csharp
+[Fact]
+public void Should_CreateMultipleImages()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    var accountId = Guid.NewGuid();
+    context.Initialize(new Entity("account")
+    {
+        Id = accountId,
+        ["name"] = "Contoso",
+        ["revenue"] = new Money(1000000),
+        ["telephone1"] = "555-0100"
+    });
+    
+    // Register plugin with multiple pre-images
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Update",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(MultiImagePlugin),
+        PreImages = new List<PluginStepImageRegistration>
+        {
+            new PluginStepImageRegistration
+            {
+                Name = "NameImage",
+                ImageType = ProcessingStepImageType.PreImage,
+                Attributes = new HashSet<string> { "name" }
+            },
+            new PluginStepImageRegistration
+            {
+                Name = "FinancialImage",
+                ImageType = ProcessingStepImageType.PreImage,
+                Attributes = new HashSet<string> { "revenue" }
+            }
+        }
+    });
+}
+```
+
+### Manual Image Creation (Legacy)
+
+For backward compatibility, you can still manually add images to the plugin context:
+
+```csharp
+[Fact]
+public void Should_AccessPreImage_In_Update_Manual()
 {
     var context = XrmFakedContextFactory.New();
     
@@ -442,7 +674,7 @@ public void Should_AccessPreImage_In_Update()
             pluginContext.MessageName = "Update";
             pluginContext.Stage = 20;
             
-            // Add pre-image
+            // Manually add pre-image
             pluginContext.PreEntityImages.Add("PreImage", originalAccount);
         },
         accountUpdate
@@ -478,8 +710,83 @@ public class AuditPlugin : IPlugin
                     // Log the change
                 }
             }
+            
+            // Access post-image (after update)
+            if (context.PostEntityImages.Contains("PostImage"))
+            {
+                var postImage = context.PostEntityImages["PostImage"];
+                
+                // Access updated entity state with all attributes
+                string updatedName = postImage.GetAttributeValue<string>("name");
+            }
         }
     }
+}
+```
+
+### Message-Specific Image Availability
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#when-to-use-pre-or-post-images
+
+Images are only available for specific message types:
+
+| Message | Pre-Image | Post-Image |
+|---------|-----------|------------|
+| Create  | ❌ No     | ✅ Yes     |
+| Update  | ✅ Yes    | ✅ Yes     |
+| Delete  | ✅ Yes    | ❌ No      |
+
+```csharp
+[Fact]
+public void Should_CreatePostImage_ForCreateMessage()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Post-image IS available for Create
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        PluginType = typeof(CreatePlugin),
+        PostImages = new List<PluginStepImageRegistration>
+        {
+            new PluginStepImageRegistration
+            {
+                Name = "PostImage",
+                ImageType = ProcessingStepImageType.PostImage
+            }
+        }
+    });
+    
+    // Pre-image is NOT created for Create message (entity doesn't exist yet)
+}
+
+[Fact]
+public void Should_CreatePreImage_ForDeleteMessage()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Pre-image IS available for Delete
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Delete",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(DeletePlugin),
+        PreImages = new List<PluginStepImageRegistration>
+        {
+            new PluginStepImageRegistration
+            {
+                Name = "PreImage",
+                ImageType = ProcessingStepImageType.PreImage
+            }
+        }
+    });
+    
+    // Post-image is NOT created for Delete message (entity no longer exists)
 }
 ```
 
@@ -929,11 +1236,11 @@ public void Should_UnregisterPlugin()
 
 ## Plugin Auto-Discovery from Assemblies
 
-**New in v4.x (2025-10-11)**: Automatically discover and register plugins from assemblies.
+**New in v4.x (2025-10-11)**: Automatically discover and register plugins from assemblies with support for SPKL image attributes.
 
 ### Auto-Discovery with SPKL Attributes
 
-Fake4Dataverse can automatically scan assemblies and register plugins decorated with SPKL `CrmPluginRegistrationAttribute` (without requiring a reference to the SPKL package):
+Fake4Dataverse can automatically scan assemblies and register plugins decorated with SPKL `CrmPluginRegistrationAttribute` and `CrmPluginRegistrationImage` attributes (without requiring a reference to the SPKL package):
 
 ```csharp
 [Fact]
@@ -978,10 +1285,46 @@ public class AccountCreatePlugin : IPlugin
 }
 ```
 
+**SPKL with Image Attributes Example:**
+```csharp
+using SparkleXrm.Tasks;
+
+[CrmPluginRegistration(
+    "Update",
+    "account",
+    StageEnum.PreOperation,
+    ExecutionModeEnum.Synchronous,
+    "name,revenue",                        // FilteringAttributes
+    "AccountAuditPlugin",
+    1,
+    IsolationModeEnum.Sandbox)]
+[CrmPluginRegistrationImage(
+    ImageTypeEnum.PreImage,                // PreImage, PostImage, or Both
+    "PreImage",                            // Image name
+    "name,revenue,modifiedon")]            // Filtered attributes (comma-separated)
+[CrmPluginRegistrationImage(
+    ImageTypeEnum.PostImage,
+    "PostImage",
+    "")]                                   // Empty = all attributes
+public class AccountAuditPlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        var context = (IPluginExecutionContext)serviceProvider
+            .GetService(typeof(IPluginExecutionContext));
+        
+        // Images are automatically populated
+        var preImage = context.PreEntityImages["PreImage"];
+        var postImage = context.PostEntityImages["PostImage"];
+    }
+}
+```
+
 **How it works:**
 - Scans assemblies for classes implementing `IPlugin`
 - Uses reflection to read `CrmPluginRegistrationAttribute` properties (duck typing - no package reference required)
-- Automatically creates `PluginStepRegistration` objects
+- Discovers `CrmPluginRegistrationImage` attributes and links them to parent plugin steps
+- Automatically creates `PluginStepRegistration` objects with pre-populated `PreImages` and `PostImages` collections
 - Registers all discovered steps in the pipeline simulator
 
 ### Auto-Discovery with Custom Type Converter

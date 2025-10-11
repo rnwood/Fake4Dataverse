@@ -5,6 +5,7 @@ using Fake4Dataverse.Abstractions.Plugins.Enums;
 using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
+using System.ServiceModel;
 
 namespace Fake4Dataverse.Tests.Pipeline
 {
@@ -219,6 +220,186 @@ namespace Fake4Dataverse.Tests.Pipeline
             var registeredSteps = context.PluginPipelineSimulator.GetRegisteredPluginSteps(
                 "new_AutoDiscoveredAction", string.Empty, ProcessingStepStage.Preoperation);
             Assert.NotEmpty(registeredSteps);
+        }
+
+        [Fact]
+        public void Should_ExecuteCustomAction_WithMetadata()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
+            // Custom Actions can be executed through Custom API infrastructure
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+
+            // Setup custom action metadata using Custom API entity
+            var customAction = new Entity("customapi")
+            {
+                Id = Guid.NewGuid(),
+                ["uniquename"] = "new_CalculateDiscount",
+                ["isenabled"] = true,
+                ["boundentitylogicalname"] = string.Empty // Global action
+            };
+            context.Initialize(customAction);
+
+            // Register plugin for custom action
+            CustomActionTestPlugin.WasExecuted = false;
+            CustomActionTestPlugin.ExecutedMessageName = null;
+
+            context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+            {
+                MessageName = "new_CalculateDiscount",
+                PrimaryEntityName = string.Empty,
+                Stage = ProcessingStepStage.Preoperation,
+                PluginType = typeof(CustomActionTestPlugin)
+            });
+
+            var service = context.GetOrganizationService();
+
+            // Act - Execute custom action
+            var request = new OrganizationRequest("new_CalculateDiscount");
+            request.Parameters["Amount"] = 1000m;
+            request.Parameters["DiscountPercent"] = 10m;
+
+            var response = service.Execute(request);
+
+            // Assert
+            Assert.True(CustomActionTestPlugin.WasExecuted);
+            Assert.Equal("new_CalculateDiscount", CustomActionTestPlugin.ExecutedMessageName);
+        }
+
+        [Fact]
+        public void Should_ThrowException_WhenCustomActionNotEnabled()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
+            // Custom Actions must be enabled before they can be executed
+            var context = XrmFakedContextFactory.New();
+
+            // Setup custom action in disabled state
+            var customAction = new Entity("customapi")
+            {
+                Id = Guid.NewGuid(),
+                ["uniquename"] = "new_DisabledAction",
+                ["isenabled"] = false, // Not enabled
+                ["boundentitylogicalname"] = string.Empty
+            };
+            context.Initialize(customAction);
+
+            var service = context.GetOrganizationService();
+
+            // Act & Assert
+            var request = new OrganizationRequest("new_DisabledAction");
+            var exception = Assert.Throws<FaultException<OrganizationServiceFault>>(() => service.Execute(request));
+            Assert.Contains("not enabled", exception.Message);
+        }
+
+        [Fact]
+        public void Should_ExecuteEntityBoundCustomAction()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
+            // Custom Actions can be bound to a specific entity
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+
+            // Create test account
+            var accountId = Guid.NewGuid();
+            var account = new Entity("account")
+            {
+                Id = accountId,
+                ["name"] = "Test Account"
+            };
+
+            // Setup entity-bound custom action
+            var customAction = new Entity("customapi")
+            {
+                Id = Guid.NewGuid(),
+                ["uniquename"] = "new_AccountCustomAction",
+                ["isenabled"] = true,
+                ["boundentitylogicalname"] = "account" // Bound to account entity
+            };
+            context.Initialize(new List<Entity> { customAction, account });
+
+            // Register plugin
+            CustomActionTestPlugin.WasExecuted = false;
+            context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+            {
+                MessageName = "new_AccountCustomAction",
+                PrimaryEntityName = "account",
+                Stage = ProcessingStepStage.Preoperation,
+                PluginType = typeof(CustomActionTestPlugin)
+            });
+
+            var service = context.GetOrganizationService();
+
+            // Act - Execute entity-bound custom action
+            var request = new OrganizationRequest("new_AccountCustomAction");
+            request.Parameters["Target"] = new EntityReference("account", accountId);
+
+            service.Execute(request);
+
+            // Assert
+            Assert.True(CustomActionTestPlugin.WasExecuted);
+            Assert.Equal("new_AccountCustomAction", CustomActionTestPlugin.ExecutedMessageName);
+        }
+
+        [Fact]
+        public void Should_ExecutePlugins_AtAllStages_ForProcessBasedCustomAction()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
+            // Plugins can be registered on custom action messages at any stage
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+
+            // Setup custom action
+            var customAction = new Entity("customapi")
+            {
+                Id = Guid.NewGuid(),
+                ["uniquename"] = "new_ProcessAction",
+                ["isenabled"] = true,
+                ["boundentitylogicalname"] = string.Empty
+            };
+            context.Initialize(customAction);
+
+            // Register plugins at different stages
+            StageTrackingPlugin.ExecutedStages.Clear();
+
+            context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+            {
+                MessageName = "new_ProcessAction",
+                PrimaryEntityName = string.Empty,
+                Stage = ProcessingStepStage.Prevalidation,
+                PluginType = typeof(StageTrackingPlugin)
+            });
+
+            context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+            {
+                MessageName = "new_ProcessAction",
+                PrimaryEntityName = string.Empty,
+                Stage = ProcessingStepStage.Preoperation,
+                PluginType = typeof(StageTrackingPlugin)
+            });
+
+            context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+            {
+                MessageName = "new_ProcessAction",
+                PrimaryEntityName = string.Empty,
+                Stage = ProcessingStepStage.Postoperation,
+                PluginType = typeof(StageTrackingPlugin)
+            });
+
+            var service = context.GetOrganizationService();
+
+            // Act - Execute custom action
+            var request = new OrganizationRequest("new_ProcessAction");
+            service.Execute(request);
+
+            // Assert - All stages executed
+            Assert.Equal(3, StageTrackingPlugin.ExecutedStages.Count);
+            Assert.Contains(ProcessingStepStage.Prevalidation, StageTrackingPlugin.ExecutedStages);
+            Assert.Contains(ProcessingStepStage.Preoperation, StageTrackingPlugin.ExecutedStages);
+            Assert.Contains(ProcessingStepStage.Postoperation, StageTrackingPlugin.ExecutedStages);
         }
     }
 
