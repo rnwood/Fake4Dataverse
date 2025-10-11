@@ -90,5 +90,32 @@ namespace Fake4Dataverse.Abstractions.Plugins
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/best-practices/business-logic/avoid-recursive-loops
         /// </summary>
         int MaxDepth { get; set; }
+
+        /// <summary>
+        /// Discovers and registers plugins from the provided assemblies.
+        /// By default, scans for IPlugin implementations with SPKL CrmPluginRegistrationAttribute(s).
+        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl
+        /// </summary>
+        /// <param name="assemblies">Assemblies to scan for plugins</param>
+        /// <param name="customConverter">Optional custom function to convert plugin types to registrations.
+        /// Signature: Type -> IEnumerable&lt;PluginStepRegistration&gt;</param>
+        /// <returns>Number of plugin steps registered</returns>
+        int DiscoverAndRegisterPlugins(
+            IEnumerable<System.Reflection.Assembly> assemblies,
+            Func<Type, IEnumerable<PluginStepRegistration>> customConverter = null);
+
+        /// <summary>
+        /// Discovers and registers plugins using a custom attribute converter.
+        /// Allows users to provide their own logic for extracting registration information from custom attributes.
+        /// </summary>
+        /// <param name="assemblies">Assemblies to scan for plugins</param>
+        /// <param name="attributeType">Type of attribute to look for</param>
+        /// <param name="attributeConverter">Function to convert attribute instances to registrations.
+        /// Signature: (Type pluginType, Attribute attribute) -> PluginStepRegistration</param>
+        /// <returns>Number of plugin steps registered</returns>
+        int DiscoverAndRegisterPluginsWithAttributeConverter(
+            IEnumerable<System.Reflection.Assembly> assemblies,
+            Type attributeType,
+            Func<Type, System.Attribute, PluginStepRegistration> attributeConverter);
     }
 }

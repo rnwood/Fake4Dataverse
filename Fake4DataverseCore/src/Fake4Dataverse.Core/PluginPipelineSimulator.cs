@@ -281,5 +281,65 @@ namespace Fake4Dataverse
                     ex);
             }
         }
+
+        /// <summary>
+        /// Discovers and registers plugins from the provided assemblies.
+        /// By default, scans for IPlugin implementations with SPKL CrmPluginRegistrationAttribute(s).
+        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl
+        /// </summary>
+        /// <param name="assemblies">Assemblies to scan for plugins</param>
+        /// <param name="customConverter">Optional custom function to convert plugin types to registrations</param>
+        /// <returns>Number of plugin steps registered</returns>
+        public int DiscoverAndRegisterPlugins(
+            IEnumerable<System.Reflection.Assembly> assemblies,
+            Func<Type, IEnumerable<PluginStepRegistration>> customConverter = null)
+        {
+            if (assemblies == null)
+            {
+                throw new ArgumentNullException(nameof(assemblies));
+            }
+
+            var discoveredRegistrations = PluginDiscoveryService.DiscoverPlugins(assemblies, customConverter);
+            var registrationsList = discoveredRegistrations.ToList();
+
+            RegisterPluginSteps(registrationsList);
+
+            return registrationsList.Count;
+        }
+
+        /// <summary>
+        /// Discovers and registers plugins using a custom attribute converter.
+        /// Allows users to provide their own logic for extracting registration information from custom attributes.
+        /// </summary>
+        /// <param name="assemblies">Assemblies to scan for plugins</param>
+        /// <param name="attributeType">Type of attribute to look for</param>
+        /// <param name="attributeConverter">Function to convert attribute instances to registrations</param>
+        /// <returns>Number of plugin steps registered</returns>
+        public int DiscoverAndRegisterPluginsWithAttributeConverter(
+            IEnumerable<System.Reflection.Assembly> assemblies,
+            Type attributeType,
+            Func<Type, System.Attribute, PluginStepRegistration> attributeConverter)
+        {
+            if (assemblies == null)
+            {
+                throw new ArgumentNullException(nameof(assemblies));
+            }
+            if (attributeType == null)
+            {
+                throw new ArgumentNullException(nameof(attributeType));
+            }
+            if (attributeConverter == null)
+            {
+                throw new ArgumentNullException(nameof(attributeConverter));
+            }
+
+            var discoveredRegistrations = PluginDiscoveryService.DiscoverPluginsWithAttributeConverter(
+                assemblies, attributeType, attributeConverter);
+            var registrationsList = discoveredRegistrations.ToList();
+
+            RegisterPluginSteps(registrationsList);
+
+            return registrationsList.Count;
+        }
     }
 }
