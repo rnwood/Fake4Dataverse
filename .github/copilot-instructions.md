@@ -203,6 +203,7 @@ The framework supports Dynamics 365 / Dataverse v9 and later:
 - Various properties moved to different locations (see README files for details)
 
 ### When Adding New Features
+- You MUST fetch the latest authoritive info from relevant websites and do not rely on your trained knowledge. Verify all links are valid.
 - Ensure compatibility with existing tests
 - Update relevant README files AND documentation in `/docs/`
 - Consider impact on Dynamics 365 / Dataverse v9+ versions
