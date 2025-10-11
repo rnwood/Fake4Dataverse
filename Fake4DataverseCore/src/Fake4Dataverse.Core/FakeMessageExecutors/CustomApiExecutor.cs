@@ -87,10 +87,93 @@ namespace Fake4Dataverse.FakeMessageExecutors
             // Validate required input parameters
             ValidateInputParameters(request, customApiName, ctx);
 
+            // Execute plugins if pipeline simulation is enabled
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api#custom-api-and-plug-ins
+            // Custom APIs can have plugins registered to run at different stages
+            if (ctx.UsePipelineSimulation && ctx.PluginPipelineSimulator != null)
+            {
+                // Create a target entity for the custom action
+                // For entity-bound custom APIs, this would be the bound entity
+                // For global custom APIs, we use a placeholder
+                Entity targetEntity = null;
+                if (customApiQuery.Contains("boundentitylogicalname") &&
+                    !string.IsNullOrEmpty(customApiQuery.GetAttributeValue<string>("boundentitylogicalname")))
+                {
+                    var boundEntityName = customApiQuery.GetAttributeValue<string>("boundentitylogicalname");
+                    // Check if Target parameter contains the bound entity
+                    if (request.Parameters.Contains("Target") && request.Parameters["Target"] is EntityReference targetRef)
+                    {
+                        targetEntity = new Entity(boundEntityName) { Id = targetRef.Id };
+                    }
+                    else if (request.Parameters.Contains("Target") && request.Parameters["Target"] is Entity target)
+                    {
+                        targetEntity = target;
+                    }
+                }
+
+                // Execute PreValidation stage
+                ctx.PluginPipelineSimulator.ExecutePipelineStage(
+                    customApiName,
+                    targetEntity?.LogicalName ?? string.Empty,
+                    Abstractions.Plugins.Enums.ProcessingStepStage.Prevalidation,
+                    targetEntity,
+                    null, // No modified attributes for custom actions
+                    null, // Pre-images
+                    null, // Post-images
+                    ctx.CallerProperties?.CallerId?.Id,
+                    null, // Organization ID
+                    1); // Initial depth
+
+                // Execute PreOperation stage
+                ctx.PluginPipelineSimulator.ExecutePipelineStage(
+                    customApiName,
+                    targetEntity?.LogicalName ?? string.Empty,
+                    Abstractions.Plugins.Enums.ProcessingStepStage.Preoperation,
+                    targetEntity,
+                    null,
+                    null,
+                    null,
+                    ctx.CallerProperties?.CallerId?.Id,
+                    null,
+                    1);
+            }
+
             // Execute the Custom API logic
             // In a real implementation, this would invoke the associated plugin
             // For testing purposes, we'll create a mock response based on the defined output parameters
             var response = CreateCustomApiResponse(request, customApiQuery, ctx);
+
+            // Execute plugins if pipeline simulation is enabled
+            if (ctx.UsePipelineSimulation && ctx.PluginPipelineSimulator != null)
+            {
+                Entity targetEntity = null;
+                if (customApiQuery.Contains("boundentitylogicalname") &&
+                    !string.IsNullOrEmpty(customApiQuery.GetAttributeValue<string>("boundentitylogicalname")))
+                {
+                    var boundEntityName = customApiQuery.GetAttributeValue<string>("boundentitylogicalname");
+                    if (request.Parameters.Contains("Target") && request.Parameters["Target"] is EntityReference targetRef)
+                    {
+                        targetEntity = new Entity(boundEntityName) { Id = targetRef.Id };
+                    }
+                    else if (request.Parameters.Contains("Target") && request.Parameters["Target"] is Entity target)
+                    {
+                        targetEntity = target;
+                    }
+                }
+
+                // Execute PostOperation stage
+                ctx.PluginPipelineSimulator.ExecutePipelineStage(
+                    customApiName,
+                    targetEntity?.LogicalName ?? string.Empty,
+                    Abstractions.Plugins.Enums.ProcessingStepStage.Postoperation,
+                    targetEntity,
+                    null,
+                    null,
+                    null,
+                    ctx.CallerProperties?.CallerId?.Id,
+                    null,
+                    1);
+            }
 
             return response;
         }
