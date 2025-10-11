@@ -121,5 +121,20 @@ namespace Fake4Dataverse.Abstractions.CloudFlows
         /// Clears execution history for all flows
         /// </summary>
         void ClearExecutionHistory();
+
+        /// <summary>
+        /// Triggers all flows matching a Dataverse operation (Create, Update, Delete).
+        /// This is called automatically by CRUD operations when pipeline simulation is enabled.
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
+        /// </summary>
+        /// <param name="message">The Dataverse message (Create, Update, Delete)</param>
+        /// <param name="entityLogicalName">The entity logical name</param>
+        /// <param name="entity">The entity that triggered the flow</param>
+        /// <param name="modifiedAttributes">Optional set of modified attributes (for Update triggers)</param>
+        void TriggerDataverseFlows(
+            string message,
+            string entityLogicalName,
+            Microsoft.Xrm.Sdk.Entity entity,
+            System.Collections.Generic.HashSet<string> modifiedAttributes = null);
     }
 }

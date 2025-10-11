@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.CloudFlows;
+using Microsoft.Xrm.Sdk;
 
 namespace Fake4Dataverse.CloudFlows
 {
@@ -240,6 +241,86 @@ namespace Fake4Dataverse.CloudFlows
             foreach (var history in _executionHistory.Values)
             {
                 history.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Triggers all flows matching a Dataverse operation (Create, Update, Delete).
+        /// This is called automatically by CRUD operations when pipeline simulation is enabled.
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
+        /// </summary>
+        /// <param name="message">The Dataverse message (Create, Update, Delete)</param>
+        /// <param name="entityLogicalName">The entity logical name</param>
+        /// <param name="entity">The entity that triggered the flow</param>
+        /// <param name="modifiedAttributes">Optional set of modified attributes (for Update triggers)</param>
+        public void TriggerDataverseFlows(
+            string message,
+            string entityLogicalName,
+            Entity entity,
+            HashSet<string> modifiedAttributes = null)
+        {
+            if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(entityLogicalName) || entity == null)
+                return;
+
+            // Find all flows with matching Dataverse triggers
+            var matchingFlows = _flows.Values
+                .Where(flow => flow.IsEnabled && flow.Trigger is DataverseTrigger)
+                .Select(flow => new { Flow = flow, Trigger = flow.Trigger as DataverseTrigger })
+                .Where(x => 
+                {
+                    var trigger = x.Trigger;
+                    
+                    // Match entity name
+                    if (!string.Equals(trigger.EntityLogicalName, entityLogicalName, StringComparison.OrdinalIgnoreCase))
+                        return false;
+
+                    // Match message
+                    if (!string.Equals(trigger.Message, message, StringComparison.OrdinalIgnoreCase) &&
+                        !(trigger.Message == "CreateOrUpdate" && (message == "Create" || message == "Update")))
+                        return false;
+
+                    // For Update triggers, check filtered attributes if specified
+                    if (message == "Update" && trigger.FilteredAttributes != null && trigger.FilteredAttributes.Any())
+                    {
+                        if (modifiedAttributes == null || !modifiedAttributes.Any())
+                            return false;
+
+                        // Trigger only if at least one filtered attribute was modified
+                        if (!trigger.FilteredAttributes.Any(fa => modifiedAttributes.Contains(fa, StringComparer.OrdinalIgnoreCase)))
+                            return false;
+                    }
+
+                    return true;
+                })
+                .ToList();
+
+            // Execute each matching flow
+            foreach (var match in matchingFlows)
+            {
+                try
+                {
+                    // Build trigger inputs from entity
+                    var triggerInputs = new Dictionary<string, object>
+                    {
+                        [entityLogicalName + "id"] = entity.Id.ToString(),
+                        ["id"] = entity.Id.ToString()
+                    };
+
+                    // Add all entity attributes to trigger inputs
+                    foreach (var attr in entity.Attributes)
+                    {
+                        triggerInputs[attr.Key] = attr.Value;
+                    }
+
+                    // Execute the flow
+                    ExecuteFlow(match.Flow, triggerInputs);
+                }
+                catch (Exception)
+                {
+                    // Log error but don't fail the CRUD operation
+                    // In real Dataverse, flow failures don't fail the triggering operation
+                    // Flows run asynchronously
+                }
             }
         }
 
