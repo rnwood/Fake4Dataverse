@@ -60,6 +60,7 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
 - **Low Priority (9 issues)**: Advanced or niche features
   - Virtual entities
   - Elastic tables
+  - ~~Cloud Flows~~ ✅
   - Power Platform integration
   - Performance profiling
   - Concurrent testing
@@ -81,15 +82,15 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
 ### Recommended Order
 
 1. **Phase 1 - Core Functionality** (High Priority)
-   - Issues 1-10 (4 completed ✅, 6 remaining)
+   - Issues 1-10 (6 completed ✅, 4 remaining)
    - Focus: Essential features for most testing scenarios
 
 2. **Phase 2 - Enhanced Testing** (Medium Priority)
-   - Issues 3, 10-11, 16-20, 23-24, 27, 29 (Issues 16-17 completed ✅)
+   - Issues 3, 10-11, 16-20, 23-24, 27, 29 (Issues 16-19 completed ✅)
    - Focus: Improved test coverage and accuracy
 
 3. **Phase 3 - Advanced Features** (Low Priority)
-   - Issues 12-15, 21-22, 25-26, 28
+   - Issues 12-15, 21-22, 25-26, 28 (Issue 14 completed ✅)
    - Focus: Specialized and advanced scenarios
 
 ### Contributing
