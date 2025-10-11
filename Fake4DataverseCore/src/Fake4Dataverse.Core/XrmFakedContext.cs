@@ -1,9 +1,11 @@
 using FakeItEasy;
 using Fake4Dataverse.Abstractions;
+using Fake4Dataverse.Abstractions.CloudFlows;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
 using Fake4Dataverse.Abstractions.Metadata;
 using Fake4Dataverse.Abstractions.Permissions;
 using Fake4Dataverse.Abstractions.Plugins;
+using Fake4Dataverse.CloudFlows;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Permissions;
 using Fake4Dataverse.Services;
@@ -32,6 +34,18 @@ namespace Fake4Dataverse
         /// Gets the plugin pipeline simulator for registering and executing plugins
         /// </summary>
         public IPluginPipelineSimulator PluginPipelineSimulator { get; private set; }
+
+        /// <summary>
+        /// Gets the Cloud Flow simulator for registering and testing Cloud Flows (Power Automate flows).
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/overview-cloud
+        /// 
+        /// The Cloud Flow simulator enables testing of:
+        /// - Dataverse-triggered flows (Create, Update, Delete)
+        /// - Dataverse connector actions within flows
+        /// - Custom connector actions (via extensibility)
+        /// - Flow execution verification and assertion
+        /// </summary>
+        public ICloudFlowSimulator CloudFlowSimulator { get; private set; }
 
         /// <summary>
         /// All proxy type assemblies available on mocked database.
@@ -139,6 +153,9 @@ namespace Fake4Dataverse
 
             // Initialize plugin pipeline simulator
             PluginPipelineSimulator = new PluginPipelineSimulator(this);
+
+            // Initialize Cloud Flow simulator
+            CloudFlowSimulator = new CloudFlowSimulator(this);
 
             GetOrganizationService();
 

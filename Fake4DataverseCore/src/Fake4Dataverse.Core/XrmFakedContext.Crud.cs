@@ -180,6 +180,11 @@ namespace Fake4Dataverse
                         modifiedAttributes,
                         userId: CallerProperties.CallerId.Id,
                         organizationId: Guid.NewGuid());
+                    
+                    // Trigger Cloud Flows after PostOperation plugins
+                    // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
+                    // Cloud Flows trigger asynchronously after the operation completes
+                    CloudFlowSimulator.TriggerDataverseFlows("Update", e.LogicalName, cachedEntity, modifiedAttributes);
                 }
             }
             else
@@ -323,6 +328,11 @@ namespace Fake4Dataverse
                         entityToDelete,
                         userId: CallerProperties.CallerId.Id,
                         organizationId: Guid.NewGuid());
+                    
+                    // Trigger Cloud Flows after PostOperation plugins
+                    // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
+                    // Cloud Flows trigger asynchronously after the operation completes
+                    CloudFlowSimulator.TriggerDataverseFlows("Delete", er.LogicalName, entityToDelete);
                 }
             }
             else
@@ -496,6 +506,11 @@ namespace Fake4Dataverse
                     e,
                     userId: CallerProperties.CallerId.Id,
                     organizationId: Guid.NewGuid());
+                
+                // Trigger Cloud Flows after PostOperation plugins
+                // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
+                // Cloud Flows trigger asynchronously after the operation completes
+                CloudFlowSimulator.TriggerDataverseFlows("Create", e.LogicalName, e);
             }
         }
 
