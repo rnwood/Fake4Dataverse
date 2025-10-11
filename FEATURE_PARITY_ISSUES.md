@@ -307,9 +307,9 @@ Add support for simulating rollup fields that aggregate related record data.
 - ✅ Multiple rollup fields per entity
 - ✅ Support for Integer, Decimal, Money (Currency), DateTime types
 - ✅ On-demand calculation methods
-- ✅ Comprehensive unit tests (16 tests - all passing)
+- ✅ **Automatic refresh on related record changes (Create/Update/Delete)**
+- ✅ Comprehensive unit tests (23 tests - all passing)
 - ✅ Complete documentation with examples
-- ⚠️ Automatic refresh on related record changes (planned, not yet implemented)
 - ⚠️ Hierarchical rollups (placeholder exists, not fully implemented)
 
 ### Related Files
@@ -318,6 +318,7 @@ Add support for simulating rollup fields that aggregate related record data.
 - ✅ `Fake4DataverseCore/src/Fake4Dataverse.Core/XrmFakedContext.RollupFields.cs`
 - ✅ `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/RollupFields/RollupFieldBasicTests.cs`
 - ✅ `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/RollupFields/RollupFieldFilterTests.cs`
+- ✅ `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/RollupFields/RollupFieldAutoRefreshTests.cs`
 - ✅ `docs/usage/rollup-fields.md`
 
 ### Documentation
@@ -325,11 +326,11 @@ Add support for simulating rollup fields that aggregate related record data.
 - [Microsoft: Define Rollup Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields) - Official reference
 
 ### FakeXrmEasy v2+ Equivalent
-**Note**: FakeXrmEasy v2+ has rollup field support but implementation details are in their commercial codebase. Our implementation is based on verified Microsoft documentation and provides similar functionality with explicit evaluation methods.
+**Note**: FakeXrmEasy v2+ has rollup field support but implementation details are in their commercial codebase. Our implementation is based on verified Microsoft documentation and provides similar functionality with explicit evaluation methods and automatic refresh on related record changes.
 
 **References**:
 - FakeXrmEasy v2+ rollup fields feature is documented as available but specific API documentation is in their commercial docs
-- Implementation approach differs: Fake4Dataverse uses explicit `RegisterRollupField()` and manual evaluation vs FakeXrmEasy v2+ metadata-based registration with automatic evaluation
+- Implementation approach differs: Fake4Dataverse uses explicit `RegisterRollupField()` and automatic refresh vs FakeXrmEasy v2+ metadata-based registration with automatic evaluation
 
 ### Priority
 High - Common pattern for aggregating data

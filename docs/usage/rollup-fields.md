@@ -28,9 +28,9 @@ According to Microsoft documentation, rollup fields are evaluated:
 - **On-demand** - Using the CalculateRollupField message
 - **After related record changes** - When child records are created, updated, or deleted
 
-In Fake4Dataverse, rollup fields must be evaluated explicitly using:
-- `EvaluateRollupFields(entity)` - Evaluate all rollup fields for an entity
-- `TriggerRollupCalculation(entityLogicalName, recordId)` - Evaluate rollup fields for a specific record
+In Fake4Dataverse, rollup fields can be evaluated:
+- **Manually** - Using `EvaluateRollupFields(entity)` or `TriggerRollupCalculation(entityLogicalName, recordId)`
+- **Automatically** - When related records are created, updated, or deleted (automatic refresh)
 
 ## Usage
 
@@ -557,6 +557,203 @@ public void Should_Combine_State_And_Custom_Filter()
 }
 ```
 
+## Automatic Rollup Refresh
+
+Rollup fields are automatically recalculated when related child records are created, updated, or deleted. This matches Dataverse behavior where rollup columns are refreshed when related data changes.
+
+### Auto-Refresh on Create
+
+When a new related record is created, the parent entity's rollup fields are automatically updated:
+
+```csharp
+[Fact]
+public void Rollup_Auto_Refreshes_On_Create()
+{
+    // Arrange
+    var context = (XrmFakedContext)XrmFakedContextFactory.New();
+    var service = context.GetOrganizationService();
+    var evaluator = context.RollupFieldEvaluator;
+
+    // Register rollup field: count of contacts
+    var definition = new RollupFieldDefinition
+    {
+        EntityLogicalName = "account",
+        AttributeLogicalName = "contactcount",
+        RelatedEntityLogicalName = "contact",
+        AggregateFunction = RollupAggregateFunction.Count,
+        ResultType = typeof(int)
+    };
+    evaluator.RegisterRollupField(definition);
+
+    var accountId = Guid.NewGuid();
+    var account = new Entity("account") { Id = accountId };
+    context.Initialize(new[] { account });
+
+    // Initial calculation
+    evaluator.EvaluateRollupFields(account);
+    Assert.Equal(0, context.Data["account"][accountId].GetAttributeValue<int>("contactcount"));
+
+    // Act - Create a related contact
+    service.Create(new Entity("contact")
+    {
+        ["firstname"] = "John",
+        ["parentcustomerid"] = new EntityReference("account", accountId)
+    });
+
+    // Assert - Rollup automatically refreshed
+    var updatedAccount = context.Data["account"][accountId];
+    Assert.Equal(1, updatedAccount.GetAttributeValue<int>("contactcount"));
+}
+```
+
+### Auto-Refresh on Update
+
+When a related record is updated, the parent entity's rollup fields are automatically recalculated:
+
+```csharp
+[Fact]
+public void Rollup_Auto_Refreshes_On_Update()
+{
+    // Arrange
+    var context = (XrmFakedContext)XrmFakedContextFactory.New();
+    var service = context.GetOrganizationService();
+    var evaluator = context.RollupFieldEvaluator;
+
+    var definition = new RollupFieldDefinition
+    {
+        EntityLogicalName = "account",
+        AttributeLogicalName = "totalrevenue",
+        RelatedEntityLogicalName = "opportunity",
+        AggregateAttributeLogicalName = "estimatedvalue",
+        AggregateFunction = RollupAggregateFunction.Sum,
+        ResultType = typeof(decimal)
+    };
+    evaluator.RegisterRollupField(definition);
+
+    var accountId = Guid.NewGuid();
+    var account = new Entity("account") { Id = accountId };
+    var oppId = Guid.NewGuid();
+    var opportunity = new Entity("opportunity")
+    {
+        Id = oppId,
+        ["estimatedvalue"] = 100000m,
+        ["parentaccountid"] = new EntityReference("account", accountId)
+    };
+
+    context.Initialize(new[] { account, opportunity });
+    evaluator.EvaluateRollupFields(account);
+
+    // Act - Update the opportunity value
+    service.Update(new Entity("opportunity")
+    {
+        Id = oppId,
+        ["estimatedvalue"] = 150000m
+    });
+
+    // Assert - Rollup automatically refreshed
+    var updatedAccount = context.Data["account"][accountId];
+    Assert.Equal(150000m, updatedAccount.GetAttributeValue<decimal>("totalrevenue"));
+}
+```
+
+### Auto-Refresh on Delete
+
+When a related record is deleted, the parent entity's rollup fields are automatically updated:
+
+```csharp
+[Fact]
+public void Rollup_Auto_Refreshes_On_Delete()
+{
+    // Arrange
+    var context = (XrmFakedContext)XrmFakedContextFactory.New();
+    var service = context.GetOrganizationService();
+    var evaluator = context.RollupFieldEvaluator;
+
+    var definition = new RollupFieldDefinition
+    {
+        EntityLogicalName = "account",
+        AttributeLogicalName = "contactcount",
+        RelatedEntityLogicalName = "contact",
+        AggregateFunction = RollupAggregateFunction.Count,
+        ResultType = typeof(int)
+    };
+    evaluator.RegisterRollupField(definition);
+
+    var accountId = Guid.NewGuid();
+    var account = new Entity("account") { Id = accountId };
+    var contactId = Guid.NewGuid();
+    var contact = new Entity("contact")
+    {
+        Id = contactId,
+        ["parentcustomerid"] = new EntityReference("account", accountId)
+    };
+
+    context.Initialize(new[] { account, contact });
+    evaluator.EvaluateRollupFields(account);
+    Assert.Equal(1, context.Data["account"][accountId].GetAttributeValue<int>("contactcount"));
+
+    // Act - Delete the contact
+    service.Delete("contact", contactId);
+
+    // Assert - Rollup automatically refreshed
+    var updatedAccount = context.Data["account"][accountId];
+    Assert.Equal(0, updatedAccount.GetAttributeValue<int>("contactcount"));
+}
+```
+
+### Auto-Refresh When Lookup Changes
+
+When a related record's lookup field is updated to point to a different parent, both the old and new parent entities' rollup fields are automatically refreshed:
+
+```csharp
+[Fact]
+public void Rollup_Auto_Refreshes_When_Lookup_Changes()
+{
+    // Arrange
+    var context = (XrmFakedContext)XrmFakedContextFactory.New();
+    var service = context.GetOrganizationService();
+    var evaluator = context.RollupFieldEvaluator;
+
+    var definition = new RollupFieldDefinition
+    {
+        EntityLogicalName = "account",
+        AttributeLogicalName = "totalrevenue",
+        RelatedEntityLogicalName = "opportunity",
+        AggregateAttributeLogicalName = "estimatedvalue",
+        AggregateFunction = RollupAggregateFunction.Sum,
+        ResultType = typeof(decimal)
+    };
+    evaluator.RegisterRollupField(definition);
+
+    var account1Id = Guid.NewGuid();
+    var account1 = new Entity("account") { Id = account1Id };
+    var account2Id = Guid.NewGuid();
+    var account2 = new Entity("account") { Id = account2Id };
+    var oppId = Guid.NewGuid();
+    var opportunity = new Entity("opportunity")
+    {
+        Id = oppId,
+        ["estimatedvalue"] = 100000m,
+        ["parentaccountid"] = new EntityReference("account", account1Id)
+    };
+
+    context.Initialize(new[] { account1, account2, opportunity });
+    evaluator.EvaluateRollupFields(account1);
+    evaluator.EvaluateRollupFields(account2);
+
+    // Act - Move opportunity to account2
+    service.Update(new Entity("opportunity")
+    {
+        Id = oppId,
+        ["parentaccountid"] = new EntityReference("account", account2Id)
+    });
+
+    // Assert - Account2's rollup automatically refreshed
+    var updatedAccount2 = context.Data["account"][account2Id];
+    Assert.Equal(100000m, updatedAccount2.GetAttributeValue<decimal>("totalrevenue"));
+}
+```
+
 ## On-Demand Calculation
 
 Trigger rollup calculation for a specific record:
@@ -790,8 +987,8 @@ public void Rollup_Should_Match_Aggregate_Query()
 | Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
 |---------|----------------|-------------------|
 | **Registration** | Metadata-based via `SetupRollupField()` | Code-based via `RegisterRollupField()` |
-| **Evaluation** | Automatic on entity retrieve | Manual via `EvaluateRollupFields()` or `TriggerRollupCalculation()` |
-| **Auto-refresh** | Automatic when related records change | Not yet implemented (planned) |
+| **Evaluation** | Automatic on entity retrieve | Manual via `EvaluateRollupFields()` or automatic on related record changes |
+| **Auto-refresh** | Automatic when related records change | ✅ **Automatic when related records change** |
 | **Hierarchical rollups** | Fully supported | Planned (placeholder exists) |
 | **Custom filters** | FetchXML filter expressions | Lambda expression predicates |
 | **State filters** | Part of FetchXML filter | Dedicated `StateFilter` property |
@@ -842,15 +1039,13 @@ evaluator.EvaluateRollupFields(account);
 
 ## Limitations and Known Issues
 
-1. **Manual Evaluation Required**: Unlike real Dataverse, rollup fields are not automatically evaluated. You must call `EvaluateRollupFields()` or `TriggerRollupCalculation()` explicitly.
+1. **Manual Initial Evaluation**: Rollup fields must be evaluated at least once manually after registration using `EvaluateRollupFields()`. After that, automatic refresh handles updates.
 
-2. **No Automatic Refresh**: Changes to related records don't automatically trigger rollup recalculation. Call evaluation methods manually after changes.
+2. **Hierarchical Rollups**: Currently not fully implemented. The `IsHierarchical` property exists but the logic to traverse hierarchies is placeholder code.
 
-3. **Hierarchical Rollups**: Currently not fully implemented. The `IsHierarchical` property exists but the logic to traverse hierarchies is placeholder code.
+3. **Relationship Detection**: Uses simple lookup field matching. Complex relationships may not be detected correctly.
 
-4. **Relationship Detection**: Uses simple lookup field matching. Complex relationships may not be detected correctly.
-
-5. **No CalculateRollupField Message**: The actual Dataverse `CalculateRollupFieldRequest` message executor is not implemented. Use `TriggerRollupCalculation()` instead.
+4. **No CalculateRollupField Message**: The actual Dataverse `CalculateRollupFieldRequest` message executor is not implemented. Use `TriggerRollupCalculation()` instead.
 
 ## Related Features
 
