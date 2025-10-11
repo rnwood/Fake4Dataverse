@@ -399,15 +399,15 @@ namespace Fake4Dataverse.Abstractions.Plugins
             // Handle string values
             if (imageTypeValue is string imageTypeString)
             {
-                if (imageTypeString.Contains("Pre", StringComparison.OrdinalIgnoreCase))
+                if (imageTypeString.IndexOf("Pre", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return ProcessingStepImageType.PreImage;
                 }
-                if (imageTypeString.Contains("Post", StringComparison.OrdinalIgnoreCase))
+                if (imageTypeString.IndexOf("Post", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return ProcessingStepImageType.PostImage;
                 }
-                if (imageTypeString.Contains("Both", StringComparison.OrdinalIgnoreCase))
+                if (imageTypeString.IndexOf("Both", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return ProcessingStepImageType.Both;
                 }
@@ -483,17 +483,17 @@ namespace Fake4Dataverse.Abstractions.Plugins
             // Handle string values
             if (stageValue is string stageString)
             {
-                if (stageString.Contains("PreValidation", StringComparison.OrdinalIgnoreCase) ||
+                if (stageString.IndexOf("PreValidation", StringComparison.OrdinalIgnoreCase) >= 0 ||
                     stageString.Contains("10"))
                 {
                     return ProcessingStepStage.Prevalidation;
                 }
-                if (stageString.Contains("PreOperation", StringComparison.OrdinalIgnoreCase) ||
+                if (stageString.IndexOf("PreOperation", StringComparison.OrdinalIgnoreCase) >= 0 ||
                     stageString.Contains("20"))
                 {
                     return ProcessingStepStage.Preoperation;
                 }
-                if (stageString.Contains("PostOperation", StringComparison.OrdinalIgnoreCase) ||
+                if (stageString.IndexOf("PostOperation", StringComparison.OrdinalIgnoreCase) >= 0 ||
                     stageString.Contains("40"))
                 {
                     return ProcessingStepStage.Postoperation;
@@ -535,7 +535,7 @@ namespace Fake4Dataverse.Abstractions.Plugins
             // Handle string values
             if (modeValue is string modeString)
             {
-                if (modeString.Contains("Async", StringComparison.OrdinalIgnoreCase) ||
+                if (modeString.IndexOf("Async", StringComparison.OrdinalIgnoreCase) >= 0 ||
                     modeString.Contains("1"))
                 {
                     return ProcessingStepMode.Asynchronous;

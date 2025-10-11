@@ -284,23 +284,37 @@ namespace Fake4Dataverse.FakeMessageExecutors
             // 0 = Boolean, 1 = DateTime, 2 = Decimal, 3 = Entity, 4 = EntityCollection,
             // 5 = EntityReference, 6 = Float, 7 = Integer, 8 = Money, 9 = Picklist, 10 = String,
             // 11 = StringArray, 12 = Guid
-            return typeValue switch
+            switch (typeValue)
             {
-                0 => false,                      // Boolean
-                1 => DateTime.UtcNow,           // DateTime
-                2 => 0m,                        // Decimal
-                3 => null,                      // Entity
-                4 => new EntityCollection(),    // EntityCollection
-                5 => null,                      // EntityReference
-                6 => 0f,                        // Float
-                7 => 0,                         // Integer
-                8 => new Money(0m),             // Money
-                9 => new OptionSetValue(0),     // Picklist
-                10 => string.Empty,             // String
-                11 => new string[0],            // StringArray
-                12 => Guid.Empty,               // Guid
-                _ => null
-            };
+                case 0:
+                    return false;                      // Boolean
+                case 1:
+                    return DateTime.UtcNow;           // DateTime
+                case 2:
+                    return 0m;                        // Decimal
+                case 3:
+                    return null;                      // Entity
+                case 4:
+                    return new EntityCollection();    // EntityCollection
+                case 5:
+                    return null;                      // EntityReference
+                case 6:
+                    return 0f;                        // Float
+                case 7:
+                    return 0;                         // Integer
+                case 8:
+                    return new Money(0m);             // Money
+                case 9:
+                    return new OptionSetValue(0);     // Picklist
+                case 10:
+                    return string.Empty;             // String
+                case 11:
+                    return new string[0];            // StringArray
+                case 12:
+                    return Guid.Empty;               // Guid
+                default:
+                    return null;
+            }
         }
     }
 }
