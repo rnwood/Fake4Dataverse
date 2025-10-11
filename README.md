@@ -304,16 +304,16 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 16. **Complete Pre/Post Image Support** - Basic implementation only
 
 #### Metadata Limitations:
-23. **Global OptionSets** - Partial support only
-24. **Publisher Metadata** - Not supported
-25. **Solution Metadata** - Not supported
-26. **Complete Metadata Operations** - Many RetrieveMetadata variants missing
+17. **Global OptionSets** - Partial support only
+18. **Publisher Metadata** - Not supported
+19. **Solution Metadata** - Not supported
+20. **Complete Metadata Operations** - Many RetrieveMetadata variants missing
 
 #### Additional Missing Message Executors (estimated 50+ messages):
-27. Various business-specific messages (Marketing, Service, Field Service specific)
-28. Advanced relationship messages
-29. Modern Dataverse-specific messages
-30. And many more organization requests added in recent Dynamics 365 versions
+21. Various business-specific messages (Marketing, Service, Field Service specific)
+22. Advanced relationship messages
+23. Modern Dataverse-specific messages
+24. And many more organization requests added in recent Dynamics 365 versions
 
 This honest assessment shows that while Fake4Dataverse provides a solid foundation with 47 message executors and core testing capabilities, it represents an early v2 development snapshot and lacks the maturity and feature completeness of the actively developed commercial FakeXrmEasy v2+. The commercial version has continued to add significant features, especially around modern Dataverse capabilities, advanced pipeline simulation, and quality-of-life improvements that benefit from ongoing commercial development and support.
 
