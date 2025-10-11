@@ -164,6 +164,11 @@ namespace Fake4Dataverse
                 cachedEntity["modifiedon"] = DateTime.UtcNow;
                 cachedEntity["modifiedby"] = CallerId;
 
+                // Evaluate calculated fields after update
+                // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields
+                // "Calculated columns are calculated in real-time when they are retrieved"
+                EvaluateCalculatedFieldsForEntity(cachedEntity);
+
                 if (this.UsePipelineSimulation)
                 {
                     // Execute PostOperation stage (inside transaction)
