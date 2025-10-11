@@ -200,7 +200,7 @@ namespace Fake4Dataverse.Tests.Pipeline
             Assert.False(asyncOp.IsSuccessful);
             Assert.NotNull(asyncOp.ErrorMessage);
             Assert.NotNull(asyncOp.Exception);
-            Assert.Contains("loves exceptions", asyncOp.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("amazing exception", asyncOp.ErrorMessage, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]
