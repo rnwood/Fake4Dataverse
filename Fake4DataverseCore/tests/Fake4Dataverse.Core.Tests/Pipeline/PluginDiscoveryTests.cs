@@ -153,6 +153,101 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Assert
             Assert.True(TestDiscoveredPlugin.WasExecuted);
         }
+
+        [Fact]
+        public void Should_DiscoverPreImageFromSPKLAttribute()
+        {
+            // Arrange
+            // Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+            // SPKL CrmPluginRegistrationImageAttribute defines pre/post images for plugin steps
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should find plugin with pre-image
+            var pluginWithPreImage = registrations
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithPreImage));
+            
+            Assert.NotNull(pluginWithPreImage);
+            Assert.NotEmpty(pluginWithPreImage.PreImages);
+            
+            var preImage = pluginWithPreImage.PreImages.First();
+            Assert.Equal("PreImage", preImage.Name);
+            Assert.Equal(ProcessingStepImageType.PreImage, preImage.ImageType);
+            Assert.Contains("name", preImage.Attributes);
+            Assert.Contains("revenue", preImage.Attributes);
+            Assert.Equal(2, preImage.Attributes.Count);
+        }
+
+        [Fact]
+        public void Should_DiscoverPostImageFromSPKLAttribute()
+        {
+            // Arrange
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should find plugin with post-image
+            var pluginWithPostImage = registrations
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithPostImage));
+            
+            Assert.NotNull(pluginWithPostImage);
+            Assert.NotEmpty(pluginWithPostImage.PostImages);
+            
+            var postImage = pluginWithPostImage.PostImages.First();
+            Assert.Equal("PostImage", postImage.Name);
+            Assert.Equal(ProcessingStepImageType.PostImage, postImage.ImageType);
+            Assert.Empty(postImage.Attributes); // Empty attributes = all attributes
+        }
+
+        [Fact]
+        public void Should_DiscoverMultipleImagesFromSPKLAttributes()
+        {
+            // Arrange
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should find plugin with both pre and post images
+            var pluginWithMultipleImages = registrations
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithMultipleImages));
+            
+            Assert.NotNull(pluginWithMultipleImages);
+            Assert.NotEmpty(pluginWithMultipleImages.PreImages);
+            Assert.NotEmpty(pluginWithMultipleImages.PostImages);
+            
+            var preImage = pluginWithMultipleImages.PreImages.First();
+            Assert.Equal("PreImage", preImage.Name);
+            Assert.Contains("firstname", preImage.Attributes);
+            Assert.Contains("lastname", preImage.Attributes);
+            
+            var postImage = pluginWithMultipleImages.PostImages.First();
+            Assert.Equal("PostImage", postImage.Name);
+        }
+
+        [Fact]
+        public void Should_RegisterPluginWithImages_InPipelineSimulator()
+        {
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(assemblies);
+
+            // Assert - Verify plugins with images are registered
+            var registeredSteps = context.PluginPipelineSimulator.GetRegisteredPluginSteps(
+                "Update", "account", ProcessingStepStage.Preoperation).ToList();
+            
+            var pluginWithImages = registeredSteps
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithPreImage));
+            
+            Assert.NotNull(pluginWithImages);
+            Assert.NotEmpty(pluginWithImages.PreImages);
+        }
     }
 
     #region Test Plugins
@@ -205,6 +300,46 @@ namespace Fake4Dataverse.Tests.Pipeline
         }
     }
 
+    /// <summary>
+    /// Test plugin with SPKL image attributes for pre-image
+    /// </summary>
+    [CrmPluginRegistration("Update", "account", ProcessingStepStage.Preoperation, 1)]
+    [CrmPluginRegistrationImage(ProcessingStepImageType.PreImage, "PreImage", "name,revenue")]
+    public class TestPluginWithPreImage : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Test implementation
+        }
+    }
+
+    /// <summary>
+    /// Test plugin with SPKL image attributes for post-image
+    /// </summary>
+    [CrmPluginRegistration("Update", "contact", ProcessingStepStage.Postoperation, 1)]
+    [CrmPluginRegistrationImage(ProcessingStepImageType.PostImage, "PostImage", "")]
+    public class TestPluginWithPostImage : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Test implementation
+        }
+    }
+
+    /// <summary>
+    /// Test plugin with multiple SPKL image attributes
+    /// </summary>
+    [CrmPluginRegistration("Update", "lead", ProcessingStepStage.Preoperation, 1)]
+    [CrmPluginRegistrationImage(ProcessingStepImageType.PreImage, "PreImage", "firstname,lastname")]
+    [CrmPluginRegistrationImage(ProcessingStepImageType.PostImage, "PostImage", "")]
+    public class TestPluginWithMultipleImages : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Test implementation
+        }
+    }
+
     #endregion
 
     #region Test Attributes
@@ -247,6 +382,32 @@ namespace Fake4Dataverse.Tests.Pipeline
         {
             Message = message;
             Entity = entity;
+        }
+    }
+
+    /// <summary>
+    /// Simulates SPKL CrmPluginRegistrationImageAttribute for testing
+    /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class CrmPluginRegistrationImageAttribute : Attribute
+    {
+        public string MessageName { get; set; }
+        public string EntityLogicalName { get; set; }
+        public ProcessingStepImageType ImageType { get; set; }
+        public string Name { get; set; }
+        public string EntityAlias { get; set; }
+        public string Attributes { get; set; }
+
+        public CrmPluginRegistrationImageAttribute(
+            ProcessingStepImageType imageType,
+            string name,
+            string attributes = "")
+        {
+            ImageType = imageType;
+            Name = name;
+            Attributes = attributes;
+            EntityAlias = name; // Default to name
         }
     }
 

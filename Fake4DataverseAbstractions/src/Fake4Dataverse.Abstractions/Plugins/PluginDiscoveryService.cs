@@ -135,29 +135,43 @@ namespace Fake4Dataverse.Abstractions.Plugins
         /// - ExecutionMode: Synchronous or Asynchronous
         /// - Offline: Whether the plugin runs offline
         /// - DeleteAsyncOperation: Whether to delete async operation
+        /// 
+        /// SPKL CrmPluginRegistrationImage properties:
+        /// - ImageType: PreImage, PostImage, or Both
+        /// - Name: The name/key for accessing the image
+        /// - EntityAlias: The entity alias (optional)
+        /// - Attributes: Comma-separated list of attributes to include in the image
         /// </summary>
         private static IEnumerable<PluginStepRegistration> ConvertFromAttributes(Type pluginType)
         {
             var registrations = new List<PluginStepRegistration>();
 
             // Look for CrmPluginRegistrationAttribute using reflection (without referencing the package)
-            var attributes = pluginType.GetCustomAttributes(inherit: true)
+            var stepAttributes = pluginType.GetCustomAttributes(inherit: true)
                 .Where(a => a.GetType().Name == "CrmPluginRegistrationAttribute")
                 .ToList();
 
-            if (!attributes.Any())
+            if (!stepAttributes.Any())
             {
                 // No attributes found - return empty list
                 return registrations;
             }
 
-            foreach (var attribute in attributes)
+            // Look for CrmPluginRegistrationImage attributes
+            var imageAttributes = pluginType.GetCustomAttributes(inherit: true)
+                .Where(a => a.GetType().Name == "CrmPluginRegistrationImageAttribute" || 
+                           a.GetType().Name == "CrmPluginRegistrationImage")
+                .ToList();
+
+            foreach (var attribute in stepAttributes)
             {
                 try
                 {
                     var registration = ConvertAttributeToRegistration(pluginType, attribute);
                     if (registration != null)
                     {
+                        // Process image attributes and add them to the registration
+                        ProcessImageAttributes(registration, imageAttributes, attribute);
                         registrations.Add(registration);
                     }
                 }
@@ -229,6 +243,196 @@ namespace Fake4Dataverse.Abstractions.Plugins
             }
 
             return registration;
+        }
+
+        /// <summary>
+        /// Processes CrmPluginRegistrationImage attributes and adds them to the plugin step registration.
+        /// Links image attributes to their parent step based on message name and entity.
+        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+        /// </summary>
+        private static void ProcessImageAttributes(
+            PluginStepRegistration registration, 
+            List<object> imageAttributes, 
+            object stepAttribute)
+        {
+            if (imageAttributes == null || !imageAttributes.Any())
+            {
+                return;
+            }
+
+            // Get step identifiers for matching
+            var stepMessageName = GetPropertyValue<string>(stepAttribute, "MessageName") ?? 
+                                 GetPropertyValue<string>(stepAttribute, "Message");
+            var stepEntityName = GetPropertyValue<string>(stepAttribute, "EntityLogicalName") ?? 
+                                GetPropertyValue<string>(stepAttribute, "EntityName");
+
+            foreach (var imageAttr in imageAttributes)
+            {
+                try
+                {
+                    // Check if this image attribute belongs to this step
+                    // Image attributes can specify MessageName and EntityLogicalName to link to specific steps
+                    var imageMessageName = GetPropertyValue<string>(imageAttr, "MessageName");
+                    var imageEntityName = GetPropertyValue<string>(imageAttr, "EntityLogicalName");
+
+                    // If image specifies message/entity, it must match the step
+                    if (!string.IsNullOrEmpty(imageMessageName) && 
+                        !string.Equals(imageMessageName, stepMessageName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrEmpty(imageEntityName) && 
+                        !string.Equals(imageEntityName, stepEntityName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var imageRegistration = ConvertImageAttributeToRegistration(imageAttr);
+                    if (imageRegistration != null)
+                    {
+                        // Add to appropriate collection based on image type
+                        if (imageRegistration.ImageType == ProcessingStepImageType.PreImage)
+                        {
+                            registration.PreImages.Add(imageRegistration);
+                        }
+                        else if (imageRegistration.ImageType == ProcessingStepImageType.PostImage)
+                        {
+                            registration.PostImages.Add(imageRegistration);
+                        }
+                        else if (imageRegistration.ImageType == ProcessingStepImageType.Both)
+                        {
+                            // For "Both", create separate pre and post image registrations
+                            var preImage = new PluginStepImageRegistration
+                            {
+                                Name = imageRegistration.Name,
+                                EntityAlias = imageRegistration.EntityAlias,
+                                ImageType = ProcessingStepImageType.PreImage,
+                                Attributes = new HashSet<string>(imageRegistration.Attributes, StringComparer.OrdinalIgnoreCase)
+                            };
+                            var postImage = new PluginStepImageRegistration
+                            {
+                                Name = imageRegistration.Name,
+                                EntityAlias = imageRegistration.EntityAlias,
+                                ImageType = ProcessingStepImageType.PostImage,
+                                Attributes = new HashSet<string>(imageRegistration.Attributes, StringComparer.OrdinalIgnoreCase)
+                            };
+                            registration.PreImages.Add(preImage);
+                            registration.PostImages.Add(postImage);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(
+                        $"Failed to convert image attribute: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Converts a CrmPluginRegistrationImage attribute to a PluginStepImageRegistration using reflection.
+        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+        /// 
+        /// SPKL CrmPluginRegistrationImage properties:
+        /// - ImageType: PreImage (0), PostImage (1), or Both (2)
+        /// - Name: The name/key for accessing the image in plugin code
+        /// - EntityAlias: The entity alias (optional, defaults to Name)
+        /// - Attributes: Comma-separated list of attributes to include in the image
+        /// </summary>
+        private static PluginStepImageRegistration ConvertImageAttributeToRegistration(object imageAttribute)
+        {
+            // Read image properties using reflection
+            var name = GetPropertyValue<string>(imageAttribute, "Name");
+            var entityAlias = GetPropertyValue<string>(imageAttribute, "EntityAlias");
+            var imageTypeValue = GetPropertyValue<object>(imageAttribute, "ImageType");
+            var attributes = GetPropertyValue<string>(imageAttribute, "Attributes");
+
+            // Name is required
+            if (string.IsNullOrEmpty(name))
+            {
+                return null;
+            }
+
+            var imageRegistration = new PluginStepImageRegistration
+            {
+                Name = name,
+                EntityAlias = entityAlias ?? name, // Default to name if not specified
+                Attributes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            };
+
+            // Convert image type
+            if (imageTypeValue != null)
+            {
+                imageRegistration.ImageType = ConvertToImageType(imageTypeValue);
+            }
+            else
+            {
+                // Default to PreImage if not specified
+                imageRegistration.ImageType = ProcessingStepImageType.PreImage;
+            }
+
+            // Parse attributes
+            if (!string.IsNullOrEmpty(attributes))
+            {
+                var attributeList = attributes
+                    .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(a => a.Trim())
+                    .Where(a => !string.IsNullOrEmpty(a));
+
+                imageRegistration.Attributes = new HashSet<string>(attributeList, StringComparer.OrdinalIgnoreCase);
+            }
+
+            return imageRegistration;
+        }
+
+        /// <summary>
+        /// Converts an image type value (string, enum, or int) to ProcessingStepImageType.
+        /// </summary>
+        private static ProcessingStepImageType ConvertToImageType(object imageTypeValue)
+        {
+            if (imageTypeValue == null)
+            {
+                return ProcessingStepImageType.PreImage; // Default
+            }
+
+            // Handle string values
+            if (imageTypeValue is string imageTypeString)
+            {
+                if (imageTypeString.Contains("Pre", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ProcessingStepImageType.PreImage;
+                }
+                if (imageTypeString.Contains("Post", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ProcessingStepImageType.PostImage;
+                }
+                if (imageTypeString.Contains("Both", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ProcessingStepImageType.Both;
+                }
+            }
+
+            // Handle numeric values
+            if (imageTypeValue is int imageTypeInt)
+            {
+                switch (imageTypeInt)
+                {
+                    case 0: return ProcessingStepImageType.PreImage;
+                    case 1: return ProcessingStepImageType.PostImage;
+                    case 2: return ProcessingStepImageType.Both;
+                }
+            }
+
+            // Handle enum values
+            var imageTypeName = imageTypeValue.ToString();
+            if (Enum.TryParse<ProcessingStepImageType>(imageTypeName, true, out var result))
+            {
+                return result;
+            }
+
+            // Default
+            return ProcessingStepImageType.PreImage;
         }
 
         /// <summary>
