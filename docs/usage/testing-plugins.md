@@ -12,6 +12,7 @@ Plugin testing is one of the primary use cases for Fake4Dataverse. This guide sh
 - [Testing Plugin Steps](#testing-plugin-steps)
 - [Async Plugins](#async-plugins)
 - [Plugin Pipeline Simulator](#plugin-pipeline-simulator) **NEW**
+- [Plugin Auto-Discovery from Assemblies](#plugin-auto-discovery-from-assemblies) **NEW**
 - [Best Practices](#best-practices)
 
 ## Quick Start
@@ -915,7 +916,7 @@ public void Should_UnregisterPlugin()
 
 | Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
 |---------|----------------|-------------------|
-| Plugin Discovery | Automatic from assemblies | Manual registration required |
+| Plugin Discovery | Automatic from assemblies | Via `DiscoverAndRegisterPlugins()` |
 | Pipeline Execution | Automatic during CRUD | Opt-in via `UsePipelineSimulation = true` |
 | Configuration | External config files | Inline in registration |
 | Manual Execution | Limited | Full control via `ExecutePipelineStage()` |
@@ -923,6 +924,203 @@ public void Should_UnregisterPlugin()
 | Execution Order | ✅ Yes | ✅ Yes |
 | Filtering Attributes | ✅ Yes | ✅ Yes |
 | Depth Tracking | ✅ Yes | ✅ Yes |
+| Auto-Discovery | ✅ Yes | ✅ Yes (SPKL + custom attributes) |
+
+## Plugin Auto-Discovery from Assemblies
+
+**New in v4.x (2025-10-11)**: Automatically discover and register plugins from assemblies.
+
+### Auto-Discovery with SPKL Attributes
+
+Fake4Dataverse can automatically scan assemblies and register plugins decorated with SPKL `CrmPluginRegistrationAttribute` (without requiring a reference to the SPKL package):
+
+```csharp
+[Fact]
+public void Should_AutoDiscover_PluginsWithSPKLAttributes()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Act - Discover and register all plugins from assembly
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(MyPlugin).Assembly });
+    
+    Console.WriteLine($"Discovered and registered {count} plugin steps");
+    
+    // Plugins automatically execute during CRUD operations
+    var service = context.GetOrganizationService();
+    var account = new Entity("account") { ["name"] = "Test" };
+    service.Create(account); // Registered plugins execute automatically
+}
+```
+
+**SPKL Attribute Example:**
+```csharp
+using SparkleXrm.Tasks;
+
+[CrmPluginRegistration(
+    "Create",                              // Message
+    "account",                             // Entity
+    StageEnum.PreOperation,                // Stage
+    ExecutionModeEnum.Synchronous,         // Mode
+    "",                                    // FilteringAttributes (empty = all)
+    "AccountCreatePlugin",                 // Name
+    1,                                     // ExecutionOrder/Rank
+    IsolationModeEnum.Sandbox)]
+public class AccountCreatePlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        // Plugin logic
+    }
+}
+```
+
+**How it works:**
+- Scans assemblies for classes implementing `IPlugin`
+- Uses reflection to read `CrmPluginRegistrationAttribute` properties (duck typing - no package reference required)
+- Automatically creates `PluginStepRegistration` objects
+- Registers all discovered steps in the pipeline simulator
+
+### Auto-Discovery with Custom Type Converter
+
+Provide a custom function to convert plugin types to registrations:
+
+```csharp
+[Fact]
+public void Should_UseCustomConverter_ForPluginDiscovery()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Custom converter function: Type -> IEnumerable<PluginStepRegistration>
+    Func<Type, IEnumerable<PluginStepRegistration>> converter = (pluginType) =>
+    {
+        // Custom logic to determine registrations based on plugin type
+        if (pluginType.Name.StartsWith("Account"))
+        {
+            return new[]
+            {
+                new PluginStepRegistration
+                {
+                    PluginType = pluginType,
+                    MessageName = "Create",
+                    PrimaryEntityName = "account",
+                    Stage = ProcessingStepStage.Preoperation,
+                    ExecutionOrder = 1
+                }
+            };
+        }
+        
+        if (pluginType.Name.StartsWith("Contact"))
+        {
+            return new[]
+            {
+                new PluginStepRegistration
+                {
+                    PluginType = pluginType,
+                    MessageName = "Update",
+                    PrimaryEntityName = "contact",
+                    Stage = ProcessingStepStage.Postoperation,
+                    ExecutionOrder = 1
+                }
+            };
+        }
+        
+        return Enumerable.Empty<PluginStepRegistration>();
+    };
+    
+    // Discover with custom converter
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(MyPlugin).Assembly },
+        converter);
+}
+```
+
+### Auto-Discovery with Custom Attribute Converter
+
+Use your own custom attributes for plugin registration:
+
+```csharp
+// Define custom attribute
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class MyPluginRegistrationAttribute : Attribute
+{
+    public string Message { get; set; }
+    public string Entity { get; set; }
+    public int Stage { get; set; }
+    
+    public MyPluginRegistrationAttribute(string message, string entity, int stage)
+    {
+        Message = message;
+        Entity = entity;
+        Stage = stage;
+    }
+}
+
+// Use custom attribute on plugins
+[MyPluginRegistration("Create", "account", 20)]
+[MyPluginRegistration("Update", "account", 20)]
+public class AccountPlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        // Plugin logic
+    }
+}
+
+// Discover with custom attribute converter
+[Fact]
+public void Should_UseCustomAttributeConverter()
+{
+    var context = XrmFakedContextFactory.New();
+    
+    Func<Type, Attribute, PluginStepRegistration> attributeConverter = 
+        (pluginType, attribute) =>
+    {
+        if (attribute is MyPluginRegistrationAttribute myAttr)
+        {
+            return new PluginStepRegistration
+            {
+                PluginType = pluginType,
+                MessageName = myAttr.Message,
+                PrimaryEntityName = myAttr.Entity,
+                Stage = (ProcessingStepStage)myAttr.Stage
+            };
+        }
+        return null;
+    };
+    
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPluginsWithAttributeConverter(
+        new[] { typeof(AccountPlugin).Assembly },
+        typeof(MyPluginRegistrationAttribute),
+        attributeConverter);
+}
+```
+
+### When to Use Auto-Discovery
+
+**Use auto-discovery when:**
+- You have many plugins with SPKL attributes
+- You want to test the complete plugin configuration from your assembly
+- You're migrating from a project that uses SPKL for deployment
+- You want to ensure test configuration matches deployment configuration
+
+**Use manual registration when:**
+- You need fine-grained control over specific plugin registrations
+- Testing individual plugin behavior in isolation
+- You don't use SPKL or custom attributes
+- You need to test edge cases or specific configurations
+
+### Differences from FakeXrmEasy v2
+
+| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| **Auto-Discovery** | Built-in assembly scanning | Explicit via `DiscoverAndRegisterPlugins()` |
+| **Attribute Support** | SPKL attributes | SPKL attributes (via reflection) + custom attributes |
+| **Custom Converters** | Limited | Full support for type and attribute converters |
+| **Configuration** | Config file based | Code-based with full flexibility |
 
 ## Best Practices
 
