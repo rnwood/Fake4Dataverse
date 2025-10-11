@@ -117,5 +117,17 @@ namespace Fake4Dataverse.Abstractions.Plugins
             IEnumerable<System.Reflection.Assembly> assemblies,
             Type attributeType,
             Func<Type, System.Attribute, PluginStepRegistration> attributeConverter);
+
+        /// <summary>
+        /// Gets the async job queue for managing asynchronous plugin executions.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/asynchronous-service
+        /// 
+        /// The async job queue simulates Dataverse's asyncoperation table, allowing test writers to:
+        /// - Monitor queued async operations
+        /// - Execute async operations on-demand
+        /// - Wait for async operations to complete
+        /// - Inspect async operation results and errors
+        /// </summary>
+        IAsyncJobQueue AsyncJobQueue { get; }
     }
 }

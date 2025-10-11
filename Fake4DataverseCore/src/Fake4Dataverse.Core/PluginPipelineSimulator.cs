@@ -23,6 +23,7 @@ namespace Fake4Dataverse
     {
         private readonly IXrmFakedContext _context;
         private readonly Dictionary<string, List<PluginStepRegistration>> _pluginSteps;
+        private readonly IAsyncJobQueue _asyncJobQueue;
         
         /// <summary>
         /// Maximum allowed pipeline execution depth before throwing an exception.
@@ -32,10 +33,17 @@ namespace Fake4Dataverse
         /// </summary>
         public int MaxDepth { get; set; } = 8;
 
+        /// <summary>
+        /// Gets the async job queue for managing asynchronous plugin executions.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/asynchronous-service
+        /// </summary>
+        public IAsyncJobQueue AsyncJobQueue => _asyncJobQueue;
+
         public PluginPipelineSimulator(IXrmFakedContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _pluginSteps = new Dictionary<string, List<PluginStepRegistration>>(StringComparer.OrdinalIgnoreCase);
+            _asyncJobQueue = new AsyncJobQueue(context);
         }
 
         /// <summary>
@@ -173,9 +181,22 @@ namespace Fake4Dataverse
                 // Async plugins are queued for later execution and don't run in the current transaction
                 if (step.Mode == ProcessingStepMode.Asynchronous)
                 {
-                    // In a real system, async plugins would be queued
-                    // For testing purposes, we can either skip them or execute them synchronously
-                    // For now, we'll execute them synchronously to allow testing async plugin logic
+                    // Queue async plugin for later execution
+                    // In Dataverse, async plugins are queued as asyncoperation records after the transaction completes
+                    var asyncOperation = AsyncOperation.CreateForPlugin(
+                        step,
+                        messageName,
+                        entityLogicalName,
+                        targetEntity,
+                        preEntityImages,
+                        postEntityImages,
+                        userId ?? _context.CallerProperties.CallerId.Id,
+                        organizationId ?? Guid.NewGuid(),
+                        Guid.NewGuid(), // correlationId
+                        currentDepth);
+
+                    _asyncJobQueue.Enqueue(asyncOperation);
+                    continue; // Skip immediate execution
                 }
 
                 // Create entity images based on step registration
