@@ -201,6 +201,12 @@ namespace Fake4Dataverse.CalculatedFields
                 return fieldRef;
             });
 
+            // Replace logical operators with NCalc equivalents
+            // Dataverse uses AND/OR keywords while NCalc uses &&/||
+            // Use word boundaries to match whole words only
+            result = Regex.Replace(result, @"\bAND\b", "&&", RegexOptions.IgnoreCase);
+            result = Regex.Replace(result, @"\bOR\b", "||", RegexOptions.IgnoreCase);
+
             return result;
         }
 
