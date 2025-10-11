@@ -834,11 +834,292 @@ public void Should_Execute_PreAndPost_Steps()
 
 ## Async Plugins
 
-Asynchronous plugins in Fake4Dataverse run synchronously (since there's no real async infrastructure).
+**New in v4.x (2025-10-11)**: Fake4Dataverse now includes comprehensive async plugin support with a simulated system job queue that mirrors Dataverse's asyncoperation entity.
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/asynchronous-service
+
+In Dataverse, asynchronous plugins (Mode = 1) are queued as asyncoperation records and execute after the main transaction completes. Fake4Dataverse simulates this behavior by:
+- Queueing async plugins instead of executing them immediately
+- Providing APIs to monitor, execute, and wait for async jobs
+- Tracking async operation status (Ready, InProgress, Succeeded, Failed)
+- Capturing plugin execution errors
+
+### Key Differences from FakeXrmEasy v2
+
+**Important**: The async plugin implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
+
+| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| **Async Plugin Execution** | Executes synchronously by default | Queued by default, execute on-demand |
+| **System Job Queue** | Not exposed | Fully exposed via `AsyncJobQueue` |
+| **Monitoring** | Limited | Full asyncoperation entity simulation |
+| **Control** | Automatic | Manual control with auto-execute option |
+
+### Basic Async Plugin Testing
+
+Register an async plugin and control when it executes:
+
+```csharp
+using Fake4Dataverse.Abstractions.Plugins;
+using Fake4Dataverse.Abstractions.Plugins.Enums;
+
+[Fact]
+public void Should_QueueAsyncPlugin_ForLaterExecution()
+{
+    // Arrange - Register an async plugin
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        Mode = ProcessingStepMode.Asynchronous, // Async mode
+        PluginType = typeof(MyAsyncPlugin)
+    });
+    
+    var account = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["name"] = "Test Account"
+    };
+    
+    // Act - Execute pipeline stage (plugin is queued, not executed)
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Postoperation,
+        account);
+    
+    // Assert - Plugin is queued
+    Assert.Equal(1, simulator.AsyncJobQueue.PendingCount);
+    Assert.Equal(0, simulator.AsyncJobQueue.CompletedCount);
+    
+    // Execute queued async operations
+    simulator.AsyncJobQueue.ExecuteAll();
+    
+    // Assert - Plugin has now executed
+    Assert.Equal(0, simulator.AsyncJobQueue.PendingCount);
+    Assert.Equal(1, simulator.AsyncJobQueue.CompletedCount);
+}
+```
+
+### Monitoring Async Operations
+
+The async job queue provides full visibility into queued and completed operations:
 
 ```csharp
 [Fact]
-public void Should_ExecuteAsync_Plugin_Synchronously()
+public void Should_MonitorAsyncOperations()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register async plugin
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        Mode = ProcessingStepMode.Asynchronous,
+        PluginType = typeof(MyAsyncPlugin)
+    });
+    
+    // Queue operation
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Postoperation,
+        new Entity("account") { Id = Guid.NewGuid(), ["name"] = "Test" });
+    
+    // Get pending operations
+    var pendingOps = simulator.AsyncJobQueue.GetPending();
+    Assert.Single(pendingOps);
+    
+    var asyncOp = pendingOps[0];
+    
+    // Check initial state
+    Assert.Equal(AsyncOperationState.Ready, asyncOp.StateCode);
+    Assert.Equal(AsyncOperationStatus.WaitingForResources, asyncOp.StatusCode);
+    Assert.Equal(AsyncOperationType.ExecutePlugin, asyncOp.OperationType);
+    Assert.Equal("Create", asyncOp.MessageName);
+    Assert.Equal("account", asyncOp.PrimaryEntityName);
+    
+    // Execute and check final state
+    simulator.AsyncJobQueue.Execute(asyncOp.AsyncOperationId);
+    
+    Assert.Equal(AsyncOperationState.Completed, asyncOp.StateCode);
+    Assert.Equal(AsyncOperationStatus.Succeeded, asyncOp.StatusCode);
+    Assert.True(asyncOp.IsSuccessful);
+    Assert.NotNull(asyncOp.StartedOn);
+    Assert.NotNull(asyncOp.CompletedOn);
+}
+```
+
+### Waiting for Async Operations
+
+Use `WaitForAll()` or `WaitFor()` to wait for async operations to complete:
+
+```csharp
+[Fact]
+public void Should_WaitForAsyncOperations_ToComplete()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register async plugin
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        Mode = ProcessingStepMode.Asynchronous,
+        PluginType = typeof(MyAsyncPlugin)
+    });
+    
+    // Queue multiple operations
+    for (int i = 0; i < 3; i++)
+    {
+        simulator.ExecutePipelineStage(
+            "Create",
+            "account",
+            ProcessingStepStage.Postoperation,
+            new Entity("account") { Id = Guid.NewGuid(), ["name"] = $"Test {i}" });
+    }
+    
+    // Wait for all to complete (with 30 second timeout)
+    bool completed = simulator.AsyncJobQueue.WaitForAll(timeoutMilliseconds: 30000);
+    
+    Assert.True(completed);
+    Assert.Equal(0, simulator.AsyncJobQueue.PendingCount);
+    Assert.Equal(3, simulator.AsyncJobQueue.CompletedCount);
+}
+```
+
+### Async/Await Support
+
+The async job queue also supports async/await patterns:
+
+```csharp
+[Fact]
+public async Task Should_ExecuteAsyncOperations_WithAwait()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register and queue async plugin
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        Mode = ProcessingStepMode.Asynchronous,
+        PluginType = typeof(MyAsyncPlugin)
+    });
+    
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Postoperation,
+        new Entity("account") { Id = Guid.NewGuid(), ["name"] = "Test" });
+    
+    // Execute asynchronously
+    int executedCount = await simulator.AsyncJobQueue.ExecuteAllAsync();
+    
+    Assert.Equal(1, executedCount);
+    
+    // Or wait asynchronously
+    bool completed = await simulator.AsyncJobQueue.WaitForAllAsync(timeoutMilliseconds: 30000);
+    Assert.True(completed);
+}
+```
+
+### Handling Failed Async Operations
+
+Failed async operations are captured with full error details:
+
+```csharp
+[Fact]
+public void Should_CaptureAsyncPluginErrors()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register a plugin that throws an exception
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        Mode = ProcessingStepMode.Asynchronous,
+        PluginType = typeof(FailingPlugin)
+    });
+    
+    // Queue and execute
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Postoperation,
+        new Entity("account") { Id = Guid.NewGuid(), ["name"] = "Test" });
+    
+    simulator.AsyncJobQueue.ExecuteAll();
+    
+    // Get failed operations
+    var failedOps = simulator.AsyncJobQueue.GetFailed();
+    Assert.Single(failedOps);
+    
+    var failedOp = failedOps[0];
+    Assert.Equal(AsyncOperationState.Completed, failedOp.StateCode);
+    Assert.Equal(AsyncOperationStatus.Failed, failedOp.StatusCode);
+    Assert.NotNull(failedOp.ErrorMessage);
+    Assert.NotNull(failedOp.Exception);
+}
+```
+
+### Auto-Execute Mode
+
+For simpler tests, enable auto-execute mode to run async plugins immediately:
+
+```csharp
+[Fact]
+public void Should_AutoExecuteAsyncPlugins_WhenEnabled()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Enable auto-execute for async plugins
+    simulator.AsyncJobQueue.AutoExecute = true;
+    
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        Mode = ProcessingStepMode.Asynchronous,
+        PluginType = typeof(MyAsyncPlugin)
+    });
+    
+    // Plugin executes immediately when queued
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Postoperation,
+        new Entity("account") { Id = Guid.NewGuid(), ["name"] = "Test" });
+    
+    // Already completed
+    Assert.Equal(0, simulator.AsyncJobQueue.PendingCount);
+    Assert.Equal(1, simulator.AsyncJobQueue.CompletedCount);
+}
+```
+
+### Legacy ExecutePluginWith for Async Plugins
+
+The legacy `ExecutePluginWith` method still works but executes async plugins synchronously:
+
+```csharp
+[Fact]
+public void Should_ExecuteAsync_Plugin_Synchronously_WithLegacyMethod()
 {
     var context = XrmFakedContextFactory.New();
     
@@ -847,6 +1128,7 @@ public void Should_ExecuteAsync_Plugin_Synchronously()
         ["name"] = "Test Account"
     };
     
+    // Using legacy method - executes synchronously even though Mode = 1
     context.ExecutePluginWith<MyAsyncPlugin>(
         pluginContext =>
         {
@@ -857,10 +1139,76 @@ public void Should_ExecuteAsync_Plugin_Synchronously()
         account
     );
     
-    // Plugin executes immediately in tests
-    // (not queued like in real Dataverse)
+    // Plugin executes immediately in tests (not queued)
 }
 ```
+
+### AsyncOperation Entity Structure
+
+Async operations can be converted to entities (simulating the asyncoperation entity in Dataverse):
+
+```csharp
+[Fact]
+public void Should_ConvertAsyncOperation_ToEntity()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Queue async plugin
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        Mode = ProcessingStepMode.Asynchronous,
+        PluginType = typeof(MyAsyncPlugin)
+    });
+    
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Postoperation,
+        new Entity("account") { Id = Guid.NewGuid(), ["name"] = "Test" });
+    
+    var asyncOp = simulator.AsyncJobQueue.GetPending().First();
+    
+    // Convert to entity (mirrors Dataverse asyncoperation entity)
+    Entity asyncOpEntity = asyncOp.ToEntity();
+    
+    Assert.Equal("asyncoperation", asyncOpEntity.LogicalName);
+    Assert.Equal(asyncOp.AsyncOperationId, asyncOpEntity.Id);
+    Assert.Equal((int)AsyncOperationType.ExecutePlugin, 
+        asyncOpEntity.GetAttributeValue<OptionSetValue>("operationtype").Value);
+    Assert.Equal((int)AsyncOperationState.Ready, 
+        asyncOpEntity.GetAttributeValue<OptionSetValue>("statecode").Value);
+}
+```
+
+### Cleanup
+
+Clear completed operations to clean up test state:
+
+```csharp
+[Fact]
+public void Should_CleanupCompletedOperations()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Queue and execute operations
+    // ... (registration and execution code)
+    
+    simulator.AsyncJobQueue.ExecuteAll();
+    
+    // Clear completed operations
+    int clearedCount = simulator.AsyncJobQueue.ClearCompleted();
+    
+    // Or clear all operations
+    simulator.AsyncJobQueue.Clear();
+}
+```
+
+
 
 ## Plugin Pipeline Simulator
 
@@ -872,7 +1220,7 @@ Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/
 
 **Important**: The plugin pipeline implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
 
-1. **Explicit Registration**: Plugins must be explicitly registered using `PluginPipelineSimulator.RegisterPluginStep()`. There is no automatic plugin discovery from assemblies.
+1. **Explicit Registration**: Plugins must be explicitly registered using `PluginPipelineSimulator.RegisterPluginStep()`. There is no automatic plugin discovery from assemblies (though you can use `DiscoverAndRegisterPlugins()` for SPKL-style auto-discovery).
 
 2. **Manual Pipeline Control**: You have full control over when pipeline stages execute. By default, plugins do NOT execute during CRUD operations.
 
@@ -880,7 +1228,7 @@ Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/
 
 4. **Direct Configuration**: Plugin configuration (secure/unsecure) is passed directly in the `PluginStepRegistration` object, not through external configuration files.
 
-5. **No Async Queuing**: Async plugins execute synchronously in tests (no queue simulation). This matches FakeXrmEasy v1 behavior.
+5. **Async Plugin Queuing**: Async plugins are queued in a simulated system job queue (unlike FakeXrmEasy v2 which executes them synchronously). See [Async Plugins](#async-plugins) section for details.
 
 ### Auto-Registration Mode (Recommended)
 

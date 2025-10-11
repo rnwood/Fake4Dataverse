@@ -661,11 +661,13 @@ Medium - Important for plugin testing
 
 ---
 
-## Issue 18: Enhance Async Plugin Support
+## Issue 18: Enhance Async Plugin Support ✅
 
 **Title:** Improve asynchronous plugin execution simulation
 
 **Labels:** `enhancement`, `plugins`, `medium-priority`
+
+**Status:** ✅ **COMPLETED** (2025-10-11)
 
 **Description:**
 
@@ -673,19 +675,40 @@ Medium - Important for plugin testing
 Improve support for testing asynchronous plugins.
 
 ### Current Status
-- ⚠️ Limited support in Fake4Dataverse
+- ✅ **Implemented in Fake4Dataverse v4.x** (2025-10-11)
 - ✅ Full support in FakeXrmEasy v2+
 - ⚠️ Limited in FakeXrmEasy v1
 
+### Implementation Details
+- Created `AsyncOperation` class mirroring Dataverse's asyncoperation entity
+- Implemented `AsyncJobQueue` for queuing and executing async plugins
+- Added `AsyncOperationState`, `AsyncOperationStatus`, and `AsyncOperationType` enums
+- Async plugins are now queued instead of executed synchronously
+- Full monitoring and control APIs for test writers
+- Support for waiting on async operations (sync and async/await)
+- Auto-execute mode for simpler test scenarios
+- Comprehensive test coverage (18 tests)
+
 ### Requirements
-- Support async plugin execution mode
-- Handle async service context
-- Simulate system job queue
-- Support async plugin debugging
-- Add comprehensive unit tests
+- ✅ Support async plugin execution mode
+- ✅ Handle async service context
+- ✅ Simulate system job queue
+- ✅ Support async plugin debugging
+- ✅ Add comprehensive unit tests
 
 ### Related Files
-- `Fake4DataverseCore/src/Fake4Dataverse.Core/XrmFakedContext.Plugins.cs`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Enums/AsyncOperationState.cs`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Enums/AsyncOperationStatus.cs`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Enums/AsyncOperationType.cs`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/AsyncOperation.cs`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/IAsyncJobQueue.cs`
+- `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/IPluginPipelineSimulator.cs`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/AsyncJobQueue.cs`
+- `Fake4DataverseCore/src/Fake4Dataverse.Core/PluginPipelineSimulator.cs`
+- `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/Pipeline/AsyncPluginExecutionTests.cs`
+
+### Documentation
+- [Testing Plugins - Async Plugins](./docs/usage/testing-plugins.md#async-plugins)
 
 ### Priority
 Medium - Important for complex workflows
@@ -1131,12 +1154,13 @@ This document contains 30 GitHub issues covering all major feature gaps identifi
 - ✅ Issue #5: Custom Actions Support (Implemented 2025-10-11)
 - ✅ Issue #16: Multiple Plugins Per Message Support (Implemented 2025-10-10)
 - ✅ Issue #17: Complete Pipeline Simulation (Implemented 2025-10-10)
+- ✅ Issue #18: Async Plugin Support (Implemented 2025-10-11)
 - ✅ Issue #19: Pre/Post Image Support (Implemented 2025-10-11)
 
 **Category Breakdown:**
 - Message Executors: 6 issues (2 completed ✅)
 - Query Support: 3 issues (2 completed ✅)
-- Plugin/Pipeline: 5 issues (4 completed ✅)
+- Plugin/Pipeline: 5 issues (5 completed ✅)
 - Field Types: 2 issues
 - Business Logic: 3 issues
 - Metadata: 4 issues
