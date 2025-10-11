@@ -145,8 +145,8 @@ The following table compares the features available across different versions of
 | **FetchXML** | ⚠️ Basic | ✅ Yes with aggregation | ✅ Full support |
 | **LINQ Queries** | ⚠️ Limited | ✅ Yes | ✅ Yes |
 | **Condition Operators** | ~40 operators | ✅ 60+ operators | ✅ 70+ operators |
-| **Hierarchical Queries (Above/Under)** | ❌ No | ❌ No | ✅ Yes |
-| **Fiscal Period Operators** | ⚠️ Basic (InFiscalYear) | ⚠️ Basic (InFiscalYear) | ✅ Full support |
+| **Hierarchical Queries (Above/Under)** | ❌ No | ✅ Yes | ✅ Yes |
+| **Fiscal Period Operators** | ⚠️ Basic (InFiscalYear) | ✅ Full support | ✅ Full support |
 | **Aggregation (Sum, Count, etc.)** | ⚠️ Limited | ✅ Yes | ✅ Yes |
 | **Joins (LinkEntity)** | ✅ Yes | ✅ Yes | ✅ Yes |
 
@@ -157,7 +157,7 @@ The following table compares the features available across different versions of
 | **Total Message Executors** | ~30-40 | ✅ 47+ | ✅ 100+ |
 | **Assign** | ✅ Yes | ✅ Yes | ✅ Yes |
 | **SetState** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Merge** | ⚠️ Limited | ❌ No | ✅ Yes |
+| **Merge** | ⚠️ Limited | ✅ Yes | ✅ Yes |
 | **GrantAccess/RevokeAccess** | ⚠️ Basic | ✅ Yes | ✅ Yes |
 | **WhoAmI** | ✅ Yes | ✅ Yes | ✅ Yes |
 | **RetrieveVersion** | ❌ No | ✅ Yes | ✅ Yes |
@@ -170,7 +170,7 @@ The following table compares the features available across different versions of
 | **BulkDelete** | ❌ No | ✅ Yes | ✅ Yes |
 | **AddToQueue/RemoveFromQueue** | ❌ No | ✅ Yes | ✅ Yes |
 | **Team Operations** | ⚠️ Limited | ✅ Yes | ✅ Yes |
-| **Custom API** | ❌ No | ❌ No | ✅ Yes |
+| **Custom API** | ❌ No | ✅ Yes | ✅ Yes |
 | **Custom Actions** | ⚠️ Limited | ❌ No | ✅ Yes |
 
 ### Plugin & Workflow Support
@@ -179,9 +179,9 @@ The following table compares the features available across different versions of
 |---------|---------------------|---------------------------|------------------------------|
 | **Plugin Execution** | ✅ Yes | ✅ Yes (Basic) | ✅ Full support |
 | **Plugin Context Simulation** | ✅ Yes | ✅ Yes | ✅ Yes |
-| **Multiple Plugins per Message** | ❌ No | ⚠️ Partial | ✅ Yes |
+| **Multiple Plugins per Message** | ❌ No | ✅ Yes | ✅ Yes |
 | **Pre/Post Images** | ⚠️ Basic | ⚠️ Basic | ✅ Full support |
-| **Pipeline Stages** | ⚠️ Basic | ⚠️ Basic | ✅ Full support |
+| **Pipeline Stages** | ⚠️ Basic | ✅ Full support | ✅ Full support |
 | **Workflow Activities** | ✅ Yes | ❌ Removed (SDK limitation) | ✅ Yes |
 | **Custom Workflow Activities** | ✅ Yes | ❌ Removed (SDK limitation) | ✅ Yes |
 | **Async Plugins** | ⚠️ Limited | ⚠️ Limited | ✅ Yes |
@@ -283,43 +283,37 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 
 #### High-Priority Missing Features:
 1. **Workflow/Custom Workflow Activities** - Removed due to SDK limitations
-2. **Hierarchical Query Operators** - Above, AboveOrEqual, Under, UnderOrEqual, ChildOf
-3. **Advanced Fiscal Period Operators** - InFiscalPeriod, LastFiscalPeriod, NextFiscalPeriod, etc.
-4. **Custom API Support** - Modern Dataverse Custom APIs not supported
-5. **Custom Actions** - Limited support for custom actions
-6. **Merge Request** - Entity merge operations not implemented
-7. **Calculated/Rollup Fields** - No simulation of calculated or rollup fields
-8. **Business Rules** - No business rule simulation
-9. **Duplicate Detection** - No duplicate detection simulation
-10. **Audit Log** - No audit log simulation
+2. **Custom Actions** - Limited support for custom actions
+3. **Calculated/Rollup Fields** - No simulation of calculated or rollup fields
+4. **Business Rules** - No business rule simulation
+5. **Duplicate Detection** - No duplicate detection simulation
+6. **Audit Log** - No audit log simulation
 
 #### Modern Dataverse Features Not Supported:
-11. **Virtual Entities** - No virtual entity support
-12. **Elastic Tables** - No elastic table support
-13. **Cloud Flows Integration** - No cloud flow simulation
-14. **Power Automate Testing** - No Power Automate integration testing
-15. **Connection References** - No connection reference support
-16. **Advanced Security Model** - Limited security role and privilege simulation
-17. **Concurrent Execution Testing** - No multi-threaded execution testing
-18. **Performance Profiling** - No built-in profiling tools
+7. **Virtual Entities** - No virtual entity support
+8. **Elastic Tables** - No elastic table support
+9. **Cloud Flows Integration** - No cloud flow simulation
+10. **Power Automate Testing** - No Power Automate integration testing
+11. **Connection References** - No connection reference support
+12. **Advanced Security Model** - Limited security role and privilege simulation
+13. **Concurrent Execution Testing** - No multi-threaded execution testing
+14. **Performance Profiling** - No built-in profiling tools
 
 #### Pipeline & Plugin Limitations:
-19. **Multiple Plugins per Message** - Limited support for multiple plugins
-20. **Complete Pipeline Simulation** - Pipeline stages not fully simulated
-21. **Async Plugin Support** - Limited async plugin testing
-22. **Complete Pre/Post Image Support** - Basic implementation only
+15. **Async Plugin Support** - Limited async plugin testing
+16. **Complete Pre/Post Image Support** - Basic implementation only
 
 #### Metadata Limitations:
-23. **Global OptionSets** - Partial support only
-24. **Publisher Metadata** - Not supported
-25. **Solution Metadata** - Not supported
-26. **Complete Metadata Operations** - Many RetrieveMetadata variants missing
+17. **Global OptionSets** - Partial support only
+18. **Publisher Metadata** - Not supported
+19. **Solution Metadata** - Not supported
+20. **Complete Metadata Operations** - Many RetrieveMetadata variants missing
 
 #### Additional Missing Message Executors (estimated 50+ messages):
-27. Various business-specific messages (Marketing, Service, Field Service specific)
-28. Advanced relationship messages
-29. Modern Dataverse-specific messages
-30. And many more organization requests added in recent Dynamics 365 versions
+21. Various business-specific messages (Marketing, Service, Field Service specific)
+22. Advanced relationship messages
+23. Modern Dataverse-specific messages
+24. And many more organization requests added in recent Dynamics 365 versions
 
 This honest assessment shows that while Fake4Dataverse provides a solid foundation with 47 message executors and core testing capabilities, it represents an early v2 development snapshot and lacks the maturity and feature completeness of the actively developed commercial FakeXrmEasy v2+. The commercial version has continued to add significant features, especially around modern Dataverse capabilities, advanced pipeline simulation, and quality-of-life improvements that benefit from ongoing commercial development and support.
 
