@@ -214,6 +214,11 @@ The framework supports Dynamics 365 / Dataverse v9 and later:
   - Include error scenarios and best practices
   - Add links to Microsoft documentation
   - Follow the pattern established in existing docs (see `docs/custom-api.md`, `docs/merge-request.md`, etc.)
+- **Update the README.md feature comparison table**: When implementing a feature that affects feature parity:
+  - Locate the feature in the "Feature Comparison: FakeXrmEasy v1 vs Fake4Dataverse vs FakeXrmEasy v2" section
+  - Update the Fake4Dataverse column from ❌ No or ⚠️ Partial to ✅ Yes (or ✅ Full support for detailed entries)
+  - Remove the feature from the "Key Gaps in Fake4Dataverse (This Fork)" section if it's listed there
+  - Ensure consistency between the feature comparison table and the tracking files
 - **Update feature parity tracking files**: When implementing a feature that addresses a parity issue, update:
   - `FEATURE_PARITY_ISSUES.md` - Mark the issue as completed with ✅ and update status
   - `QUICK_REFERENCE.md` - Mark the feature as completed in the priority lists
