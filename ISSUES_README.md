@@ -50,6 +50,8 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
 
 - **Medium Priority (11 issues)**: Important enhancements that improve testing coverage
   - ~~Advanced fiscal periods~~ ✅ (moved to completed)
+  - ~~Multiple plugins per message~~ ✅
+  - ~~Complete pipeline simulation~~ ✅
   - Plugin pipeline improvements
   - Metadata enhancements
   - Security simulation
@@ -83,7 +85,7 @@ If you prefer to create issues manually or selectively, refer to `FEATURE_PARITY
    - Focus: Essential features for most testing scenarios
 
 2. **Phase 2 - Enhanced Testing** (Medium Priority)
-   - Issues 3, 10-11, 16-20, 23-24, 27, 29
+   - Issues 3, 10-11, 16-20, 23-24, 27, 29 (Issues 16-17 completed ✅)
    - Focus: Improved test coverage and accuracy
 
 3. **Phase 3 - Advanced Features** (Low Priority)

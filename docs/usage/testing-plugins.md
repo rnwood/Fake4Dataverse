@@ -11,6 +11,9 @@ Plugin testing is one of the primary use cases for Fake4Dataverse. This guide sh
 - [Testing Plugin Images](#testing-plugin-images)
 - [Testing Plugin Steps](#testing-plugin-steps)
 - [Async Plugins](#async-plugins)
+- [Plugin Pipeline Simulator](#plugin-pipeline-simulator) **NEW**
+- [Plugin Auto-Discovery from Assemblies](#plugin-auto-discovery-from-assemblies) **NEW**
+- [Custom Action and Custom API Plugin Support](#custom-action-and-custom-api-plugin-support) **NEW**
 - [Best Practices](#best-practices)
 
 ## Quick Start
@@ -551,6 +554,835 @@ public void Should_ExecuteAsync_Plugin_Synchronously()
     // (not queued like in real Dataverse)
 }
 ```
+
+## Plugin Pipeline Simulator
+
+**New in v4.x (2025-10-10)**: Fake4Dataverse now includes comprehensive plugin pipeline simulation with support for multiple plugins per message/entity/stage combination.
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
+
+### Key Differences from FakeXrmEasy v2
+
+**Important**: The plugin pipeline implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
+
+1. **Explicit Registration**: Plugins must be explicitly registered using `PluginPipelineSimulator.RegisterPluginStep()`. There is no automatic plugin discovery from assemblies.
+
+2. **Manual Pipeline Control**: You have full control over when pipeline stages execute. By default, plugins do NOT execute during CRUD operations.
+
+3. **Opt-In Auto-Execution**: Enable `context.UsePipelineSimulation = true` to automatically execute registered plugins during Create/Update/Delete operations.
+
+4. **Direct Configuration**: Plugin configuration (secure/unsecure) is passed directly in the `PluginStepRegistration` object, not through external configuration files.
+
+5. **No Async Queuing**: Async plugins execute synchronously in tests (no queue simulation). This matches FakeXrmEasy v1 behavior.
+
+### Auto-Registration Mode (Recommended)
+
+Enable automatic plugin execution during CRUD operations by setting `UsePipelineSimulation = true`:
+
+```csharp
+[Fact]
+public void Should_AutoExecutePlugins_During_CrudOperations()
+{
+    // Arrange - Enable auto-execution
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true; // Enable auto-execution
+    
+    // Register plugins once
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(AccountNumberPlugin)
+    });
+    
+    var service = context.GetOrganizationService();
+    
+    // Act - Plugins automatically execute
+    var account = new Entity("account") { ["name"] = "Test Account" };
+    var id = service.Create(account); // AccountNumberPlugin executes automatically
+    
+    // Assert - Plugin effects are visible
+    var created = service.Retrieve("account", id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+    Assert.NotNull(created["accountnumber"]);
+}
+```
+
+**When to use auto-registration:**
+- Testing plugins as part of normal CRUD operations
+- Integration testing where plugins should behave like production
+- Testing plugin interactions and execution order
+- Most realistic plugin testing scenarios
+
+### Manual Pipeline Execution
+
+For fine-grained control, manually execute specific pipeline stages:
+
+```csharp
+[Fact]
+public void Should_ManuallyExecutePipelineStage()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    // Note: UsePipelineSimulation remains false (default)
+    
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(ValidationPlugin)
+    });
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // Act - Manually trigger specific pipeline stage
+    context.PluginPipelineSimulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Preoperation,
+        account);
+    
+    // Plugin executed only when explicitly called
+}
+```
+
+**When to use manual execution:**
+- Unit testing individual plugin behavior in isolation
+- Testing specific pipeline stages without full CRUD simulation
+- When you need precise control over execution timing
+- Testing plugin context properties
+
+### Multiple Plugins Per Message
+
+You can now register multiple plugins for the same message, entity, and stage. Plugins execute in order based on their `ExecutionOrder` (rank) property.
+
+```csharp
+using Fake4Dataverse.Abstractions.Plugins;
+using Fake4Dataverse.Abstractions.Plugins.Enums;
+
+[Fact]
+public void Should_Execute_MultiplePlugins_InOrder()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register Plugin 1 (executes first)
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 1,  // Lower numbers execute first
+        PluginType = typeof(ValidationPlugin)
+    });
+    
+    // Register Plugin 2 (executes second)
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 2,
+        PluginType = typeof(EnrichmentPlugin)
+    });
+    
+    // Register Plugin 3 (executes third)
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 3,
+        PluginType = typeof(AuditPlugin)
+    });
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // Act - Execute pipeline stage
+    simulator.ExecutePipelineStage(
+        "Create",
+        "account",
+        ProcessingStepStage.Preoperation,
+        account);
+    
+    // Assert - All plugins executed in order
+    // Each plugin can modify the entity for the next plugin
+}
+```
+
+### Filtering Attributes (Update Message)
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/register-plug-in#filtering-attributes
+
+Plugins on Update messages can specify filtering attributes. The plugin only executes if one of the specified attributes was modified.
+
+```csharp
+[Fact]
+public void Should_OnlyExecute_WhenFilteredAttributeModified()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Plugin only executes when 'name' or 'revenue' changes
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Update",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(MyPlugin),
+        FilteringAttributes = new HashSet<string> { "name", "revenue" }
+    });
+    
+    var account = new Entity("account") { Id = Guid.NewGuid() };
+    
+    // Act 1 - Update 'name' (plugin executes)
+    var modifiedAttributes = new HashSet<string> { "name" };
+    simulator.ExecutePipelineStage(
+        "Update", "account", ProcessingStepStage.Preoperation,
+        account, modifiedAttributes);
+    
+    // Act 2 - Update 'telephone' only (plugin does NOT execute)
+    modifiedAttributes = new HashSet<string> { "telephone" };
+    simulator.ExecutePipelineStage(
+        "Update", "account", ProcessingStepStage.Preoperation,
+        account, modifiedAttributes);
+}
+```
+
+### Plugin Configuration
+
+Plugins can receive configuration parameters (secure and unsecure).
+
+```csharp
+simulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "Create",
+    PrimaryEntityName = "account",
+    Stage = ProcessingStepStage.Preoperation,
+    PluginType = typeof(ConfigurablePlugin),
+    UnsecureConfiguration = "Setting1=Value1",
+    SecureConfiguration = "ApiKey=SecretKey123"
+});
+```
+
+The plugin constructor receives these parameters:
+
+```csharp
+public class ConfigurablePlugin : IPlugin
+{
+    private readonly string _unsecureConfig;
+    private readonly string _secureConfig;
+    
+    public ConfigurablePlugin(string unsecureConfig, string secureConfig)
+    {
+        _unsecureConfig = unsecureConfig;
+        _secureConfig = secureConfig;
+    }
+    
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        // Use configuration
+    }
+}
+```
+
+### Complete Pipeline Simulation
+
+Execute plugins through all pipeline stages:
+
+```csharp
+[Fact]
+public void Should_Execute_CompletePluginPipeline()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Register plugins for different stages
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Prevalidation,
+        ExecutionOrder = 1,
+        PluginType = typeof(PreValidationPlugin)
+    });
+    
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 1,
+        PluginType = typeof(PreOperationPlugin)
+    });
+    
+    simulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Postoperation,
+        ExecutionOrder = 1,
+        PluginType = typeof(PostOperationPlugin)
+    });
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // Act - Execute each pipeline stage
+    simulator.ExecutePipelineStage("Create", "account", 
+        ProcessingStepStage.Prevalidation, account);
+    
+    // Simulate main operation (Create)
+    account.Id = Guid.NewGuid();
+    context.Initialize(account);
+    
+    simulator.ExecutePipelineStage("Create", "account", 
+        ProcessingStepStage.Preoperation, account);
+    
+    simulator.ExecutePipelineStage("Create", "account", 
+        ProcessingStepStage.Postoperation, account);
+}
+```
+
+### Depth Tracking
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/best-practices/business-logic/avoid-recursive-loops
+
+The pipeline simulator tracks execution depth to prevent infinite loops. The default maximum depth is 8 (matching Dataverse).
+
+```csharp
+[Fact]
+public void Should_PreventInfiniteLoops()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    // Set max depth for testing
+    simulator.MaxDepth = 3;
+    
+    var account = new Entity("account") { ["name"] = "Test" };
+    
+    // This will throw if depth exceeds 3
+    var exception = Assert.Throws<InvalidPluginExecutionException>(() =>
+    {
+        simulator.ExecutePipelineStage(
+            "Create", "account", ProcessingStepStage.Preoperation,
+            account, currentDepth: 4);
+    });
+    
+    Assert.Contains("Maximum plugin execution depth", exception.Message);
+}
+```
+
+### Unregistering Plugins
+
+```csharp
+[Fact]
+public void Should_UnregisterPlugin()
+{
+    var context = XrmFakedContextFactory.New();
+    var simulator = context.PluginPipelineSimulator;
+    
+    var registration = new PluginStepRegistration
+    {
+        MessageName = "Create",
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(MyPlugin)
+    };
+    
+    simulator.RegisterPluginStep(registration);
+    
+    // Remove the registration
+    simulator.UnregisterPluginStep(registration);
+    
+    // Or clear all registrations
+    simulator.ClearAllPluginSteps();
+}
+```
+
+### Migration Notes
+
+**From FakeXrmEasy v2.x**: The plugin pipeline simulation in Fake4Dataverse may have different setup compared to commercial FakeXrmEasy v2+:
+
+1. **Explicit Registration**: Plugins must be explicitly registered via `PluginPipelineSimulator.RegisterPluginStep()` 
+2. **Direct Control**: You have full control over when pipeline stages execute
+3. **Configuration**: Plugin configuration is passed directly in the registration
+4. **Auto-Execution**: Enable `UsePipelineSimulation = true` for automatic plugin execution during CRUD operations (similar to v2 behavior)
+
+**Comparison Table:**
+
+| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| Plugin Discovery | Automatic from assemblies | Via `DiscoverAndRegisterPlugins()` |
+| Pipeline Execution | Automatic during CRUD | Opt-in via `UsePipelineSimulation = true` |
+| Configuration | External config files | Inline in registration |
+| Manual Execution | Limited | Full control via `ExecutePipelineStage()` |
+| Multiple Plugins | ✅ Yes | ✅ Yes |
+| Execution Order | ✅ Yes | ✅ Yes |
+| Filtering Attributes | ✅ Yes | ✅ Yes |
+| Depth Tracking | ✅ Yes | ✅ Yes |
+| Auto-Discovery | ✅ Yes | ✅ Yes (SPKL + custom attributes) |
+
+## Plugin Auto-Discovery from Assemblies
+
+**New in v4.x (2025-10-11)**: Automatically discover and register plugins from assemblies.
+
+### Auto-Discovery with SPKL Attributes
+
+Fake4Dataverse can automatically scan assemblies and register plugins decorated with SPKL `CrmPluginRegistrationAttribute` (without requiring a reference to the SPKL package):
+
+```csharp
+[Fact]
+public void Should_AutoDiscover_PluginsWithSPKLAttributes()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Act - Discover and register all plugins from assembly
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(MyPlugin).Assembly });
+    
+    Console.WriteLine($"Discovered and registered {count} plugin steps");
+    
+    // Plugins automatically execute during CRUD operations
+    var service = context.GetOrganizationService();
+    var account = new Entity("account") { ["name"] = "Test" };
+    service.Create(account); // Registered plugins execute automatically
+}
+```
+
+**SPKL Attribute Example:**
+```csharp
+using SparkleXrm.Tasks;
+
+[CrmPluginRegistration(
+    "Create",                              // Message
+    "account",                             // Entity
+    StageEnum.PreOperation,                // Stage
+    ExecutionModeEnum.Synchronous,         // Mode
+    "",                                    // FilteringAttributes (empty = all)
+    "AccountCreatePlugin",                 // Name
+    1,                                     // ExecutionOrder/Rank
+    IsolationModeEnum.Sandbox)]
+public class AccountCreatePlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        // Plugin logic
+    }
+}
+```
+
+**How it works:**
+- Scans assemblies for classes implementing `IPlugin`
+- Uses reflection to read `CrmPluginRegistrationAttribute` properties (duck typing - no package reference required)
+- Automatically creates `PluginStepRegistration` objects
+- Registers all discovered steps in the pipeline simulator
+
+### Auto-Discovery with Custom Type Converter
+
+Provide a custom function to convert plugin types to registrations:
+
+```csharp
+[Fact]
+public void Should_UseCustomConverter_ForPluginDiscovery()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Custom converter function: Type -> IEnumerable<PluginStepRegistration>
+    Func<Type, IEnumerable<PluginStepRegistration>> converter = (pluginType) =>
+    {
+        // Custom logic to determine registrations based on plugin type
+        if (pluginType.Name.StartsWith("Account"))
+        {
+            return new[]
+            {
+                new PluginStepRegistration
+                {
+                    PluginType = pluginType,
+                    MessageName = "Create",
+                    PrimaryEntityName = "account",
+                    Stage = ProcessingStepStage.Preoperation,
+                    ExecutionOrder = 1
+                }
+            };
+        }
+        
+        if (pluginType.Name.StartsWith("Contact"))
+        {
+            return new[]
+            {
+                new PluginStepRegistration
+                {
+                    PluginType = pluginType,
+                    MessageName = "Update",
+                    PrimaryEntityName = "contact",
+                    Stage = ProcessingStepStage.Postoperation,
+                    ExecutionOrder = 1
+                }
+            };
+        }
+        
+        return Enumerable.Empty<PluginStepRegistration>();
+    };
+    
+    // Discover with custom converter
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(MyPlugin).Assembly },
+        converter);
+}
+```
+
+### Auto-Discovery with Custom Attribute Converter
+
+Use your own custom attributes for plugin registration:
+
+```csharp
+// Define custom attribute
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+public class MyPluginRegistrationAttribute : Attribute
+{
+    public string Message { get; set; }
+    public string Entity { get; set; }
+    public int Stage { get; set; }
+    
+    public MyPluginRegistrationAttribute(string message, string entity, int stage)
+    {
+        Message = message;
+        Entity = entity;
+        Stage = stage;
+    }
+}
+
+// Use custom attribute on plugins
+[MyPluginRegistration("Create", "account", 20)]
+[MyPluginRegistration("Update", "account", 20)]
+public class AccountPlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        // Plugin logic
+    }
+}
+
+// Discover with custom attribute converter
+[Fact]
+public void Should_UseCustomAttributeConverter()
+{
+    var context = XrmFakedContextFactory.New();
+    
+    Func<Type, Attribute, PluginStepRegistration> attributeConverter = 
+        (pluginType, attribute) =>
+    {
+        if (attribute is MyPluginRegistrationAttribute myAttr)
+        {
+            return new PluginStepRegistration
+            {
+                PluginType = pluginType,
+                MessageName = myAttr.Message,
+                PrimaryEntityName = myAttr.Entity,
+                Stage = (ProcessingStepStage)myAttr.Stage
+            };
+        }
+        return null;
+    };
+    
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPluginsWithAttributeConverter(
+        new[] { typeof(AccountPlugin).Assembly },
+        typeof(MyPluginRegistrationAttribute),
+        attributeConverter);
+}
+```
+
+### When to Use Auto-Discovery
+
+**Use auto-discovery when:**
+- You have many plugins with SPKL attributes
+- You want to test the complete plugin configuration from your assembly
+- You're migrating from a project that uses SPKL for deployment
+- You want to ensure test configuration matches deployment configuration
+
+**Use manual registration when:**
+- You need fine-grained control over specific plugin registrations
+- Testing individual plugin behavior in isolation
+- You don't use SPKL or custom attributes
+- You need to test edge cases or specific configurations
+
+### Differences from FakeXrmEasy v2
+
+| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| **Auto-Discovery** | Built-in assembly scanning | Explicit via `DiscoverAndRegisterPlugins()` |
+| **Attribute Support** | SPKL attributes | SPKL attributes (via reflection) + custom attributes |
+| **Custom Converters** | Limited | Full support for type and attribute converters |
+| **Configuration** | Config file based | Code-based with full flexibility |
+
+## Custom Action and Custom API Plugin Support
+
+**New in v4.x (2025-10-11)**: Register and execute plugins for Custom Actions and Custom APIs.
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
+
+### Registering Plugins for Custom Actions
+
+Custom Actions and Custom APIs use custom message names that you define. Plugins can be registered for these messages just like standard CRUD messages:
+
+```csharp
+[Fact]
+public void Should_ExecutePlugin_ForCustomAction()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup custom API metadata
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_CalculateScore", // Custom action name
+        ["isenabled"] = true,
+        ["boundentitylogicalname"] = "account" // Entity-bound custom action
+    };
+    context.Initialize(customApi);
+
+    // Register plugin for custom action
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_CalculateScore", // Custom action message name
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(CalculateScorePlugin)
+    });
+
+    var service = context.GetOrganizationService();
+
+    // Act - Execute custom action
+    var request = new OrganizationRequest("new_CalculateScore");
+    request.Parameters["Target"] = new EntityReference("account", Guid.NewGuid());
+    request.Parameters["InputValue"] = 100;
+    
+    var response = service.Execute(request);
+
+    // Plugin executes automatically during custom action execution
+}
+```
+
+### Global Custom Actions
+
+For global (unbound) custom actions, use an empty string for `PrimaryEntityName`:
+
+```csharp
+[Fact]
+public void Should_ExecutePlugin_ForGlobalCustomAction()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup global custom API metadata
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_ProcessBatch",
+        ["isenabled"] = true
+        // No boundentitylogicalname = global custom action
+    };
+    context.Initialize(customApi);
+
+    // Register plugin for global custom action
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ProcessBatch",
+        PrimaryEntityName = string.Empty, // Global custom action
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(ProcessBatchPlugin)
+    });
+
+    var service = context.GetOrganizationService();
+
+    // Execute global custom action
+    var request = new OrganizationRequest("new_ProcessBatch");
+    request.Parameters["BatchSize"] = 100;
+    
+    service.Execute(request);
+}
+```
+
+### Multiple Plugins for Custom Actions
+
+Multiple plugins can be registered for the same custom action with different execution orders:
+
+```csharp
+[Fact]
+public void Should_ExecuteMultiplePlugins_ForCustomAction()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup custom API
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_ComplexOperation",
+        ["isenabled"] = true
+    };
+    context.Initialize(customApi);
+
+    // Register multiple plugins with execution order
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ComplexOperation",
+        PrimaryEntityName = string.Empty,
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 1, // Executes first
+        PluginType = typeof(ValidationPlugin)
+    });
+
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ComplexOperation",
+        PrimaryEntityName = string.Empty,
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 2, // Executes second
+        PluginType = typeof(TransformationPlugin)
+    });
+
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ComplexOperation",
+        PrimaryEntityName = string.Empty,
+        Stage = ProcessingStepStage.Postoperation,
+        ExecutionOrder = 1,
+        PluginType = typeof(NotificationPlugin)
+    });
+
+    var service = context.GetOrganizationService();
+    var request = new OrganizationRequest("new_ComplexOperation");
+    service.Execute(request);
+    
+    // Plugins execute in order: ValidationPlugin -> TransformationPlugin -> NotificationPlugin
+}
+```
+
+### Auto-Discovery for Custom Actions
+
+Custom action plugins can be auto-discovered using SPKL attributes:
+
+```csharp
+using SparkleXrm.Tasks;
+
+// Plugin with SPKL attribute for custom action
+[CrmPluginRegistration(
+    "new_CalculateScore",                  // Custom action message name
+    "account",                             // Entity (or empty for global)
+    StageEnum.PreOperation,
+    ExecutionModeEnum.Synchronous,
+    "",
+    "CalculateScorePlugin",
+    1,
+    IsolationModeEnum.Sandbox)]
+public class CalculateScorePlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+        
+        // Custom action logic
+        var inputValue = context.InputParameters.Contains("InputValue") 
+            ? (int)context.InputParameters["InputValue"] 
+            : 0;
+        
+        // Calculate and set output
+        context.OutputParameters["CalculatedScore"] = inputValue * 1.5;
+    }
+}
+
+// Test with auto-discovery
+[Fact]
+public void Should_AutoDiscoverCustomActionPlugins()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup custom API metadata
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_CalculateScore",
+        ["isenabled"] = true,
+        ["boundentitylogicalname"] = "account"
+    };
+    context.Initialize(customApi);
+
+    // Auto-discover and register plugins
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(CalculateScorePlugin).Assembly });
+
+    var service = context.GetOrganizationService();
+    var request = new OrganizationRequest("new_CalculateScore");
+    request.Parameters["Target"] = new EntityReference("account", Guid.NewGuid());
+    request.Parameters["InputValue"] = 100;
+    
+    service.Execute(request);
+    // Plugin executes automatically
+}
+```
+
+### Custom Action Pipeline Stages
+
+Custom actions support all three pipeline stages:
+
+```csharp
+// PreValidation - Outside transaction, validate inputs
+context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "new_CustomAction",
+    PrimaryEntityName = string.Empty,
+    Stage = ProcessingStepStage.Prevalidation,
+    PluginType = typeof(ValidationPlugin)
+});
+
+// PreOperation - Inside transaction, before main operation
+context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "new_CustomAction",
+    PrimaryEntityName = string.Empty,
+    Stage = ProcessingStepStage.Preoperation,
+    PluginType = typeof(PreProcessPlugin)
+});
+
+// PostOperation - Inside transaction (sync) or queued (async), after main operation
+context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "new_CustomAction",
+    PrimaryEntityName = string.Empty,
+    Stage = ProcessingStepStage.Postoperation,
+    PluginType = typeof(PostProcessPlugin)
+});
+```
+
+### Differences from FakeXrmEasy v2
+
+| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| **Custom Action Support** | ✅ Yes | ✅ Yes |
+| **Custom API Support** | ✅ Yes | ✅ Yes |
+| **Entity-Bound Actions** | ✅ Yes | ✅ Yes |
+| **Global Actions** | ✅ Yes | ✅ Yes |
+| **All Pipeline Stages** | ✅ Yes | ✅ Yes |
+| **Multiple Plugins** | ✅ Yes | ✅ Yes |
+| **Execution Order** | ✅ Yes | ✅ Yes |
+| **Auto-Discovery** | ✅ Yes | ✅ Yes (via SPKL attributes) |
+
+**Key differences:**
+- FakeXrmEasy v2+ may automatically discover custom action metadata from assemblies
+- Fake4Dataverse requires explicit custom API metadata setup via `customapi` entity
+- Both support full plugin pipeline simulation for custom actions/APIs
 
 ## Best Practices
 

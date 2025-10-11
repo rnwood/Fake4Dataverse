@@ -29,6 +29,11 @@ namespace Fake4Dataverse
         public IXrmFakedPluginContextProperties PluginContextProperties { get; set; }
 
         /// <summary>
+        /// Gets the plugin pipeline simulator for registering and executing plugins
+        /// </summary>
+        public IPluginPipelineSimulator PluginPipelineSimulator { get; private set; }
+
+        /// <summary>
         /// All proxy type assemblies available on mocked database.
         /// </summary>
         private List<Assembly> _proxyTypesAssemblies { get; set; }
@@ -128,6 +133,12 @@ namespace Fake4Dataverse
             InitializationLevel = EntityInitializationLevel.Default;
 
             _proxyTypesAssemblies = new List<Assembly>();
+
+            // Initialize plugin context properties for plugin execution
+            PluginContextProperties = new Fake4Dataverse.Plugins.XrmFakedPluginContextProperties(this);
+
+            // Initialize plugin pipeline simulator
+            PluginPipelineSimulator = new PluginPipelineSimulator(this);
 
             GetOrganizationService();
 

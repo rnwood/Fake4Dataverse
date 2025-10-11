@@ -108,9 +108,30 @@ namespace Fake4Dataverse
             if (Data.ContainsKey(e.LogicalName) &&
                 Data[e.LogicalName].ContainsKey(e.Id))
             {
+                // Track modified attributes for filtering
+                var modifiedAttributes = new HashSet<string>(e.Attributes.Keys, StringComparer.OrdinalIgnoreCase);
+                
                 if (this.UsePipelineSimulation)
                 {
-                    //ExecutePipelineStage("Update", ProcessingStepStage.Preoperation, ProcessingStepMode.Synchronous, e);
+                    // Execute PreValidation stage (outside transaction)
+                    PluginPipelineSimulator.ExecutePipelineStage(
+                        "Update",
+                        e.LogicalName,
+                        Abstractions.Plugins.Enums.ProcessingStepStage.Prevalidation,
+                        e,
+                        modifiedAttributes,
+                        userId: CallerProperties.CallerId.Id,
+                        organizationId: Guid.NewGuid());
+                    
+                    // Execute PreOperation stage (inside transaction)
+                    PluginPipelineSimulator.ExecutePipelineStage(
+                        "Update",
+                        e.LogicalName,
+                        Abstractions.Plugins.Enums.ProcessingStepStage.Preoperation,
+                        e,
+                        modifiedAttributes,
+                        userId: CallerProperties.CallerId.Id,
+                        organizationId: Guid.NewGuid());
                 }
 
                 var integrityOptions = GetProperty<IIntegrityOptions>();
@@ -145,10 +166,15 @@ namespace Fake4Dataverse
 
                 if (this.UsePipelineSimulation)
                 {
-                    //ExecutePipelineStage("Update", ProcessingStepStage.Postoperation, ProcessingStepMode.Synchronous, e);
-
-                    var clone = e.Clone(e.GetType());
-                    //ExecutePipelineStage("Update", ProcessingStepStage.Postoperation, ProcessingStepMode.Asynchronous, clone);
+                    // Execute PostOperation stage (inside transaction)
+                    PluginPipelineSimulator.ExecutePipelineStage(
+                        "Update",
+                        e.LogicalName,
+                        Abstractions.Plugins.Enums.ProcessingStepStage.Postoperation,
+                        e,
+                        modifiedAttributes,
+                        userId: CallerProperties.CallerId.Id,
+                        organizationId: Guid.NewGuid());
                 }
             }
             else
@@ -255,18 +281,43 @@ namespace Fake4Dataverse
             if (this.Data.ContainsKey(er.LogicalName) && this.Data[er.LogicalName] != null &&
                 this.Data[er.LogicalName].ContainsKey(er.Id))
             {
+                // Get the entity before deletion for plugin execution
+                var entityToDelete = this.Data[er.LogicalName][er.Id];
+                
                 if (this.UsePipelineSimulation)
                 {
-                    //ExecutePipelineStage("Delete", ProcessingStepStage.Preoperation, ProcessingStepMode.Synchronous, er);
+                    // Execute PreValidation stage (outside transaction)
+                    PluginPipelineSimulator.ExecutePipelineStage(
+                        "Delete",
+                        er.LogicalName,
+                        Abstractions.Plugins.Enums.ProcessingStepStage.Prevalidation,
+                        entityToDelete,
+                        userId: CallerProperties.CallerId.Id,
+                        organizationId: Guid.NewGuid());
+                    
+                    // Execute PreOperation stage (inside transaction)
+                    PluginPipelineSimulator.ExecutePipelineStage(
+                        "Delete",
+                        er.LogicalName,
+                        Abstractions.Plugins.Enums.ProcessingStepStage.Preoperation,
+                        entityToDelete,
+                        userId: CallerProperties.CallerId.Id,
+                        organizationId: Guid.NewGuid());
                 }
 
-                // Entity found => return only the subset of columns specified or all of them
+                // Entity found => delete it (Main Operation)
                 this.Data[er.LogicalName].Remove(er.Id);
 
                 if (this.UsePipelineSimulation)
                 {
-                    //ExecutePipelineStage("Delete", ProcessingStepStage.Postoperation, ProcessingStepMode.Synchronous, er);
-                    //ExecutePipelineStage("Delete", ProcessingStepStage.Postoperation, ProcessingStepMode.Asynchronous, er);
+                    // Execute PostOperation stage (inside transaction)
+                    PluginPipelineSimulator.ExecutePipelineStage(
+                        "Delete",
+                        er.LogicalName,
+                        Abstractions.Plugins.Enums.ProcessingStepStage.Postoperation,
+                        entityToDelete,
+                        userId: CallerProperties.CallerId.Id,
+                        organizationId: Guid.NewGuid());
                 }
             }
             else
@@ -408,16 +459,38 @@ namespace Fake4Dataverse
 
             if (usePluginPipeline)
             {
-                //ExecutePipelineStage("Create", ProcessingStepStage.Preoperation, ProcessingStepMode.Synchronous, e);
+                // Execute PreValidation stage (outside transaction)
+                PluginPipelineSimulator.ExecutePipelineStage(
+                    "Create",
+                    e.LogicalName,
+                    Abstractions.Plugins.Enums.ProcessingStepStage.Prevalidation,
+                    e,
+                    userId: CallerProperties.CallerId.Id,
+                    organizationId: Guid.NewGuid());
+                
+                // Execute PreOperation stage (inside transaction)
+                PluginPipelineSimulator.ExecutePipelineStage(
+                    "Create",
+                    e.LogicalName,
+                    Abstractions.Plugins.Enums.ProcessingStepStage.Preoperation,
+                    e,
+                    userId: CallerProperties.CallerId.Id,
+                    organizationId: Guid.NewGuid());
             }
 
-            // Store
+            // Store (Main Operation)
             AddEntity(clone ? e.Clone(e.GetType()) : e);
 
             if (usePluginPipeline)
             {
-                //ExecutePipelineStage("Create", ProcessingStepStage.Postoperation, ProcessingStepMode.Synchronous, e);
-                //ExecutePipelineStage("Create", ProcessingStepStage.Postoperation, ProcessingStepMode.Asynchronous, e);
+                // Execute PostOperation stage (inside transaction)
+                PluginPipelineSimulator.ExecutePipelineStage(
+                    "Create",
+                    e.LogicalName,
+                    Abstractions.Plugins.Enums.ProcessingStepStage.Postoperation,
+                    e,
+                    userId: CallerProperties.CallerId.Id,
+                    organizationId: Guid.NewGuid());
             }
         }
 
