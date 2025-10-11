@@ -75,7 +75,7 @@ This is a monorepo containing three main projects:
 ## Technology Stack
 
 - **Language**: C#
-- **Framework**: .NET Core 3.1 / .NET Framework (multi-targeting)
+- **Framework**: .NET Core 8.0 / .NET Framework (multi-targeting)
 - **Build System**: PowerShell scripts with dotnet CLI
 - **Test Framework**: xUnit
 - **CI/CD**: GitHub Actions
@@ -102,7 +102,7 @@ pwsh ./build.ps1
 ```
 
 #### Build Script Parameters
-- `targetFramework`: Specify target framework (default: "netcoreapp3.1", use "all" for all targets)
+- `targetFramework`: Specify target framework (default: "net8.0", use "all" for all targets)
 - `configuration`: Build configuration (e.g., "FAKE_XRM_EASY_9")
 
 ### Running Tests
