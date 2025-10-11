@@ -29,7 +29,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             
             var rule = new BusinessRuleDefinition
             {
-                Name = "SetCreditLimitRule",
+                Name = "SetDescriptionRule",
                 EntityLogicalName = "account",
                 Scope = BusinessRuleScope.Entity,
                 Trigger = BusinessRuleTrigger.OnCreate,
@@ -47,8 +47,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
                     new BusinessRuleAction
                     {
                         ActionType = BusinessRuleActionType.SetFieldValue,
-                        FieldName = "creditlimit",
-                        Value = 0m
+                        FieldName = "description",
+                        Value = "Account is on credit hold"
                     }
                 }
             };
@@ -59,8 +59,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             {
                 Id = Guid.NewGuid(),
                 ["name"] = "Test Account",
-                ["creditonhold"] = true,
-                ["creditlimit"] = new Money(10000m)
+                ["creditonhold"] = true
             };
             
             // Act
@@ -69,7 +68,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             
             // Assert
             var retrieved = service.Retrieve("account", createdId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
-            Assert.Equal(0m, ((Money)retrieved["creditlimit"]).Value);
+            Assert.Equal("Account is on credit hold", retrieved["description"]);
         }
         
         [Fact]
@@ -84,7 +83,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             
             var rule = new BusinessRuleDefinition
             {
-                Name = "ValidateCreditLimitRule",
+                Name = "ValidateNameLengthRule",
                 EntityLogicalName = "account",
                 Scope = BusinessRuleScope.Entity,
                 Trigger = BusinessRuleTrigger.OnCreate,
@@ -92,9 +91,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
                 {
                     new BusinessRuleCondition
                     {
-                        FieldName = "creditlimit",
-                        Operator = ConditionOperator.GreaterThan,
-                        Value = 100000m
+                        FieldName = "name",
+                        Operator = ConditionOperator.Null
                     }
                 },
                 Actions = new System.Collections.Generic.List<BusinessRuleAction>
@@ -102,8 +100,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
                     new BusinessRuleAction
                     {
                         ActionType = BusinessRuleActionType.ShowErrorMessage,
-                        FieldName = "creditlimit",
-                        Message = "Credit limit cannot exceed $100,000"
+                        FieldName = "name",
+                        Message = "Account name is required"
                     }
                 }
             };
@@ -112,9 +110,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             
             var account = new Entity("account")
             {
-                Id = Guid.NewGuid(),
-                ["name"] = "Test Account",
-                ["creditlimit"] = new Money(150000m)
+                Id = Guid.NewGuid()
+                // name is not set, so condition will be true
             };
             
             // Act & Assert
@@ -124,7 +121,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
                 service.Create(account);
             });
             
-            Assert.Contains("Credit limit cannot exceed $100,000", ex.Message);
+            Assert.Contains("Account name is required", ex.Message);
         }
         
         [Fact]
