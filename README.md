@@ -184,7 +184,7 @@ The following table compares the features available across different versions of
 | **Pipeline Stages** | ⚠️ Basic | ✅ Full support | ✅ Full support |
 | **Workflow Activities** | ✅ Yes | ❌ Removed (SDK limitation) | ✅ Yes |
 | **Custom Workflow Activities** | ✅ Yes | ❌ Removed (SDK limitation) | ✅ Yes |
-| **Async Plugins** | ⚠️ Limited | ⚠️ Limited | ✅ Yes |
+| **Async Plugins** | ✅ Yes | ⚠️ Limited | ✅ Yes |
 
 ### Metadata Support
 
@@ -300,8 +300,7 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 14. **Performance Profiling** - No built-in profiling tools
 
 #### Pipeline & Plugin Limitations:
-15. **Async Plugin Support** - Limited async plugin testing
-16. **Complete Pre/Post Image Support** - Basic implementation only
+15. **Complete Pre/Post Image Support** - Basic implementation only
 
 #### Metadata Limitations:
 17. **Global OptionSets** - Partial support only
