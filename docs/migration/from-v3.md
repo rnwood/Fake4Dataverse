@@ -202,6 +202,7 @@ Search your codebase for v3-specific features (see [Feature Availability](#featu
 ✅ Basic message executors
 ✅ Early-bound entities
 ✅ Caller properties
+✅ **Calculated Fields** (NEW in v4.0.0) - See [Calculated Fields Guide](../usage/calculated-fields.md)
 
 ### Features That May Differ
 
@@ -277,6 +278,37 @@ entityMetadata["primarynamefield"] = "name";
 
 context.Initialize(entityMetadata);
 ```
+
+### Calculated Fields (NEW in v4.0.0)
+
+**Fake4Dataverse v4.0.0+** now supports calculated fields simulation:
+
+```csharp
+using Fake4Dataverse.CalculatedFields;
+
+// Register calculated field
+var evaluator = context.CalculatedFieldEvaluator;
+var definition = new CalculatedFieldDefinition
+{
+    EntityLogicalName = "product",
+    AttributeLogicalName = "totalprice",
+    Formula = "[quantity] * [unitprice]",
+    ResultType = typeof(decimal)
+};
+evaluator.RegisterCalculatedField(definition);
+
+// Calculated fields are automatically evaluated on retrieve/update
+var product = service.Retrieve("product", productId, new ColumnSet(true));
+// totalprice is automatically calculated
+```
+
+**Key Differences from FakeXrmEasy v3.x:**
+- **Registration**: v4.x uses explicit `RegisterCalculatedField()` calls
+- **Formula Syntax**: Same as Dataverse (uses `[fieldname]` syntax)
+- **Supported Functions**: All Microsoft-documented functions (CONCAT, DIFFINDAYS, ADDDAYS, TRIMLEFT, TRIMRIGHT, etc.)
+- **Evaluation**: Automatic on retrieve and update operations
+
+See the [Calculated Fields Guide](../usage/calculated-fields.md) for complete documentation.
 
 ## Migration Checklist
 
