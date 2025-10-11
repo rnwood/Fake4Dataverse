@@ -13,6 +13,7 @@ Plugin testing is one of the primary use cases for Fake4Dataverse. This guide sh
 - [Async Plugins](#async-plugins)
 - [Plugin Pipeline Simulator](#plugin-pipeline-simulator) **NEW**
 - [Plugin Auto-Discovery from Assemblies](#plugin-auto-discovery-from-assemblies) **NEW**
+- [Custom Action and Custom API Plugin Support](#custom-action-and-custom-api-plugin-support) **NEW**
 - [Best Practices](#best-practices)
 
 ## Quick Start
@@ -1121,6 +1122,267 @@ public void Should_UseCustomAttributeConverter()
 | **Attribute Support** | SPKL attributes | SPKL attributes (via reflection) + custom attributes |
 | **Custom Converters** | Limited | Full support for type and attribute converters |
 | **Configuration** | Config file based | Code-based with full flexibility |
+
+## Custom Action and Custom API Plugin Support
+
+**New in v4.x (2025-10-11)**: Register and execute plugins for Custom Actions and Custom APIs.
+
+Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
+
+### Registering Plugins for Custom Actions
+
+Custom Actions and Custom APIs use custom message names that you define. Plugins can be registered for these messages just like standard CRUD messages:
+
+```csharp
+[Fact]
+public void Should_ExecutePlugin_ForCustomAction()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup custom API metadata
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_CalculateScore", // Custom action name
+        ["isenabled"] = true,
+        ["boundentitylogicalname"] = "account" // Entity-bound custom action
+    };
+    context.Initialize(customApi);
+
+    // Register plugin for custom action
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_CalculateScore", // Custom action message name
+        PrimaryEntityName = "account",
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(CalculateScorePlugin)
+    });
+
+    var service = context.GetOrganizationService();
+
+    // Act - Execute custom action
+    var request = new OrganizationRequest("new_CalculateScore");
+    request.Parameters["Target"] = new EntityReference("account", Guid.NewGuid());
+    request.Parameters["InputValue"] = 100;
+    
+    var response = service.Execute(request);
+
+    // Plugin executes automatically during custom action execution
+}
+```
+
+### Global Custom Actions
+
+For global (unbound) custom actions, use an empty string for `PrimaryEntityName`:
+
+```csharp
+[Fact]
+public void Should_ExecutePlugin_ForGlobalCustomAction()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup global custom API metadata
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_ProcessBatch",
+        ["isenabled"] = true
+        // No boundentitylogicalname = global custom action
+    };
+    context.Initialize(customApi);
+
+    // Register plugin for global custom action
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ProcessBatch",
+        PrimaryEntityName = string.Empty, // Global custom action
+        Stage = ProcessingStepStage.Preoperation,
+        PluginType = typeof(ProcessBatchPlugin)
+    });
+
+    var service = context.GetOrganizationService();
+
+    // Execute global custom action
+    var request = new OrganizationRequest("new_ProcessBatch");
+    request.Parameters["BatchSize"] = 100;
+    
+    service.Execute(request);
+}
+```
+
+### Multiple Plugins for Custom Actions
+
+Multiple plugins can be registered for the same custom action with different execution orders:
+
+```csharp
+[Fact]
+public void Should_ExecuteMultiplePlugins_ForCustomAction()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup custom API
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_ComplexOperation",
+        ["isenabled"] = true
+    };
+    context.Initialize(customApi);
+
+    // Register multiple plugins with execution order
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ComplexOperation",
+        PrimaryEntityName = string.Empty,
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 1, // Executes first
+        PluginType = typeof(ValidationPlugin)
+    });
+
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ComplexOperation",
+        PrimaryEntityName = string.Empty,
+        Stage = ProcessingStepStage.Preoperation,
+        ExecutionOrder = 2, // Executes second
+        PluginType = typeof(TransformationPlugin)
+    });
+
+    context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+    {
+        MessageName = "new_ComplexOperation",
+        PrimaryEntityName = string.Empty,
+        Stage = ProcessingStepStage.Postoperation,
+        ExecutionOrder = 1,
+        PluginType = typeof(NotificationPlugin)
+    });
+
+    var service = context.GetOrganizationService();
+    var request = new OrganizationRequest("new_ComplexOperation");
+    service.Execute(request);
+    
+    // Plugins execute in order: ValidationPlugin -> TransformationPlugin -> NotificationPlugin
+}
+```
+
+### Auto-Discovery for Custom Actions
+
+Custom action plugins can be auto-discovered using SPKL attributes:
+
+```csharp
+using SparkleXrm.Tasks;
+
+// Plugin with SPKL attribute for custom action
+[CrmPluginRegistration(
+    "new_CalculateScore",                  // Custom action message name
+    "account",                             // Entity (or empty for global)
+    StageEnum.PreOperation,
+    ExecutionModeEnum.Synchronous,
+    "",
+    "CalculateScorePlugin",
+    1,
+    IsolationModeEnum.Sandbox)]
+public class CalculateScorePlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+        
+        // Custom action logic
+        var inputValue = context.InputParameters.Contains("InputValue") 
+            ? (int)context.InputParameters["InputValue"] 
+            : 0;
+        
+        // Calculate and set output
+        context.OutputParameters["CalculatedScore"] = inputValue * 1.5;
+    }
+}
+
+// Test with auto-discovery
+[Fact]
+public void Should_AutoDiscoverCustomActionPlugins()
+{
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+
+    // Setup custom API metadata
+    var customApi = new Entity("customapi")
+    {
+        Id = Guid.NewGuid(),
+        ["uniquename"] = "new_CalculateScore",
+        ["isenabled"] = true,
+        ["boundentitylogicalname"] = "account"
+    };
+    context.Initialize(customApi);
+
+    // Auto-discover and register plugins
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(CalculateScorePlugin).Assembly });
+
+    var service = context.GetOrganizationService();
+    var request = new OrganizationRequest("new_CalculateScore");
+    request.Parameters["Target"] = new EntityReference("account", Guid.NewGuid());
+    request.Parameters["InputValue"] = 100;
+    
+    service.Execute(request);
+    // Plugin executes automatically
+}
+```
+
+### Custom Action Pipeline Stages
+
+Custom actions support all three pipeline stages:
+
+```csharp
+// PreValidation - Outside transaction, validate inputs
+context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "new_CustomAction",
+    PrimaryEntityName = string.Empty,
+    Stage = ProcessingStepStage.Prevalidation,
+    PluginType = typeof(ValidationPlugin)
+});
+
+// PreOperation - Inside transaction, before main operation
+context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "new_CustomAction",
+    PrimaryEntityName = string.Empty,
+    Stage = ProcessingStepStage.Preoperation,
+    PluginType = typeof(PreProcessPlugin)
+});
+
+// PostOperation - Inside transaction (sync) or queued (async), after main operation
+context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
+{
+    MessageName = "new_CustomAction",
+    PrimaryEntityName = string.Empty,
+    Stage = ProcessingStepStage.Postoperation,
+    PluginType = typeof(PostProcessPlugin)
+});
+```
+
+### Differences from FakeXrmEasy v2
+
+| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| **Custom Action Support** | ✅ Yes | ✅ Yes |
+| **Custom API Support** | ✅ Yes | ✅ Yes |
+| **Entity-Bound Actions** | ✅ Yes | ✅ Yes |
+| **Global Actions** | ✅ Yes | ✅ Yes |
+| **All Pipeline Stages** | ✅ Yes | ✅ Yes |
+| **Multiple Plugins** | ✅ Yes | ✅ Yes |
+| **Execution Order** | ✅ Yes | ✅ Yes |
+| **Auto-Discovery** | ✅ Yes | ✅ Yes (via SPKL attributes) |
+
+**Key differences:**
+- FakeXrmEasy v2+ may automatically discover custom action metadata from assemblies
+- Fake4Dataverse requires explicit custom API metadata setup via `customapi` entity
+- Both support full plugin pipeline simulation for custom actions/APIs
 
 ## Best Practices
 
