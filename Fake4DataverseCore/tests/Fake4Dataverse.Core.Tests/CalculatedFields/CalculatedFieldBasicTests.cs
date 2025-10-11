@@ -1,4 +1,5 @@
 using Fake4Dataverse.CalculatedFields;
+using Fake4Dataverse.Middleware;
 using Microsoft.Xrm.Sdk;
 using System;
 using Xunit;
@@ -248,7 +249,7 @@ namespace Fake4Dataverse.Tests.CalculatedFields
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields
             // "Calculated columns are calculated in real-time when they are retrieved"
-            var context = new XrmFakedContext();
+            var context = (XrmFakedContext)XrmFakedContextFactory.New();
             var evaluator = context.CalculatedFieldEvaluator;
 
             var definition = new CalculatedFieldDefinition
