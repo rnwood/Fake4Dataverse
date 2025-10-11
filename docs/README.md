@@ -22,6 +22,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
+- [Calculated Fields](./usage/calculated-fields.md) - Simulating calculated field evaluation
 - [Custom API Support](./usage/custom-api.md) - Implementing Custom APIs
 - [Merge Request Operations](./usage/merge-request.md) - Merging entity records
 - [Hierarchical Queries](./usage/hierarchical-queries.md) - Querying hierarchical data
