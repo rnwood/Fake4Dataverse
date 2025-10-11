@@ -1,3 +1,4 @@
+using Fake4Dataverse.Abstractions.CloudFlows;
 using Fake4Dataverse.Abstractions.Plugins;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -82,6 +83,18 @@ namespace Fake4Dataverse.Abstractions
         /// Default is false.
         /// </summary>
         bool UsePipelineSimulation { get; set; }
+
+        /// <summary>
+        /// Gets the Cloud Flow simulator for registering and testing Cloud Flows (Power Automate flows).
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/overview-cloud
+        /// 
+        /// The Cloud Flow simulator enables testing of:
+        /// - Dataverse-triggered flows (Create, Update, Delete)
+        /// - Dataverse connector actions within flows
+        /// - Custom connector actions (via extensibility)
+        /// - Flow execution verification and assertion
+        /// </summary>
+        ICloudFlowSimulator CloudFlowSimulator { get; }
 
         void AddEntity(Entity e);
         void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false);
