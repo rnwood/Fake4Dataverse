@@ -178,14 +178,19 @@ namespace Fake4Dataverse
                     // For now, we'll execute them synchronously to allow testing async plugin logic
                 }
 
+                // Create entity images based on step registration
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
+                var stepPreImages = CreateEntityImages(step, messageName, targetEntity, preEntityImages, true);
+                var stepPostImages = CreateEntityImages(step, messageName, targetEntity, postEntityImages, false);
+
                 ExecutePlugin(
                     step,
                     messageName,
                     entityLogicalName,
                     stage,
                     targetEntity,
-                    preEntityImages,
-                    postEntityImages,
+                    stepPreImages,
+                    stepPostImages,
                     userId,
                     organizationId,
                     currentDepth);
@@ -280,6 +285,97 @@ namespace Fake4Dataverse
                     $"Plugin '{step.PluginType.FullName}' failed during execution: {ex.Message}",
                     ex);
             }
+        }
+
+        /// <summary>
+        /// Creates entity images based on the plugin step registration configuration.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
+        /// 
+        /// Entity images provide snapshots of entity data at different points in the pipeline.
+        /// Pre-images: Entity state before the core operation (available for Update, Delete)
+        /// Post-images: Entity state after the core operation (available for Create, Update)
+        /// 
+        /// Images can be filtered to include only specific attributes for performance and security.
+        /// Multiple images can be registered with different attribute filters.
+        /// </summary>
+        /// <param name="step">The plugin step registration containing image configurations</param>
+        /// <param name="messageName">The SDK message name (Create, Update, Delete, etc.)</param>
+        /// <param name="targetEntity">The target entity for the operation</param>
+        /// <param name="providedImages">Any images provided by the caller (can be null)</param>
+        /// <param name="isPreImage">True for pre-images, false for post-images</param>
+        /// <returns>EntityImageCollection containing the configured images</returns>
+        private EntityImageCollection CreateEntityImages(
+            PluginStepRegistration step,
+            string messageName,
+            Entity targetEntity,
+            EntityImageCollection providedImages,
+            bool isPreImage)
+        {
+            // Start with provided images or create new collection
+            var images = providedImages ?? new EntityImageCollection();
+
+            // If no target entity, return the provided images
+            if (targetEntity == null)
+            {
+                return images;
+            }
+
+            // Determine which image collection to use from the step registration
+            var imageRegistrations = isPreImage ? step.PreImages : step.PostImages;
+
+            // If no image registrations configured, return provided images
+            if (imageRegistrations == null || imageRegistrations.Count == 0)
+            {
+                return images;
+            }
+
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#when-to-use-pre-or-post-images
+            // For pre-images: Need to retrieve current state from context for Update/Delete
+            // For post-images: Use target entity for Create, retrieve updated state for Update
+            Entity sourceEntity = targetEntity;
+
+            // For pre-images on Update/Delete, we need to retrieve the current state from the context
+            if (isPreImage && (messageName.Equals("Update", StringComparison.OrdinalIgnoreCase) ||
+                               messageName.Equals("Delete", StringComparison.OrdinalIgnoreCase)))
+            {
+                // Try to retrieve the existing entity from the context
+                try
+                {
+                    var service = _context.GetOrganizationService();
+                    var existingEntity = service.Retrieve(targetEntity.LogicalName, targetEntity.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+                    sourceEntity = existingEntity;
+                }
+                catch
+                {
+                    // If retrieval fails, use the target entity as fallback
+                    sourceEntity = targetEntity;
+                }
+            }
+
+            // Create images based on registrations
+            foreach (var imageReg in imageRegistrations)
+            {
+                // Check if this image registration is valid for the current message
+                if (!imageReg.IsValidForMessage(messageName, isPreImage))
+                {
+                    continue;
+                }
+
+                // Create filtered image based on configured attributes
+                var filteredImage = imageReg.CreateFilteredImage(sourceEntity);
+
+                if (filteredImage != null)
+                {
+                    // Add image to collection using the configured name
+                    // If an image with this name already exists (from providedImages), it will be replaced
+                    var imageName = !string.IsNullOrEmpty(imageReg.Name) ? imageReg.Name : 
+                                    (!string.IsNullOrEmpty(imageReg.EntityAlias) ? imageReg.EntityAlias : "Image");
+                    
+                    images[imageName] = filteredImage;
+                }
+            }
+
+            return images;
         }
 
         /// <summary>

@@ -21,6 +21,15 @@ namespace Fake4Dataverse.Abstractions.Plugins
     public class PluginStepRegistration
     {
         /// <summary>
+        /// Initializes a new instance of the PluginStepRegistration class.
+        /// </summary>
+        public PluginStepRegistration()
+        {
+            PreImages = new List<PluginStepImageRegistration>();
+            PostImages = new List<PluginStepImageRegistration>();
+        }
+
+        /// <summary>
         /// Gets or sets the SDK message name (e.g., "Create", "Update", "Delete")
         /// </summary>
         public string MessageName { get; set; }
@@ -77,6 +86,26 @@ namespace Fake4Dataverse.Abstractions.Plugins
         /// Gets or sets the secure configuration data passed to the plugin constructor
         /// </summary>
         public string SecureConfiguration { get; set; }
+
+        /// <summary>
+        /// Gets or sets the collection of pre-entity image registrations for this plugin step.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
+        /// 
+        /// Pre-images provide a snapshot of the entity's state before the core operation.
+        /// Available for Update and Delete messages.
+        /// Multiple images can be registered with different attribute filters.
+        /// </summary>
+        public List<PluginStepImageRegistration> PreImages { get; set; }
+
+        /// <summary>
+        /// Gets or sets the collection of post-entity image registrations for this plugin step.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
+        /// 
+        /// Post-images provide a snapshot of the entity's state after the core operation.
+        /// Available for Create and Update messages.
+        /// Multiple images can be registered with different attribute filters.
+        /// </summary>
+        public List<PluginStepImageRegistration> PostImages { get; set; }
 
         /// <summary>
         /// Determines whether this plugin step should execute for the given entity and modified attributes.
