@@ -214,7 +214,7 @@ The following table compares the features available across different versions of
 | **Security Roles Simulation** | ⚠️ Basic | ⚠️ Basic | ✅ Full support |
 | **Business Units** | ⚠️ Limited | ⚠️ Limited | ✅ Full support |
 | **Calculated Fields** | ❌ No | ✅ Yes | ✅ Yes |
-| **Rollup Fields** | ❌ No | ✅ Yes | ✅ Yes |
+| **Rollup Fields** | ❌ No | ✅ Yes | ⚠️ Unknown¹ |
 | **Business Rules** | ❌ No | ❌ No | ✅ Yes |
 | **Duplicate Detection** | ❌ No | ❌ No | ✅ Yes |
 | **Audit Log** | ❌ No | ❌ No | ✅ Yes |
@@ -223,6 +223,8 @@ The following table compares the features available across different versions of
 | **Connection References** | ❌ No | ❌ No | ✅ Yes |
 | **Cloud Flows** | ❌ No | ❌ No | ✅ Yes |
 | **Power Automate Integration** | ❌ No | ❌ No | ✅ Yes |
+
+¹ FakeXrmEasy v2+ is a commercial product with documentation not publicly accessible. Feature availability cannot be independently verified.
 
 ### Testing & Quality Features
 

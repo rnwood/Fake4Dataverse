@@ -288,7 +288,7 @@ Add support for simulating rollup fields that aggregate related record data.
 
 ### Current Status
 - ✅ **Implemented in Fake4Dataverse v4.0.0**
-- ✅ Available in FakeXrmEasy v2+
+- ⚠️ FakeXrmEasy v2+ may have similar capabilities (commercial product, documentation not publicly accessible)
 - ❌ Not available in FakeXrmEasy v1
 
 ### Implementation Details
@@ -325,12 +325,12 @@ Add support for simulating rollup fields that aggregate related record data.
 - [Rollup Fields Usage Guide](docs/usage/rollup-fields.md) - Comprehensive 27KB+ documentation
 - [Microsoft: Define Rollup Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields) - Official reference
 
-### FakeXrmEasy v2+ Equivalent
-**Note**: FakeXrmEasy v2+ has rollup field support but implementation details are in their commercial codebase. Our implementation is based on verified Microsoft documentation and provides similar functionality with explicit evaluation methods and automatic refresh on related record changes.
+### Implementation Approach
+**Note**: This implementation is based entirely on Microsoft's official Dataverse documentation. FakeXrmEasy v2+ is a commercial product with documentation not publicly accessible, so direct comparisons cannot be made with certainty.
 
 **References**:
-- FakeXrmEasy v2+ rollup fields feature is documented as available but specific API documentation is in their commercial docs
-- Implementation approach differs: Fake4Dataverse uses explicit `RegisterRollupField()` and automatic refresh vs FakeXrmEasy v2+ metadata-based registration with automatic evaluation
+- Implementation based on [Microsoft: Define Rollup Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields)
+- Fake4Dataverse uses explicit `RegisterRollupField()` with code-based configuration and automatic refresh on related record changes
 
 ### Priority
 High - Common pattern for aggregating data

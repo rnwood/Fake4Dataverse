@@ -978,38 +978,26 @@ public void Rollup_Should_Match_Aggregate_Query()
 }
 ```
 
-## Key Differences from FakeXrmEasy v2
+## Key Differences from Other Testing Frameworks
 
-**Important**: The rollup field implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
+**Note**: Rollup field support varies across testing frameworks. The implementation in Fake4Dataverse is based on Microsoft's official Dataverse documentation and provides the following approach:
 
 ### Comparison Table
 
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| **Registration** | Metadata-based via `SetupRollupField()` | Code-based via `RegisterRollupField()` |
-| **Evaluation** | Automatic on entity retrieve | Manual via `EvaluateRollupFields()` or automatic on related record changes |
-| **Auto-refresh** | Automatic when related records change | ✅ **Automatic when related records change** |
-| **Hierarchical rollups** | Fully supported | Planned (placeholder exists) |
-| **Custom filters** | FetchXML filter expressions | Lambda expression predicates |
-| **State filters** | Part of FetchXML filter | Dedicated `StateFilter` property |
+| Feature | Fake4Dataverse v4 | Notes |
+|---------|-------------------|-------|
+| **Registration** | Code-based via `RegisterRollupField()` | Explicit registration with strongly-typed definitions |
+| **Evaluation** | Manual via `EvaluateRollupFields()` or automatic on related record changes | Flexible control over when rollup fields are calculated |
+| **Auto-refresh** | ✅ **Automatic when related records change** | Matches Dataverse behavior for Create/Update/Delete operations |
+| **Hierarchical rollups** | Planned (placeholder exists) | Future enhancement |
+| **Custom filters** | Lambda expression predicates | Type-safe C# predicates for flexible filtering |
+| **State filters** | Dedicated `StateFilter` property | Built-in support for Active/Inactive/All |
 
-### Setup Differences
-
-**FakeXrmEasy v2+:**
-```csharp
-// Metadata-based approach
-context.SetupRollupField("account", "totalrevenue", 
-    new RollupFieldMetadata {
-        SourceEntity = "opportunity",
-        SourceAttribute = "estimatedvalue",
-        Function = RollupFunction.Sum,
-        Filter = "<filter>...</filter>"  // FetchXML filter
-    });
-```
+### Setup Approach
 
 **Fake4Dataverse v4:**
 ```csharp
-// Code-based approach
+// Code-based approach with explicit registration
 var evaluator = context.RollupFieldEvaluator;
 evaluator.RegisterRollupField(new RollupFieldDefinition
 {
@@ -1021,8 +1009,10 @@ evaluator.RegisterRollupField(new RollupFieldDefinition
     Filter = entity => /* lambda expression */
 });
 
-// Must explicitly evaluate
+// Initial evaluation required
 evaluator.EvaluateRollupFields(account);
+
+// After initial evaluation, automatic refresh handles updates
 ```
 
 ## Supported Data Types
@@ -1058,4 +1048,4 @@ evaluator.EvaluateRollupFields(account);
 
 - [Microsoft: Define Rollup Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields)
 - [Microsoft: Types of Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/types-of-fields)
-- [Microsoft: CalculateRollupFieldRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.calculaterolluprequestfield)
+- [Microsoft: CalculateRollupFieldRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.calculaterollupfieldrequest)
