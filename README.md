@@ -73,12 +73,16 @@ We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releas
 - **[CRUD Operations](./docs/usage/crud-operations.md)** - Create, Read, Update, Delete operations
 - **[Querying Data](./docs/usage/querying-data.md)** - LINQ and FetchXML queries
 - **[Batch Operations](./docs/usage/batch-operations.md)** - ExecuteMultiple and Transactions
+- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
 
 ### Advanced Topics
 - **[XrmFakedContext](./docs/concepts/xrm-faked-context.md)** - Deep dive into the context
 - **[Middleware Architecture](./docs/concepts/middleware.md)** - Understanding the pipeline
 - **[Message Executors](./docs/messages/README.md)** - All supported Dataverse messages
 - **[Custom Executors](./docs/api/custom-executors.md)** - Creating your own executors
+- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
+- **[Expression Language](./docs/expression-language.md)** - Power Automate expression evaluation ✅ **NEW**
+- **[Known Gaps & Limitations](./docs/GAPS.md)** - Comprehensive limitations guide ✅ **NEW**
 
 ### Migration
 - **[From FakeXrmEasy v1.x](./docs/migration/from-v1.md)** - Migrate from v1.x
