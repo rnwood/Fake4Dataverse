@@ -121,7 +121,7 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
                 return false;
 
             var connectionName = triggerDef.Inputs?.Host?.ConnectionName;
-            return connectionName?.Contains("commondataserviceforapps", StringComparison.OrdinalIgnoreCase) ?? false;
+            return connectionName?.IndexOf("commondataserviceforapps", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         /// <summary>
@@ -194,14 +194,19 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
         /// </summary>
         private string MapMessageCode(int messageCode)
         {
-            return messageCode switch
+            switch (messageCode)
             {
-                1 => "Create",
-                2 => "Update",
-                3 => "Delete",
-                4 => "CreateOrUpdate",
-                _ => throw new InvalidOperationException($"Unknown message code: {messageCode}")
-            };
+                case 1:
+                    return "Create";
+                case 2:
+                    return "Update";
+                case 3:
+                    return "Delete";
+                case 4:
+                    return "CreateOrUpdate";
+                default:
+                    throw new InvalidOperationException($"Unknown message code: {messageCode}");
+            }
         }
 
         /// <summary>
@@ -311,7 +316,7 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
                 return false;
 
             var connectionName = actionDef.Inputs?.Host?.ConnectionName;
-            return connectionName?.Contains("commondataserviceforapps", StringComparison.OrdinalIgnoreCase) ?? false;
+            return connectionName?.IndexOf("commondataserviceforapps", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         /// <summary>
@@ -416,17 +421,23 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
         /// </summary>
         private DataverseActionType MapOperationId(string operationId)
         {
-            return operationId switch
+            switch (operationId)
             {
-                "CreateRecord" => DataverseActionType.Create,
-                "UpdateRecord" => DataverseActionType.Update,
-                "DeleteRecord" => DataverseActionType.Delete,
-                "GetItem" => DataverseActionType.Retrieve,
-                "ListRecords" => DataverseActionType.ListRecords,
-                _ => throw new NotSupportedException(
-                    $"Operation ID '{operationId}' is not yet supported. " +
-                    "Currently supported: CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords.")
-            };
+                case "CreateRecord":
+                    return DataverseActionType.Create;
+                case "UpdateRecord":
+                    return DataverseActionType.Update;
+                case "DeleteRecord":
+                    return DataverseActionType.Delete;
+                case "GetItem":
+                    return DataverseActionType.Retrieve;
+                case "ListRecords":
+                    return DataverseActionType.ListRecords;
+                default:
+                    throw new NotSupportedException(
+                        $"Operation ID '{operationId}' is not yet supported. " +
+                        "Currently supported: CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords.");
+            }
         }
 
         /// <summary>
@@ -487,15 +498,24 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
         /// </summary>
         private object GetJsonElementValue(JsonElement jsonElement)
         {
-            return jsonElement.ValueKind switch
+            switch (jsonElement.ValueKind)
             {
-                JsonValueKind.String => jsonElement.GetString(),
-                JsonValueKind.Number => jsonElement.TryGetInt32(out var intVal) ? (object)intVal : jsonElement.GetDouble(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.Null => null,
-                _ => jsonElement.ToString()
-            };
+                case JsonValueKind.String:
+                    return jsonElement.GetString();
+                case JsonValueKind.Number:
+                    int intVal;
+                    if (jsonElement.TryGetInt32(out intVal))
+                        return intVal;
+                    return jsonElement.GetDouble();
+                case JsonValueKind.True:
+                    return true;
+                case JsonValueKind.False:
+                    return false;
+                case JsonValueKind.Null:
+                    return null;
+                default:
+                    return jsonElement.ToString();
+            }
         }
     }
 }

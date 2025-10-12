@@ -1,5 +1,5 @@
 param (
-    [string]$targetFramework = "netcoreapp3.1",
+    [string]$targetFramework = "all",
     [string]$configuration = "FAKE_XRM_EASY_9"
  )
 
@@ -35,14 +35,9 @@ if(!($LASTEXITCODE -eq 0)) {
     throw "Error during build step"
 }
 
-if($targetFramework -eq "all")
-{
-    dotnet test --configuration $configuration --no-restore --verbosity normal --collect:"XPlat code coverage" --settings tests/.runsettings --results-directory ./coverage
-}
-else 
-{
-    dotnet test --configuration $configuration --no-restore --framework $targetFramework --verbosity normal --collect:"XPlat code coverage" --settings tests/.runsettings --results-directory ./coverage
-}
+# For testing: always test net8.0 only since net462 can't run on Linux
+# When targetFramework is "all", we build both frameworks but only test net8.0
+dotnet test --configuration $configuration --no-restore --framework net8.0 --verbosity normal --collect:"XPlat code coverage" --settings tests/.runsettings --results-directory ./coverage
 
 if(!($LASTEXITCODE -eq 0)) {
     throw "Error during test step"
