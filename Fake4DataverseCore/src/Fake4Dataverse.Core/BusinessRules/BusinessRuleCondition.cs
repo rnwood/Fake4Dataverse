@@ -198,42 +198,144 @@ namespace Fake4Dataverse.BusinessRules
         
         private bool IsGreaterThan(object fieldValue, object compareValue)
         {
-            if (fieldValue is IComparable comparable && compareValue != null)
+            if (compareValue == null) return false;
+            
+            // Handle Money type specially
+            if (fieldValue is Money moneyField)
             {
-                var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
-                return comparable.CompareTo(convertedValue) > 0;
+                decimal compareDecimal = GetDecimalValue(compareValue);
+                return moneyField.Value > compareDecimal;
+            }
+            
+            if (fieldValue is IComparable comparable)
+            {
+                try
+                {
+                    var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
+                    return comparable.CompareTo(convertedValue) > 0;
+                }
+                catch
+                {
+                    // If conversion fails, try direct comparison
+                    return comparable.CompareTo(compareValue) > 0;
+                }
             }
             return false;
         }
         
         private bool IsGreaterThanOrEqual(object fieldValue, object compareValue)
         {
-            if (fieldValue is IComparable comparable && compareValue != null)
+            if (compareValue == null) return false;
+            
+            // Handle Money type specially
+            if (fieldValue is Money moneyField)
             {
-                var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
-                return comparable.CompareTo(convertedValue) >= 0;
+                decimal compareDecimal = GetDecimalValue(compareValue);
+                return moneyField.Value >= compareDecimal;
+            }
+            
+            if (fieldValue is IComparable comparable)
+            {
+                try
+                {
+                    var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
+                    return comparable.CompareTo(convertedValue) >= 0;
+                }
+                catch
+                {
+                    // If conversion fails, try direct comparison
+                    return comparable.CompareTo(compareValue) >= 0;
+                }
             }
             return false;
         }
         
         private bool IsLessThan(object fieldValue, object compareValue)
         {
-            if (fieldValue is IComparable comparable && compareValue != null)
+            if (compareValue == null) return false;
+            
+            // Handle Money type specially
+            if (fieldValue is Money moneyField)
             {
-                var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
-                return comparable.CompareTo(convertedValue) < 0;
+                decimal compareDecimal = GetDecimalValue(compareValue);
+                return moneyField.Value < compareDecimal;
+            }
+            
+            if (fieldValue is IComparable comparable)
+            {
+                try
+                {
+                    var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
+                    return comparable.CompareTo(convertedValue) < 0;
+                }
+                catch
+                {
+                    // If conversion fails, try direct comparison
+                    return comparable.CompareTo(compareValue) < 0;
+                }
             }
             return false;
         }
         
         private bool IsLessThanOrEqual(object fieldValue, object compareValue)
         {
-            if (fieldValue is IComparable comparable && compareValue != null)
+            if (compareValue == null) return false;
+            
+            // Handle Money type specially
+            if (fieldValue is Money moneyField)
             {
-                var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
-                return comparable.CompareTo(convertedValue) <= 0;
+                decimal compareDecimal = GetDecimalValue(compareValue);
+                return moneyField.Value <= compareDecimal;
+            }
+            
+            if (fieldValue is IComparable comparable)
+            {
+                try
+                {
+                    var convertedValue = Convert.ChangeType(compareValue, fieldValue.GetType());
+                    return comparable.CompareTo(convertedValue) <= 0;
+                }
+                catch
+                {
+                    // If conversion fails, try direct comparison
+                    return comparable.CompareTo(compareValue) <= 0;
+                }
             }
             return false;
+        }
+        
+        /// <summary>
+        /// Helper method to extract decimal value from various types (Money, decimal, int, etc.)
+        /// </summary>
+        private decimal GetDecimalValue(object value)
+        {
+            if (value is Money money)
+            {
+                return money.Value;
+            }
+            if (value is decimal dec)
+            {
+                return dec;
+            }
+            if (value is int intVal)
+            {
+                return intVal;
+            }
+            if (value is long longVal)
+            {
+                return longVal;
+            }
+            if (value is double doubleVal)
+            {
+                return (decimal)doubleVal;
+            }
+            if (value is float floatVal)
+            {
+                return (decimal)floatVal;
+            }
+            
+            // Try to convert as last resort
+            return Convert.ToDecimal(value);
         }
         
         private bool ContainsCheck(object fieldValue, object compareValue, ConditionOperator op)

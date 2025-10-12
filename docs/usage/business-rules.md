@@ -539,15 +539,17 @@ Business rules work with all standard Dataverse field types:
 
 ## Key Differences from FakeXrmEasy v2
 
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| **Context Setup** | `new XrmRealContext()` or similar | Must use `XrmFakedContextFactory.New()` |
-| **Accessing Executor** | Direct property access | Requires casting: `(XrmFakedContext)context` |
-| **Rule Registration** | Built-in rule definition | Manual `BusinessRuleDefinition` objects |
-| **Scope Support** | Full scope support | Entity (server-side) scope only |
-| **Client-Side Rules** | Fully simulated | Tracked but not enforced |
+**Note**: Based on research as of October 2025, business rules support in FakeXrmEasy v2+ could not be verified through public documentation or repositories. The table below compares to hypothetical FakeXrmEasy v2 implementation if it exists in their commercial version.
 
-**Migration Tip**: When migrating from FakeXrmEasy v2, update context creation to use the factory and cast when accessing `BusinessRuleExecutor`.
+| Feature | FakeXrmEasy v2+ (if available) | Fake4Dataverse v4 |
+|---------|----------------|-------------------|
+| **Context Setup** | Potentially `new XrmRealContext()` or similar | Must use `XrmFakedContextFactory.New()` |
+| **Accessing Executor** | Potentially direct property access | Requires casting: `(XrmFakedContext)context` |
+| **Rule Registration** | Unknown - potentially metadata-based | Manual `BusinessRuleDefinition` objects |
+| **Scope Support** | Unknown | Entity (server-side) scope only |
+| **Client-Side Rules** | Unknown | Tracked but not enforced |
+
+**Important**: Fake4Dataverse's business rules implementation is based on Microsoft's official documentation and provides comprehensive simulation of server-side business rule behavior. If you're using FakeXrmEasy v1, this is a new capability not available in that version.
 
 ## Advanced Topics
 

@@ -121,12 +121,17 @@ namespace Fake4Dataverse
                 {
                     var errorMessages = string.Join("; ", businessRuleResult.Errors.Select(err => 
                         string.IsNullOrEmpty(err.FieldName) ? err.Message : $"{err.FieldName}: {err.Message}"));
+                    var fullMessage = $"Business rule validation failed: {errorMessages}";
+                    
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        ErrorCode = (int)Fake4Dataverse.Abstractions.ErrorCodes.BusinessRuleEditorSupportsOnlyIfConditionBranch,
+                        Message = fullMessage
+                    };
+                    
                     throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
-                        new Microsoft.Xrm.Sdk.OrganizationServiceFault
-                        {
-                            ErrorCode = (int)Fake4Dataverse.Abstractions.ErrorCodes.BusinessRuleEditorSupportsOnlyIfConditionBranch,
-                            Message = $"Business rule validation failed: {errorMessages}"
-                        });
+                        fault,
+                        new System.ServiceModel.FaultReason(fullMessage));
                 }
                 
                 if (this.UsePipelineSimulation)
@@ -500,12 +505,17 @@ namespace Fake4Dataverse
             {
                 var errorMessages = string.Join("; ", businessRuleResult.Errors.Select(err => 
                     string.IsNullOrEmpty(err.FieldName) ? err.Message : $"{err.FieldName}: {err.Message}"));
+                var fullMessage = $"Business rule validation failed: {errorMessages}";
+                
+                var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                {
+                    ErrorCode = (int)Fake4Dataverse.Abstractions.ErrorCodes.BusinessRuleEditorSupportsOnlyIfConditionBranch,
+                    Message = fullMessage
+                };
+                
                 throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
-                    new Microsoft.Xrm.Sdk.OrganizationServiceFault
-                    {
-                        ErrorCode = (int)Fake4Dataverse.Abstractions.ErrorCodes.BusinessRuleEditorSupportsOnlyIfConditionBranch,
-                        Message = $"Business rule validation failed: {errorMessages}"
-                    });
+                    fault,
+                    new System.ServiceModel.FaultReason(fullMessage));
             }
 
             if (usePluginPipeline)

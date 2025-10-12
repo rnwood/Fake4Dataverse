@@ -321,7 +321,7 @@ Implement simulation of Dataverse business rules for field validation and logic.
 
 ### Current Status
 - ✅ **Implemented** in Fake4Dataverse (2025-10-12)
-- ✅ Available in FakeXrmEasy v2+
+- ⚠️ **Unverified** in FakeXrmEasy v2+ (no public documentation or code found as of October 2025)
 - ❌ Not available in FakeXrmEasy v1
 
 ### Requirements
@@ -361,13 +361,18 @@ Implement simulation of Dataverse business rules for field validation and logic.
 - [Microsoft: Create Business Rules](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-create-business-rule) - Official reference
 
 ### FakeXrmEasy v2+ Equivalent
-**Note**: FakeXrmEasy v2+ has business rules support. Fake4Dataverse implementation provides similar functionality with some key differences:
+**Note**: As of October 2025 research, business rules support in FakeXrmEasy v2+ could not be verified through:
+- Public GitHub repositories (DynamicsValue organization)
+- Public documentation sites
+- Code search in their repositories
 
-**Key Differences**:
-1. **Context Setup**: Must use `XrmFakedContextFactory.New()` for middleware integration
-2. **Accessing Executor**: Requires cast: `(XrmFakedContext)context.BusinessRuleExecutor`
-3. **Rule Registration**: Manual `BusinessRuleDefinition` objects
-4. **Scope Support**: Entity (server-side) scope only; client-side tracking but not enforced
+Fake4Dataverse's implementation is based entirely on Microsoft's official documentation and provides comprehensive server-side business rule simulation. This may be the first open-source implementation of business rules testing for Dataverse.
+
+**Potential Key Differences** (if FakeXrmEasy v2 has this feature):
+1. **Context Setup**: Fake4Dataverse requires `XrmFakedContextFactory.New()` for middleware integration
+2. **Accessing Executor**: Fake4Dataverse requires cast: `(XrmFakedContext)context.BusinessRuleExecutor`
+3. **Rule Registration**: Fake4Dataverse uses explicit `BusinessRuleDefinition` objects
+4. **Scope Support**: Fake4Dataverse supports Entity (server-side) scope only; client-side tracking but not enforced
 
 ### Priority
 High - Common low-code customization approach (COMPLETED)
