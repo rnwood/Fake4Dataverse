@@ -19,6 +19,10 @@ The following features were recently implemented and are now fully functional:
 - **Compose Actions** - Data transformation and composition in flows
 - **Apply to Each Loops** - Collection iteration with `item()` function support
 - **Nested Loop Support** - Stack-based item tracking for complex loop scenarios
+- **Condition Actions** - If/then/else branching in flows ✅ **NEW**
+- **Switch Actions** - Multi-case branching in flows ✅ **NEW**
+- **Parallel Branches** - Parallel execution paths in flows ✅ **NEW**
+- **Do Until Loops** - Loop with exit condition in flows ✅ **NEW**
 
 ## 🔴 High-Priority Missing Features
 
@@ -120,15 +124,16 @@ These are newer Dataverse features that are not yet available:
 - ✅ Expression language (80+ functions)
 - ✅ Compose actions
 - ✅ Apply to Each loops
+- ✅ Condition actions (if/then/else) ✅ **NEW**
+- ✅ Switch actions ✅ **NEW**
+- ✅ Parallel branches ✅ **NEW**
+- ✅ Do Until loops ✅ **NEW**
 
 **Not Supported:**
 - ❌ Approval actions
 - ❌ Connector actions (SharePoint, Office 365, etc.)
 - ❌ HTTP actions
-- ❌ Condition actions (if/then/else)
-- ❌ Switch actions
-- ❌ Parallel branches
-- ❌ Do Until loops
+- ❌ Scope actions (Try/Catch/Finally)
 
 **Workaround:**
 - Use extensibility to implement custom connector handlers for critical connectors
@@ -306,10 +311,9 @@ Despite these gaps, Fake4Dataverse excels at:
 Community contributions are welcome for:
 
 1. **High Priority:**
-   - Condition actions (if/then/else) for Cloud Flows
-   - Switch actions for Cloud Flows
    - HTTP connector for Cloud Flows
-   - Additional connector implementations
+   - Additional connector implementations (Office 365, SharePoint, Teams)
+   - Scope actions (Try/Catch/Finally) for error handling
 
 2. **Medium Priority:**
    - Business rule simulation

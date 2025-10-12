@@ -86,15 +86,22 @@ namespace Fake4Dataverse.CloudFlows
         /// <summary>
         /// Handle Create action
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/entity-operations-create
+        /// 
+        /// Attributes are converted from OData format (used by Power Automate/Web API) to SDK types.
+        /// This includes converting integers to OptionSetValue, decimals to Money, etc.
         /// </summary>
         private IDictionary<string, object> HandleCreate(DataverseAction action, IOrganizationService service)
         {
             var entity = new Entity(action.EntityLogicalName);
 
-            // Set attributes from action
+            // Set attributes from action - convert OData values to SDK types
             if (action.Attributes != null)
             {
-                foreach (var attr in action.Attributes)
+                var convertedAttributes = ODataValueConverter.ConvertODataAttributes(
+                    action.Attributes as Dictionary<string, object>, 
+                    action.EntityLogicalName);
+
+                foreach (var attr in convertedAttributes)
                 {
                     entity[attr.Key] = attr.Value;
                 }
@@ -142,6 +149,8 @@ namespace Fake4Dataverse.CloudFlows
         /// <summary>
         /// Handle Update action
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/entity-operations-update
+        /// 
+        /// Attributes are converted from OData format (used by Power Automate/Web API) to SDK types.
         /// </summary>
         private IDictionary<string, object> HandleUpdate(DataverseAction action, IOrganizationService service)
         {
@@ -153,10 +162,14 @@ namespace Fake4Dataverse.CloudFlows
                 Id = action.EntityId.Value
             };
 
-            // Set attributes from action
+            // Set attributes from action - convert OData values to SDK types
             if (action.Attributes != null)
             {
-                foreach (var attr in action.Attributes)
+                var convertedAttributes = ODataValueConverter.ConvertODataAttributes(
+                    action.Attributes as Dictionary<string, object>,
+                    action.EntityLogicalName);
+
+                foreach (var attr in convertedAttributes)
                 {
                     entity[attr.Key] = attr.Value;
                 }

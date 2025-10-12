@@ -94,10 +94,74 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
         public string Type { get; set; }
 
         [JsonPropertyName("inputs")]
-        public ActionInputs Inputs { get; set; }
+        public object Inputs { get; set; }  // Changed from ActionInputs to object to handle both structures
 
         [JsonPropertyName("runAfter")]
         public Dictionary<string, List<string>> RunAfter { get; set; }
+
+        // For control flow actions (If, Switch, Foreach, Until)
+        [JsonPropertyName("actions")]
+        public Dictionary<string, ActionDefinition> Actions { get; set; }
+
+        [JsonPropertyName("expression")]
+        public object Expression { get; set; }
+
+        // For If/Condition actions
+        [JsonPropertyName("else")]
+        public ElseBlock Else { get; set; }
+
+        // For Switch actions
+        [JsonPropertyName("cases")]
+        public Dictionary<string, CaseBlock> Cases { get; set; }
+
+        [JsonPropertyName("default")]
+        public DefaultBlock Default { get; set; }
+
+        // For Until actions
+        [JsonPropertyName("limit")]
+        public LimitDefinition Limit { get; set; }
+    }
+
+    /// <summary>
+    /// Else block for If/Condition actions
+    /// </summary>
+    internal class ElseBlock
+    {
+        [JsonPropertyName("actions")]
+        public Dictionary<string, ActionDefinition> Actions { get; set; }
+    }
+
+    /// <summary>
+    /// Case block for Switch actions
+    /// </summary>
+    internal class CaseBlock
+    {
+        [JsonPropertyName("case")]
+        public string Case { get; set; }
+
+        [JsonPropertyName("actions")]
+        public Dictionary<string, ActionDefinition> Actions { get; set; }
+    }
+
+    /// <summary>
+    /// Default block for Switch actions
+    /// </summary>
+    internal class DefaultBlock
+    {
+        [JsonPropertyName("actions")]
+        public Dictionary<string, ActionDefinition> Actions { get; set; }
+    }
+
+    /// <summary>
+    /// Limit definition for Until actions
+    /// </summary>
+    internal class LimitDefinition
+    {
+        [JsonPropertyName("count")]
+        public int Count { get; set; }
+
+        [JsonPropertyName("timeout")]
+        public string Timeout { get; set; }
     }
 
     /// <summary>
