@@ -4,6 +4,11 @@
 
 Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi Montaña. This fork continues the development of the testing framework under the MIT License, based on the last version of FakeXrmEasy that was available under that license.
 
+> [!WARNING]
+>
+> This fork is not ready for real use. I'm using it test some highly experimental ideas.
+> Watch this space.
+
 **Author:** Rob Wood  
 **Original Author:** Jordi Montaña (@jordimontana)  
 **License:** MIT (see LICENSE.txt files in each project folder)
