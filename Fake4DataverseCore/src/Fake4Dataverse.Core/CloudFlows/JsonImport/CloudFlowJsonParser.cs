@@ -289,20 +289,41 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
 
         /// <summary>
         /// Parses a single action from the JSON definition.
-        /// Currently supports Dataverse actions. Other action types will throw NotSupportedException.
+        /// Supports Dataverse actions, control flow actions (If, Switch, Foreach, Until), and data operations (Compose).
         /// </summary>
         private IFlowAction ParseAction(string actionName, ActionDefinition actionDef)
         {
-            // Check if this is a Dataverse action
-            if (IsDataverseAction(actionDef))
+            // Check action type and parse accordingly
+            switch (actionDef.Type?.ToLowerInvariant())
             {
-                return ParseDataverseAction(actionName, actionDef);
+                case "if":
+                    return ParseConditionAction(actionName, actionDef);
+                
+                case "switch":
+                    return ParseSwitchAction(actionName, actionDef);
+                
+                case "foreach":
+                    return ParseApplyToEachAction(actionName, actionDef);
+                
+                case "until":
+                    return ParseDoUntilAction(actionName, actionDef);
+                
+                case "compose":
+                    return ParseComposeAction(actionName, actionDef);
+                
+                case "openapiconnection":
+                    // Check if this is a Dataverse action
+                    if (IsDataverseAction(actionDef))
+                    {
+                        return ParseDataverseAction(actionName, actionDef);
+                    }
+                    break;
             }
 
             // For unsupported action types, throw an exception
             throw new NotSupportedException(
                 $"Action type '{actionDef.Type}' is not yet supported. " +
-                "Currently supported: Dataverse actions (OpenApiConnection with commondataserviceforapps). " +
+                "Currently supported: If, Switch, Foreach, Until, Compose, and Dataverse actions (OpenApiConnection with commondataserviceforapps). " +
                 "Use RegisterConnectorActionHandler() to handle custom connector actions in tests.");
         }
 
@@ -315,7 +336,21 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
             if (actionDef.Type != "OpenApiConnection")
                 return false;
 
-            var connectionName = actionDef.Inputs?.Host?.ConnectionName;
+            // Get ActionInputs from object
+            ActionInputs inputs = null;
+            if (actionDef.Inputs is JsonElement jsonElement)
+            {
+                try
+                {
+                    inputs = JsonSerializer.Deserialize<ActionInputs>(jsonElement.GetRawText());
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            var connectionName = inputs?.Host?.ConnectionName;
             return connectionName?.IndexOf("commondataserviceforapps", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
@@ -332,11 +367,18 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
         /// </summary>
         private DataverseAction ParseDataverseAction(string actionName, ActionDefinition actionDef)
         {
-            var operationId = actionDef.Inputs?.Host?.OperationId;
+            // Get ActionInputs from object
+            ActionInputs inputs = null;
+            if (actionDef.Inputs is JsonElement jsonElement)
+            {
+                inputs = JsonSerializer.Deserialize<ActionInputs>(jsonElement.GetRawText());
+            }
+            
+            var operationId = inputs?.Host?.OperationId;
             if (string.IsNullOrEmpty(operationId))
                 throw new InvalidOperationException($"Action '{actionName}' must have an operationId");
 
-            var parameters = actionDef.Inputs?.Parameters ?? new Dictionary<string, object>();
+            var parameters = inputs?.Parameters ?? new Dictionary<string, object>();
 
             var action = new DataverseAction
             {
@@ -374,9 +416,9 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
                     
                     // Extract the actual value, handling JsonElement
                     var attrValue = param.Value;
-                    if (attrValue is JsonElement jsonElement)
+                    if (attrValue is JsonElement attrJsonElement)
                     {
-                        attrValue = GetJsonElementValue(jsonElement);
+                        attrValue = GetJsonElementValue(attrJsonElement);
                     }
                     
                     attributes[attributeName] = attrValue;
@@ -516,6 +558,147 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
                 default:
                     return jsonElement.ToString();
             }
+        }
+
+        /// <summary>
+        /// Parses a Condition (If) action from the JSON definition.
+        /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-conditional-statement
+        /// 
+        /// If actions contain an expression, actions to run when true, and optional else actions.
+        /// </summary>
+        private ConditionAction ParseConditionAction(string actionName, ActionDefinition actionDef)
+        {
+            var condition = new ConditionAction
+            {
+                Name = actionName,
+                Expression = actionDef.Expression
+            };
+
+            // Parse true actions
+            if (actionDef.Actions != null && actionDef.Actions.Any())
+            {
+                condition.TrueActions = ParseActions(actionDef.Actions);
+            }
+
+            // Parse false actions (else block)
+            if (actionDef.Else?.Actions != null && actionDef.Else.Actions.Any())
+            {
+                condition.FalseActions = ParseActions(actionDef.Else.Actions);
+            }
+
+            return condition;
+        }
+
+        /// <summary>
+        /// Parses a Switch action from the JSON definition.
+        /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-switch-statement
+        /// 
+        /// Switch actions contain an expression, multiple cases with their actions, and a default case.
+        /// </summary>
+        private SwitchAction ParseSwitchAction(string actionName, ActionDefinition actionDef)
+        {
+            var switchAction = new SwitchAction
+            {
+                Name = actionName,
+                Expression = actionDef.Expression
+            };
+
+            // Parse cases
+            if (actionDef.Cases != null)
+            {
+                foreach (var caseEntry in actionDef.Cases)
+                {
+                    var caseName = caseEntry.Key;
+                    var caseBlock = caseEntry.Value;
+                    
+                    if (caseBlock.Actions != null && caseBlock.Actions.Any())
+                    {
+                        var caseActions = ParseActions(caseBlock.Actions);
+                        // Use the case value from the block, or fall back to the key
+                        var caseValue = caseBlock.Case ?? caseName;
+                        switchAction.Cases[caseValue] = caseActions;
+                    }
+                }
+            }
+
+            // Parse default case
+            if (actionDef.Default?.Actions != null && actionDef.Default.Actions.Any())
+            {
+                switchAction.DefaultActions = ParseActions(actionDef.Default.Actions);
+            }
+
+            return switchAction;
+        }
+
+        /// <summary>
+        /// Parses an Apply to Each (Foreach) action from the JSON definition.
+        /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-loops#foreach-loop
+        /// 
+        /// Foreach actions contain an expression that evaluates to a collection and actions to run for each item.
+        /// </summary>
+        private ApplyToEachAction ParseApplyToEachAction(string actionName, ActionDefinition actionDef)
+        {
+            var applyToEach = new ApplyToEachAction
+            {
+                Name = actionName,
+                Collection = actionDef.Expression
+            };
+
+            // Parse actions to execute for each item
+            if (actionDef.Actions != null && actionDef.Actions.Any())
+            {
+                applyToEach.Actions = ParseActions(actionDef.Actions);
+            }
+
+            return applyToEach;
+        }
+
+        /// <summary>
+        /// Parses a Do Until action from the JSON definition.
+        /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-loops#until-loop
+        /// 
+        /// Until actions contain an expression (exit condition), actions to repeat, and limits.
+        /// </summary>
+        private DoUntilAction ParseDoUntilAction(string actionName, ActionDefinition actionDef)
+        {
+            var doUntil = new DoUntilAction
+            {
+                Name = actionName,
+                Expression = actionDef.Expression
+            };
+
+            // Parse actions to execute in the loop
+            if (actionDef.Actions != null && actionDef.Actions.Any())
+            {
+                doUntil.Actions = ParseActions(actionDef.Actions);
+            }
+
+            // Parse limits
+            if (actionDef.Limit != null)
+            {
+                doUntil.MaxIterations = actionDef.Limit.Count > 0 ? actionDef.Limit.Count : 60;
+                doUntil.Timeout = actionDef.Limit.Timeout;
+            }
+
+            return doUntil;
+        }
+
+        /// <summary>
+        /// Parses a Compose action from the JSON definition.
+        /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-perform-data-operations#compose-action
+        /// 
+        /// Compose actions transform data using expressions and return the result.
+        /// The inputs can be a simple expression string or complex object.
+        /// </summary>
+        private ComposeAction ParseComposeAction(string actionName, ActionDefinition actionDef)
+        {
+            var compose = new ComposeAction
+            {
+                Name = actionName,
+                Inputs = actionDef.Inputs // Inputs can be any object (string, dict, array, etc.)
+            };
+
+            return compose;
         }
     }
 }

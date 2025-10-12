@@ -4,9 +4,9 @@
 
 Cloud Flows (Power Automate flows) are an increasingly common integration pattern for Dataverse applications. The Cloud Flow simulation feature in Fake4Dataverse enables developers to test Dataverse-triggered flows, verify flow execution, and validate flow actions/outputs in unit tests.
 
-**Status:** ✅ **Implemented** (October 12, 2025) - Phases 1-7 Complete
+**Status:** ✅ **Implemented** (October 12, 2025) - Phases 1-7 Complete, JSON Import Extended
 
-**Test Coverage:** 151 unit tests, all passing ✅ (includes control flow actions)
+**Test Coverage:** 157 unit tests, all passing ✅ (includes control flow actions and JSON import)
 
 ## Microsoft Documentation
 
@@ -225,13 +225,15 @@ flowSimulator.AssertFlowTriggered("notify_on_contact_create");
 - **Trigger Scopes:** Organization, BusinessUnit, ParentChildBusinessUnits, User
 - **Filtered Attributes:** Update triggers with specific attribute filtering
 - **Actions:** Dataverse actions (CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords)
+- **Control Flow:** Condition (If), Switch, Foreach (Apply to Each), Until (Do Until) ✅ **NEW**
+- **Data Operations:** Compose ✅ **NEW**
 - **Action Parameters:** Entity names, attributes, filters, ordering, top
+- **Expression Language:** Full Power Automate expression evaluation ✅ **NEW**
 
 **Limitations:**
-- Expression evaluation is not yet supported (expressions are stored but not evaluated during import)
 - Non-Dataverse connectors require custom handlers via `RegisterConnectorActionHandler`
-- Advanced control flow (conditions, loops, parallel branches) not yet supported
-- Expressions in action parameters (e.g., `@triggerOutputs()`) are preserved but not evaluated
+- Scope actions (Try/Catch/Finally) not yet supported
+- Some advanced connector-specific features may require custom handlers
 
 **How to Export a Flow from Power Automate:**
 1. Open your Cloud Flow in Power Automate
@@ -1304,11 +1306,12 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 - ⏳ Schedule triggers and recurrence
 - ⏳ Manual triggers with input schemas
 
-**Test Coverage:** 151 unit tests, all passing ✅
+**Test Coverage:** 157 unit tests, all passing ✅
 - 57 tests for expression evaluator
 - 7 tests for safe navigation and path separators ✅ **NEW**
 - 7 tests for Compose and Apply to Each actions ✅ **NEW**
 - 13 tests for control flow actions (Condition, Switch, Parallel, Do Until) ✅ **NEW**
+- 6 tests for JSON import of control flow actions ✅ **NEW**
 - 67 tests for simulator, Dataverse actions, and triggering
 
 ## Key Differences from FakeXrmEasy v2

@@ -852,5 +852,536 @@ namespace Fake4Dataverse.Tests.CloudFlows
         }
 
         #endregion
+
+        #region Control Flow Actions JSON Import Tests
+
+        [Fact]
+        public void Should_ImportConditionAction_FromJson()
+        {
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-conditional-statement
+            // Tests importing a flow with a Condition (If) action
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+            var flowSimulator = context.CloudFlowSimulator;
+            var service = context.GetOrganizationService();
+
+            var flowJson = @"{
+  ""name"": ""conditional_flow"",
+  ""properties"": {
+    ""displayName"": ""Conditional Flow"",
+    ""state"": ""Started"",
+    ""definition"": {
+      ""$schema"": ""https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"",
+      ""contentVersion"": ""1.0.0.0"",
+      ""triggers"": {
+        ""When_opportunity_created"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""opportunity"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Check_Value"": {
+          ""type"": ""If"",
+          ""expression"": ""@greater(triggerBody()['estimatedvalue'], 100000)"",
+          ""actions"": {
+            ""High_Value_Task"": {
+              ""type"": ""OpenApiConnection"",
+              ""inputs"": {
+                ""host"": {
+                  ""connectionName"": ""shared_commondataserviceforapps"",
+                  ""operationId"": ""CreateRecord""
+                },
+                ""parameters"": {
+                  ""entityName"": ""task"",
+                  ""item/subject"": ""High value opportunity"",
+                  ""item/prioritycode"": 2
+                }
+              },
+              ""runAfter"": {}
+            }
+          },
+          ""else"": {
+            ""actions"": {
+              ""Standard_Task"": {
+                ""type"": ""OpenApiConnection"",
+                ""inputs"": {
+                  ""host"": {
+                    ""connectionName"": ""shared_commondataserviceforapps"",
+                    ""operationId"": ""CreateRecord""
+                  },
+                  ""parameters"": {
+                    ""entityName"": ""task"",
+                    ""item/subject"": ""Standard opportunity"",
+                    ""item/prioritycode"": 1
+                  }
+                },
+                ""runAfter"": {}
+              }
+            }
+          },
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            service.Create(new Entity("opportunity") { ["estimatedvalue"] = new Money(150000) });
+
+            // Assert
+            flowSimulator.AssertFlowTriggered("conditional_flow");
+            var results = flowSimulator.GetFlowExecutionResults("conditional_flow");
+            Assert.Single(results);
+            Assert.True(results[0].Succeeded);
+            
+            // Verify high value task was created (true branch)
+            var tasks = context.CreateQuery("task").ToList();
+            Assert.Single(tasks);
+            Assert.Equal("High value opportunity", tasks[0]["subject"]);
+        }
+
+        [Fact]
+        public void Should_ImportSwitchAction_FromJson()
+        {
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-switch-statement
+            // Tests importing a flow with a Switch action
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+            var flowSimulator = context.CloudFlowSimulator;
+            var service = context.GetOrganizationService();
+
+            var flowJson = @"{
+  ""name"": ""switch_flow"",
+  ""properties"": {
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""When_incident_created"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""incident"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Route_By_Priority"": {
+          ""type"": ""Switch"",
+          ""expression"": ""@triggerBody()['prioritycode']"",
+          ""cases"": {
+            ""High"": {
+              ""case"": ""1"",
+              ""actions"": {
+                ""High_Priority_Task"": {
+                  ""type"": ""OpenApiConnection"",
+                  ""inputs"": {
+                    ""host"": {
+                      ""connectionName"": ""shared_commondataserviceforapps"",
+                      ""operationId"": ""CreateRecord""
+                    },
+                    ""parameters"": {
+                      ""entityName"": ""task"",
+                      ""item/subject"": ""High priority case""
+                    }
+                  },
+                  ""runAfter"": {}
+                }
+              }
+            },
+            ""Normal"": {
+              ""case"": ""2"",
+              ""actions"": {
+                ""Normal_Priority_Task"": {
+                  ""type"": ""OpenApiConnection"",
+                  ""inputs"": {
+                    ""host"": {
+                      ""connectionName"": ""shared_commondataserviceforapps"",
+                      ""operationId"": ""CreateRecord""
+                    },
+                    ""parameters"": {
+                      ""entityName"": ""task"",
+                      ""item/subject"": ""Normal priority case""
+                    }
+                  },
+                  ""runAfter"": {}
+                }
+              }
+            }
+          },
+          ""default"": {
+            ""actions"": {
+              ""Default_Task"": {
+                ""type"": ""OpenApiConnection"",
+                ""inputs"": {
+                  ""host"": {
+                    ""connectionName"": ""shared_commondataserviceforapps"",
+                    ""operationId"": ""CreateRecord""
+                  },
+                  ""parameters"": {
+                    ""entityName"": ""task"",
+                    ""item/subject"": ""Unknown priority case""
+                  }
+                },
+                ""runAfter"": {}
+              }
+            }
+          },
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            service.Create(new Entity("incident") { ["prioritycode"] = 1 }); // Use int instead of OptionSetValue for JSON comparison
+
+            // Assert
+            flowSimulator.AssertFlowTriggered("switch_flow");
+            var results = flowSimulator.GetFlowExecutionResults("switch_flow");
+            Assert.Single(results);
+            Assert.True(results[0].Succeeded);
+            
+            // Verify high priority task was created
+            var tasks = context.CreateQuery("task").ToList();
+            Assert.Single(tasks);
+            Assert.Equal("High priority case", tasks[0]["subject"]);
+        }
+
+        [Fact]
+        public void Should_ImportForeachAction_FromJson()
+        {
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-loops#foreach-loop
+            // Tests importing a flow with a Foreach (Apply to Each) action
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+            var flowSimulator = context.CloudFlowSimulator;
+            var service = context.GetOrganizationService();
+            
+            // Create test accounts
+            service.Create(new Entity("account") { ["name"] = "Account 1", ["accountid"] = Guid.NewGuid() });
+            service.Create(new Entity("account") { ["name"] = "Account 2", ["accountid"] = Guid.NewGuid() });
+
+            var flowJson = @"{
+  ""name"": ""foreach_flow"",
+  ""properties"": {
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""Manual"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""contact"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""List_Accounts"": {
+          ""type"": ""OpenApiConnection"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""ListRecords""
+            },
+            ""parameters"": {
+              ""entityName"": ""account""
+            }
+          },
+          ""runAfter"": {}
+        },
+        ""Apply_to_each"": {
+          ""type"": ""Foreach"",
+          ""expression"": ""@outputs('List_Accounts')['value']"",
+          ""actions"": {
+            ""Create_Task_For_Account"": {
+              ""type"": ""OpenApiConnection"",
+              ""inputs"": {
+                ""host"": {
+                  ""connectionName"": ""shared_commondataserviceforapps"",
+                  ""operationId"": ""CreateRecord""
+                },
+                ""parameters"": {
+                  ""entityName"": ""task"",
+                  ""item/subject"": ""@concat('Follow up with ', item()['name'])""
+                }
+              },
+              ""runAfter"": {}
+            }
+          },
+          ""runAfter"": {
+            ""List_Accounts"": [""Succeeded""]
+          }
+        }
+      }
+    }
+  }
+}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            service.Create(new Entity("contact") { ["firstname"] = "Test" });
+
+            // Assert
+            flowSimulator.AssertFlowTriggered("foreach_flow");
+            var results = flowSimulator.GetFlowExecutionResults("foreach_flow");
+            Assert.Single(results);
+            Assert.True(results[0].Succeeded);
+        }
+
+        [Fact]
+        public void Should_ImportUntilAction_FromJson()
+        {
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-control-flow-loops#until-loop
+            // Tests importing a flow with an Until (Do Until) action
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+            var flowSimulator = context.CloudFlowSimulator;
+            var service = context.GetOrganizationService();
+
+            var flowJson = @"{
+  ""name"": ""until_flow"",
+  ""properties"": {
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""Manual"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""account"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Do_until"": {
+          ""type"": ""Until"",
+          ""expression"": ""@greater(1, 0)"",
+          ""limit"": {
+            ""count"": 5,
+            ""timeout"": ""PT1H""
+          },
+          ""actions"": {
+            ""Log_Action"": {
+              ""type"": ""Compose"",
+              ""inputs"": ""Checking status...""
+            }
+          },
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            // Assert
+            flowSimulator.AssertFlowTriggered("until_flow");
+            var results = flowSimulator.GetFlowExecutionResults("until_flow");
+            Assert.Single(results);
+            Assert.True(results[0].Succeeded);
+        }
+
+        [Fact]
+        public void Should_ImportComposeAction_FromJson()
+        {
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-perform-data-operations#compose-action
+            // Tests importing a flow with a Compose action
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+            var flowSimulator = context.CloudFlowSimulator;
+            var service = context.GetOrganizationService();
+
+            var flowJson = @"{
+  ""name"": ""compose_flow"",
+  ""properties"": {
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""When_contact_created"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""contact"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Compose_Name"": {
+          ""type"": ""Compose"",
+          ""inputs"": ""@concat(triggerBody()['firstname'], ' ', triggerBody()['lastname'])"",
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            service.Create(new Entity("contact") { ["firstname"] = "John", ["lastname"] = "Doe" });
+
+            // Assert
+            flowSimulator.AssertFlowTriggered("compose_flow");
+            var results = flowSimulator.GetFlowExecutionResults("compose_flow");
+            Assert.Single(results);
+            Assert.True(results[0].Succeeded);
+            
+            // Verify compose output
+            var composeResult = results[0].ActionResults[0];
+            Assert.Equal("Compose_Name", composeResult.ActionName);
+            Assert.Equal("John Doe", composeResult.Outputs["value"]);
+        }
+
+        [Fact]
+        public void Should_ImportComplexFlow_WithMultipleControlActions()
+        {
+            // Tests importing a flow with multiple control flow actions combined
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            context.UsePipelineSimulation = true;
+            var flowSimulator = context.CloudFlowSimulator;
+            var service = context.GetOrganizationService();
+
+            var flowJson = @"{
+  ""name"": ""complex_control_flow"",
+  ""properties"": {
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""When_opportunity_created"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""opportunity"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Compose_Value"": {
+          ""type"": ""Compose"",
+          ""inputs"": ""@triggerBody()['estimatedvalue']"",
+          ""runAfter"": {}
+        },
+        ""Check_Value"": {
+          ""type"": ""If"",
+          ""expression"": ""@greater(outputs('Compose_Value')['value'], 50000)"",
+          ""actions"": {
+            ""High_Value_Task"": {
+              ""type"": ""OpenApiConnection"",
+              ""inputs"": {
+                ""host"": {
+                  ""connectionName"": ""shared_commondataserviceforapps"",
+                  ""operationId"": ""CreateRecord""
+                },
+                ""parameters"": {
+                  ""entityName"": ""task"",
+                  ""item/subject"": ""High value opportunity""
+                }
+              },
+              ""runAfter"": {}
+            }
+          },
+          ""else"": {
+            ""actions"": {
+              ""Low_Value_Task"": {
+                ""type"": ""OpenApiConnection"",
+                ""inputs"": {
+                  ""host"": {
+                    ""connectionName"": ""shared_commondataserviceforapps"",
+                    ""operationId"": ""CreateRecord""
+                  },
+                  ""parameters"": {
+                    ""entityName"": ""task"",
+                    ""item/subject"": ""Low value opportunity""
+                  }
+                },
+                ""runAfter"": {}
+              }
+            }
+          },
+          ""runAfter"": {
+            ""Compose_Value"": [""Succeeded""]
+          }
+        }
+      }
+    }
+  }
+}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            service.Create(new Entity("opportunity") { ["estimatedvalue"] = new Money(75000) });
+
+            // Assert
+            flowSimulator.AssertFlowTriggered("complex_control_flow");
+            var results = flowSimulator.GetFlowExecutionResults("complex_control_flow");
+            Assert.Single(results);
+            Assert.True(results[0].Succeeded);
+            
+            // Verify high value task was created
+            var tasks = context.CreateQuery("task").ToList();
+            Assert.Single(tasks);
+            Assert.Equal("High value opportunity", tasks[0]["subject"]);
+        }
+
+        #endregion
     }
 }
