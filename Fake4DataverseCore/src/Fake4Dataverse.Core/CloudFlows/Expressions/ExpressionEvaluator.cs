@@ -127,6 +127,12 @@ namespace Fake4Dataverse.CloudFlows.Expressions
 
             // Math Functions - Arithmetic operations
             RegisterMathFunctions(engine);
+
+            // Type Checking Functions - Type validation
+            RegisterTypeCheckingFunctions(engine);
+
+            // URI Functions - URL manipulation
+            RegisterUriFunctions(engine);
         }
 
         /// <summary>
@@ -187,10 +193,12 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return _executionContext.GetActionOutputs(actionName);
             }));
 
-            // variables(variableName) - Returns a variable value (placeholder - not fully implemented)
+            // variables(variableName) - Returns a variable value
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#variables
+            // Returns the value of a flow variable that was set using Initialize Variable or Set Variable actions
             engine.SetValue("variables", new Func<string, object>((variableName) =>
             {
-                return null; // Variables would need separate tracking in execution context
+                return _executionContext.GetVariable(variableName);
             }));
 
             // parameters(parameterName) - Returns a parameter value (placeholder)
@@ -351,6 +359,36 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                     return number.ToString(format);
                 return number.ToString();
             }));
+
+            // slice(text, startIndex, endIndex?) - Extract substring by indices
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#slice
+            // Returns a substring from startIndex to endIndex (exclusive). Similar to substring but with end index.
+            engine.SetValue("slice", new Func<string, int, int?, string>((text, startIndex, endIndex) =>
+            {
+                if (text == null) return null;
+                if (endIndex.HasValue)
+                {
+                    var length = endIndex.Value - startIndex;
+                    return text.Substring(startIndex, length);
+                }
+                return text.Substring(startIndex);
+            }));
+
+            // nthIndexOf(text, searchValue, occurrence) - Find nth occurrence
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#nthIndexOf  
+            // Returns the starting position of the nth occurrence of searchValue in text
+            engine.SetValue("nthIndexOf", new Func<string, string, int, int>((text, searchValue, occurrence) =>
+            {
+                if (text == null || searchValue == null || occurrence <= 0) return -1;
+                
+                int index = -1;
+                for (int i = 0; i < occurrence; i++)
+                {
+                    index = text.IndexOf(searchValue, index + 1, StringComparison.Ordinal);
+                    if (index == -1) return -1;
+                }
+                return index;
+            }));
         }
 
         /// <summary>
@@ -471,6 +509,14 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                     }
                 }
                 return JsValue.Null;
+            }));
+
+            // xor(condition1, condition2) - Exclusive OR
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#xor
+            // Returns true if exactly one condition is true (exclusive OR)
+            engine.SetValue("xor", new Func<bool, bool, bool>((condition1, condition2) =>
+            {
+                return condition1 ^ condition2;
             }));
         }
 
@@ -641,6 +687,77 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 // A full implementation would require proper set intersection
                 return args[0];
             }));
+
+            // reverse(collection) - Reverse array
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#reverse
+            // Returns a collection with the items in reverse order
+            engine.SetValue("reverse", new Func<object, object>((collection) =>
+            {
+                if (collection is string str)
+                {
+                    var chars = str.ToCharArray();
+                    Array.Reverse(chars);
+                    return new string(chars);
+                }
+                if (collection is Array arr)
+                {
+                    var reversed = new object[arr.Length];
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        reversed[i] = arr.GetValue(arr.Length - 1 - i);
+                    }
+                    return reversed;
+                }
+                if (collection is System.Collections.IEnumerable enumerable)
+                {
+                    return enumerable.Cast<object>().Reverse().ToArray();
+                }
+                return null;
+            }));
+
+            // createArray(...) - Create array from arguments
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#createArray
+            // Returns an array containing all the provided arguments
+            engine.SetValue("createArray", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            {
+                var result = new object[args.Length];
+                for (int i = 0; i < args.Length; i++)
+                {
+                    result[i] = ConvertJintValue(args[i]);
+                }
+                return JsValue.FromObject(engine, result);
+            }));
+
+            // flatten(collection) - Flatten nested arrays
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#flatten
+            // Returns a flat array from an array of arrays
+            engine.SetValue("flatten", new Func<object, object[]>((collection) =>
+            {
+                var result = new List<object>();
+                void FlattenRecursive(object item)
+                {
+                    if (item is Array arr)
+                    {
+                        foreach (var element in arr)
+                        {
+                            FlattenRecursive(element);
+                        }
+                    }
+                    else if (item is System.Collections.IEnumerable enumerable && !(item is string))
+                    {
+                        foreach (var element in enumerable)
+                        {
+                            FlattenRecursive(element);
+                        }
+                    }
+                    else
+                    {
+                        result.Add(item);
+                    }
+                }
+                FlattenRecursive(collection);
+                return result.ToArray();
+            }));
         }
 
         /// <summary>
@@ -733,6 +850,132 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 var dt = DateTime.Parse(timestamp);
                 return dt.DayOfYear;
             }));
+
+            // startOfDay(timestamp) - Returns start of day
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#startOfDay
+            // Returns the start of the day for a timestamp (midnight)
+            engine.SetValue("startOfDay", new Func<string, string>((timestamp) =>
+            {
+                var dt = DateTime.Parse(timestamp);
+                return dt.Date.ToString("o");
+            }));
+
+            // startOfHour(timestamp) - Returns start of hour
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#startOfHour
+            // Returns the start of the hour for a timestamp
+            engine.SetValue("startOfHour", new Func<string, string>((timestamp) =>
+            {
+                var dt = DateTime.Parse(timestamp);
+                return new DateTime(dt.Year, dt.Month, dt.Day, dt.Hour, 0, 0, dt.Kind).ToString("o");
+            }));
+
+            // startOfMonth(timestamp) - Returns start of month
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#startOfMonth
+            // Returns the start of the month for a timestamp
+            engine.SetValue("startOfMonth", new Func<string, string>((timestamp) =>
+            {
+                var dt = DateTime.Parse(timestamp);
+                return new DateTime(dt.Year, dt.Month, 1, 0, 0, 0, dt.Kind).ToString("o");
+            }));
+
+            // subtractFromTime(timestamp, interval, timeUnit) - Subtract time
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#subtractFromTime
+            // Subtracts a time interval from a timestamp. TimeUnit: Year, Month, Week, Day, Hour, Minute, Second
+            engine.SetValue("subtractFromTime", new Func<string, int, string, string>((timestamp, interval, timeUnit) =>
+            {
+                var dt = DateTime.Parse(timestamp);
+                switch (timeUnit.ToLowerInvariant())
+                {
+                    case "year":
+                        return dt.AddYears(-interval).ToString("o");
+                    case "month":
+                        return dt.AddMonths(-interval).ToString("o");
+                    case "week":
+                        return dt.AddDays(-interval * 7).ToString("o");
+                    case "day":
+                        return dt.AddDays(-interval).ToString("o");
+                    case "hour":
+                        return dt.AddHours(-interval).ToString("o");
+                    case "minute":
+                        return dt.AddMinutes(-interval).ToString("o");
+                    case "second":
+                        return dt.AddSeconds(-interval).ToString("o");
+                    default:
+                        return dt.ToString("o");
+                }
+            }));
+
+            // getPastTime(interval, timeUnit, format?) - Get past time
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#getPastTime
+            // Returns the current timestamp minus the specified time interval
+            engine.SetValue("getPastTime", new Func<int, string, string, string>((interval, timeUnit, format) =>
+            {
+                var result = DateTime.UtcNow;
+                switch (timeUnit.ToLowerInvariant())
+                {
+                    case "year":
+                        result = result.AddYears(-interval);
+                        break;
+                    case "month":
+                        result = result.AddMonths(-interval);
+                        break;
+                    case "week":
+                        result = result.AddDays(-interval * 7);
+                        break;
+                    case "day":
+                        result = result.AddDays(-interval);
+                        break;
+                    case "hour":
+                        result = result.AddHours(-interval);
+                        break;
+                    case "minute":
+                        result = result.AddMinutes(-interval);
+                        break;
+                    case "second":
+                        result = result.AddSeconds(-interval);
+                        break;
+                }
+                
+                if (!string.IsNullOrEmpty(format))
+                    return result.ToString(format);
+                return result.ToString("o");
+            }));
+
+            // getFutureTime(interval, timeUnit, format?) - Get future time
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#getFutureTime
+            // Returns the current timestamp plus the specified time interval
+            engine.SetValue("getFutureTime", new Func<int, string, string, string>((interval, timeUnit, format) =>
+            {
+                var result = DateTime.UtcNow;
+                switch (timeUnit.ToLowerInvariant())
+                {
+                    case "year":
+                        result = result.AddYears(interval);
+                        break;
+                    case "month":
+                        result = result.AddMonths(interval);
+                        break;
+                    case "week":
+                        result = result.AddDays(interval * 7);
+                        break;
+                    case "day":
+                        result = result.AddDays(interval);
+                        break;
+                    case "hour":
+                        result = result.AddHours(interval);
+                        break;
+                    case "minute":
+                        result = result.AddMinutes(interval);
+                        break;
+                    case "second":
+                        result = result.AddSeconds(interval);
+                        break;
+                }
+                
+                if (!string.IsNullOrEmpty(format))
+                    return result.ToString(format);
+                return result.ToString("o");
+            }));
         }
 
         /// <summary>
@@ -805,6 +1048,175 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             engine.SetValue("range", new Func<int, int, int[]>((start, count) =>
             {
                 return Enumerable.Range(start, count).ToArray();
+            }));
+        }
+
+        /// <summary>
+        /// Type Checking Functions: isInt(), isFloat(), isString(), isArray(), isObject()
+        /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference
+        /// 
+        /// These functions check the type of a value.
+        /// </summary>
+        private void RegisterTypeCheckingFunctions(Engine engine)
+        {
+            // isInt(value) - Check if value is an integer
+            engine.SetValue("isInt", new Func<object, bool>((value) =>
+            {
+                return value is int || value is long || (value is double d && d == Math.Floor(d));
+            }));
+
+            // isFloat(value) - Check if value is a floating point number
+            engine.SetValue("isFloat", new Func<object, bool>((value) =>
+            {
+                return value is float || value is double || value is decimal;
+            }));
+
+            // isString(value) - Check if value is a string
+            engine.SetValue("isString", new Func<object, bool>((value) =>
+            {
+                return value is string;
+            }));
+
+            // isArray(value) - Check if value is an array
+            engine.SetValue("isArray", new Func<object, bool>((value) =>
+            {
+                return value is Array || (value is System.Collections.IEnumerable && !(value is string));
+            }));
+
+            // isObject(value) - Check if value is an object
+            engine.SetValue("isObject", new Func<object, bool>((value) =>
+            {
+                return value != null && !(value is string) && !(value is Array) && 
+                       !(value is System.ValueType) && !(value is System.Collections.IEnumerable);
+            }));
+        }
+
+        /// <summary>
+        /// URI Functions: uriComponent(), uriHost(), uriPath(), etc.
+        /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uri-or-url-functions
+        /// 
+        /// These functions work with URIs and URLs.
+        /// </summary>
+        private void RegisterUriFunctions(Engine engine)
+        {
+            // uriComponent(value) - Encode URI component
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriComponent
+            // Returns a URI-encoded version of a string by replacing URL-unsafe characters with escape characters
+            engine.SetValue("uriComponent", new Func<string, string>((value) =>
+            {
+                if (value == null) return null;
+                return Uri.EscapeDataString(value);
+            }));
+
+            // uriComponentToString(encodedValue) - Decode URI component
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriComponentToString
+            // Returns the decoded string version of a URI-encoded string
+            engine.SetValue("uriComponentToString", new Func<string, string>((encodedValue) =>
+            {
+                if (encodedValue == null) return null;
+                return Uri.UnescapeDataString(encodedValue);
+            }));
+
+            // uriHost(uri) - Get URI host
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriHost
+            // Returns the host value for a URI
+            engine.SetValue("uriHost", new Func<string, string>((uri) =>
+            {
+                if (string.IsNullOrEmpty(uri)) return null;
+                try
+                {
+                    var u = new Uri(uri);
+                    return u.Host;
+                }
+                catch
+                {
+                    return null;
+                }
+            }));
+
+            // uriPath(uri) - Get URI path
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriPath
+            // Returns the path value for a URI
+            engine.SetValue("uriPath", new Func<string, string>((uri) =>
+            {
+                if (string.IsNullOrEmpty(uri)) return null;
+                try
+                {
+                    var u = new Uri(uri);
+                    return u.AbsolutePath;
+                }
+                catch
+                {
+                    return null;
+                }
+            }));
+
+            // uriPathAndQuery(uri) - Get URI path and query
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriPathAndQuery
+            // Returns the path and query values for a URI
+            engine.SetValue("uriPathAndQuery", new Func<string, string>((uri) =>
+            {
+                if (string.IsNullOrEmpty(uri)) return null;
+                try
+                {
+                    var u = new Uri(uri);
+                    return u.PathAndQuery;
+                }
+                catch
+                {
+                    return null;
+                }
+            }));
+
+            // uriQuery(uri) - Get URI query
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriQuery
+            // Returns the query value for a URI
+            engine.SetValue("uriQuery", new Func<string, string>((uri) =>
+            {
+                if (string.IsNullOrEmpty(uri)) return null;
+                try
+                {
+                    var u = new Uri(uri);
+                    return u.Query;
+                }
+                catch
+                {
+                    return null;
+                }
+            }));
+
+            // uriScheme(uri) - Get URI scheme
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriScheme
+            // Returns the scheme value for a URI
+            engine.SetValue("uriScheme", new Func<string, string>((uri) =>
+            {
+                if (string.IsNullOrEmpty(uri)) return null;
+                try
+                {
+                    var u = new Uri(uri);
+                    return u.Scheme;
+                }
+                catch
+                {
+                    return null;
+                }
+            }));
+
+            // uriPort(uri) - Get URI port
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#uriPort
+            // Returns the port value for a URI
+            engine.SetValue("uriPort", new Func<string, int>((uri) =>
+            {
+                if (string.IsNullOrEmpty(uri)) return -1;
+                try
+                {
+                    var u = new Uri(uri);
+                    return u.Port;
+                }
+                catch
+                {
+                    return -1;
+                }
             }));
         }
 
