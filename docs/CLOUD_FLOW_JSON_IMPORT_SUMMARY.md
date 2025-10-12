@@ -110,10 +110,21 @@ Created 20 comprehensive unit tests covering:
 ## Limitations
 
 ### Expression Evaluation
-❌ Expressions (e.g., `@triggerOutputs()`, `@concat()`) are stored but not evaluated  
-- Expressions in action parameters are preserved as strings
-- Expression evaluation is planned for a future phase
-- Workaround: Use programmatic flow registration for flows with complex expressions
+✅ **NOW SUPPORTED** - Expressions are evaluated using Jint.net JavaScript engine  
+- Common expressions: `@triggerOutputs()`, `@concat()`, `@equals()`, etc. ✅ Working
+- Complex nested logical expressions: ⚠️ Limited support (see [Expression Language Reference](../expression-language.md))
+- 60+ Power Automate functions supported
+- 32+ tests passing with real-world examples
+
+**Example:**
+```csharp
+// Expressions in JSON are now evaluated automatically
+{
+  "item/subject": "@concat('Follow up with ', triggerBody()?['firstname'])"
+}
+```
+
+**Workaround for complex nested expressions:** Use programmatic flow registration or break into multiple actions.
 
 ### Unsupported Trigger Types
 ❌ Manual triggers (Request)  
@@ -231,10 +242,12 @@ All tests follow best practices:
 
 Possible future enhancements (not in scope for this implementation):
 
-1. **Expression Engine**
-   - Evaluate `@triggerOutputs()`, `@outputs()`, `@concat()`, etc.
-   - Support Power Fx expressions
-   - Variable resolution
+1. **Advanced Expression Support** ✅ **PARTIALLY COMPLETE**
+   - ✅ Evaluate `@triggerOutputs()`, `@outputs()`, `@concat()`, etc. - **IMPLEMENTED**
+   - ✅ Support 60+ Power Automate functions - **IMPLEMENTED**
+   - ⚠️ Complex nested logical expressions - **LIMITED** (see docs)
+   - ❌ Power Fx expressions - **NOT IMPLEMENTED**
+   - ❌ Variable resolution (`variables()`, `parameters()`) - **NOT IMPLEMENTED**
 
 2. **Advanced Control Flow**
    - Condition actions (if/then/else)
