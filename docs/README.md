@@ -22,7 +22,10 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
+- [Alternate Keys](./usage/alternate-keys.md) - Using alternate keys for record identification ✅ **NEW**
+- [Duplicate Detection](./usage/duplicate-detection.md) - Testing duplicate detection rules ✅ **NEW**
 - [Calculated Fields](./usage/calculated-fields.md) - Simulating calculated field evaluation
+- [Rollup Fields](./usage/rollup-fields.md) - Simulating rollup field evaluation
 - [Custom API Support](./usage/custom-api.md) - Implementing Custom APIs
 - [Cloud Flows](./usage/cloud-flows.md) - Testing Power Automate flows ✅ **IMPLEMENTED**
 - [Expression Language](./expression-language.md) - Power Automate expressions ✅ **NEW**
@@ -65,6 +68,8 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Write my first test**: Start with [Quick Start](./getting-started/quickstart.md)
 - **Test a plugin**: See [Testing Plugins](./usage/testing-plugins.md)
 - **Query test data**: Check [Querying Data](./usage/querying-data.md)
+- **Use alternate keys**: See [Alternate Keys](./usage/alternate-keys.md)
+- **Test duplicate detection**: Check [Duplicate Detection](./usage/duplicate-detection.md)
 - **Understand the architecture**: Read [Middleware Architecture](./concepts/middleware.md)
 - **Test security**: See [Security and Permissions](./usage/security-permissions.md)
 - **Migrate from FakeXrmEasy**: Check the [Migration Guides](./migration/)
