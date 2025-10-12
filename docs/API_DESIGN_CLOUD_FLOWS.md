@@ -59,13 +59,15 @@ Base interface for flow triggers. Concrete implementations:
 #### IFlowAction
 Base interface for flow actions. Concrete implementations:
 - `DataverseAction` - CRUD operations on Dataverse entities
+- `ComposeAction` - Data transformation and composition ✅ **IMPLEMENTED**
+- `ApplyToEachAction` - Loop over collections ✅ **IMPLEMENTED**
 
 **Location:** `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/CloudFlows/IFlowAction.cs`
 
 **Extensibility:** Future implementations could include:
 - `ConditionAction` - If/then/else branching
-- `ApplyToEachAction` - Loops over collections
-- `ComposeAction` - Data transformation
+- `SwitchAction` - Multi-way conditional branching
+- `ParallelBranchAction` - Parallel execution paths
 - `ConnectorAction` - Generic connector action
 
 #### IConnectorActionHandler

@@ -600,6 +600,197 @@ Assert.Single(results[0].Errors);
 Assert.Contains("External service unavailable", results[0].Errors[0]);
 ```
 
+## Action Types
+
+### Compose Action ✅ **NEW**
+
+The Compose action allows you to create data transformations and compose new objects or values from expressions.
+
+**Reference:** https://learn.microsoft.com/en-us/power-automate/data-operations#use-the-compose-action
+
+**Use Cases:**
+- Transform data from previous steps
+- Create structured objects or arrays
+- Perform calculations or string manipulations
+- Format data before passing to subsequent actions
+
+**Example: Simple Value Composition**
+```csharp
+var composeAction = new ComposeAction
+{
+    Name = "Compose_FullName",
+    Inputs = "@concat(triggerBody()['firstname'], ' ', triggerBody()['lastname'])"
+};
+
+var flowDef = new CloudFlowDefinition
+{
+    Name = "Test_Compose",
+    Trigger = new DataverseTrigger { EntityLogicalName = "contact", Message = "Create" },
+    Actions = new List<IFlowAction> { composeAction }
+};
+
+simulator.RegisterFlow(flowDef);
+var result = simulator.SimulateTrigger("Test_Compose", triggerInputs);
+
+// Access composed value
+var fullName = result.ActionResults[0].Outputs["value"];
+```
+
+**Example: Composing Objects**
+```csharp
+var contactObject = new Dictionary<string, object>
+{
+    ["fullname"] = "@concat(triggerBody()['firstname'], ' ', triggerBody()['lastname'])",
+    ["email"] = "@triggerBody()['email']",
+    ["displayname"] = "@toUpper(triggerBody()['lastname'])"
+};
+
+var composeAction = new ComposeAction
+{
+    Name = "Compose_ContactData",
+    Inputs = contactObject
+};
+
+// All expressions in the dictionary are evaluated recursively
+```
+
+**Referencing Compose Outputs:**
+```csharp
+// Use @outputs('ActionName')['value'] to reference composed data
+var compose1 = new ComposeAction
+{
+    Name = "Compose_Greeting",
+    Inputs = "@concat('Hello ', triggerBody()['firstname'])"
+};
+
+var compose2 = new ComposeAction
+{
+    Name = "Compose_Message",
+    Inputs = "@concat(outputs('Compose_Greeting')['value'], '!')"
+};
+```
+
+### Apply to Each Action ✅ **NEW**
+
+The Apply to Each action iterates over a collection and executes a set of actions for each item.
+
+**Reference:** https://learn.microsoft.com/en-us/power-automate/apply-to-each
+
+**Use Cases:**
+- Process each record from a list query
+- Send emails to multiple recipients
+- Create or update multiple records
+- Transform each item in an array
+
+**Example: Basic Loop**
+```csharp
+var contacts = new[]
+{
+    new Dictionary<string, object> { ["name"] = "Contact 1", ["email"] = "c1@example.com" },
+    new Dictionary<string, object> { ["name"] = "Contact 2", ["email"] = "c2@example.com" }
+};
+
+var triggerInputs = new Dictionary<string, object>
+{
+    ["contacts"] = contacts
+};
+
+var composeInLoop = new ComposeAction
+{
+    Name = "Compose_Email",
+    Inputs = "@item()['email']"  // @item() returns current loop item
+};
+
+var applyToEach = new ApplyToEachAction
+{
+    Name = "Process_Contacts",
+    Collection = "@triggerBody()['contacts']",  // Expression that returns collection
+    Actions = new List<IFlowAction> { composeInLoop }
+};
+```
+
+**Example: Multiple Actions Per Item**
+```csharp
+var doubleValue = new ComposeAction
+{
+    Name = "Double_Value",
+    Inputs = "@mul(item(), 2)"
+};
+
+var addTen = new ComposeAction
+{
+    Name = "Add_Ten",
+    Inputs = "@add(outputs('Double_Value')['value'], 10)"
+};
+
+var applyToEach = new ApplyToEachAction
+{
+    Name = "Process_Numbers",
+    Collection = "@triggerBody()['numbers']",
+    Actions = new List<IFlowAction> { doubleValue, addTen }
+};
+```
+
+**Using @item() Function:**
+```csharp
+// @item() returns the current item in the loop
+// For object items, access properties: @item()['propertyName']
+// For primitive items, use directly: @item()
+
+var composeFullName = new ComposeAction
+{
+    Name = "Compose_FullName",
+    Inputs = "@concat(item()['firstname'], ' ', item()['lastname'])"
+};
+```
+
+**Loop with Dataverse Actions:**
+```csharp
+var createTask = new DataverseAction
+{
+    Name = "Create_Task_For_Contact",
+    DataverseActionType = DataverseActionType.Create,
+    EntityLogicalName = "task",
+    Attributes = new Dictionary<string, object>
+    {
+        ["subject"] = "@concat('Follow up with ', item()['name'])",
+        ["description"] = "@item()['email']"
+    }
+};
+
+var applyToEach = new ApplyToEachAction
+{
+    Name = "Create_Tasks",
+    Collection = "@outputs('List_Contacts')['value']",
+    Actions = new List<IFlowAction> { createTask }
+};
+```
+
+**Nested Loops:**
+Nested loops are supported through the stack-based item tracking:
+```csharp
+var innerLoop = new ApplyToEachAction
+{
+    Name = "Inner_Loop",
+    Collection = "@item()['children']",
+    Actions = new List<IFlowAction> 
+    { 
+        new ComposeAction 
+        { 
+            Name = "Process_Child", 
+            Inputs = "@item()['name']"  // Refers to inner loop item
+        } 
+    }
+};
+
+var outerLoop = new ApplyToEachAction
+{
+    Name = "Outer_Loop",
+    Collection = "@triggerBody()['parents']",
+    Actions = new List<IFlowAction> { innerLoop }
+};
+```
+
 ## Trigger Types
 
 ### Dataverse Triggers
@@ -762,9 +953,9 @@ Assert.Equal(1, flowSimulator.GetFlowExecutionCount("log_account_update")); // S
 
 ## Implementation Status
 
-**Current Status:** ✅ **Completed** (October 11, 2025)
+**Current Status:** ✅ **Completed** (October 12, 2025)
 
-All core phases have been implemented and tested. The Cloud Flow simulation feature is fully functional for testing Dataverse-triggered flows.
+All core phases have been implemented and tested. The Cloud Flow simulation feature is fully functional for testing Dataverse-triggered flows with comprehensive expression language support, safe navigation, path separators, Compose actions, and Apply to Each loops.
 
 ### Phase 1: Core Infrastructure ✅ **COMPLETED**
 - ✅ `ICloudFlowSimulator` interface
@@ -785,6 +976,7 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 - ✅ `IConnectorActionHandler` interface
 - ✅ Connector action handler registration
 - ✅ Built-in Dataverse connector
+- ✅ Built-in Compose action handler ✅ **NEW**
 - ✅ Extensibility for custom connectors
 
 ### Phase 4: Verification APIs ✅ **COMPLETED**
@@ -794,18 +986,33 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 - ✅ Action result inspection
 - ✅ Execution history
 
-### Phase 5: Advanced Features (Future Enhancements)
-- ⏳ JSON flow definition import (`RegisterFlowFromJson`)
-- ⏳ Conditional logic (if/then/else)
-- ⏳ Apply to each (loops)
-- ⏳ Compose actions and expression evaluation
+### Phase 5: Expression Language ✅ **COMPLETED**
+- ✅ Full expression language implementation using Jint 4.2.0
+- ✅ 80+ Power Automate functions
+- ✅ Safe navigation operator (?) for null-safe access ✅ **NEW**
+- ✅ Path separator (/) for nested property access ✅ **NEW**
+- ✅ All reference functions (triggerBody, outputs, body, variables, item)
+- ✅ String, math, logical, date/time, collection, and conversion functions
+- ✅ Type preservation (int, double, string, bool)
+
+### Phase 6: Advanced Action Types ✅ **COMPLETED**
+- ✅ Compose actions for data transformation ✅ **NEW**
+- ✅ Apply to Each (loops) with `@item()` function ✅ **NEW**
+- ✅ Nested loop support via stack-based item tracking ✅ **NEW**
+- ✅ Recursive expression evaluation in composed objects ✅ **NEW**
+
+### Phase 7: Advanced Features (Future Enhancements)
+- ⏳ Conditional logic actions (if/then/else)
+- ⏳ Switch actions
 - ⏳ Error handling and retry logic
 - ⏳ Parallel branches
+- ⏳ Additional connector types (Office365, SharePoint, etc.)
 
-**Test Coverage:** 47 unit tests, all passing ✅
-- 22 tests for core simulator functionality
-- 12 tests for Dataverse connector actions
-- 13 tests for automatic flow triggering
+**Test Coverage:** 138 unit tests, all passing ✅
+- 57 tests for expression evaluator
+- 7 tests for safe navigation and path separators ✅ **NEW**
+- 7 tests for Compose and Apply to Each actions ✅ **NEW**
+- 67 tests for simulator, Dataverse actions, and triggering
 
 ## Key Differences from FakeXrmEasy v2
 

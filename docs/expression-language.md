@@ -6,7 +6,7 @@ Fake4Dataverse now supports Power Automate expression language evaluation using 
 
 **Implementation Date:** October 12, 2025  
 **Issue:** Implement 100% compatible cloud flow expression language  
-**Test Coverage:** 44+ passing tests with real-world examples  
+**Test Coverage:** 64+ passing expression tests + 7 safe navigation/path tests with real-world examples  
 **Engine:** Jint 4.2.0  
 **Total Functions:** 80+ Power Automate functions
 
@@ -186,6 +186,59 @@ Use `@{...}` within text:
 ```
 "Contact name is @{triggerBody()['firstname']} @{triggerBody()['lastname']}"
 ```
+
+### Safe Navigation Operator (?) ✅ **NEW**
+
+The safe navigation operator `?` provides null-safe property access, preventing errors when objects are null or undefined.
+
+**Syntax:** `object?['property']`
+
+**Examples:**
+```csharp
+// Safe access to potentially null nested object
+@triggerBody()?['contact']?['firstname']
+
+// Returns null instead of throwing if 'contact' is null
+@outputs('Get_Account')?['body']?['primarycontact']?['email']
+
+// Can be chained with path separators
+@triggerBody()?['body/contact/address/city']
+```
+
+**Reference:** https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference
+
+**How it works:**
+- If the object is null or undefined, returns null instead of throwing an error
+- Can be chained multiple times: `a?['b']?['c']?['d']`
+- Works with all reference functions: `triggerBody()`, `outputs()`, `body()`, `item()`
+- Combines seamlessly with path separators
+
+### Path Separator (/) ✅ **NEW**
+
+Path separators allow accessing nested properties using slash notation, making expressions more concise.
+
+**Syntax:** `['path/to/property']`
+
+**Examples:**
+```csharp
+// Access nested body property
+@outputs('Get_Contact')['body/firstname']
+
+// Deep nesting
+@outputs('Get_Data')['body/contact/address/city']
+
+// Equivalent to:
+@outputs('Get_Data')['body']['contact']['address']['city']
+
+// Combined with safe navigation
+@outputs('Get_Account')?['body/primarycontact/email']
+```
+
+**How it works:**
+- Slash `/` in property access is converted to nested bracket notation
+- Works with both single and double quotes: `['path/to']` or `["path/to"]`
+- Can have multiple slashes: `['a/b/c/d']` → `['a']['b']['c']['d']`
+- Processed before safe navigation, so `?['a/b']` becomes `?['a']?['b']`
 
 ## Integration with Cloud Flows
 
