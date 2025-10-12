@@ -416,10 +416,26 @@ namespace Fake4Dataverse.CloudFlows
 
             try
             {
-                // Special handling for Apply to Each actions
+                // Special handling for control flow actions
                 if (action is ApplyToEachAction applyToEachAction)
                 {
                     return ExecuteApplyToEachAction(applyToEachAction, executionContext);
+                }
+                else if (action is ConditionAction conditionAction)
+                {
+                    return ExecuteConditionAction(conditionAction, executionContext);
+                }
+                else if (action is SwitchAction switchAction)
+                {
+                    return ExecuteSwitchAction(switchAction, executionContext);
+                }
+                else if (action is ParallelBranchAction parallelAction)
+                {
+                    return ExecuteParallelBranchAction(parallelAction, executionContext);
+                }
+                else if (action is DoUntilAction doUntilAction)
+                {
+                    return ExecuteDoUntilAction(doUntilAction, executionContext);
                 }
 
                 // Find appropriate handler
@@ -541,6 +557,363 @@ namespace Fake4Dataverse.CloudFlows
                 actionResult.Outputs = new Dictionary<string, object>
                 {
                     ["itemResults"] = itemResults
+                };
+            }
+            catch (Exception ex)
+            {
+                actionResult.Succeeded = false;
+                actionResult.ErrorMessage = ex.Message;
+            }
+
+            return actionResult;
+        }
+
+        /// <summary>
+        /// Execute a Condition action with if/then/else branching
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/use-expressions-in-conditions
+        /// 
+        /// The Condition action evaluates an expression and executes either TrueActions or FalseActions.
+        /// This enables conditional logic and branching within flows.
+        /// </summary>
+        private IFlowActionResult ExecuteConditionAction(ConditionAction action, IFlowExecutionContext executionContext)
+        {
+            var actionResult = new FlowActionResult(
+                action.Name ?? "Condition",
+                "Condition");
+
+            try
+            {
+                // Evaluate the condition expression
+                var evaluator = new Expressions.ExpressionEvaluator(executionContext);
+                var conditionResult = evaluator.Evaluate(action.Expression);
+
+                // Convert to boolean
+                bool isTrue = false;
+                if (conditionResult is bool boolValue)
+                {
+                    isTrue = boolValue;
+                }
+                else if (conditionResult != null)
+                {
+                    // Try to parse as boolean
+                    isTrue = Convert.ToBoolean(conditionResult);
+                }
+
+                // Select which branch to execute
+                var actionsToExecute = isTrue ? action.TrueActions : action.FalseActions;
+
+                // Execute the selected branch
+                var branchResults = new List<Dictionary<string, object>>();
+                foreach (var branchAction in actionsToExecute ?? new List<IFlowAction>())
+                {
+                    var branchActionResult = ExecuteAction(branchAction, executionContext);
+
+                    if (!branchActionResult.Succeeded)
+                    {
+                        actionResult.Succeeded = false;
+                        actionResult.ErrorMessage = $"Action '{branchActionResult.ActionName}' failed in condition branch: {branchActionResult.ErrorMessage}";
+                        return actionResult;
+                    }
+
+                    // Store action outputs
+                    if (branchActionResult.Outputs != null && !string.IsNullOrEmpty(branchActionResult.ActionName))
+                    {
+                        branchResults.Add(new Dictionary<string, object>
+                        {
+                            ["actionName"] = branchActionResult.ActionName,
+                            ["outputs"] = branchActionResult.Outputs
+                        });
+
+                        var flowContext = executionContext as FlowExecutionContext;
+                        if (flowContext != null)
+                        {
+                            flowContext.AddActionOutputs(branchActionResult.ActionName,
+                                (IDictionary<string, object>)branchActionResult.Outputs);
+                        }
+                    }
+                }
+
+                actionResult.Succeeded = true;
+                actionResult.Outputs = new Dictionary<string, object>
+                {
+                    ["conditionResult"] = isTrue,
+                    ["branchExecuted"] = isTrue ? "true" : "false",
+                    ["branchResults"] = branchResults
+                };
+            }
+            catch (Exception ex)
+            {
+                actionResult.Succeeded = false;
+                actionResult.ErrorMessage = ex.Message;
+            }
+
+            return actionResult;
+        }
+
+        /// <summary>
+        /// Execute a Switch action with multi-case branching
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/use-switch-action
+        /// 
+        /// The Switch action evaluates an expression and executes the matching case's actions.
+        /// If no case matches, the default actions are executed.
+        /// </summary>
+        private IFlowActionResult ExecuteSwitchAction(SwitchAction action, IFlowExecutionContext executionContext)
+        {
+            var actionResult = new FlowActionResult(
+                action.Name ?? "Switch",
+                "Switch");
+
+            try
+            {
+                // Evaluate the switch expression
+                var evaluator = new Expressions.ExpressionEvaluator(executionContext);
+                var switchValue = evaluator.Evaluate(action.Expression);
+
+                // Convert to string for case matching
+                var switchValueStr = switchValue?.ToString() ?? string.Empty;
+
+                // Find matching case
+                IList<IFlowAction> actionsToExecute = null;
+                string matchedCase = "default";
+
+                if (action.Cases != null)
+                {
+                    foreach (var caseEntry in action.Cases)
+                    {
+                        if (string.Equals(caseEntry.Key, switchValueStr, StringComparison.OrdinalIgnoreCase))
+                        {
+                            actionsToExecute = caseEntry.Value;
+                            matchedCase = caseEntry.Key;
+                            break;
+                        }
+                    }
+                }
+
+                // If no case matched, use default
+                if (actionsToExecute == null)
+                {
+                    actionsToExecute = action.DefaultActions ?? new List<IFlowAction>();
+                }
+
+                // Execute the matched case actions
+                var caseResults = new List<Dictionary<string, object>>();
+                foreach (var caseAction in actionsToExecute)
+                {
+                    var caseActionResult = ExecuteAction(caseAction, executionContext);
+
+                    if (!caseActionResult.Succeeded)
+                    {
+                        actionResult.Succeeded = false;
+                        actionResult.ErrorMessage = $"Action '{caseActionResult.ActionName}' failed in switch case '{matchedCase}': {caseActionResult.ErrorMessage}";
+                        return actionResult;
+                    }
+
+                    // Store action outputs
+                    if (caseActionResult.Outputs != null && !string.IsNullOrEmpty(caseActionResult.ActionName))
+                    {
+                        caseResults.Add(new Dictionary<string, object>
+                        {
+                            ["actionName"] = caseActionResult.ActionName,
+                            ["outputs"] = caseActionResult.Outputs
+                        });
+
+                        var flowContext = executionContext as FlowExecutionContext;
+                        if (flowContext != null)
+                        {
+                            flowContext.AddActionOutputs(caseActionResult.ActionName,
+                                (IDictionary<string, object>)caseActionResult.Outputs);
+                        }
+                    }
+                }
+
+                actionResult.Succeeded = true;
+                actionResult.Outputs = new Dictionary<string, object>
+                {
+                    ["switchValue"] = switchValueStr,
+                    ["matchedCase"] = matchedCase,
+                    ["caseResults"] = caseResults
+                };
+            }
+            catch (Exception ex)
+            {
+                actionResult.Succeeded = false;
+                actionResult.ErrorMessage = ex.Message;
+            }
+
+            return actionResult;
+        }
+
+        /// <summary>
+        /// Execute a Parallel Branch action
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/use-parallel-branches
+        /// 
+        /// In simulation, branches execute sequentially but are logically independent.
+        /// All branches must complete successfully for the action to succeed.
+        /// </summary>
+        private IFlowActionResult ExecuteParallelBranchAction(ParallelBranchAction action, IFlowExecutionContext executionContext)
+        {
+            var actionResult = new FlowActionResult(
+                action.Name ?? "Parallel",
+                "ParallelBranch");
+
+            try
+            {
+                var branchResults = new List<Dictionary<string, object>>();
+
+                // Execute each branch (sequentially in simulation, but logically parallel)
+                foreach (var branch in action.Branches ?? new List<ParallelBranch>())
+                {
+                    var branchResult = new Dictionary<string, object>
+                    {
+                        ["branchName"] = branch.Name ?? "Unnamed",
+                        ["actions"] = new List<Dictionary<string, object>>()
+                    };
+
+                    var actionList = (List<Dictionary<string, object>>)branchResult["actions"];
+
+                    // Execute actions in this branch
+                    foreach (var branchAction in branch.Actions ?? new List<IFlowAction>())
+                    {
+                        var branchActionResult = ExecuteAction(branchAction, executionContext);
+
+                        if (!branchActionResult.Succeeded)
+                        {
+                            actionResult.Succeeded = false;
+                            actionResult.ErrorMessage = $"Action '{branchActionResult.ActionName}' failed in parallel branch '{branch.Name}': {branchActionResult.ErrorMessage}";
+                            return actionResult;
+                        }
+
+                        // Store action outputs
+                        if (branchActionResult.Outputs != null && !string.IsNullOrEmpty(branchActionResult.ActionName))
+                        {
+                            actionList.Add(new Dictionary<string, object>
+                            {
+                                ["actionName"] = branchActionResult.ActionName,
+                                ["outputs"] = branchActionResult.Outputs
+                            });
+
+                            var flowContext = executionContext as FlowExecutionContext;
+                            if (flowContext != null)
+                            {
+                                flowContext.AddActionOutputs(branchActionResult.ActionName,
+                                    (IDictionary<string, object>)branchActionResult.Outputs);
+                            }
+                        }
+                    }
+
+                    branchResults.Add(branchResult);
+                }
+
+                actionResult.Succeeded = true;
+                actionResult.Outputs = new Dictionary<string, object>
+                {
+                    ["branchResults"] = branchResults
+                };
+            }
+            catch (Exception ex)
+            {
+                actionResult.Succeeded = false;
+                actionResult.ErrorMessage = ex.Message;
+            }
+
+            return actionResult;
+        }
+
+        /// <summary>
+        /// Execute a Do Until loop action
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/do-until-loop
+        /// 
+        /// The Do Until action repeatedly executes actions until a condition becomes true.
+        /// The condition is checked AFTER each iteration (do-while loop).
+        /// The loop has a maximum iteration limit to prevent infinite loops.
+        /// </summary>
+        private IFlowActionResult ExecuteDoUntilAction(DoUntilAction action, IFlowExecutionContext executionContext)
+        {
+            var actionResult = new FlowActionResult(
+                action.Name ?? "Do_until",
+                "DoUntil");
+
+            try
+            {
+                var evaluator = new Expressions.ExpressionEvaluator(executionContext);
+                var iterationResults = new List<Dictionary<string, object>>();
+                int iteration = 0;
+                bool conditionMet = false;
+
+                // Execute loop - check condition AFTER each iteration
+                do
+                {
+                    iteration++;
+
+                    // Check max iterations
+                    if (iteration > action.MaxIterations)
+                    {
+                        actionResult.Succeeded = false;
+                        actionResult.ErrorMessage = $"Do Until loop exceeded maximum iterations ({action.MaxIterations})";
+                        return actionResult;
+                    }
+
+                    var iterationResult = new Dictionary<string, object>
+                    {
+                        ["iteration"] = iteration,
+                        ["actions"] = new List<Dictionary<string, object>>()
+                    };
+
+                    var actionList = (List<Dictionary<string, object>>)iterationResult["actions"];
+
+                    // Execute actions in this iteration
+                    foreach (var loopAction in action.Actions ?? new List<IFlowAction>())
+                    {
+                        var loopActionResult = ExecuteAction(loopAction, executionContext);
+
+                        if (!loopActionResult.Succeeded)
+                        {
+                            actionResult.Succeeded = false;
+                            actionResult.ErrorMessage = $"Action '{loopActionResult.ActionName}' failed in Do Until iteration {iteration}: {loopActionResult.ErrorMessage}";
+                            return actionResult;
+                        }
+
+                        // Store action outputs
+                        if (loopActionResult.Outputs != null && !string.IsNullOrEmpty(loopActionResult.ActionName))
+                        {
+                            actionList.Add(new Dictionary<string, object>
+                            {
+                                ["actionName"] = loopActionResult.ActionName,
+                                ["outputs"] = loopActionResult.Outputs
+                            });
+
+                            var flowContext = executionContext as FlowExecutionContext;
+                            if (flowContext != null)
+                            {
+                                flowContext.AddActionOutputs(loopActionResult.ActionName,
+                                    (IDictionary<string, object>)loopActionResult.Outputs);
+                            }
+                        }
+                    }
+
+                    iterationResults.Add(iterationResult);
+
+                    // Evaluate condition AFTER iteration
+                    var conditionValue = evaluator.Evaluate(action.Expression);
+
+                    // Convert to boolean
+                    if (conditionValue is bool boolValue)
+                    {
+                        conditionMet = boolValue;
+                    }
+                    else if (conditionValue != null)
+                    {
+                        conditionMet = Convert.ToBoolean(conditionValue);
+                    }
+
+                } while (!conditionMet);
+
+                actionResult.Succeeded = true;
+                actionResult.Outputs = new Dictionary<string, object>
+                {
+                    ["iterations"] = iteration,
+                    ["iterationResults"] = iterationResults,
+                    ["conditionMet"] = true
                 };
             }
             catch (Exception ex)
