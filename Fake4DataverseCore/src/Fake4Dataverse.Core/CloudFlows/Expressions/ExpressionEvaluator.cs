@@ -488,10 +488,17 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return null; // Parameters would need to be passed in flow definition
             }));
 
-            // item() - Returns the current item in an Apply to Each loop (placeholder)
+            // item() - Returns the current item in an Apply to Each loop
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#item
+            // Returns the current item being processed in an Apply to Each loop action
             engine.SetValue("item", new Func<object>(() =>
             {
-                return null; // Would need loop context tracking
+                // Access the current loop item from the execution context
+                if (_executionContext is FlowExecutionContext flowContext)
+                {
+                    return flowContext.GetCurrentLoopItem();
+                }
+                return null;
             }));
         }
 
