@@ -108,6 +108,73 @@ namespace Fake4Dataverse.CloudFlows.Expressions
         /// </summary>
         private void RegisterPowerAutomateFunctions(Engine engine)
         {
+            // For variadic functions, we need to use JavaScript's arguments object
+            // Register a helper that captures the engine instance for use in JavaScript
+            var helper = new
+            {
+                concat = new Func<object[], string>((args) => string.Concat(args.Select(a => a?.ToString() ?? string.Empty))),
+                min = new Func<object[], double>((args) => args.Select(v => Convert.ToDouble(v)).Min()),
+                max = new Func<object[], double>((args) => args.Select(v => Convert.ToDouble(v)).Max()),
+                and = new Func<object[], bool>((args) => args.All(c => Convert.ToBoolean(c))),
+                or = new Func<object[], bool>((args) => args.Any(c => Convert.ToBoolean(c))),
+                coalesce = new Func<object[], object>((args) => {
+                    foreach (var value in args)
+                    {
+                        if (value != null)
+                        {
+                            if (value is string str && !string.IsNullOrEmpty(str))
+                                return value;
+                            else if (!(value is string))
+                                return value;
+                        }
+                    }
+                    return null;
+                }),
+                createArray = new Func<object[], object[]>((args) => args),
+                union = new Func<object[], object[]>((args) => {
+                    var result = new List<object>();
+                    foreach (var collection in args)
+                    {
+                        if (collection is System.Collections.IEnumerable enumerable)
+                        {
+                            result.AddRange(enumerable.Cast<object>());
+                        }
+                    }
+                    return result.Distinct().ToArray();
+                }),
+                intersection = new Func<object[], object[]>((args) => {
+                    if (args.Length == 0) return new object[0];
+                    
+                    var sets = args
+                        .Select(c => c is System.Collections.IEnumerable enumerable 
+                            ? new HashSet<object>(enumerable.Cast<object>()) 
+                            : new HashSet<object>())
+                        .ToArray();
+
+                    var result = new HashSet<object>(sets[0]);
+                    for (int i = 1; i < sets.Length; i++)
+                    {
+                        result.IntersectWith(sets[i]);
+                    }
+                    return result.ToArray();
+                })
+            };
+
+            engine.SetValue("__helper", helper);
+
+            // Register variadic functions using JavaScript that captures arguments
+            engine.Execute(@"
+                function concat() { return __helper.concat(Array.from(arguments)); }
+                function min() { return __helper.min(Array.from(arguments)); }
+                function max() { return __helper.max(Array.from(arguments)); }
+                function and() { return __helper.and(Array.from(arguments)); }
+                function or() { return __helper.or(Array.from(arguments)); }
+                function coalesce() { return __helper.coalesce(Array.from(arguments)); }
+                function createArray() { return __helper.createArray(Array.from(arguments)); }
+                function union() { return __helper.union(Array.from(arguments)); }
+                function intersection() { return __helper.intersection(Array.from(arguments)); }
+            ");
+
             // Reference Functions - Access trigger and action data
             RegisterReferenceFunctions(engine);
 
@@ -216,20 +283,12 @@ namespace Fake4Dataverse.CloudFlows.Expressions
         }
 
         /// <summary>
-        /// String Functions: concat(), substring(), replace(), toLower(), toUpper(), trim(), split(), join()
+        /// String Functions: substring(), replace(), toLower(), toUpper(), trim(), split(), join()
+        /// Note: concat() is registered as a variadic function in RegisterPowerAutomateFunctions()
         /// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#string-functions
         /// </summary>
         private void RegisterStringFunctions(Engine engine)
         {
-            // concat(...) - Concatenates multiple strings
-            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#concat
-            // Returns a single string from combining two or more strings. Can also work with integers.
-            // Using action-based callback for variadic function support
-            engine.SetValue("concat", new Func<object[], string>((args) =>
-            {
-                return string.Concat(args.Select(a => a?.ToString() ?? string.Empty));
-            }));
-
             // substring(text, startIndex, length?) - Extracts a substring
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#substring
             // Returns characters from a string, starting from the specified position. Length is optional.
@@ -707,13 +766,7 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return null;
             }));
 
-            // createArray(...) - Create array from arguments
-            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#createArray
-            // Returns an array containing all the provided arguments
-            engine.SetValue("createArray", new Func<object[], object[]>((args) =>
-            {
-                return args;
-            }));
+            // Note: createArray() is registered as a variadic function in RegisterPowerAutomateFunctions()
 
             // flatten(collection) - Flatten nested arrays
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#flatten
@@ -1006,19 +1059,7 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return value1 % value2;
             }));
 
-            // min(...) - Returns minimum value
-            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#min
-            engine.SetValue("min", new Func<object[], double>((values) =>
-            {
-                return values.Select(v => Convert.ToDouble(v)).Min();
-            }));
-
-            // max(...) - Returns maximum value
-            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#max
-            engine.SetValue("max", new Func<object[], double>((values) =>
-            {
-                return values.Select(v => Convert.ToDouble(v)).Max();
-            }));
+            // Note: min() and max() are registered as variadic functions in RegisterPowerAutomateFunctions()
 
             // rand(min, max) - Returns random integer
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#rand
