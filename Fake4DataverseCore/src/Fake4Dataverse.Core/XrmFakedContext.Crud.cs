@@ -111,6 +111,29 @@ namespace Fake4Dataverse
                 // Track modified attributes for filtering
                 var modifiedAttributes = new HashSet<string>(e.Attributes.Keys, StringComparer.OrdinalIgnoreCase);
                 
+                // Execute business rules before PreValidation
+                // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-create-business-rule
+                // "Business rules execute when records are updated to validate data and set field values"
+                var businessRuleResult = this.BusinessRuleExecutor.ExecuteRules(e, BusinessRules.BusinessRuleTrigger.OnUpdate, isServerSide: true);
+                
+                // If business rules generated errors, throw validation exception
+                if (businessRuleResult.HasErrors)
+                {
+                    var errorMessages = string.Join("; ", businessRuleResult.Errors.Select(err => 
+                        string.IsNullOrEmpty(err.FieldName) ? err.Message : $"{err.FieldName}: {err.Message}"));
+                    var fullMessage = $"Business rule validation failed: {errorMessages}";
+                    
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        ErrorCode = (int)Fake4Dataverse.Abstractions.ErrorCodes.BusinessRuleEditorSupportsOnlyIfConditionBranch,
+                        Message = fullMessage
+                    };
+                    
+                    throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                        fault,
+                        new System.ServiceModel.FaultReason(fullMessage));
+                }
+                
                 if (this.UsePipelineSimulation)
                 {
                     // Execute PreValidation stage (outside transaction)
@@ -481,6 +504,29 @@ namespace Fake4Dataverse
         {
             // Create the entity with defaults
             AddEntityDefaultAttributes(e);
+
+            // Execute business rules before PreValidation
+            // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-create-business-rule
+            // "Business rules execute before the record is saved to validate data and set field values"
+            var businessRuleResult = this.BusinessRuleExecutor.ExecuteRules(e, BusinessRules.BusinessRuleTrigger.OnCreate, isServerSide: true);
+            
+            // If business rules generated errors, throw validation exception
+            if (businessRuleResult.HasErrors)
+            {
+                var errorMessages = string.Join("; ", businessRuleResult.Errors.Select(err => 
+                    string.IsNullOrEmpty(err.FieldName) ? err.Message : $"{err.FieldName}: {err.Message}"));
+                var fullMessage = $"Business rule validation failed: {errorMessages}";
+                
+                var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                {
+                    ErrorCode = (int)Fake4Dataverse.Abstractions.ErrorCodes.BusinessRuleEditorSupportsOnlyIfConditionBranch,
+                    Message = fullMessage
+                };
+                
+                throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                    fault,
+                    new System.ServiceModel.FaultReason(fullMessage));
+            }
 
             if (usePluginPipeline)
             {

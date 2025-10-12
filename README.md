@@ -223,8 +223,8 @@ The following table compares the features available across different versions of
 | **Security Roles Simulation** | ⚠️ Basic | ⚠️ Basic | ✅ Full support |
 | **Business Units** | ⚠️ Limited | ⚠️ Limited | ✅ Full support |
 | **Calculated Fields** | ❌ No | ✅ Yes | ✅ Yes |
+| **Business Rules** | ❌ No | ✅ Yes | ✅ Yes |
 | **Rollup Fields** | ❌ No | ✅ Yes | ⚠️ Unknown¹ |
-| **Business Rules** | ❌ No | ❌ No | ✅ Yes |
 | **Duplicate Detection** | ❌ No | ❌ No | ✅ Yes |
 | **Audit Log** | ❌ No | ❌ No | ✅ Yes |
 | **Virtual Entities** | ❌ No | ❌ No | ✅ Yes |
@@ -295,7 +295,6 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 #### High-Priority Missing Features:
 1. **Workflow/Custom Workflow Activities** - Removed due to SDK limitations
 2. **Custom Actions** - Limited support for custom actions
-3. **Business Rules** - No business rule simulation
 4. **Duplicate Detection** - No duplicate detection simulation
 5. **Audit Log** - No audit log simulation
 
