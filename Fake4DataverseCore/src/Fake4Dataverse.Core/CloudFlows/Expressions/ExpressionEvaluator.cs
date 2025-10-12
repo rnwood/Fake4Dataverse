@@ -79,6 +79,10 @@ namespace Fake4Dataverse.CloudFlows.Expressions
         {
             try
             {
+                // Preprocess the expression to handle reserved JavaScript keywords
+                // Replace if( with __if( since 'if' is a reserved keyword
+                expression = PreprocessExpression(expression);
+                
                 var engine = new Engine(options =>
                 {
                     options.Strict = false;
@@ -101,6 +105,22 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 throw new InvalidOperationException($"Failed to evaluate expression: {expression}", ex);
             }
         }
+        
+        /// <summary>
+        /// Preprocesses an expression to handle JavaScript reserved keywords
+        /// </summary>
+        private string PreprocessExpression(string expression)
+        {
+            // Replace if( with __if( since 'if' is a reserved JavaScript keyword
+            // We need to be careful to only replace if( as a function call, not within strings
+            // Simple approach: replace if( with __if( globally (works for most cases)
+            expression = System.Text.RegularExpressions.Regex.Replace(
+                expression, 
+                @"\bif\s*\(",  // Word boundary, 'if', optional whitespace, open paren
+                "__if(");
+            
+            return expression;
+        }
 
         /// <summary>
         /// Registers all Power Automate workflow functions in the Jint engine.
@@ -120,12 +140,20 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 coalesce = new Func<object[], object>((args) => {
                     foreach (var value in args)
                     {
-                        if (value != null)
+                        // Skip null and Jint undefined values
+                        if (value == null || (value is JsValue jsVal && (jsVal.IsNull() || jsVal.IsUndefined())))
+                            continue;
+                            
+                        // For strings, check if non-empty
+                        if (value is string str)
                         {
-                            if (value is string str && !string.IsNullOrEmpty(str))
+                            if (!string.IsNullOrEmpty(str))
                                 return value;
-                            else if (!(value is string))
-                                return value;
+                        }
+                        else
+                        {
+                            // For non-string types, return if not null
+                            return value;
                         }
                     }
                     return null;
@@ -157,7 +185,8 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                         result.IntersectWith(sets[i]);
                     }
                     return result.ToArray();
-                })
+                }),
+                @int = new Func<object, int>((value) => Convert.ToInt32(value))
             };
 
             engine.SetValue("__helper", helper);
@@ -173,6 +202,10 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 function createArray() { return __helper.createArray(Array.from(arguments)); }
                 function union() { return __helper.union(Array.from(arguments)); }
                 function intersection() { return __helper.intersection(Array.from(arguments)); }
+                function int(value) { 
+                    var result = __helper.int(value);
+                    return { __isInt: true, __value: result };
+                }
             ");
 
             // Reference Functions - Access trigger and action data
@@ -264,10 +297,35 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // variables(variableName) - Returns a variable value
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#variables
             // Returns the value of a flow variable that was set using Initialize Variable or Set Variable actions
-            engine.SetValue("variables", new Func<string, object>((variableName) =>
+            // We wrap integer values to preserve type through Jint conversion
+            engine.Execute(@"
+                function variables(variableName) {
+                    var value = __helper.getVariable(variableName);
+                    if (value !== null && typeof value === 'object' && value.__isInt) {
+                        return value;
+                    }
+                    return value;
+                }
+            ");
+            
+            var getVariableHelper = new Func<string, object>((variableName) =>
             {
-                return _executionContext.GetVariable(variableName);
-            }));
+                var value = _executionContext.GetVariable(variableName);
+                // Wrap integers to preserve type
+                if (value is int intValue)
+                {
+                    return new Dictionary<string, object>
+                    {
+                        ["__isInt"] = true,
+                        ["__value"] = intValue
+                    };
+                }
+                return value;
+            });
+            
+            // Need to add getVariable to existing helper - will do this by modifying the helper object
+            engine.Execute("__helper.getVariable = function(name) { return __getVariableHelper(name); };");
+            engine.SetValue("__getVariableHelper", getVariableHelper);
 
             // parameters(parameterName) - Returns a parameter value (placeholder)
             engine.SetValue("parameters", new Func<string, object>((parameterName) =>
@@ -483,21 +541,9 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return CompareValues(value1, value2) <= 0;
             }));
 
-            // and(condition1, condition2, ...) - Logical AND
+            // Note: and() and or() are registered as variadic functions in RegisterPowerAutomateFunctions()
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#and
-            // Returns true if all conditions are true.
-            engine.SetValue("and", new Func<object[], bool>((conditions) =>
-            {
-                return conditions.All(c => Convert.ToBoolean(c));
-            }));
-
-            // or(condition1, condition2, ...) - Logical OR
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#or
-            // Returns true if at least one condition is true.
-            engine.SetValue("or", new Func<object[], bool>((conditions) =>
-            {
-                return conditions.Any(c => Convert.ToBoolean(c));
-            }));
 
             // not(condition) - Logical NOT
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#not
@@ -509,11 +555,12 @@ namespace Fake4Dataverse.CloudFlows.Expressions
 
             // if(condition, trueValue, falseValue) - Conditional expression
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#if
-            // Returns trueValue if condition is true, otherwise returns falseValue.
-            engine.SetValue("if", new Func<bool, object, object, object>((condition, trueValue, falseValue) =>
+            // 'if' is a reserved keyword in JavaScript, so we register it as __if and preprocess expressions to replace if( with __if(
+            engine.SetValue("__if", new Func<bool, object, object, object>((condition, trueValue, falseValue) =>
             {
                 return condition ? trueValue : falseValue;
             }));
+            
 
             // empty(value) - Checks if value is empty
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#empty
@@ -541,23 +588,8 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return false;
             }));
 
-            // coalesce(...) - Returns first non-null value
+            // Note: coalesce() is registered as a variadic function in RegisterPowerAutomateFunctions()
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#coalesce
-            // Evaluates arguments in order and returns the first non-null/non-empty value.
-            engine.SetValue("coalesce", new Func<object[], object>((values) =>
-            {
-                foreach (var value in values)
-                {
-                    if (value != null)
-                    {
-                        if (value is string str && !string.IsNullOrEmpty(str))
-                            return value;
-                        else if (!(value is string))
-                            return value;
-                    }
-                }
-                return null;
-            }));
 
             // xor(condition1, condition2) - Exclusive OR
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#xor
@@ -582,13 +614,9 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return value?.ToString();
             }));
 
-            // int(value) - Converts to integer
+            // Note: int() is registered as a special function in RegisterPowerAutomateFunctions()
+            // to preserve integer type through Jint conversion
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#int
-            // Returns the integer representation of the value. Throws if conversion fails.
-            engine.SetValue("int", new Func<object, int>((value) =>
-            {
-                return Convert.ToInt32(value);
-            }));
 
             // float(value) - Converts to floating point
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#float
@@ -1313,9 +1341,27 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             if (jsValue.IsObject())
             {
                 var obj = jsValue.AsObject();
+                
+                // Check if this is a tagged int value from int() function
+                if (obj.HasOwnProperty("__isInt") && obj.HasOwnProperty("__value"))
+                {
+                    var isIntProp = obj.Get("__isInt");
+                    if (isIntProp.IsBoolean() && isIntProp.AsBoolean())
+                    {
+                        var valueProp = obj.Get("__value");
+                        if (valueProp.IsNumber())
+                        {
+                            return (int)valueProp.AsNumber();
+                        }
+                    }
+                }
+                
                 var result = new Dictionary<string, object>();
                 foreach (var prop in obj.GetOwnProperties())
                 {
+                    // Skip internal marker properties
+                    if (prop.Key.ToString().StartsWith("__"))
+                        continue;
                     result[prop.Key.ToString()] = ConvertJintValue(prop.Value.Value);
                 }
                 return result;
