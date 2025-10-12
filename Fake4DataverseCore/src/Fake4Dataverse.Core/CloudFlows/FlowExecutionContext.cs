@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fake4Dataverse.Abstractions.CloudFlows;
@@ -11,11 +12,13 @@ namespace Fake4Dataverse.CloudFlows
     public class FlowExecutionContext : IFlowExecutionContext
     {
         private readonly Dictionary<string, Dictionary<string, object>> _actionOutputs;
+        private readonly Dictionary<string, object> _variables;
 
         public FlowExecutionContext(IReadOnlyDictionary<string, object> triggerInputs)
         {
             TriggerInputs = triggerInputs ?? new Dictionary<string, object>();
             _actionOutputs = new Dictionary<string, Dictionary<string, object>>();
+            _variables = new Dictionary<string, object>();
         }
 
         /// <summary>
@@ -58,6 +61,36 @@ namespace Fake4Dataverse.CloudFlows
         internal void AddActionOutputs(string actionName, IDictionary<string, object> outputs)
         {
             _actionOutputs[actionName] = new Dictionary<string, object>(outputs);
+        }
+
+        /// <summary>
+        /// Sets a flow variable value
+        /// </summary>
+        public void SetVariable(string variableName, object value)
+        {
+            if (string.IsNullOrWhiteSpace(variableName))
+                throw new ArgumentException("Variable name cannot be null or empty", nameof(variableName));
+
+            _variables[variableName] = value;
+        }
+
+        /// <summary>
+        /// Gets a flow variable value
+        /// </summary>
+        public object GetVariable(string variableName)
+        {
+            if (string.IsNullOrWhiteSpace(variableName))
+                return null;
+
+            return _variables.TryGetValue(variableName, out var value) ? value : null;
+        }
+
+        /// <summary>
+        /// Gets all variable names
+        /// </summary>
+        public IReadOnlyCollection<string> GetVariableNames()
+        {
+            return _variables.Keys.ToList().AsReadOnly();
         }
     }
 }

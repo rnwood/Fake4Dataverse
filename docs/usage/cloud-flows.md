@@ -29,15 +29,65 @@ Cloud Flows allow you to:
 The Cloud Flow simulation feature provides:
 1. **Flow Registration** - Register flow definitions programmatically or from JSON
 2. **JSON Import** - Import real Cloud Flow definitions exported from Power Automate ✅ **NEW**
-3. **Automatic Triggering** - Flows automatically trigger on Create/Update/Delete operations when `UsePipelineSimulation = true`
-4. **Manual Triggering** - Manually simulate flow execution with `SimulateTrigger`
-5. **Built-in Dataverse Connector** - Full CRUD support (Create, Retrieve, Update, Delete, ListRecords, Relate, Unrelate, ExecuteAction)
-6. **Extensible Connector System** - Register custom handlers for Office 365, SharePoint, Teams, HTTP, and any custom connectors
-7. **Comprehensive Verification** - Assert flows triggered, inspect execution results, examine action outputs
-8. **Filtered Attributes** - Update triggers support filtered attributes (trigger only when specific fields change)
-9. **Asynchronous Behavior** - Flow failures don't fail CRUD operations, matching real Dataverse behavior
+3. **Expression Language** - Full Power Automate expression evaluation using Jint.net ✅ **NEW**
+4. **Automatic Triggering** - Flows automatically trigger on Create/Update/Delete operations when `UsePipelineSimulation = true`
+5. **Manual Triggering** - Manually simulate flow execution with `SimulateTrigger`
+6. **Built-in Dataverse Connector** - Full CRUD support (Create, Retrieve, Update, Delete, ListRecords, Relate, Unrelate, ExecuteAction)
+7. **Extensible Connector System** - Register custom handlers for Office 365, SharePoint, Teams, HTTP, and any custom connectors
+8. **Comprehensive Verification** - Assert flows triggered, inspect execution results, examine action outputs
+9. **Filtered Attributes** - Update triggers support filtered attributes (trigger only when specific fields change)
+10. **Asynchronous Behavior** - Flow failures don't fail CRUD operations, matching real Dataverse behavior
 
 ## API Usage
+
+### Expression Language Support ✅ **NEW**
+
+Fake4Dataverse now supports Power Automate expression language for dynamic values in flow actions:
+
+```csharp
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "dynamic_task_creation",
+    Trigger = new DataverseTrigger
+    {
+        EntityLogicalName = "contact",
+        Message = "Create"
+    },
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "Create_Task",
+            DataverseActionType = DataverseActionType.Create,
+            EntityLogicalName = "task",
+            Attributes = new Dictionary<string, object>
+            {
+                // Expressions are evaluated automatically
+                ["subject"] = "@concat('Follow up with ', triggerBody()['firstname'], ' ', triggerBody()['lastname'])",
+                ["description"] = "@concat('Email: ', triggerBody()['emailaddress1'], ' | Phone: ', triggerBody()['telephone1'])",
+                ["scheduledend"] = "@addDays(utcNow(), 7)"  // Due in 7 days
+            }
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+```
+
+**Supported Functions:**
+- Reference: `triggerOutputs()`, `triggerBody()`, `outputs('ActionName')`, `body('ActionName')`, `variables('varName')` ✅
+- String: `concat()`, `substring()`, `slice()`, `replace()`, `toLower()`, `toUpper()`, `split()`, `trim()`, `guid()`, `nthIndexOf()`
+- Logical: `equals()`, `greater()`, `less()`, `not()`, `empty()`, `xor()`
+- Conversion: `string()`, `int()`, `float()`, `bool()`, `base64()`
+- Collection: `first()`, `last()`, `take()`, `skip()`, `join()`, `reverse()`, `createArray()`, `flatten()`
+- Date/Time: `utcNow()`, `addDays()`, `addHours()`, `formatDateTime()`, `startOfDay()`, `getPastTime()`, `getFutureTime()`
+- Math: `add()`, `sub()`, `mul()`, `div()`, `min()`, `max()`
+- Type Checking: `isInt()`, `isFloat()`, `isString()`, `isArray()`, `isObject()` ✅ **NEW**
+- URI: `uriComponent()`, `uriHost()`, `uriPath()`, `uriQuery()`, `uriScheme()` ✅ **NEW**
+
+**Total: 80+ functions implemented**
+
+**See:** [Expression Language Reference](../expression-language.md) for complete documentation and examples.
 
 ### Flow Registration
 

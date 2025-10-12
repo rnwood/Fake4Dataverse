@@ -25,6 +25,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Calculated Fields](./usage/calculated-fields.md) - Simulating calculated field evaluation
 - [Custom API Support](./usage/custom-api.md) - Implementing Custom APIs
 - [Cloud Flows](./usage/cloud-flows.md) - Testing Power Automate flows ✅ **IMPLEMENTED**
+- [Expression Language](./expression-language.md) - Power Automate expressions ✅ **NEW**
 - [Merge Request Operations](./usage/merge-request.md) - Merging entity records
 - [Hierarchical Queries](./usage/hierarchical-queries.md) - Querying hierarchical data
 - [Fiscal Period Operators](./usage/fiscal-period-operators.md) - Fiscal calendar queries

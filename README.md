@@ -226,7 +226,7 @@ The following table compares the features available across different versions of
 | **Virtual Entities** | ❌ No | ❌ No | ✅ Yes |
 | **Elastic Tables** | ❌ No | ❌ No | ✅ Yes |
 | **Connection References** | ❌ No | ❌ No | ✅ Yes |
-| **Cloud Flows** | ❌ No | ✅ Yes (with JSON import) | ✅ Yes |
+| **Cloud Flows** | ❌ No | ✅ Yes (with JSON import & expressions) | ✅ Yes |
 | **Power Automate Integration** | ❌ No | ❌ No | ✅ Yes |
 
 ### Testing & Quality Features

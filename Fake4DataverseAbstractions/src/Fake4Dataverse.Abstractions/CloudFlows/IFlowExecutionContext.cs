@@ -26,5 +26,21 @@ namespace Fake4Dataverse.Abstractions.CloudFlows
         /// Gets all action outputs indexed by action name
         /// </summary>
         IReadOnlyDictionary<string, IReadOnlyDictionary<string, object>> AllActionOutputs { get; }
+
+        /// <summary>
+        /// Sets a flow variable value.
+        /// Flow variables are used to store state during flow execution.
+        /// </summary>
+        /// <param name="variableName">The name of the variable</param>
+        /// <param name="value">The value to store</param>
+        void SetVariable(string variableName, object value);
+
+        /// <summary>
+        /// Gets a flow variable value.
+        /// Returns null if the variable doesn't exist.
+        /// </summary>
+        /// <param name="variableName">The name of the variable</param>
+        /// <returns>The variable value, or null if not found</returns>
+        object GetVariable(string variableName);
     }
 }
