@@ -338,10 +338,13 @@ While Fake4Dataverse simulates Dataverse closely, there are differences:
 - Metadata (limited)
 - Calculated/Rollup fields
 
+✅ **Now Supported**:
+- Cloud Flows - Power Automate flow simulation (with JSON import!) ✅ **NEW**
+- Custom APIs - Modern Dataverse Custom APIs
+
 ❌ **Not Simulated**:
 - Business rules
-- Workflows (cloud flows)
-- Custom APIs (platform-level)
+- Classic Workflows (deprecated WF engine)
 - JavaScript web resources
 - Canvas apps
 

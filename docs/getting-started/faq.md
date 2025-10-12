@@ -323,6 +323,27 @@ See [Custom Message Executors](./api/custom-executors.md).
 
 Yes! See [Middleware Architecture](./concepts/middleware.md).
 
+## Additional Features
+
+### Can I test Power Automate Cloud Flows?
+
+Yes! ✅ **NEW** - Fake4Dataverse now supports Cloud Flow simulation including:
+- Registering flows programmatically
+- **Importing real Power Automate flows from exported JSON** (new feature!)
+- Automatic triggering on CRUD operations
+- Verifying flow execution and results
+- Mocking external connectors
+
+See the [Cloud Flows Guide](../usage/cloud-flows.md) for complete documentation.
+
+### Can I test Custom APIs?
+
+Yes! See the [Custom API Guide](../usage/custom-api.md) for details.
+
+### Can I test plugins?
+
+Yes! See the [Plugin Testing Guide](../usage/testing-plugins.md) for comprehensive examples.
+
 ## Getting Help
 
 ### Where can I find examples?

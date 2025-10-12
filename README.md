@@ -221,7 +221,7 @@ The following table compares the features available across different versions of
 | **Virtual Entities** | ❌ No | ❌ No | ✅ Yes |
 | **Elastic Tables** | ❌ No | ❌ No | ✅ Yes |
 | **Connection References** | ❌ No | ❌ No | ✅ Yes |
-| **Cloud Flows** | ❌ No | ✅ Yes | ✅ Yes |
+| **Cloud Flows** | ❌ No | ✅ Yes (with JSON import) | ✅ Yes |
 | **Power Automate Integration** | ❌ No | ❌ No | ✅ Yes |
 
 ### Testing & Quality Features
@@ -292,7 +292,7 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 #### Modern Dataverse Features Not Supported:
 7. **Virtual Entities** - No virtual entity support
 8. **Elastic Tables** - No elastic table support
-9. **Power Automate Testing** - Limited Power Automate integration testing (Cloud Flows basic support added)
+9. **Power Automate Testing** - Cloud Flows fully supported with JSON import ✅ **NEW**, broader Power Automate integration limited
 11. **Connection References** - No connection reference support
 12. **Advanced Security Model** - Limited security role and privilege simulation
 13. **Concurrent Execution Testing** - No multi-threaded execution testing
