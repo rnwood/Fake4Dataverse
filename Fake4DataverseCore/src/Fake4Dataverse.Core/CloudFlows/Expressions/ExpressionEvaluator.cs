@@ -107,17 +107,161 @@ namespace Fake4Dataverse.CloudFlows.Expressions
         }
         
         /// <summary>
-        /// Preprocesses an expression to handle JavaScript reserved keywords
+        /// Preprocesses an expression to handle JavaScript reserved keywords and Power Automate specific syntax
         /// </summary>
         private string PreprocessExpression(string expression)
         {
             // Replace if( with __if( since 'if' is a reserved JavaScript keyword
-            // We need to be careful to only replace if( as a function call, not within strings
-            // Simple approach: replace if( with __if( globally (works for most cases)
             expression = System.Text.RegularExpressions.Regex.Replace(
                 expression, 
                 @"\bif\s*\(",  // Word boundary, 'if', optional whitespace, open paren
                 "__if(");
+            
+            // Handle ?['path/to/field'] by converting to ?['path']?['to']?['field']
+            // This must be done BEFORE path separator handling so that safe navigation applies to all levels
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\?\['[^']*?/[^']*?'\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\?\['([^'/]*?)(?:/([^'/]*?))+'\]",
+                    match => {
+                        var fullPath = match.Groups[0].Value; // ?['a/b/c']
+                        var innerPath = fullPath.Substring(3, fullPath.Length - 5); // a/b/c
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"?['{p}']"));
+                    });
+            }
+            
+            // Same for double quotes
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\?\[""[^""]*?/[^""]*?""\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\?\[""([^""/]*?)(?:/([^""/]*?))+""\]",
+                    match => {
+                        var fullPath = match.Groups[0].Value;
+                        var innerPath = fullPath.Substring(3, fullPath.Length - 5);
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"?[\"{p}\"]"));
+                    });
+            }
+            
+            // Handle path separator in property access FIRST: ['body/fieldname'] → ['body']['fieldname']
+            // This must be done before safe navigation handling
+            // Use a loop to handle multiple path separators in one bracket
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\['[^']*?/[^']*?'\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\['([^'/]*?)(?:/([^'/]*?))+'\]",  // Match ['something/something'] or ['a/b/c']
+                    match => {
+                        var fullPath = match.Groups[0].Value; // ['a/b/c']
+                        var innerPath = fullPath.Substring(2, fullPath.Length - 4); // a/b/c
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"['{p}']"));
+                    });
+            }
+            
+            // Also handle path separator with double quotes
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\[""[^""]*?/[^""]*?""\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\[""([^""/]*?)(?:/([^""/]*?))+""\]",
+                    match => {
+                        var fullPath = match.Groups[0].Value;
+                        var innerPath = fullPath.Substring(2, fullPath.Length - 4);
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"[\"{p}\"]"));
+                    });
+            }
+            
+            // Handle safe navigation operator ?['field'] and ?["field"]
+            // Match pattern: something)?['field'] or something]['otherfield']?['field']
+            // We need to capture everything before the ?['field']
+            expression = System.Text.RegularExpressions.Regex.Replace(
+                expression,
+                @"((?:\w+\([^)]*\)|[\w]+)(?:\['[^']+'\]|\[""[^""]+""\])*)\?\['([^']+)'\]",  // Match func()['prop']?['field'] or func()?['field']
+                match => $"__safeGet({match.Groups[1].Value}, '{match.Groups[2].Value}')"
+            );
+            
+            expression = System.Text.RegularExpressions.Regex.Replace(
+                expression,
+                @"((?:\w+\([^)]*\)|[\w]+)(?:\['[^']+'\]|\[""[^""]+""\])*)\?\[""([^""]+)""\]",  // Same with double quotes
+                match => $"__safeGet({match.Groups[1].Value}, \"{match.Groups[2].Value}\")"
+            );
+            
+            // Also handle chained safe navigation: __safeGet(...)?['field'] 
+            // Keep applying until no more matches (handles arbitrary chaining)
+            // Need to handle nested parentheses properly
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"__safeGet\(.+?\)\?\["))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"(__safeGet\(.+?\))\?\['([^']+)'\]",
+                    match => {
+                        // Extract the __safeGet(...) part, handling nested parentheses
+                        var prefix = match.Groups[1].Value;
+                        var field = match.Groups[2].Value;
+                        
+                        // Count parentheses to ensure we got the complete __safeGet call
+                        int depth = 0;
+                        int endPos = -1;
+                        for (int i = "__safeGet(".Length; i < prefix.Length; i++)
+                        {
+                            if (prefix[i] == '(') depth++;
+                            else if (prefix[i] == ')') depth--;
+                            
+                            if (depth == -1)
+                            {
+                                endPos = i;
+                                break;
+                            }
+                        }
+                        
+                        if (endPos > 0)
+                        {
+                            prefix = prefix.Substring(0, endPos + 1);
+                        }
+                        
+                        return $"__safeGet({prefix}, '{field}')";
+                    },
+                    System.Text.RegularExpressions.RegexOptions.None,
+                    TimeSpan.FromSeconds(1)
+                );
+                
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"(__safeGet\(.+?\))\?\[""([^""]+)""\]",
+                    match => {
+                        var prefix = match.Groups[1].Value;
+                        var field = match.Groups[2].Value;
+                        
+                        int depth = 0;
+                        int endPos = -1;
+                        for (int i = "__safeGet(".Length; i < prefix.Length; i++)
+                        {
+                            if (prefix[i] == '(') depth++;
+                            else if (prefix[i] == ')') depth--;
+                            
+                            if (depth == -1)
+                            {
+                                endPos = i;
+                                break;
+                            }
+                        }
+                        
+                        if (endPos > 0)
+                        {
+                            prefix = prefix.Substring(0, endPos + 1);
+                        }
+                        
+                        return $"__safeGet({prefix}, \"{field}\")";
+                    },
+                    System.Text.RegularExpressions.RegexOptions.None,
+                    TimeSpan.FromSeconds(1)
+                );
+            }
             
             return expression;
         }
@@ -205,6 +349,17 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 function int(value) { 
                     var result = __helper.int(value);
                     return { __isInt: true, __value: result };
+                }
+                
+                // Safe navigation helper - returns null if object is null/undefined or field doesn't exist
+                function __safeGet(obj, field) {
+                    if (obj === null || obj === undefined) {
+                        return null;
+                    }
+                    if (typeof obj === 'object' && field in obj) {
+                        return obj[field];
+                    }
+                    return null;
                 }
             ");
 
