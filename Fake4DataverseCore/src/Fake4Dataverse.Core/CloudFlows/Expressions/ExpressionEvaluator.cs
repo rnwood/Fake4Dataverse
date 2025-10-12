@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Fake4Dataverse.Abstractions.CloudFlows;
 using Jint;
 using Jint.Native;
+using Jint.Native.Function;
 using Jint.Native.Object;
 
 namespace Fake4Dataverse.CloudFlows.Expressions
@@ -223,9 +224,10 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // concat(...) - Concatenates multiple strings
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#concat
             // Returns a single string from combining two or more strings. Can also work with integers.
-            engine.SetValue("concat", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            // Using action-based callback for variadic function support
+            engine.SetValue("concat", new Func<object[], string>((args) =>
             {
-                return string.Concat(args.Select(a => a.ToString()));
+                return string.Concat(args.Select(a => a?.ToString() ?? string.Empty));
             }));
 
             // substring(text, startIndex, length?) - Extracts a substring
@@ -279,23 +281,10 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // join(array, delimiter) - Joins array elements
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#join
             // Returns a string with all items from an array, separated by delimiter.
-            engine.SetValue("join", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("join", new Func<object[], string, string>((array, delimiter) =>
             {
-                if (args.Length < 2) return JsValue.Null;
-                var array = args[0];
-                var delimiter = args[1].ToString();
-                
-                if (array.IsArray())
-                {
-                    var arr = array.AsArray();
-                    var items = new List<string>();
-                    for (uint i = 0; i < arr.Length; i++)
-                    {
-                        items.Add(arr.Get(i.ToString()).ToString());
-                    }
-                    return string.Join(delimiter, items);
-                }
-                return JsValue.Null;
+                if (array == null || array.Length == 0) return string.Empty;
+                return string.Join(delimiter, array.Select(a => a?.ToString() ?? string.Empty));
             }));
 
             // length(text) - Returns string length
@@ -438,17 +427,17 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // and(condition1, condition2, ...) - Logical AND
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#and
             // Returns true if all conditions are true.
-            engine.SetValue("and", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("and", new Func<object[], bool>((conditions) =>
             {
-                return args.All(c => c.AsBoolean());
+                return conditions.All(c => Convert.ToBoolean(c));
             }));
 
             // or(condition1, condition2, ...) - Logical OR
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#or
             // Returns true if at least one condition is true.
-            engine.SetValue("or", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("or", new Func<object[], bool>((conditions) =>
             {
-                return args.Any(c => c.AsBoolean());
+                return conditions.Any(c => Convert.ToBoolean(c));
             }));
 
             // not(condition) - Logical NOT
@@ -496,19 +485,19 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // coalesce(...) - Returns first non-null value
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#coalesce
             // Evaluates arguments in order and returns the first non-null/non-empty value.
-            engine.SetValue("coalesce", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("coalesce", new Func<object[], object>((values) =>
             {
-                foreach (var arg in args)
+                foreach (var value in values)
                 {
-                    if (!arg.IsNull() && !arg.IsUndefined())
+                    if (value != null)
                     {
-                        if (arg.IsString() && !string.IsNullOrEmpty(arg.AsString()))
-                            return arg;
-                        else if (!arg.IsString())
-                            return arg;
+                        if (value is string str && !string.IsNullOrEmpty(str))
+                            return value;
+                        else if (!(value is string))
+                            return value;
                     }
                 }
-                return JsValue.Null;
+                return null;
             }));
 
             // xor(condition1, condition2) - Exclusive OR
@@ -657,35 +646,38 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // union(collection1, collection2, ...) - Returns union of collections
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#union
             // Returns a collection with all unique items from the input collections.
-            engine.SetValue("union", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("union", new Func<object[], object[]>((collections) =>
             {
                 var result = new List<object>();
-                foreach (var arg in args)
+                foreach (var collection in collections)
                 {
-                    if (arg.IsArray())
+                    if (collection is System.Collections.IEnumerable enumerable)
                     {
-                        var arr = arg.AsArray();
-                        for (uint i = 0; i < arr.Length; i++)
-                        {
-                            var item = ConvertJintValue(arr.Get(i.ToString()));
-                            result.Add(item);
-                        }
+                        result.AddRange(enumerable.Cast<object>());
                     }
                 }
-                // Return distinct values
-                return JsValue.FromObject(engine, result.Distinct().ToArray());
+                return result.Distinct().ToArray();
             }));
 
             // intersection(collection1, collection2, ...) - Returns intersection
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#intersection
             // Returns a collection with only items that appear in all input collections.
-            engine.SetValue("intersection", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("intersection", new Func<object[], object[]>((collections) =>
             {
-                if (args.Length == 0) return JsValue.FromObject(engine, Array.Empty<object>());
+                if (collections.Length == 0) return new object[0];
                 
-                // For simplicity, just return the first array
-                // A full implementation would require proper set intersection
-                return args[0];
+                var sets = collections
+                    .Select(c => c is System.Collections.IEnumerable enumerable 
+                        ? new HashSet<object>(enumerable.Cast<object>()) 
+                        : new HashSet<object>())
+                    .ToArray();
+
+                var result = new HashSet<object>(sets[0]);
+                for (int i = 1; i < sets.Length; i++)
+                {
+                    result.IntersectWith(sets[i]);
+                }
+                return result.ToArray();
             }));
 
             // reverse(collection) - Reverse array
@@ -718,14 +710,9 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // createArray(...) - Create array from arguments
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#createArray
             // Returns an array containing all the provided arguments
-            engine.SetValue("createArray", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("createArray", new Func<object[], object[]>((args) =>
             {
-                var result = new object[args.Length];
-                for (int i = 0; i < args.Length; i++)
-                {
-                    result[i] = ConvertJintValue(args[i]);
-                }
-                return JsValue.FromObject(engine, result);
+                return args;
             }));
 
             // flatten(collection) - Flatten nested arrays
@@ -1021,16 +1008,16 @@ namespace Fake4Dataverse.CloudFlows.Expressions
 
             // min(...) - Returns minimum value
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#min
-            engine.SetValue("min", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("min", new Func<object[], double>((values) =>
             {
-                return args.Select(v => v.AsNumber()).Min();
+                return values.Select(v => Convert.ToDouble(v)).Min();
             }));
 
             // max(...) - Returns maximum value
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#max
-            engine.SetValue("max", new Func<JsValue, JsValue[], JsValue>((thisValue, args) =>
+            engine.SetValue("max", new Func<object[], double>((values) =>
             {
-                return args.Select(v => v.AsNumber()).Max();
+                return values.Select(v => Convert.ToDouble(v)).Max();
             }));
 
             // rand(min, max) - Returns random integer
