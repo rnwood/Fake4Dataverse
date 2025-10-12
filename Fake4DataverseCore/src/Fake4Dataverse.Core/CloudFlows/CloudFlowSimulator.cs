@@ -32,8 +32,9 @@ namespace Fake4Dataverse.CloudFlows
             _connectorHandlers = new Dictionary<string, IConnectorActionHandler>(StringComparer.OrdinalIgnoreCase);
             _executionHistory = new Dictionary<string, List<IFlowExecutionResult>>(StringComparer.OrdinalIgnoreCase);
 
-            // Register built-in Dataverse action handler
+            // Register built-in action handlers
             RegisterConnectorActionHandler("Dataverse", new DataverseActionHandler());
+            RegisterConnectorActionHandler("Compose", new ComposeActionHandler());
         }
 
         /// <summary>
@@ -415,6 +416,12 @@ namespace Fake4Dataverse.CloudFlows
 
             try
             {
+                // Special handling for Apply to Each actions
+                if (action is ApplyToEachAction applyToEachAction)
+                {
+                    return ExecuteApplyToEachAction(applyToEachAction, executionContext);
+                }
+
                 // Find appropriate handler
                 IConnectorActionHandler handler = null;
 
@@ -439,6 +446,102 @@ namespace Fake4Dataverse.CloudFlows
 
                 actionResult.Succeeded = true;
                 actionResult.Outputs = new Dictionary<string, object>(outputs ?? new Dictionary<string, object>());
+            }
+            catch (Exception ex)
+            {
+                actionResult.Succeeded = false;
+                actionResult.ErrorMessage = ex.Message;
+            }
+
+            return actionResult;
+        }
+
+        /// <summary>
+        /// Execute an Apply to Each action with loop iteration
+        /// Reference: https://learn.microsoft.com/en-us/power-automate/apply-to-each
+        /// </summary>
+        private IFlowActionResult ExecuteApplyToEachAction(ApplyToEachAction action, IFlowExecutionContext executionContext)
+        {
+            var actionResult = new FlowActionResult(
+                action.Name ?? "Apply_to_each",
+                "ApplyToEach");
+
+            try
+            {
+                // Evaluate the collection expression
+                var evaluator = new Expressions.ExpressionEvaluator(executionContext);
+                var collectionValue = evaluator.Evaluate(action.Collection);
+
+                // Convert to enumerable
+                System.Collections.IEnumerable collection = null;
+                if (collectionValue is System.Collections.IEnumerable enumerable)
+                {
+                    collection = enumerable;
+                }
+                else if (collectionValue != null)
+                {
+                    // Wrap single value in array
+                    collection = new[] { collectionValue };
+                }
+
+                if (collection == null)
+                {
+                    actionResult.Succeeded = false;
+                    actionResult.ErrorMessage = "Collection evaluated to null";
+                    return actionResult;
+                }
+
+                // Iterate over collection
+                var itemResults = new List<Dictionary<string, object>>();
+                var flowContext = executionContext as FlowExecutionContext;
+                
+                foreach (var item in collection)
+                {
+                    // Push item onto stack for @item() access
+                    flowContext?.PushLoopItem(item);
+
+                    try
+                    {
+                        // Execute actions for this item
+                        var itemActionResults = new Dictionary<string, object>();
+                        
+                        foreach (var loopAction in action.Actions ?? new List<IFlowAction>())
+                        {
+                            var loopActionResult = ExecuteAction(loopAction, executionContext);
+                            
+                            if (!loopActionResult.Succeeded)
+                            {
+                                actionResult.Succeeded = false;
+                                actionResult.ErrorMessage = $"Action '{loopActionResult.ActionName}' failed in loop: {loopActionResult.ErrorMessage}";
+                                return actionResult;
+                            }
+
+                            // Store action outputs
+                            if (loopActionResult.Outputs != null && !string.IsNullOrEmpty(loopActionResult.ActionName))
+                            {
+                                itemActionResults[loopActionResult.ActionName] = loopActionResult.Outputs;
+                                if (flowContext != null)
+                                {
+                                    flowContext.AddActionOutputs(loopActionResult.ActionName, 
+                                        (IDictionary<string, object>)loopActionResult.Outputs);
+                                }
+                            }
+                        }
+
+                        itemResults.Add(itemActionResults);
+                    }
+                    finally
+                    {
+                        // Pop item from stack
+                        flowContext?.PopLoopItem();
+                    }
+                }
+
+                actionResult.Succeeded = true;
+                actionResult.Outputs = new Dictionary<string, object>
+                {
+                    ["itemResults"] = itemResults
+                };
             }
             catch (Exception ex)
             {

@@ -13,12 +13,14 @@ namespace Fake4Dataverse.CloudFlows
     {
         private readonly Dictionary<string, Dictionary<string, object>> _actionOutputs;
         private readonly Dictionary<string, object> _variables;
+        private readonly Stack<object> _loopItemStack;
 
         public FlowExecutionContext(IReadOnlyDictionary<string, object> triggerInputs)
         {
             TriggerInputs = triggerInputs ?? new Dictionary<string, object>();
             _actionOutputs = new Dictionary<string, Dictionary<string, object>>();
             _variables = new Dictionary<string, object>();
+            _loopItemStack = new Stack<object>();
         }
 
         /// <summary>
@@ -91,6 +93,36 @@ namespace Fake4Dataverse.CloudFlows
         public IReadOnlyCollection<string> GetVariableNames()
         {
             return _variables.Keys.ToList().AsReadOnly();
+        }
+
+        /// <summary>
+        /// Pushes a loop item onto the stack for @item() function access.
+        /// Used internally by Apply to Each action handler.
+        /// </summary>
+        internal void PushLoopItem(object item)
+        {
+            _loopItemStack.Push(item);
+        }
+
+        /// <summary>
+        /// Pops a loop item from the stack when exiting a loop.
+        /// Used internally by Apply to Each action handler.
+        /// </summary>
+        internal void PopLoopItem()
+        {
+            if (_loopItemStack.Count > 0)
+            {
+                _loopItemStack.Pop();
+            }
+        }
+
+        /// <summary>
+        /// Gets the current loop item for @item() function.
+        /// Returns null if not in a loop context.
+        /// </summary>
+        internal object GetCurrentLoopItem()
+        {
+            return _loopItemStack.Count > 0 ? _loopItemStack.Peek() : null;
         }
     }
 }

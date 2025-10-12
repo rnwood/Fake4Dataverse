@@ -30,6 +30,14 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Hierarchical Queries](./usage/hierarchical-queries.md) - Querying hierarchical data
 - [Fiscal Period Operators](./usage/fiscal-period-operators.md) - Fiscal calendar queries
 
+### 🏗️ [Architecture & Planning](.)
+- [Cloud Flow API Design](./API_DESIGN_CLOUD_FLOWS.md) - Technical design for Cloud Flow simulation
+- [Cloud Flow Architecture](./CLOUD_FLOW_ARCHITECTURE.md) - Architecture diagrams and patterns
+- [Cloud Flow JSON Import](./CLOUD_FLOW_JSON_IMPORT_SUMMARY.md) - JSON flow definition import
+- [Async Plugin Implementation](./async-plugin-implementation.md) - Async plugin execution design
+- [Documentation Overview](./DOCUMENTATION_OVERVIEW.md) - This documentation structure
+- [Known Gaps & Limitations](./GAPS.md) - Comprehensive list of unsupported features ✅ **NEW**
+
 ### 📋 [Message Executors](./messages/)
 - [Overview](./messages/README.md) - Supported Dataverse messages
 - [CRUD Messages](./messages/crud.md) - Create, Retrieve, Update, Delete, Upsert

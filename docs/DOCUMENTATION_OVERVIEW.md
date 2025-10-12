@@ -26,6 +26,7 @@ docs/
 │   ├── security-permissions.md       # Security testing patterns
 │   ├── calculated-fields.md          # Calculated field simulation (18KB)
 │   ├── custom-api.md                 # Custom API implementation
+│   ├── cloud-flows.md                # Cloud Flow simulation (NEW)
 │   ├── merge-request.md              # Merge request operations
 │   ├── hierarchical-queries.md       # Hierarchical query operators
 │   └── fiscal-period-operators.md    # Fiscal period operators
@@ -43,10 +44,52 @@ docs/
 │   ├── ixrm-faked-context.md         # Context interface reference
 │   ├── extension-methods.md          # Extension methods
 │   └── custom-executors.md           # Creating custom executors
-└── migration/                         # Migration guides
-    ├── from-v1.md                    # Migrate from v1.x
-    └── from-v3.md                    # Migrate from commercial v3.x
+├── migration/                         # Migration guides
+│   ├── from-v1.md                    # Migrate from v1.x
+│   └── from-v3.md                    # Migrate from commercial v3.x
+├── expression-language.md             # Power Automate expressions (NEW)
+├── API_DESIGN_CLOUD_FLOWS.md         # Cloud Flow API technical design
+├── CLOUD_FLOW_ARCHITECTURE.md        # Cloud Flow architecture diagrams
+├── CLOUD_FLOW_JSON_IMPORT_SUMMARY.md # JSON flow import specification
+├── async-plugin-implementation.md     # Async plugin execution design
+├── GAPS.md                            # Known gaps and limitations (NEW)
+└── DOCUMENTATION_OVERVIEW.md         # This file
 ```
+
+## Document Purpose and Audience
+
+### User-Facing Documentation
+
+**For New Users:**
+- `getting-started/` - Start here for installation, first test, and basic concepts
+- `README.md` - Navigation hub for all documentation
+
+**For Daily Use:**
+- `usage/` - Practical guides for common testing scenarios
+- `messages/` - Reference for supported Dataverse operations
+
+**For Advanced Users:**
+- `concepts/` - Deep understanding of framework architecture
+- `api/` - API reference and extensibility patterns
+
+**For Migration:**
+- `migration/` - Guides for migrating from other versions
+
+### Technical/Planning Documentation
+
+**Cloud Flow Implementation:**
+- `expression-language.md` - Complete Power Automate expression language reference with 80+ functions
+- `usage/cloud-flows.md` - User guide for testing Cloud Flows
+- `API_DESIGN_CLOUD_FLOWS.md` - Technical API design specification
+- `CLOUD_FLOW_ARCHITECTURE.md` - Architecture diagrams and component design
+- `CLOUD_FLOW_JSON_IMPORT_SUMMARY.md` - JSON flow definition import specification
+
+**Other Technical Docs:**
+- `async-plugin-implementation.md` - Async plugin execution architecture
+- `GAPS.md` - Known gaps and limitations guide ✅ **NEW**
+
+**Meta Documentation:**
+- `DOCUMENTATION_OVERVIEW.md` - This file, explains documentation structure
 
 ## Documentation Stats
 

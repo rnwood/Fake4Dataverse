@@ -79,6 +79,10 @@ namespace Fake4Dataverse.CloudFlows.Expressions
         {
             try
             {
+                // Preprocess the expression to handle reserved JavaScript keywords
+                // Replace if( with __if( since 'if' is a reserved keyword
+                expression = PreprocessExpression(expression);
+                
                 var engine = new Engine(options =>
                 {
                     options.Strict = false;
@@ -101,6 +105,166 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 throw new InvalidOperationException($"Failed to evaluate expression: {expression}", ex);
             }
         }
+        
+        /// <summary>
+        /// Preprocesses an expression to handle JavaScript reserved keywords and Power Automate specific syntax
+        /// </summary>
+        private string PreprocessExpression(string expression)
+        {
+            // Replace if( with __if( since 'if' is a reserved JavaScript keyword
+            expression = System.Text.RegularExpressions.Regex.Replace(
+                expression, 
+                @"\bif\s*\(",  // Word boundary, 'if', optional whitespace, open paren
+                "__if(");
+            
+            // Handle ?['path/to/field'] by converting to ?['path']?['to']?['field']
+            // This must be done BEFORE path separator handling so that safe navigation applies to all levels
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\?\['[^']*?/[^']*?'\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\?\['([^'/]*?)(?:/([^'/]*?))+'\]",
+                    match => {
+                        var fullPath = match.Groups[0].Value; // ?['a/b/c']
+                        var innerPath = fullPath.Substring(3, fullPath.Length - 5); // a/b/c
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"?['{p}']"));
+                    });
+            }
+            
+            // Same for double quotes
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\?\[""[^""]*?/[^""]*?""\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\?\[""([^""/]*?)(?:/([^""/]*?))+""\]",
+                    match => {
+                        var fullPath = match.Groups[0].Value;
+                        var innerPath = fullPath.Substring(3, fullPath.Length - 5);
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"?[\"{p}\"]"));
+                    });
+            }
+            
+            // Handle path separator in property access FIRST: ['body/fieldname'] → ['body']['fieldname']
+            // This must be done before safe navigation handling
+            // Use a loop to handle multiple path separators in one bracket
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\['[^']*?/[^']*?'\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\['([^'/]*?)(?:/([^'/]*?))+'\]",  // Match ['something/something'] or ['a/b/c']
+                    match => {
+                        var fullPath = match.Groups[0].Value; // ['a/b/c']
+                        var innerPath = fullPath.Substring(2, fullPath.Length - 4); // a/b/c
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"['{p}']"));
+                    });
+            }
+            
+            // Also handle path separator with double quotes
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"\[""[^""]*?/[^""]*?""\]"))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"\[""([^""/]*?)(?:/([^""/]*?))+""\]",
+                    match => {
+                        var fullPath = match.Groups[0].Value;
+                        var innerPath = fullPath.Substring(2, fullPath.Length - 4);
+                        var parts = innerPath.Split('/');
+                        return string.Join("", parts.Select(p => $"[\"{p}\"]"));
+                    });
+            }
+            
+            // Handle safe navigation operator ?['field'] and ?["field"]
+            // Match pattern: something)?['field'] or something]['otherfield']?['field']
+            // We need to capture everything before the ?['field']
+            expression = System.Text.RegularExpressions.Regex.Replace(
+                expression,
+                @"((?:\w+\([^)]*\)|[\w]+)(?:\['[^']+'\]|\[""[^""]+""\])*)\?\['([^']+)'\]",  // Match func()['prop']?['field'] or func()?['field']
+                match => $"__safeGet({match.Groups[1].Value}, '{match.Groups[2].Value}')"
+            );
+            
+            expression = System.Text.RegularExpressions.Regex.Replace(
+                expression,
+                @"((?:\w+\([^)]*\)|[\w]+)(?:\['[^']+'\]|\[""[^""]+""\])*)\?\[""([^""]+)""\]",  // Same with double quotes
+                match => $"__safeGet({match.Groups[1].Value}, \"{match.Groups[2].Value}\")"
+            );
+            
+            // Also handle chained safe navigation: __safeGet(...)?['field'] 
+            // Keep applying until no more matches (handles arbitrary chaining)
+            // Need to handle nested parentheses properly
+            while (System.Text.RegularExpressions.Regex.IsMatch(expression, @"__safeGet\(.+?\)\?\["))
+            {
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"(__safeGet\(.+?\))\?\['([^']+)'\]",
+                    match => {
+                        // Extract the __safeGet(...) part, handling nested parentheses
+                        var prefix = match.Groups[1].Value;
+                        var field = match.Groups[2].Value;
+                        
+                        // Count parentheses to ensure we got the complete __safeGet call
+                        int depth = 0;
+                        int endPos = -1;
+                        for (int i = "__safeGet(".Length; i < prefix.Length; i++)
+                        {
+                            if (prefix[i] == '(') depth++;
+                            else if (prefix[i] == ')') depth--;
+                            
+                            if (depth == -1)
+                            {
+                                endPos = i;
+                                break;
+                            }
+                        }
+                        
+                        if (endPos > 0)
+                        {
+                            prefix = prefix.Substring(0, endPos + 1);
+                        }
+                        
+                        return $"__safeGet({prefix}, '{field}')";
+                    },
+                    System.Text.RegularExpressions.RegexOptions.None,
+                    TimeSpan.FromSeconds(1)
+                );
+                
+                expression = System.Text.RegularExpressions.Regex.Replace(
+                    expression,
+                    @"(__safeGet\(.+?\))\?\[""([^""]+)""\]",
+                    match => {
+                        var prefix = match.Groups[1].Value;
+                        var field = match.Groups[2].Value;
+                        
+                        int depth = 0;
+                        int endPos = -1;
+                        for (int i = "__safeGet(".Length; i < prefix.Length; i++)
+                        {
+                            if (prefix[i] == '(') depth++;
+                            else if (prefix[i] == ')') depth--;
+                            
+                            if (depth == -1)
+                            {
+                                endPos = i;
+                                break;
+                            }
+                        }
+                        
+                        if (endPos > 0)
+                        {
+                            prefix = prefix.Substring(0, endPos + 1);
+                        }
+                        
+                        return $"__safeGet({prefix}, \"{field}\")";
+                    },
+                    System.Text.RegularExpressions.RegexOptions.None,
+                    TimeSpan.FromSeconds(1)
+                );
+            }
+            
+            return expression;
+        }
 
         /// <summary>
         /// Registers all Power Automate workflow functions in the Jint engine.
@@ -120,12 +284,20 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 coalesce = new Func<object[], object>((args) => {
                     foreach (var value in args)
                     {
-                        if (value != null)
+                        // Skip null and Jint undefined values
+                        if (value == null || (value is JsValue jsVal && (jsVal.IsNull() || jsVal.IsUndefined())))
+                            continue;
+                            
+                        // For strings, check if non-empty
+                        if (value is string str)
                         {
-                            if (value is string str && !string.IsNullOrEmpty(str))
+                            if (!string.IsNullOrEmpty(str))
                                 return value;
-                            else if (!(value is string))
-                                return value;
+                        }
+                        else
+                        {
+                            // For non-string types, return if not null
+                            return value;
                         }
                     }
                     return null;
@@ -157,7 +329,8 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                         result.IntersectWith(sets[i]);
                     }
                     return result.ToArray();
-                })
+                }),
+                @int = new Func<object, int>((value) => Convert.ToInt32(value))
             };
 
             engine.SetValue("__helper", helper);
@@ -173,6 +346,21 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 function createArray() { return __helper.createArray(Array.from(arguments)); }
                 function union() { return __helper.union(Array.from(arguments)); }
                 function intersection() { return __helper.intersection(Array.from(arguments)); }
+                function int(value) { 
+                    var result = __helper.int(value);
+                    return { __isInt: true, __value: result };
+                }
+                
+                // Safe navigation helper - returns null if object is null/undefined or field doesn't exist
+                function __safeGet(obj, field) {
+                    if (obj === null || obj === undefined) {
+                        return null;
+                    }
+                    if (typeof obj === 'object' && field in obj) {
+                        return obj[field];
+                    }
+                    return null;
+                }
             ");
 
             // Reference Functions - Access trigger and action data
@@ -264,10 +452,35 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // variables(variableName) - Returns a variable value
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#variables
             // Returns the value of a flow variable that was set using Initialize Variable or Set Variable actions
-            engine.SetValue("variables", new Func<string, object>((variableName) =>
+            // We wrap integer values to preserve type through Jint conversion
+            engine.Execute(@"
+                function variables(variableName) {
+                    var value = __helper.getVariable(variableName);
+                    if (value !== null && typeof value === 'object' && value.__isInt) {
+                        return value;
+                    }
+                    return value;
+                }
+            ");
+            
+            var getVariableHelper = new Func<string, object>((variableName) =>
             {
-                return _executionContext.GetVariable(variableName);
-            }));
+                var value = _executionContext.GetVariable(variableName);
+                // Wrap integers to preserve type
+                if (value is int intValue)
+                {
+                    return new Dictionary<string, object>
+                    {
+                        ["__isInt"] = true,
+                        ["__value"] = intValue
+                    };
+                }
+                return value;
+            });
+            
+            // Need to add getVariable to existing helper - will do this by modifying the helper object
+            engine.Execute("__helper.getVariable = function(name) { return __getVariableHelper(name); };");
+            engine.SetValue("__getVariableHelper", getVariableHelper);
 
             // parameters(parameterName) - Returns a parameter value (placeholder)
             engine.SetValue("parameters", new Func<string, object>((parameterName) =>
@@ -275,10 +488,17 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return null; // Parameters would need to be passed in flow definition
             }));
 
-            // item() - Returns the current item in an Apply to Each loop (placeholder)
+            // item() - Returns the current item in an Apply to Each loop
+            // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#item
+            // Returns the current item being processed in an Apply to Each loop action
             engine.SetValue("item", new Func<object>(() =>
             {
-                return null; // Would need loop context tracking
+                // Access the current loop item from the execution context
+                if (_executionContext is FlowExecutionContext flowContext)
+                {
+                    return flowContext.GetCurrentLoopItem();
+                }
+                return null;
             }));
         }
 
@@ -483,21 +703,9 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return CompareValues(value1, value2) <= 0;
             }));
 
-            // and(condition1, condition2, ...) - Logical AND
+            // Note: and() and or() are registered as variadic functions in RegisterPowerAutomateFunctions()
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#and
-            // Returns true if all conditions are true.
-            engine.SetValue("and", new Func<object[], bool>((conditions) =>
-            {
-                return conditions.All(c => Convert.ToBoolean(c));
-            }));
-
-            // or(condition1, condition2, ...) - Logical OR
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#or
-            // Returns true if at least one condition is true.
-            engine.SetValue("or", new Func<object[], bool>((conditions) =>
-            {
-                return conditions.Any(c => Convert.ToBoolean(c));
-            }));
 
             // not(condition) - Logical NOT
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#not
@@ -509,11 +717,12 @@ namespace Fake4Dataverse.CloudFlows.Expressions
 
             // if(condition, trueValue, falseValue) - Conditional expression
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#if
-            // Returns trueValue if condition is true, otherwise returns falseValue.
-            engine.SetValue("if", new Func<bool, object, object, object>((condition, trueValue, falseValue) =>
+            // 'if' is a reserved keyword in JavaScript, so we register it as __if and preprocess expressions to replace if( with __if(
+            engine.SetValue("__if", new Func<bool, object, object, object>((condition, trueValue, falseValue) =>
             {
                 return condition ? trueValue : falseValue;
             }));
+            
 
             // empty(value) - Checks if value is empty
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#empty
@@ -541,23 +750,8 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return false;
             }));
 
-            // coalesce(...) - Returns first non-null value
+            // Note: coalesce() is registered as a variadic function in RegisterPowerAutomateFunctions()
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#coalesce
-            // Evaluates arguments in order and returns the first non-null/non-empty value.
-            engine.SetValue("coalesce", new Func<object[], object>((values) =>
-            {
-                foreach (var value in values)
-                {
-                    if (value != null)
-                    {
-                        if (value is string str && !string.IsNullOrEmpty(str))
-                            return value;
-                        else if (!(value is string))
-                            return value;
-                    }
-                }
-                return null;
-            }));
 
             // xor(condition1, condition2) - Exclusive OR
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#xor
@@ -582,13 +776,9 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 return value?.ToString();
             }));
 
-            // int(value) - Converts to integer
+            // Note: int() is registered as a special function in RegisterPowerAutomateFunctions()
+            // to preserve integer type through Jint conversion
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#int
-            // Returns the integer representation of the value. Throws if conversion fails.
-            engine.SetValue("int", new Func<object, int>((value) =>
-            {
-                return Convert.ToInt32(value);
-            }));
 
             // float(value) - Converts to floating point
             // Reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-definition-language-functions-reference#float
@@ -1313,9 +1503,27 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             if (jsValue.IsObject())
             {
                 var obj = jsValue.AsObject();
+                
+                // Check if this is a tagged int value from int() function
+                if (obj.HasOwnProperty("__isInt") && obj.HasOwnProperty("__value"))
+                {
+                    var isIntProp = obj.Get("__isInt");
+                    if (isIntProp.IsBoolean() && isIntProp.AsBoolean())
+                    {
+                        var valueProp = obj.Get("__value");
+                        if (valueProp.IsNumber())
+                        {
+                            return (int)valueProp.AsNumber();
+                        }
+                    }
+                }
+                
                 var result = new Dictionary<string, object>();
                 foreach (var prop in obj.GetOwnProperties())
                 {
+                    // Skip internal marker properties
+                    if (prop.Key.ToString().StartsWith("__"))
+                        continue;
                     result[prop.Key.ToString()] = ConvertJintValue(prop.Value.Value);
                 }
                 return result;
