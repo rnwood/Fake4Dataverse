@@ -114,7 +114,7 @@ namespace Fake4Dataverse
                 // Execute business rules before PreValidation
                 // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-create-business-rule
                 // "Business rules execute when records are updated to validate data and set field values"
-                var businessRuleResult = BusinessRuleExecutor.ExecuteRules(e, BusinessRules.BusinessRuleTrigger.OnUpdate, isServerSide: true);
+                var businessRuleResult = this.BusinessRuleExecutor.ExecuteRules(e, BusinessRules.BusinessRuleTrigger.OnUpdate, isServerSide: true);
                 
                 // If business rules generated errors, throw validation exception
                 if (businessRuleResult.HasErrors)
@@ -493,7 +493,7 @@ namespace Fake4Dataverse
             // Execute business rules before PreValidation
             // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-create-business-rule
             // "Business rules execute before the record is saved to validate data and set field values"
-            var businessRuleResult = BusinessRuleExecutor.ExecuteRules(e, BusinessRules.BusinessRuleTrigger.OnCreate, isServerSide: true);
+            var businessRuleResult = this.BusinessRuleExecutor.ExecuteRules(e, BusinessRules.BusinessRuleTrigger.OnCreate, isServerSide: true);
             
             // If business rules generated errors, throw validation exception
             if (businessRuleResult.HasErrors)

@@ -1,4 +1,5 @@
 using Fake4Dataverse.BusinessRules;
+using Fake4Dataverse.Middleware;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
@@ -24,7 +25,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Set Field Value: Set a column to a specific value, clear a column value, or set a column value based on another column"
             
             // Arrange
-            var context = new XrmFakedContext();
+            var context = (XrmFakedContext)XrmFakedContextFactory.New();
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -55,6 +56,10 @@ namespace Fake4Dataverse.Tests.BusinessRules
             
             executor.RegisterRule(rule);
             
+            // Verify rule is registered
+            var registeredRules = executor.GetRulesForEntity("account");
+            Assert.Single(registeredRules);
+            
             var account = new Entity("account")
             {
                 Id = Guid.NewGuid(),
@@ -68,6 +73,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             
             // Assert
             var retrieved = service.Retrieve("account", createdId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            Assert.True(retrieved.Contains("description"), "Description field should be present after business rule execution");
             Assert.Equal("Account is on credit hold", retrieved["description"]);
         }
         
@@ -78,7 +84,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Show Error Message: Display a custom error message and prevent the record from being saved"
             
             // Arrange
-            var context = new XrmFakedContext();
+            var context = (XrmFakedContext)XrmFakedContextFactory.New();
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -131,7 +137,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Add one or more actions that should be performed when the conditions are true"
             
             // Arrange
-            var context = new XrmFakedContext();
+            var context = (XrmFakedContext)XrmFakedContextFactory.New();
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -190,7 +196,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "You can define actions to take when conditions are not met using the Else branch"
             
             // Arrange
-            var context = new XrmFakedContext();
+            var context = (XrmFakedContext)XrmFakedContextFactory.New();
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -253,7 +259,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Business rules can be configured to run on specific events like Create, Update, or field changes"
             
             // Arrange
-            var context = new XrmFakedContext();
+            var context = (XrmFakedContext)XrmFakedContextFactory.New();
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -315,7 +321,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "By default, all conditions must be true (AND). You can change to OR logic where any condition being true is sufficient."
             
             // Arrange
-            var context = new XrmFakedContext();
+            var context = (XrmFakedContext)XrmFakedContextFactory.New();
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -344,8 +350,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
                     new BusinessRuleAction
                     {
                         ActionType = BusinessRuleActionType.SetFieldValue,
-                        FieldName = "statecode",
-                        Value = new OptionSetValue(0)
+                        FieldName = "description",
+                        Value = "Conditions met"
                     }
                 }
             };
@@ -363,7 +369,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             var service = context.GetOrganizationService();
             var id1 = service.Create(account1);
             var retrieved1 = service.Retrieve("account", id1, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
-            Assert.True(retrieved1.Contains("statecode"));
+            Assert.True(retrieved1.Contains("description"));
+            Assert.Equal("Conditions met", retrieved1["description"]);
             
             // Test 2: Only one condition met - action should NOT execute
             var account2 = new Entity("account")
@@ -375,8 +382,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             
             var id2 = service.Create(account2);
             var retrieved2 = service.Retrieve("account", id2, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
-            // statecode would only be set by the rule, so it should not exist if rule didn't run
-            Assert.False(retrieved2.Contains("statecode") && retrieved2["statecode"] is OptionSetValue);
+            // description would only be set by the rule, so it should not exist if rule didn't run
+            Assert.False(retrieved2.Contains("description"));
         }
     }
 }
