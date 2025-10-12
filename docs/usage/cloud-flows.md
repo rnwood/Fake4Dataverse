@@ -75,13 +75,17 @@ flowSimulator.RegisterFlow(flowDefinition);
 ```
 
 **Supported Functions:**
-- Reference: `triggerOutputs()`, `triggerBody()`, `outputs('ActionName')`, `body('ActionName')`
-- String: `concat()`, `substring()`, `replace()`, `toLower()`, `toUpper()`, `split()`, `trim()`, `guid()`
-- Logical: `equals()`, `greater()`, `less()`, `not()`, `empty()`
+- Reference: `triggerOutputs()`, `triggerBody()`, `outputs('ActionName')`, `body('ActionName')`, `variables('varName')` ✅
+- String: `concat()`, `substring()`, `slice()`, `replace()`, `toLower()`, `toUpper()`, `split()`, `trim()`, `guid()`, `nthIndexOf()`
+- Logical: `equals()`, `greater()`, `less()`, `not()`, `empty()`, `xor()`
 - Conversion: `string()`, `int()`, `float()`, `bool()`, `base64()`
-- Collection: `first()`, `last()`, `take()`, `skip()`, `join()`
-- Date/Time: `utcNow()`, `addDays()`, `addHours()`, `formatDateTime()`
+- Collection: `first()`, `last()`, `take()`, `skip()`, `join()`, `reverse()`, `createArray()`, `flatten()`
+- Date/Time: `utcNow()`, `addDays()`, `addHours()`, `formatDateTime()`, `startOfDay()`, `getPastTime()`, `getFutureTime()`
 - Math: `add()`, `sub()`, `mul()`, `div()`, `min()`, `max()`
+- Type Checking: `isInt()`, `isFloat()`, `isString()`, `isArray()`, `isObject()` ✅ **NEW**
+- URI: `uriComponent()`, `uriHost()`, `uriPath()`, `uriQuery()`, `uriScheme()` ✅ **NEW**
+
+**Total: 80+ functions implemented**
 
 **See:** [Expression Language Reference](../expression-language.md) for complete documentation and examples.
 
