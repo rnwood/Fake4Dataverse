@@ -12,6 +12,7 @@ This section covers other specialized messages supported by Fake4Dataverse that 
 |---------|-------------|-------------|
 | WhoAmI | `WhoAmIRequest` | Get current user information |
 | RetrieveVersion | `RetrieveVersionRequest` | Get organization version |
+| RetrieveDuplicates | `RetrieveDuplicatesRequest` | Detect duplicate records |
 | ExecuteFetch | `ExecuteFetchRequest` | Execute FetchXML query |
 | FetchXmlToQueryExpression | `FetchXmlToQueryExpressionRequest` | Convert FetchXML to QueryExpression |
 | RetrieveExchangeRate | `RetrieveExchangeRateRequest` | Get exchange rate |
@@ -42,6 +43,70 @@ public void Should_Execute_WhoAmI()
     Assert.Equal(userId, response.UserId);
 }
 ```
+
+### RetrieveDuplicates
+
+Detect duplicate records based on configured duplicate detection rules.
+
+**Reference:** [RetrieveDuplicatesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveduplicatesrequest) - Detects and retrieves duplicate records for a specified record based on duplicate detection rules (duplicaterule and duplicaterulecondition entities). Only active and published rules are evaluated.
+
+```csharp
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.Xrm.Sdk;
+
+[Fact]
+public void Should_Detect_Duplicate_Accounts()
+{
+    var context = XrmFakedContextFactory.New();
+    var service = context.GetOrganizationService();
+    
+    // Set up duplicate detection rule
+    var duplicateRule = new Entity("duplicaterule")
+    {
+        Id = Guid.NewGuid(),
+        ["baseentityname"] = "account",
+        ["matchingentityname"] = "account",
+        ["statecode"] = new OptionSetValue(0),  // Active
+        ["statuscode"] = new OptionSetValue(2)   // Published
+    };
+    
+    var condition = new Entity("duplicaterulecondition")
+    {
+        Id = Guid.NewGuid(),
+        ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+        ["baseattributename"] = "accountnumber",
+        ["matchingattributename"] = "accountnumber",
+        ["operatorcode"] = new OptionSetValue(0)  // ExactMatch
+    };
+    
+    var account1 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["accountnumber"] = "ACC-001"
+    };
+    
+    var account2 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["accountnumber"] = "ACC-001"  // Duplicate!
+    };
+    
+    context.Initialize(new[] { account1, account2, duplicateRule, condition });
+    
+    var request = new RetrieveDuplicatesRequest
+    {
+        BusinessEntity = account1,
+        MatchingEntityName = "account"
+    };
+    
+    var response = (RetrieveDuplicatesResponse)service.Execute(request);
+    
+    Assert.Single(response.DuplicateCollection.Entities);
+    Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+}
+```
+
+**See also:** [Duplicate Detection Guide](../usage/duplicate-detection.md) for comprehensive examples
 
 ### ExecuteFetch
 
