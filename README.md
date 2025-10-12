@@ -215,7 +215,7 @@ The following table compares the features available across different versions of
 | **Business Units** | ⚠️ Limited | ⚠️ Limited | ✅ Full support |
 | **Calculated Fields** | ❌ No | ✅ Yes | ✅ Yes |
 | **Rollup Fields** | ❌ No | ❌ No | ✅ Yes |
-| **Business Rules** | ❌ No | ❌ No | ✅ Yes |
+| **Business Rules** | ❌ No | ✅ Yes | ✅ Yes |
 | **Duplicate Detection** | ❌ No | ❌ No | ✅ Yes |
 | **Audit Log** | ❌ No | ❌ No | ✅ Yes |
 | **Virtual Entities** | ❌ No | ❌ No | ✅ Yes |
@@ -283,19 +283,17 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 
 #### High-Priority Missing Features:
 1. **Workflow/Custom Workflow Activities** - Removed due to SDK limitations
-2. **Custom Actions** - Limited support for custom actions
-3. **Rollup Fields** - No simulation of rollup fields
-4. **Business Rules** - No business rule simulation
-5. **Duplicate Detection** - No duplicate detection simulation
-6. **Audit Log** - No audit log simulation
+2. **Rollup Fields** - No simulation of rollup fields
+3. **Duplicate Detection** - No duplicate detection simulation
+4. **Audit Log** - No audit log simulation
 
 #### Modern Dataverse Features Not Supported:
-7. **Virtual Entities** - No virtual entity support
-8. **Elastic Tables** - No elastic table support
-9. **Power Automate Testing** - Limited Power Automate integration testing (Cloud Flows basic support added)
-11. **Connection References** - No connection reference support
-12. **Advanced Security Model** - Limited security role and privilege simulation
-13. **Concurrent Execution Testing** - No multi-threaded execution testing
+5. **Virtual Entities** - No virtual entity support
+6. **Elastic Tables** - No elastic table support
+7. **Power Automate Testing** - Limited Power Automate integration testing (Cloud Flows basic support added)
+8. **Connection References** - No connection reference support
+9. **Advanced Security Model** - Limited security role and privilege simulation
+10. **Concurrent Execution Testing** - No multi-threaded execution testing
 14. **Performance Profiling** - No built-in profiling tools
 
 #### Pipeline & Plugin Limitations:
