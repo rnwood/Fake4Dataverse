@@ -7,6 +7,7 @@ using Jint;
 using Jint.Native;
 using Jint.Native.Function;
 using Jint.Native.Object;
+using Microsoft.Xrm.Sdk;
 
 namespace Fake4Dataverse.CloudFlows.Expressions
 {
@@ -406,8 +407,10 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 var triggerData = new Dictionary<string, object>();
                 if (_executionContext.TriggerInputs != null)
                 {
-                    triggerData["body"] = _executionContext.TriggerInputs;
-                    foreach (var kvp in _executionContext.TriggerInputs)
+                    // Convert SDK types to primitive values for JavaScript
+                    var convertedInputs = ConvertSdkTypesToPrimitives(_executionContext.TriggerInputs);
+                    triggerData["body"] = convertedInputs;
+                    foreach (var kvp in convertedInputs)
                     {
                         triggerData[kvp.Key] = kvp.Value;
                     }
@@ -419,7 +422,8 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // Usage: @triggerBody()?['fieldname']
             engine.SetValue("triggerBody", new Func<object>(() =>
             {
-                return _executionContext.TriggerInputs;
+                // Convert SDK types to primitive values for JavaScript
+                return ConvertSdkTypesToPrimitives(_executionContext.TriggerInputs);
             }));
 
             // outputs(actionName) - Returns outputs from a specific action
@@ -429,11 +433,13 @@ namespace Fake4Dataverse.CloudFlows.Expressions
                 var actionOutputs = _executionContext.GetActionOutputs(actionName);
                 if (actionOutputs != null)
                 {
+                    // Convert SDK types to primitive values for JavaScript
+                    var convertedOutputs = ConvertSdkTypesToPrimitives(actionOutputs);
                     var result = new Dictionary<string, object>
                     {
-                        ["body"] = actionOutputs
+                        ["body"] = convertedOutputs
                     };
-                    foreach (var kvp in actionOutputs)
+                    foreach (var kvp in convertedOutputs)
                     {
                         result[kvp.Key] = kvp.Value;
                     }
@@ -446,7 +452,8 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             // Usage: @body('ActionName')?['field']
             engine.SetValue("body", new Func<string, object>((actionName) =>
             {
-                return _executionContext.GetActionOutputs(actionName);
+                // Convert SDK types to primitive values for JavaScript
+                return ConvertSdkTypesToPrimitives(_executionContext.GetActionOutputs(actionName));
             }));
 
             // variables(variableName) - Returns a variable value
@@ -1530,6 +1537,83 @@ namespace Fake4Dataverse.CloudFlows.Expressions
             }
 
             return jsValue.ToString();
+        }
+
+        /// <summary>
+        /// Converts Dataverse SDK types to their primitive JavaScript-compatible equivalents.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/web-api-types-operations
+        /// 
+        /// Power Automate's expression language works with primitive types, not SDK objects:
+        /// - OptionSetValue → integer (the Value property)
+        /// - Money → decimal number (the Value property)
+        /// - EntityReference → object with id and name properties
+        /// - DateTime → ISO string or Date object
+        /// 
+        /// This conversion allows expressions to work naturally with SDK types retrieved from triggers.
+        /// </summary>
+        private Dictionary<string, object> ConvertSdkTypesToPrimitives(IReadOnlyDictionary<string, object> values)
+        {
+            if (values == null)
+                return null;
+
+            var converted = new Dictionary<string, object>();
+            foreach (var kvp in values)
+            {
+                converted[kvp.Key] = ConvertSdkValueToPrimitive(kvp.Value);
+            }
+            return converted;
+        }
+
+        /// <summary>
+        /// Converts a single SDK value to its primitive equivalent.
+        /// </summary>
+        private object ConvertSdkValueToPrimitive(object value)
+        {
+            if (value == null)
+                return null;
+
+            // Convert OptionSetValue to integer
+            if (value is OptionSetValue optionSet)
+                return optionSet.Value;
+
+            // Convert Money to decimal
+            if (value is Money money)
+                return money.Value;
+
+            // Convert EntityReference to a dictionary with id and logical name
+            if (value is EntityReference entityRef)
+            {
+                var refDict = new Dictionary<string, object>
+                {
+                    ["id"] = entityRef.Id.ToString(),
+                    ["logicalName"] = entityRef.LogicalName
+                };
+                if (!string.IsNullOrEmpty(entityRef.Name))
+                    refDict["name"] = entityRef.Name;
+                return refDict;
+            }
+
+            // Convert DateTime to ISO string for compatibility
+            if (value is DateTime dateTime)
+                return dateTime.ToString("o"); // ISO 8601 format
+
+            // Handle nested dictionaries (recursively convert)
+            if (value is IReadOnlyDictionary<string, object> readOnlyDict)
+                return ConvertSdkTypesToPrimitives(readOnlyDict);
+            
+            if (value is IDictionary<string, object> dict)
+            {
+                // Convert to Dictionary and then process
+                var tempDict = new Dictionary<string, object>();
+                foreach (var kvp in dict)
+                {
+                    tempDict[kvp.Key] = kvp.Value;
+                }
+                return ConvertSdkTypesToPrimitives(tempDict);
+            }
+
+            // Return other types as-is
+            return value;
         }
     }
 }

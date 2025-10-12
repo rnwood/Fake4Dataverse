@@ -229,11 +229,23 @@ flowSimulator.AssertFlowTriggered("notify_on_contact_create");
 - **Data Operations:** Compose ✅ **NEW**
 - **Action Parameters:** Entity names, attributes, filters, ordering, top
 - **Expression Language:** Full Power Automate expression evaluation ✅ **NEW**
+- **OData Type Conversion:** Automatic conversion of OData/REST API types to SDK types ✅ **NEW**
 
 **Limitations:**
 - Non-Dataverse connectors require custom handlers via `RegisterConnectorActionHandler`
 - Scope actions (Try/Catch/Finally) not yet supported
 - Some advanced connector-specific features may require custom handlers
+
+**OData Conventions (Automatically Handled):**
+
+When importing flows from JSON, the Dataverse connector uses OData/Web API conventions:
+- **OptionSet values** are integers in JSON but automatically converted to `OptionSetValue` objects
+- **Money values** are decimals in JSON but automatically converted to `Money` objects  
+- **EntityReferences** use `@odata.bind` notation (e.g., `"accounts(guid)"`) and are converted to `EntityReference` objects
+- **DateTime values** are ISO 8601 strings and converted to `DateTime` objects
+
+These conversions happen automatically, so you can use real Power Automate JSON exports without modification.
+Expressions also automatically unwrap SDK types (e.g., `@triggerBody()['prioritycode']` returns the integer value from an OptionSetValue).
 
 **How to Export a Flow from Power Automate:**
 1. Open your Cloud Flow in Power Automate

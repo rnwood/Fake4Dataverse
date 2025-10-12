@@ -1057,7 +1057,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
 
             // Act
             flowSimulator.RegisterFlowFromJson(flowJson);
-            service.Create(new Entity("incident") { ["prioritycode"] = 1 }); // Use int instead of OptionSetValue for JSON comparison
+            service.Create(new Entity("incident") { ["prioritycode"] = new OptionSetValue(1) }); // Now properly handles OptionSetValue with OData conversion
 
             // Assert
             flowSimulator.AssertFlowTriggered("switch_flow");
