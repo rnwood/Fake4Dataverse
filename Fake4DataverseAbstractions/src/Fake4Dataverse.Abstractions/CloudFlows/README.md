@@ -12,16 +12,17 @@ Cloud Flows (Power Automate flows) are a critical integration pattern in modern 
 
 ## Status
 
-**Implemented** ✅ - API design complete, core implementation complete (2025-10-11).
+**Implemented** ✅ - API design complete, core implementation complete, JSON import complete (2025-10-12).
 
 Features implemented:
 - Flow registration and execution engine
+- **JSON import from real Power Automate flows** ✅ **NEW**
 - Automatic triggering on CRUD operations
 - Built-in Dataverse connector with full CRUD support
 - Extensible connector system for mocking external systems
 - Filtered attributes support (Update triggers)
 - Comprehensive verification APIs
-- 47 unit tests, all passing ✅
+- 67 unit tests, all passing ✅ (includes 20 JSON import tests)
 
 See [User Guide](../../../docs/usage/cloud-flows.md) for usage examples and [API Design Document](../../../docs/API_DESIGN_CLOUD_FLOWS.md) for detailed specifications.
 
@@ -31,7 +32,8 @@ See [User Guide](../../../docs/usage/cloud-flows.md) for usage examples and [API
 
 #### ICloudFlowSimulator
 Main entry point for Cloud Flow simulation. Provides methods to:
-- Register flows (`RegisterFlow`, `RegisterFlowFromJson`)
+- Register flows programmatically (`RegisterFlow`)
+- **Import real Power Automate flows from JSON** (`RegisterFlowFromJson`) ✅ **NEW**
 - Manually trigger flows (`SimulateTrigger`)
 - Register connector handlers (`RegisterConnectorActionHandler`)
 - Verify flow execution (`AssertFlowTriggered`, `GetFlowExecutionResults`)
@@ -172,13 +174,17 @@ Implementation will be in `Fake4DataverseCore/src/Fake4Dataverse.Core/CloudFlows
 - `FlowExecutionResult.cs`, `FlowActionResult.cs` - Result POCOs
 - `FlowExecutionContext.cs` - Execution context implementation
 
-## Next Steps
+## Implementation Status
 
-1. **Gather Feedback** - Share API design with community
-2. **Core Implementation** - Implement `CloudFlowSimulator` class
-3. **Dataverse Integration** - Integrate with CRUD message executors
-4. **JSON Import** - Parse and map Cloud Flow JSON definitions
-5. **Advanced Features** - Conditional logic, loops, expressions
+### ✅ Completed
+1. **Core Implementation** - `CloudFlowSimulator` class fully implemented
+2. **Dataverse Integration** - Integrated with CRUD message executors
+3. **JSON Import** - Parse and map Cloud Flow JSON definitions ✅ **COMPLETE** (2025-10-12)
+
+### 🔄 Future Enhancements
+1. **Expression Evaluation** - Evaluate Power Fx expressions in actions
+2. **Advanced Features** - Conditional logic, loops, parallel branches
+3. **Additional Connectors** - HTTP, Office 365, SharePoint connectors
 
 ## Contributing
 

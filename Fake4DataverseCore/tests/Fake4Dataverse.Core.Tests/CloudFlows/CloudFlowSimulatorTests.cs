@@ -473,15 +473,45 @@ namespace Fake4Dataverse.Tests.CloudFlows
         }
 
         [Fact]
-        public void Should_ThrowNotImplementedException_ForJsonImport()
+        public void Should_ImportFlowFromJson_Successfully()
         {
             // Arrange
             var context = XrmFakedContextFactory.New();
             var flowSimulator = context.CloudFlowSimulator;
 
-            // Act & Assert - JSON import not yet implemented (Phase 4)
-            Assert.Throws<NotImplementedException>(() =>
-                flowSimulator.RegisterFlowFromJson("{}"));
+            var flowJson = @"{
+  ""name"": ""test_flow"",
+  ""properties"": {
+    ""displayName"": ""Test Flow"",
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""When_a_record_is_created"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""contact"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {}
+    }
+  }
+}";
+
+            // Act - JSON import is now implemented
+            flowSimulator.RegisterFlowFromJson(flowJson);
+
+            // Assert
+            var registeredFlows = flowSimulator.GetRegisteredFlowNames();
+            Assert.Contains("test_flow", registeredFlows);
         }
 
         [Fact]

@@ -69,16 +69,27 @@ namespace Fake4Dataverse.CloudFlows
         /// 
         /// Allows importing real Cloud Flow definitions exported from Power Automate,
         /// enabling realistic simulation that matches production behavior.
+        /// 
+        /// Supported features:
+        /// - Dataverse triggers (Create, Update, Delete, CreateOrUpdate)
+        /// - Dataverse actions (Create, Update, Delete, Retrieve, ListRecords)
+        /// - Trigger scopes (Organization, BusinessUnit, ParentChildBusinessUnits, User)
+        /// - Filtered attributes for Update triggers
+        /// 
+        /// Limitations:
+        /// - Expression evaluation is not yet supported (expressions are stored but not evaluated)
+        /// - Non-Dataverse connectors require custom handlers via RegisterConnectorActionHandler
+        /// - Advanced control flow (conditions, loops, parallel branches) not yet supported
         /// </summary>
         public void RegisterFlowFromJson(string flowJson)
         {
             if (string.IsNullOrWhiteSpace(flowJson))
                 throw new ArgumentException("Flow JSON cannot be null or empty", nameof(flowJson));
 
-            // TODO: Phase 4 - Implement JSON parsing and mapping
-            throw new NotImplementedException(
-                "JSON flow import will be implemented in Phase 4. " +
-                "For now, use RegisterFlow() with programmatic flow definitions.");
+            var parser = new JsonImport.CloudFlowJsonParser();
+            var flowDefinition = parser.Parse(flowJson);
+            
+            RegisterFlow(flowDefinition);
         }
 
         /// <summary>

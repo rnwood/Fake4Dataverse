@@ -6,7 +6,7 @@ Cloud Flows (Power Automate flows) are an increasingly common integration patter
 
 **Status:** ✅ **Implemented** (October 11, 2025) - Phases 1-4 Complete
 
-**Test Coverage:** 47 unit tests, all passing ✅
+**Test Coverage:** 67 unit tests, all passing ✅ (includes 20 JSON import tests)
 
 ## Microsoft Documentation
 
@@ -27,14 +27,15 @@ Cloud Flows allow you to:
 ## Capabilities
 
 The Cloud Flow simulation feature provides:
-1. **Flow Registration** - Register flow definitions programmatically or from JSON (JSON import planned for future)
-2. **Automatic Triggering** - Flows automatically trigger on Create/Update/Delete operations when `UsePipelineSimulation = true`
-3. **Manual Triggering** - Manually simulate flow execution with `SimulateTrigger`
-4. **Built-in Dataverse Connector** - Full CRUD support (Create, Retrieve, Update, Delete, ListRecords, Relate, Unrelate, ExecuteAction)
-5. **Extensible Connector System** - Register custom handlers for Office 365, SharePoint, Teams, HTTP, and any custom connectors
-6. **Comprehensive Verification** - Assert flows triggered, inspect execution results, examine action outputs
-7. **Filtered Attributes** - Update triggers support filtered attributes (trigger only when specific fields change)
-8. **Asynchronous Behavior** - Flow failures don't fail CRUD operations, matching real Dataverse behavior
+1. **Flow Registration** - Register flow definitions programmatically or from JSON
+2. **JSON Import** - Import real Cloud Flow definitions exported from Power Automate ✅ **NEW**
+3. **Automatic Triggering** - Flows automatically trigger on Create/Update/Delete operations when `UsePipelineSimulation = true`
+4. **Manual Triggering** - Manually simulate flow execution with `SimulateTrigger`
+5. **Built-in Dataverse Connector** - Full CRUD support (Create, Retrieve, Update, Delete, ListRecords, Relate, Unrelate, ExecuteAction)
+6. **Extensible Connector System** - Register custom handlers for Office 365, SharePoint, Teams, HTTP, and any custom connectors
+7. **Comprehensive Verification** - Assert flows triggered, inspect execution results, examine action outputs
+8. **Filtered Attributes** - Update triggers support filtered attributes (trigger only when specific fields change)
+9. **Asynchronous Behavior** - Flow failures don't fail CRUD operations, matching real Dataverse behavior
 
 ## API Usage
 
@@ -99,6 +100,97 @@ flowSimulator.UnregisterFlow("notify_on_contact_create");
 // Clear all flows
 flowSimulator.ClearAllFlows();
 ```
+
+#### Register a Flow from JSON ✅ **NEW**
+
+You can import real Cloud Flow definitions exported from Power Automate:
+
+```csharp
+using Fake4Dataverse.Abstractions.CloudFlows;
+using Fake4Dataverse.Middleware;
+
+var context = XrmFakedContextFactory.New();
+context.UsePipelineSimulation = true;
+var flowSimulator = context.CloudFlowSimulator;
+
+// Export your flow from Power Automate as JSON
+// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-workflow-definition-language
+var flowJson = @"{
+  ""name"": ""notify_on_contact_create"",
+  ""properties"": {
+    ""displayName"": ""Notify on New Contact"",
+    ""state"": ""Started"",
+    ""definition"": {
+      ""$schema"": ""https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"",
+      ""contentVersion"": ""1.0.0.0"",
+      ""triggers"": {
+        ""When_a_record_is_created"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""contact"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Create_a_new_record"": {
+          ""type"": ""OpenApiConnection"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""CreateRecord""
+            },
+            ""parameters"": {
+              ""entityName"": ""task"",
+              ""item/subject"": ""Follow up with new contact"",
+              ""item/description"": ""Contact the new lead""
+            }
+          },
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+// Import and register the flow
+flowSimulator.RegisterFlowFromJson(flowJson);
+
+// The flow works exactly like a programmatically registered flow
+var service = context.GetOrganizationService();
+service.Create(new Entity("contact") { ["firstname"] = "Jane" });
+
+flowSimulator.AssertFlowTriggered("notify_on_contact_create");
+```
+
+**Supported JSON Features:**
+- **Triggers:** Dataverse triggers (Create, Update, Delete, CreateOrUpdate)
+- **Trigger Scopes:** Organization, BusinessUnit, ParentChildBusinessUnits, User
+- **Filtered Attributes:** Update triggers with specific attribute filtering
+- **Actions:** Dataverse actions (CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords)
+- **Action Parameters:** Entity names, attributes, filters, ordering, top
+
+**Limitations:**
+- Expression evaluation is not yet supported (expressions are stored but not evaluated during import)
+- Non-Dataverse connectors require custom handlers via `RegisterConnectorActionHandler`
+- Advanced control flow (conditions, loops, parallel branches) not yet supported
+- Expressions in action parameters (e.g., `@triggerOutputs()`) are preserved but not evaluated
+
+**How to Export a Flow from Power Automate:**
+1. Open your Cloud Flow in Power Automate
+2. Click the flow menu (three dots) → Export → Package (.zip)
+3. Extract the zip file
+4. Find the `definition.json` file inside
+5. Use that JSON with `RegisterFlowFromJson`
+
+
 
 ### Automatic Flow Triggering
 
