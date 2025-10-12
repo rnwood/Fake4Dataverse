@@ -192,6 +192,11 @@ namespace Fake4Dataverse
                 // "Calculated columns are calculated in real-time when they are retrieved"
                 EvaluateCalculatedFieldsForEntity(cachedEntity);
 
+                // Trigger rollup recalculation for related entities
+                // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields
+                // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
+                TriggerRollupRecalculationForRelatedEntities(cachedEntity);
+
                 if (this.UsePipelineSimulation)
                 {
                     // Execute PostOperation stage (inside transaction)
@@ -340,6 +345,11 @@ namespace Fake4Dataverse
 
                 // Entity found => delete it (Main Operation)
                 this.Data[er.LogicalName].Remove(er.Id);
+
+                // Trigger rollup recalculation for related entities after deletion
+                // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields
+                // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
+                TriggerRollupRecalculationForRelatedEntities(entityToDelete);
 
                 if (this.UsePipelineSimulation)
                 {
@@ -541,6 +551,11 @@ namespace Fake4Dataverse
 
             // Store (Main Operation)
             AddEntity(clone ? e.Clone(e.GetType()) : e);
+
+            // Trigger rollup recalculation for related entities after creation
+            // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields
+            // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
+            TriggerRollupRecalculationForRelatedEntities(e);
 
             if (usePluginPipeline)
             {

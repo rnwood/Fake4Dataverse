@@ -4,9 +4,9 @@
 
 Cloud Flows (Power Automate flows) are an increasingly common integration pattern for Dataverse applications. The Cloud Flow simulation feature in Fake4Dataverse enables developers to test Dataverse-triggered flows, verify flow execution, and validate flow actions/outputs in unit tests.
 
-**Status:** ✅ **Implemented** (October 11, 2025) - Phases 1-4 Complete
+**Status:** ✅ **Implemented** (October 12, 2025) - Phases 1-7 Complete, JSON Import Extended
 
-**Test Coverage:** 47 unit tests, all passing ✅
+**Test Coverage:** 157 unit tests, all passing ✅ (includes control flow actions and JSON import)
 
 ## Microsoft Documentation
 
@@ -27,16 +27,67 @@ Cloud Flows allow you to:
 ## Capabilities
 
 The Cloud Flow simulation feature provides:
-1. **Flow Registration** - Register flow definitions programmatically or from JSON (JSON import planned for future)
-2. **Automatic Triggering** - Flows automatically trigger on Create/Update/Delete operations when `UsePipelineSimulation = true`
-3. **Manual Triggering** - Manually simulate flow execution with `SimulateTrigger`
-4. **Built-in Dataverse Connector** - Full CRUD support (Create, Retrieve, Update, Delete, ListRecords, Relate, Unrelate, ExecuteAction)
-5. **Extensible Connector System** - Register custom handlers for Office 365, SharePoint, Teams, HTTP, and any custom connectors
-6. **Comprehensive Verification** - Assert flows triggered, inspect execution results, examine action outputs
-7. **Filtered Attributes** - Update triggers support filtered attributes (trigger only when specific fields change)
-8. **Asynchronous Behavior** - Flow failures don't fail CRUD operations, matching real Dataverse behavior
+1. **Flow Registration** - Register flow definitions programmatically or from JSON
+2. **JSON Import** - Import real Cloud Flow definitions exported from Power Automate ✅ **NEW**
+3. **Expression Language** - Full Power Automate expression evaluation using Jint.net ✅ **NEW**
+4. **Automatic Triggering** - Flows automatically trigger on Create/Update/Delete operations when `UsePipelineSimulation = true`
+5. **Manual Triggering** - Manually simulate flow execution with `SimulateTrigger`
+6. **Built-in Dataverse Connector** - Full CRUD support (Create, Retrieve, Update, Delete, ListRecords, Relate, Unrelate, ExecuteAction)
+7. **Extensible Connector System** - Register custom handlers for Office 365, SharePoint, Teams, HTTP, and any custom connectors
+8. **Comprehensive Verification** - Assert flows triggered, inspect execution results, examine action outputs
+9. **Filtered Attributes** - Update triggers support filtered attributes (trigger only when specific fields change)
+10. **Asynchronous Behavior** - Flow failures don't fail CRUD operations, matching real Dataverse behavior
 
 ## API Usage
+
+### Expression Language Support ✅ **NEW**
+
+Fake4Dataverse now supports Power Automate expression language for dynamic values in flow actions:
+
+```csharp
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "dynamic_task_creation",
+    Trigger = new DataverseTrigger
+    {
+        EntityLogicalName = "contact",
+        Message = "Create"
+    },
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "Create_Task",
+            DataverseActionType = DataverseActionType.Create,
+            EntityLogicalName = "task",
+            Attributes = new Dictionary<string, object>
+            {
+                // Expressions are evaluated automatically
+                ["subject"] = "@concat('Follow up with ', triggerBody()['firstname'], ' ', triggerBody()['lastname'])",
+                ["description"] = "@concat('Email: ', triggerBody()['emailaddress1'], ' | Phone: ', triggerBody()['telephone1'])",
+                ["scheduledend"] = "@addDays(utcNow(), 7)"  // Due in 7 days
+            }
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+```
+
+**Supported Functions:**
+- Reference: `triggerOutputs()`, `triggerBody()`, `outputs('ActionName')`, `body('ActionName')`, `variables('varName')` ✅
+- String: `concat()`, `substring()`, `slice()`, `replace()`, `toLower()`, `toUpper()`, `split()`, `trim()`, `guid()`, `nthIndexOf()`
+- Logical: `equals()`, `greater()`, `less()`, `not()`, `empty()`, `xor()`
+- Conversion: `string()`, `int()`, `float()`, `bool()`, `base64()`
+- Collection: `first()`, `last()`, `take()`, `skip()`, `join()`, `reverse()`, `createArray()`, `flatten()`
+- Date/Time: `utcNow()`, `addDays()`, `addHours()`, `formatDateTime()`, `startOfDay()`, `getPastTime()`, `getFutureTime()`
+- Math: `add()`, `sub()`, `mul()`, `div()`, `min()`, `max()`
+- Type Checking: `isInt()`, `isFloat()`, `isString()`, `isArray()`, `isObject()` ✅ **NEW**
+- URI: `uriComponent()`, `uriHost()`, `uriPath()`, `uriQuery()`, `uriScheme()` ✅ **NEW**
+
+**Total: 80+ functions implemented**
+
+**See:** [Expression Language Reference](../expression-language.md) for complete documentation and examples.
 
 ### Flow Registration
 
@@ -99,6 +150,111 @@ flowSimulator.UnregisterFlow("notify_on_contact_create");
 // Clear all flows
 flowSimulator.ClearAllFlows();
 ```
+
+#### Register a Flow from JSON ✅ **NEW**
+
+You can import real Cloud Flow definitions exported from Power Automate:
+
+```csharp
+using Fake4Dataverse.Abstractions.CloudFlows;
+using Fake4Dataverse.Middleware;
+
+var context = XrmFakedContextFactory.New();
+context.UsePipelineSimulation = true;
+var flowSimulator = context.CloudFlowSimulator;
+
+// Export your flow from Power Automate as JSON
+// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-workflow-definition-language
+var flowJson = @"{
+  ""name"": ""notify_on_contact_create"",
+  ""properties"": {
+    ""displayName"": ""Notify on New Contact"",
+    ""state"": ""Started"",
+    ""definition"": {
+      ""$schema"": ""https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#"",
+      ""contentVersion"": ""1.0.0.0"",
+      ""triggers"": {
+        ""When_a_record_is_created"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""contact"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Create_a_new_record"": {
+          ""type"": ""OpenApiConnection"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""CreateRecord""
+            },
+            ""parameters"": {
+              ""entityName"": ""task"",
+              ""item/subject"": ""Follow up with new contact"",
+              ""item/description"": ""Contact the new lead""
+            }
+          },
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+// Import and register the flow
+flowSimulator.RegisterFlowFromJson(flowJson);
+
+// The flow works exactly like a programmatically registered flow
+var service = context.GetOrganizationService();
+service.Create(new Entity("contact") { ["firstname"] = "Jane" });
+
+flowSimulator.AssertFlowTriggered("notify_on_contact_create");
+```
+
+**Supported JSON Features:**
+- **Triggers:** Dataverse triggers (Create, Update, Delete, CreateOrUpdate)
+- **Trigger Scopes:** Organization, BusinessUnit, ParentChildBusinessUnits, User
+- **Filtered Attributes:** Update triggers with specific attribute filtering
+- **Actions:** Dataverse actions (CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords)
+- **Control Flow:** Condition (If), Switch, Foreach (Apply to Each), Until (Do Until) ✅ **NEW**
+- **Data Operations:** Compose ✅ **NEW**
+- **Action Parameters:** Entity names, attributes, filters, ordering, top
+- **Expression Language:** Full Power Automate expression evaluation ✅ **NEW**
+- **OData Type Conversion:** Automatic conversion of OData/REST API types to SDK types ✅ **NEW**
+
+**Limitations:**
+- Non-Dataverse connectors require custom handlers via `RegisterConnectorActionHandler`
+- Scope actions (Try/Catch/Finally) not yet supported
+- Some advanced connector-specific features may require custom handlers
+
+**OData Conventions (Automatically Handled):**
+
+When importing flows from JSON, the Dataverse connector uses OData/Web API conventions:
+- **OptionSet values** are integers in JSON but automatically converted to `OptionSetValue` objects
+- **Money values** are decimals in JSON but automatically converted to `Money` objects  
+- **EntityReferences** use `@odata.bind` notation (e.g., `"accounts(guid)"`) and are converted to `EntityReference` objects
+- **DateTime values** are ISO 8601 strings and converted to `DateTime` objects
+
+These conversions happen automatically, so you can use real Power Automate JSON exports without modification.
+Expressions also automatically unwrap SDK types (e.g., `@triggerBody()['prioritycode']` returns the integer value from an OptionSetValue).
+
+**How to Export a Flow from Power Automate:**
+1. Open your Cloud Flow in Power Automate
+2. Click the flow menu (three dots) → Export → Package (.zip)
+3. Extract the zip file
+4. Find the `definition.json` file inside
+5. Use that JSON with `RegisterFlowFromJson`
+
+
 
 ### Automatic Flow Triggering
 
@@ -396,38 +552,329 @@ foreach (var result in results)
 }
 ```
 
-### Advanced Features (Future Enhancements)
+### Control Flow Actions ✅ **NEW**
 
-The following features are planned for future releases. Currently, you can work around these by using custom flow actions and handlers.
+The Cloud Flow simulator now supports all major control flow actions for conditional logic, branching, and loops.
 
-#### Conditional Logic (Future)
+#### Condition Actions (If/Then/Else)
+
+Condition actions evaluate an expression and execute different branches based on the result.
+
+**Reference:** [Use expressions in conditions](https://learn.microsoft.com/en-us/power-automate/use-expressions-in-conditions)
+
 ```csharp
-// PLANNED: Conditional logic support with ConditionAction
-// Current workaround: Use multiple flows or custom action handlers
-
-// Future syntax (not yet implemented):
 var flowDefinition = new CloudFlowDefinition
 {
     Name = "conditional_processing",
     Trigger = new DataverseTrigger
     {
-        EntityLogicalName = "lead",
-        Message = "Update",
-        FilteredAttributes = new[] { "estimatedvalue" }
+        EntityLogicalName = "opportunity",
+        Message = "Create"
     },
     Actions = new List<IFlowAction>
     {
         new ConditionAction
         {
-            Condition = "@greater(triggerBody()?['estimatedvalue'], 100000)",
-            TrueActions = new List<IFlowAction> { /* ... */ },
-            FalseActions = new List<IFlowAction> { /* ... */ }
+            Name = "Check_Value",
+            Expression = "@greater(triggerBody()['estimatedvalue'], 100000)",
+            TrueActions = new List<IFlowAction>
+            {
+                new DataverseAction
+                {
+                    Name = "Create_High_Value_Task",
+                    DataverseActionType = DataverseActionType.Create,
+                    EntityLogicalName = "task",
+                    Attributes = new Dictionary<string, object>
+                    {
+                        ["subject"] = "High value opportunity - immediate follow-up required",
+                        ["prioritycode"] = 2 // High priority
+                    }
+                }
+            },
+            FalseActions = new List<IFlowAction>
+            {
+                new DataverseAction
+                {
+                    Name = "Create_Standard_Task",
+                    DataverseActionType = DataverseActionType.Create,
+                    EntityLogicalName = "task",
+                    Attributes = new Dictionary<string, object>
+                    {
+                        ["subject"] = "Standard opportunity follow-up",
+                        ["prioritycode"] = 1 // Normal priority
+                    }
+                }
+            }
         }
     }
 };
+
+flowSimulator.RegisterFlow(flowDefinition);
+
+// Test high value scenario
+var highValueOpp = new Entity("opportunity") 
+{ 
+    ["estimatedvalue"] = 150000.0m 
+};
+service.Create(highValueOpp);
+
+// Verify the high value branch executed
+var results = flowSimulator.GetFlowExecutionResults("conditional_processing");
+Assert.True(results[0].Succeeded);
+var conditionResult = results[0].ActionResults[0];
+Assert.True((bool)conditionResult.Outputs["conditionResult"]);
+Assert.Equal("true", conditionResult.Outputs["branchExecuted"]);
 ```
 
+**Key Features:**
+- Supports all expression functions for condition evaluation
+- Nested conditions supported (conditions within conditions)
+- Multiple actions can execute in each branch
+- Branch results tracked in outputs
+
+#### Switch Actions (Multi-Case Branching)
+
+Switch actions evaluate an expression and execute the matching case's actions, with a default case for unmatched values.
+
+**Reference:** [Use the Switch action](https://learn.microsoft.com/en-us/power-automate/use-switch-action)
+
+```csharp
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "route_by_priority",
+    Trigger = new DataverseTrigger
+    {
+        EntityLogicalName = "incident",
+        Message = "Create"
+    },
+    Actions = new List<IFlowAction>
+    {
+        new SwitchAction
+        {
+            Name = "Route_By_Priority",
+            Expression = "@triggerBody()['prioritycode']",
+            Cases = new Dictionary<string, IList<IFlowAction>>
+            {
+                ["1"] = new List<IFlowAction> // High
+                {
+                    new ComposeAction
+                    {
+                        Name = "High_Priority_Processing",
+                        Inputs = "Escalate to senior support immediately"
+                    }
+                },
+                ["2"] = new List<IFlowAction> // Normal
+                {
+                    new ComposeAction
+                    {
+                        Name = "Normal_Priority_Processing",
+                        Inputs = "Assign to support queue"
+                    }
+                },
+                ["3"] = new List<IFlowAction> // Low
+                {
+                    new ComposeAction
+                    {
+                        Name = "Low_Priority_Processing",
+                        Inputs = "Schedule for next available agent"
+                    }
+                }
+            },
+            DefaultActions = new List<IFlowAction>
+            {
+                new ComposeAction
+                {
+                    Name = "Default_Processing",
+                    Inputs = "Unknown priority - assign to triage"
+                }
+            }
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+
+// Test high priority case
+var highPriorityCase = new Entity("incident") { ["prioritycode"] = 1 };
+service.Create(highPriorityCase);
+
+// Verify correct case executed
+var results = flowSimulator.GetFlowExecutionResults("route_by_priority");
+var switchResult = results[0].ActionResults[0];
+Assert.Equal("1", switchResult.Outputs["switchValue"]);
+Assert.Equal("1", switchResult.Outputs["matchedCase"]);
+```
+
+**Key Features:**
+- String-based case matching (case-insensitive)
+- Default case for unmatched values
+- Multiple actions per case
+- Case execution tracked in outputs
+
+#### Parallel Branch Actions
+
+Parallel branch actions execute multiple independent action sequences. In simulation, branches execute sequentially but are logically independent.
+
+**Reference:** [Add parallel branches](https://learn.microsoft.com/en-us/power-automate/use-parallel-branches)
+
+```csharp
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "parallel_notifications",
+    Trigger = new DataverseTrigger
+    {
+        EntityLogicalName = "account",
+        Message = "Create"
+    },
+    Actions = new List<IFlowAction>
+    {
+        new ParallelBranchAction
+        {
+            Name = "Send_Notifications",
+            Branches = new List<ParallelBranch>
+            {
+                new ParallelBranch
+                {
+                    Name = "Email_Branch",
+                    Actions = new List<IFlowAction>
+                    {
+                        new ComposeAction
+                        {
+                            Name = "Compose_Email",
+                            Inputs = "@concat('New account: ', triggerBody()['name'])"
+                        },
+                        // In real flow, this would send email
+                        new ComposeAction
+                        {
+                            Name = "Send_Email",
+                            Inputs = "Email sent"
+                        }
+                    }
+                },
+                new ParallelBranch
+                {
+                    Name = "Teams_Branch",
+                    Actions = new List<IFlowAction>
+                    {
+                        new ComposeAction
+                        {
+                            Name = "Compose_Teams_Message",
+                            Inputs = "@concat('🎉 New account created: ', triggerBody()['name'])"
+                        },
+                        // In real flow, this would post to Teams
+                        new ComposeAction
+                        {
+                            Name = "Post_To_Teams",
+                            Inputs = "Teams notification sent"
+                        }
+                    }
+                },
+                new ParallelBranch
+                {
+                    Name = "Database_Branch",
+                    Actions = new List<IFlowAction>
+                    {
+                        new DataverseAction
+                        {
+                            Name = "Create_Log_Entry",
+                            DataverseActionType = DataverseActionType.Create,
+                            EntityLogicalName = "audit",
+                            Attributes = new Dictionary<string, object>
+                            {
+                                ["message"] = "Account created notification sent"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+
+// Test parallel execution
+var account = new Entity("account") { ["name"] = "Contoso Ltd" };
+service.Create(account);
+
+// Verify all branches executed
+var results = flowSimulator.GetFlowExecutionResults("parallel_notifications");
+var parallelResult = results[0].ActionResults[0];
+var branchResults = parallelResult.Outputs["branchResults"] as List<Dictionary<string, object>>;
+Assert.Equal(3, branchResults.Count); // All 3 branches executed
+```
+
+**Key Features:**
+- Multiple independent branches
+- Each branch can contain multiple sequential actions
+- All branches must complete for success
+- Branch results tracked in outputs
+- Simulates parallel execution (actually sequential for deterministic testing)
+
+#### Do Until Loops
+
+Do Until loops repeatedly execute actions until a condition becomes true, with safeguards against infinite loops.
+
+**Reference:** [Use Do Until loops](https://learn.microsoft.com/en-us/power-automate/do-until-loop)
+
+```csharp
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "poll_for_completion",
+    Trigger = new DataverseTrigger
+    {
+        EntityLogicalName = "account",
+        Message = "Create"
+    },
+    Actions = new List<IFlowAction>
+    {
+        new DoUntilAction
+        {
+            Name = "Wait_For_Approval",
+            Expression = "@equals(outputs('Check_Status')['value'], 'Approved')",
+            MaxIterations = 10,
+            Timeout = "PT1H", // 1 hour (for documentation)
+            Actions = new List<IFlowAction>
+            {
+                new DataverseAction
+                {
+                    Name = "Check_Status",
+                    DataverseActionType = DataverseActionType.Retrieve,
+                    EntityLogicalName = "approval",
+                    EntityId = "@triggerBody()['approvalid']"
+                },
+                new ComposeAction
+                {
+                    Name = "Log_Check",
+                    Inputs = "Checking approval status..."
+                }
+            }
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+```
+
+**Key Features:**
+- Condition checked AFTER each iteration (do-while pattern)
+- Maximum iteration limit (default: 60, configurable)
+- Timeout specification (for documentation)
+- Multiple actions per iteration
+- Iteration count and results tracked in outputs
+
+**Important:** The condition is evaluated AFTER executing the actions, so the loop always runs at least once.
+
+### Advanced Features (Future Enhancements)
+
+The following features are planned for future releases:
+
+#### Error Handling (Scope, Try/Catch)
+
+Error handling with Scope actions and Try/Catch/Finally patterns is planned for a future release.
+
 #### Error Simulation
+
 You can simulate errors in custom connector handlers:
 
 ```csharp
@@ -456,6 +903,197 @@ var results = flowSimulator.GetFlowExecutionResults("send_email_on_account_creat
 Assert.False(results[0].Succeeded);
 Assert.Single(results[0].Errors);
 Assert.Contains("External service unavailable", results[0].Errors[0]);
+```
+
+## Action Types
+
+### Compose Action ✅ **NEW**
+
+The Compose action allows you to create data transformations and compose new objects or values from expressions.
+
+**Reference:** https://learn.microsoft.com/en-us/power-automate/data-operations#use-the-compose-action
+
+**Use Cases:**
+- Transform data from previous steps
+- Create structured objects or arrays
+- Perform calculations or string manipulations
+- Format data before passing to subsequent actions
+
+**Example: Simple Value Composition**
+```csharp
+var composeAction = new ComposeAction
+{
+    Name = "Compose_FullName",
+    Inputs = "@concat(triggerBody()['firstname'], ' ', triggerBody()['lastname'])"
+};
+
+var flowDef = new CloudFlowDefinition
+{
+    Name = "Test_Compose",
+    Trigger = new DataverseTrigger { EntityLogicalName = "contact", Message = "Create" },
+    Actions = new List<IFlowAction> { composeAction }
+};
+
+simulator.RegisterFlow(flowDef);
+var result = simulator.SimulateTrigger("Test_Compose", triggerInputs);
+
+// Access composed value
+var fullName = result.ActionResults[0].Outputs["value"];
+```
+
+**Example: Composing Objects**
+```csharp
+var contactObject = new Dictionary<string, object>
+{
+    ["fullname"] = "@concat(triggerBody()['firstname'], ' ', triggerBody()['lastname'])",
+    ["email"] = "@triggerBody()['email']",
+    ["displayname"] = "@toUpper(triggerBody()['lastname'])"
+};
+
+var composeAction = new ComposeAction
+{
+    Name = "Compose_ContactData",
+    Inputs = contactObject
+};
+
+// All expressions in the dictionary are evaluated recursively
+```
+
+**Referencing Compose Outputs:**
+```csharp
+// Use @outputs('ActionName')['value'] to reference composed data
+var compose1 = new ComposeAction
+{
+    Name = "Compose_Greeting",
+    Inputs = "@concat('Hello ', triggerBody()['firstname'])"
+};
+
+var compose2 = new ComposeAction
+{
+    Name = "Compose_Message",
+    Inputs = "@concat(outputs('Compose_Greeting')['value'], '!')"
+};
+```
+
+### Apply to Each Action ✅ **NEW**
+
+The Apply to Each action iterates over a collection and executes a set of actions for each item.
+
+**Reference:** https://learn.microsoft.com/en-us/power-automate/apply-to-each
+
+**Use Cases:**
+- Process each record from a list query
+- Send emails to multiple recipients
+- Create or update multiple records
+- Transform each item in an array
+
+**Example: Basic Loop**
+```csharp
+var contacts = new[]
+{
+    new Dictionary<string, object> { ["name"] = "Contact 1", ["email"] = "c1@example.com" },
+    new Dictionary<string, object> { ["name"] = "Contact 2", ["email"] = "c2@example.com" }
+};
+
+var triggerInputs = new Dictionary<string, object>
+{
+    ["contacts"] = contacts
+};
+
+var composeInLoop = new ComposeAction
+{
+    Name = "Compose_Email",
+    Inputs = "@item()['email']"  // @item() returns current loop item
+};
+
+var applyToEach = new ApplyToEachAction
+{
+    Name = "Process_Contacts",
+    Collection = "@triggerBody()['contacts']",  // Expression that returns collection
+    Actions = new List<IFlowAction> { composeInLoop }
+};
+```
+
+**Example: Multiple Actions Per Item**
+```csharp
+var doubleValue = new ComposeAction
+{
+    Name = "Double_Value",
+    Inputs = "@mul(item(), 2)"
+};
+
+var addTen = new ComposeAction
+{
+    Name = "Add_Ten",
+    Inputs = "@add(outputs('Double_Value')['value'], 10)"
+};
+
+var applyToEach = new ApplyToEachAction
+{
+    Name = "Process_Numbers",
+    Collection = "@triggerBody()['numbers']",
+    Actions = new List<IFlowAction> { doubleValue, addTen }
+};
+```
+
+**Using @item() Function:**
+```csharp
+// @item() returns the current item in the loop
+// For object items, access properties: @item()['propertyName']
+// For primitive items, use directly: @item()
+
+var composeFullName = new ComposeAction
+{
+    Name = "Compose_FullName",
+    Inputs = "@concat(item()['firstname'], ' ', item()['lastname'])"
+};
+```
+
+**Loop with Dataverse Actions:**
+```csharp
+var createTask = new DataverseAction
+{
+    Name = "Create_Task_For_Contact",
+    DataverseActionType = DataverseActionType.Create,
+    EntityLogicalName = "task",
+    Attributes = new Dictionary<string, object>
+    {
+        ["subject"] = "@concat('Follow up with ', item()['name'])",
+        ["description"] = "@item()['email']"
+    }
+};
+
+var applyToEach = new ApplyToEachAction
+{
+    Name = "Create_Tasks",
+    Collection = "@outputs('List_Contacts')['value']",
+    Actions = new List<IFlowAction> { createTask }
+};
+```
+
+**Nested Loops:**
+Nested loops are supported through the stack-based item tracking:
+```csharp
+var innerLoop = new ApplyToEachAction
+{
+    Name = "Inner_Loop",
+    Collection = "@item()['children']",
+    Actions = new List<IFlowAction> 
+    { 
+        new ComposeAction 
+        { 
+            Name = "Process_Child", 
+            Inputs = "@item()['name']"  // Refers to inner loop item
+        } 
+    }
+};
+
+var outerLoop = new ApplyToEachAction
+{
+    Name = "Outer_Loop",
+    Collection = "@triggerBody()['parents']",
+    Actions = new List<IFlowAction> { innerLoop }
+};
 ```
 
 ## Trigger Types
@@ -620,9 +1258,9 @@ Assert.Equal(1, flowSimulator.GetFlowExecutionCount("log_account_update")); // S
 
 ## Implementation Status
 
-**Current Status:** ✅ **Completed** (October 11, 2025)
+**Current Status:** ✅ **Completed** (October 12, 2025)
 
-All core phases have been implemented and tested. The Cloud Flow simulation feature is fully functional for testing Dataverse-triggered flows.
+All core phases have been implemented and tested. The Cloud Flow simulation feature is fully functional for testing Dataverse-triggered flows with comprehensive expression language support, safe navigation, path separators, Compose actions, and Apply to Each loops.
 
 ### Phase 1: Core Infrastructure ✅ **COMPLETED**
 - ✅ `ICloudFlowSimulator` interface
@@ -643,6 +1281,7 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 - ✅ `IConnectorActionHandler` interface
 - ✅ Connector action handler registration
 - ✅ Built-in Dataverse connector
+- ✅ Built-in Compose action handler ✅ **NEW**
 - ✅ Extensibility for custom connectors
 
 ### Phase 4: Verification APIs ✅ **COMPLETED**
@@ -652,18 +1291,40 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 - ✅ Action result inspection
 - ✅ Execution history
 
-### Phase 5: Advanced Features (Future Enhancements)
-- ⏳ JSON flow definition import (`RegisterFlowFromJson`)
-- ⏳ Conditional logic (if/then/else)
-- ⏳ Apply to each (loops)
-- ⏳ Compose actions and expression evaluation
-- ⏳ Error handling and retry logic
-- ⏳ Parallel branches
+### Phase 5: Expression Language ✅ **COMPLETED**
+- ✅ Full expression language implementation using Jint 4.2.0
+- ✅ 80+ Power Automate functions
+- ✅ Safe navigation operator (?) for null-safe access ✅ **NEW**
+- ✅ Path separator (/) for nested property access ✅ **NEW**
+- ✅ All reference functions (triggerBody, outputs, body, variables, item)
+- ✅ String, math, logical, date/time, collection, and conversion functions
+- ✅ Type preservation (int, double, string, bool)
 
-**Test Coverage:** 47 unit tests, all passing ✅
-- 22 tests for core simulator functionality
-- 12 tests for Dataverse connector actions
-- 13 tests for automatic flow triggering
+### Phase 6: Advanced Action Types ✅ **COMPLETED**
+- ✅ Compose actions for data transformation ✅ **NEW**
+- ✅ Apply to Each (loops) with `@item()` function ✅ **NEW**
+- ✅ Nested loop support via stack-based item tracking ✅ **NEW**
+- ✅ Recursive expression evaluation in composed objects ✅ **NEW**
+
+### Phase 7: Control Flow Actions ✅ **COMPLETED** (October 12, 2025)
+- ✅ Condition actions (if/then/else branching) ✅ **NEW**
+- ✅ Switch actions (multi-case branching) ✅ **NEW**
+- ✅ Parallel branches (parallel execution paths) ✅ **NEW**
+- ✅ Do Until loops (loop with exit condition) ✅ **NEW**
+
+### Phase 8: Future Enhancements
+- ⏳ Error handling and retry logic (Scope, Try/Catch)
+- ⏳ Additional connector types (Office365, SharePoint, HTTP, etc.)
+- ⏳ Schedule triggers and recurrence
+- ⏳ Manual triggers with input schemas
+
+**Test Coverage:** 157 unit tests, all passing ✅
+- 57 tests for expression evaluator
+- 7 tests for safe navigation and path separators ✅ **NEW**
+- 7 tests for Compose and Apply to Each actions ✅ **NEW**
+- 13 tests for control flow actions (Condition, Switch, Parallel, Do Until) ✅ **NEW**
+- 6 tests for JSON import of control flow actions ✅ **NEW**
+- 67 tests for simulator, Dataverse actions, and triggering
 
 ## Key Differences from FakeXrmEasy v2
 

@@ -4,6 +4,7 @@ using System.Linq;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.CloudFlows;
 using Fake4Dataverse.Abstractions.CloudFlows.Enums;
+using Fake4Dataverse.CloudFlows.Expressions;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -18,6 +19,9 @@ namespace Fake4Dataverse.CloudFlows
     /// - ListRecords with filtering
     /// - Associate/Disassociate relationships
     /// - ExecuteAction for custom actions/APIs
+    /// 
+    /// This handler supports expression evaluation using the Power Automate expression language.
+    /// Expressions in action parameters and attributes are automatically evaluated.
     /// </summary>
     public class DataverseActionHandler : IConnectorActionHandler
     {
@@ -37,6 +41,12 @@ namespace Fake4Dataverse.CloudFlows
             {
                 throw new ArgumentException("Action must be of type DataverseAction", nameof(action));
             }
+
+            // Create expression evaluator for this flow execution context
+            var expressionEvaluator = new ExpressionEvaluator(flowContext);
+
+            // Evaluate expressions in action attributes and parameters
+            EvaluateExpressions(dataverseAction, expressionEvaluator);
 
             var service = context.GetOrganizationService();
 
@@ -76,15 +86,22 @@ namespace Fake4Dataverse.CloudFlows
         /// <summary>
         /// Handle Create action
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/entity-operations-create
+        /// 
+        /// Attributes are converted from OData format (used by Power Automate/Web API) to SDK types.
+        /// This includes converting integers to OptionSetValue, decimals to Money, etc.
         /// </summary>
         private IDictionary<string, object> HandleCreate(DataverseAction action, IOrganizationService service)
         {
             var entity = new Entity(action.EntityLogicalName);
 
-            // Set attributes from action
+            // Set attributes from action - convert OData values to SDK types
             if (action.Attributes != null)
             {
-                foreach (var attr in action.Attributes)
+                var convertedAttributes = ODataValueConverter.ConvertODataAttributes(
+                    action.Attributes as Dictionary<string, object>, 
+                    action.EntityLogicalName);
+
+                foreach (var attr in convertedAttributes)
                 {
                     entity[attr.Key] = attr.Value;
                 }
@@ -132,6 +149,8 @@ namespace Fake4Dataverse.CloudFlows
         /// <summary>
         /// Handle Update action
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/entity-operations-update
+        /// 
+        /// Attributes are converted from OData format (used by Power Automate/Web API) to SDK types.
         /// </summary>
         private IDictionary<string, object> HandleUpdate(DataverseAction action, IOrganizationService service)
         {
@@ -143,10 +162,14 @@ namespace Fake4Dataverse.CloudFlows
                 Id = action.EntityId.Value
             };
 
-            // Set attributes from action
+            // Set attributes from action - convert OData values to SDK types
             if (action.Attributes != null)
             {
-                foreach (var attr in action.Attributes)
+                var convertedAttributes = ODataValueConverter.ConvertODataAttributes(
+                    action.Attributes as Dictionary<string, object>,
+                    action.EntityLogicalName);
+
+                foreach (var attr in convertedAttributes)
                 {
                     entity[attr.Key] = attr.Value;
                 }
@@ -343,6 +366,45 @@ namespace Fake4Dataverse.CloudFlows
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Evaluates expressions in action attributes and parameters using the ExpressionEvaluator.
+        /// This enables dynamic values from trigger data and previous action outputs.
+        /// </summary>
+        private void EvaluateExpressions(DataverseAction action, ExpressionEvaluator evaluator)
+        {
+            // Evaluate expressions in Attributes
+            if (action.Attributes != null)
+            {
+                var evaluatedAttributes = new Dictionary<string, object>();
+                foreach (var attr in action.Attributes)
+                {
+                    evaluatedAttributes[attr.Key] = evaluator.Evaluate(attr.Value);
+                }
+                action.Attributes = evaluatedAttributes;
+            }
+
+            // Evaluate expressions in Parameters
+            if (action.Parameters != null)
+            {
+                var evaluatedParameters = new Dictionary<string, object>();
+                foreach (var param in action.Parameters)
+                {
+                    evaluatedParameters[param.Key] = evaluator.Evaluate(param.Value);
+                }
+                action.Parameters = evaluatedParameters;
+            }
+
+            // Evaluate expression in EntityId if it's stored as string in Parameters
+            if (action.Parameters != null && action.Parameters.ContainsKey("recordIdExpression"))
+            {
+                var evaluated = evaluator.Evaluate(action.Parameters["recordIdExpression"]);
+                if (evaluated != null && Guid.TryParse(evaluated.ToString(), out var entityId))
+                {
+                    action.EntityId = entityId;
+                }
+            }
         }
     }
 }

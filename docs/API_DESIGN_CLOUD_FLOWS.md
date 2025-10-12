@@ -59,13 +59,15 @@ Base interface for flow triggers. Concrete implementations:
 #### IFlowAction
 Base interface for flow actions. Concrete implementations:
 - `DataverseAction` - CRUD operations on Dataverse entities
+- `ComposeAction` - Data transformation and composition ✅ **IMPLEMENTED**
+- `ApplyToEachAction` - Loop over collections ✅ **IMPLEMENTED**
 
 **Location:** `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/CloudFlows/IFlowAction.cs`
 
 **Extensibility:** Future implementations could include:
 - `ConditionAction` - If/then/else branching
-- `ApplyToEachAction` - Loops over collections
-- `ComposeAction` - Data transformation
+- `SwitchAction` - Multi-way conditional branching
+- `ParallelBranchAction` - Parallel execution paths
 - `ConnectorAction` - Generic connector action
 
 #### IConnectorActionHandler
@@ -222,13 +224,18 @@ Cloud Flows are conceptually similar to async plugins:
 - [ ] Trigger condition evaluation
 - [ ] Unit tests for Dataverse integration
 
-### Phase 4: JSON Import (TODO)
-- [ ] Parse Cloud Flow JSON schema
-- [ ] Extract trigger definition
-- [ ] Extract action definitions
-- [ ] Map to internal flow definition
-- [ ] Handle common expression patterns
-- [ ] Unit tests for JSON import
+### Phase 4: JSON Import ✅ COMPLETE
+- [x] Parse Cloud Flow JSON schema
+- [x] Extract trigger definition
+- [x] Extract action definitions
+- [x] Map to internal flow definition
+- [x] Handle common expression patterns (stored but not evaluated)
+- [x] Unit tests for JSON import (20 comprehensive tests)
+- [x] Support for message codes (1=Create, 2=Update, 3=Delete, 4=CreateOrUpdate)
+- [x] Support for trigger scopes (1=Organization, 2=BusinessUnit, 3=ParentChildBusinessUnits, 4=User)
+- [x] Support for filtered attributes in Update triggers
+- [x] Support for multiple Dataverse actions with dependencies (runAfter)
+- [x] Comprehensive error handling for invalid JSON and unsupported features
 
 ### Phase 5: Advanced Features (FUTURE)
 - [ ] Conditional logic (`ConditionAction`)
@@ -326,6 +333,67 @@ flowSimulator.RegisterConnectorActionHandler("Office365", emailHandler);
 
 Assert.Single(emailHandler.SentEmails);
 Assert.Equal("test@example.com", emailHandler.SentEmails[0].To);
+```
+
+### JSON Import (Real Cloud Flow Definitions) ✅ NEW
+
+Import and test real Cloud Flow definitions exported from Power Automate:
+
+```csharp
+// Export your flow from Power Automate as JSON
+// Reference: https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-workflow-definition-language
+var flowJson = @"{
+  ""name"": ""process_high_value_opportunity"",
+  ""properties"": {
+    ""displayName"": ""Process High Value Opportunity"",
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""When_a_record_is_updated"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 2,
+              ""subscriptionRequest/entityname"": ""opportunity"",
+              ""subscriptionRequest/scope"": 4,
+              ""subscriptionRequest/filteringattributes"": ""estimatedvalue""
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""Create_notification_task"": {
+          ""type"": ""OpenApiConnection"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""CreateRecord""
+            },
+            ""parameters"": {
+              ""entityName"": ""task"",
+              ""item/subject"": ""Review high-value opportunity""
+            }
+          },
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+// Register the imported flow
+flowSimulator.RegisterFlowFromJson(flowJson);
+
+// Test it
+var service = context.GetOrganizationService();
+var oppId = service.Create(new Entity("opportunity") { ["name"] = "Deal" });
+service.Update(new Entity("opportunity", oppId) { ["estimatedvalue"] = new Money(500000) });
+
+flowSimulator.AssertFlowTriggered("process_high_value_opportunity");
 ```
 
 ## API Design Decisions

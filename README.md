@@ -4,6 +4,11 @@
 
 Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi Montaña. This fork continues the development of the testing framework under the MIT License, based on the last version of FakeXrmEasy that was available under that license.
 
+> [!WARNING]
+>
+> This fork is not ready for real use. I'm using it test some highly experimental ideas.
+> Watch this space.
+
 **Author:** Rob Wood  
 **Original Author:** Jordi Montaña (@jordimontana)  
 **License:** MIT (see LICENSE.txt files in each project folder)
@@ -68,12 +73,16 @@ We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releas
 - **[CRUD Operations](./docs/usage/crud-operations.md)** - Create, Read, Update, Delete operations
 - **[Querying Data](./docs/usage/querying-data.md)** - LINQ and FetchXML queries
 - **[Batch Operations](./docs/usage/batch-operations.md)** - ExecuteMultiple and Transactions
+- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
 
 ### Advanced Topics
 - **[XrmFakedContext](./docs/concepts/xrm-faked-context.md)** - Deep dive into the context
 - **[Middleware Architecture](./docs/concepts/middleware.md)** - Understanding the pipeline
 - **[Message Executors](./docs/messages/README.md)** - All supported Dataverse messages
 - **[Custom Executors](./docs/api/custom-executors.md)** - Creating your own executors
+- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
+- **[Expression Language](./docs/expression-language.md)** - Power Automate expression evaluation ✅ **NEW**
+- **[Known Gaps & Limitations](./docs/GAPS.md)** - Comprehensive limitations guide ✅ **NEW**
 
 ### Migration
 - **[From FakeXrmEasy v1.x](./docs/migration/from-v1.md)** - Migrate from v1.x
@@ -214,15 +223,17 @@ The following table compares the features available across different versions of
 | **Security Roles Simulation** | ⚠️ Basic | ⚠️ Basic | ✅ Full support |
 | **Business Units** | ⚠️ Limited | ⚠️ Limited | ✅ Full support |
 | **Calculated Fields** | ❌ No | ✅ Yes | ✅ Yes |
-| **Rollup Fields** | ❌ No | ❌ No | ✅ Yes |
 | **Business Rules** | ❌ No | ✅ Yes | ✅ Yes |
+| **Rollup Fields** | ❌ No | ✅ Yes | ⚠️ Unknown¹ |
 | **Duplicate Detection** | ❌ No | ❌ No | ✅ Yes |
 | **Audit Log** | ❌ No | ❌ No | ✅ Yes |
 | **Virtual Entities** | ❌ No | ❌ No | ✅ Yes |
 | **Elastic Tables** | ❌ No | ❌ No | ✅ Yes |
 | **Connection References** | ❌ No | ❌ No | ✅ Yes |
-| **Cloud Flows** | ❌ No | ✅ Yes | ✅ Yes |
+| **Cloud Flows** | ❌ No | ✅ Yes (with JSON import & expressions) | ✅ Yes |
 | **Power Automate Integration** | ❌ No | ❌ No | ✅ Yes |
+
+¹ FakeXrmEasy v2+ is a commercial product with documentation not publicly accessible. Feature availability cannot be independently verified.
 
 ### Testing & Quality Features
 
@@ -283,17 +294,17 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 
 #### High-Priority Missing Features:
 1. **Workflow/Custom Workflow Activities** - Removed due to SDK limitations
-2. **Rollup Fields** - No simulation of rollup fields
-3. **Duplicate Detection** - No duplicate detection simulation
-4. **Audit Log** - No audit log simulation
+2. **Custom Actions** - Limited support for custom actions
+4. **Duplicate Detection** - No duplicate detection simulation
+5. **Audit Log** - No audit log simulation
 
 #### Modern Dataverse Features Not Supported:
-5. **Virtual Entities** - No virtual entity support
-6. **Elastic Tables** - No elastic table support
-7. **Power Automate Testing** - Limited Power Automate integration testing (Cloud Flows basic support added)
-8. **Connection References** - No connection reference support
-9. **Advanced Security Model** - Limited security role and privilege simulation
-10. **Concurrent Execution Testing** - No multi-threaded execution testing
+7. **Virtual Entities** - No virtual entity support
+8. **Elastic Tables** - No elastic table support
+9. **Power Automate Testing** - Cloud Flows fully supported with JSON import ✅ **NEW**, broader Power Automate integration limited
+11. **Connection References** - No connection reference support
+12. **Advanced Security Model** - Limited security role and privilege simulation
+13. **Concurrent Execution Testing** - No multi-threaded execution testing
 14. **Performance Profiling** - No built-in profiling tools
 
 #### Pipeline & Plugin Limitations:

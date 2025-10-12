@@ -25,9 +25,18 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Calculated Fields](./usage/calculated-fields.md) - Simulating calculated field evaluation
 - [Custom API Support](./usage/custom-api.md) - Implementing Custom APIs
 - [Cloud Flows](./usage/cloud-flows.md) - Testing Power Automate flows ✅ **IMPLEMENTED**
+- [Expression Language](./expression-language.md) - Power Automate expressions ✅ **NEW**
 - [Merge Request Operations](./usage/merge-request.md) - Merging entity records
 - [Hierarchical Queries](./usage/hierarchical-queries.md) - Querying hierarchical data
 - [Fiscal Period Operators](./usage/fiscal-period-operators.md) - Fiscal calendar queries
+
+### 🏗️ [Architecture & Planning](.)
+- [Cloud Flow API Design](./API_DESIGN_CLOUD_FLOWS.md) - Technical design for Cloud Flow simulation
+- [Cloud Flow Architecture](./CLOUD_FLOW_ARCHITECTURE.md) - Architecture diagrams and patterns
+- [Cloud Flow JSON Import](./CLOUD_FLOW_JSON_IMPORT_SUMMARY.md) - JSON flow definition import
+- [Async Plugin Implementation](./async-plugin-implementation.md) - Async plugin execution design
+- [Documentation Overview](./DOCUMENTATION_OVERVIEW.md) - This documentation structure
+- [Known Gaps & Limitations](./GAPS.md) - Comprehensive list of unsupported features ✅ **NEW**
 
 ### 📋 [Message Executors](./messages/)
 - [Overview](./messages/README.md) - Supported Dataverse messages
