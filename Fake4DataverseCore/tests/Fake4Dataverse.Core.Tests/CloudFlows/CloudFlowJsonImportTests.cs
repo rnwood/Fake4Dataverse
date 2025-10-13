@@ -1383,5 +1383,255 @@ namespace Fake4Dataverse.Tests.CloudFlows
         }
 
         #endregion
+
+        #region File Operations JSON Import Tests
+
+        [Fact]
+        public void Should_ParseUploadFileAction_FromJson()
+        {
+            // Reference: https://learn.microsoft.com/en-us/connectors/commondataserviceforapps/
+            // Tests importing a flow with UploadFile operation
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            var contactId = Guid.NewGuid();
+            var contact = new Entity("contact")
+            {
+                Id = contactId,
+                ["firstname"] = "John",
+                ["lastname"] = "Doe"
+            };
+            context.Initialize(contact);
+
+            // Create test image as base64
+            var imageBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+            var base64Content = Convert.ToBase64String(imageBytes);
+
+            var flowJson = $@"{{
+  ""name"": ""upload_contact_photo"",
+  ""properties"": {{
+    ""state"": ""Started"",
+    ""definition"": {{
+      ""triggers"": {{
+        ""manual"": {{
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {{
+            ""host"": {{
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            }},
+            ""parameters"": {{
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""contact"",
+              ""subscriptionRequest/scope"": 4
+            }}
+          }}
+        }}
+      }},
+      ""actions"": {{
+        ""Upload_Photo"": {{
+          ""type"": ""OpenApiConnection"",
+          ""inputs"": {{
+            ""host"": {{
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""UploadFile""
+            }},
+            ""parameters"": {{
+              ""entityName"": ""contact"",
+              ""recordId"": ""{contactId}"",
+              ""columnName"": ""entityimage"",
+              ""fileName"": ""photo.png"",
+              ""fileContent"": ""{base64Content}""
+            }}
+          }},
+          ""runAfter"": {{}}
+        }}
+      }}
+    }}
+  }}
+}}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            var result = flowSimulator.SimulateTrigger("upload_contact_photo", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            Assert.Single(result.ActionResults);
+            Assert.True(result.ActionResults[0].Succeeded);
+
+            // Verify file was uploaded
+            var service = context.GetOrganizationService();
+            var updatedContact = service.Retrieve("contact", contactId, new Microsoft.Xrm.Sdk.Query.ColumnSet("entityimage"));
+            Assert.Contains("entityimage", updatedContact.Attributes.Keys);
+            var uploadedImage = updatedContact["entityimage"] as byte[];
+            Assert.NotNull(uploadedImage);
+            Assert.Equal(imageBytes, uploadedImage);
+        }
+
+        [Fact]
+        public void Should_ParseDownloadFileAction_FromJson()
+        {
+            // Reference: https://learn.microsoft.com/en-us/connectors/commondataserviceforapps/
+            // Tests importing a flow with DownloadFile operation
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            var contactId = Guid.NewGuid();
+            var imageBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+            var contact = new Entity("contact")
+            {
+                Id = contactId,
+                ["firstname"] = "Jane",
+                ["entityimage"] = imageBytes,
+                ["entityimage_name"] = "avatar.png"
+            };
+            context.Initialize(contact);
+
+            var flowJson = $@"{{
+  ""name"": ""download_contact_photo"",
+  ""properties"": {{
+    ""state"": ""Started"",
+    ""definition"": {{
+      ""triggers"": {{
+        ""manual"": {{
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {{
+            ""host"": {{
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            }},
+            ""parameters"": {{
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""contact"",
+              ""subscriptionRequest/scope"": 4
+            }}
+          }}
+        }}
+      }},
+      ""actions"": {{
+        ""Download_Photo"": {{
+          ""type"": ""OpenApiConnection"",
+          ""inputs"": {{
+            ""host"": {{
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""DownloadFile""
+            }},
+            ""parameters"": {{
+              ""entityName"": ""contact"",
+              ""recordId"": ""{contactId}"",
+              ""columnName"": ""entityimage""
+            }}
+          }},
+          ""runAfter"": {{}}
+        }}
+      }}
+    }}
+  }}
+}}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            var result = flowSimulator.SimulateTrigger("download_contact_photo", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            Assert.Single(result.ActionResults);
+            Assert.True(result.ActionResults[0].Succeeded);
+
+            var outputs = result.ActionResults[0].Outputs;
+            Assert.Contains("fileContent", outputs.Keys);
+            var downloadedContent = outputs["fileContent"] as byte[];
+            Assert.Equal(imageBytes, downloadedContent);
+            Assert.Equal("avatar.png", outputs["fileName"]);
+        }
+
+        [Fact]
+        public void Should_ParseListRecordsAction_WithAdvancedPaging()
+        {
+            // Reference: https://learn.microsoft.com/en-us/connectors/commondataserviceforapps/
+            // Tests importing a flow with ListRecords using advanced paging ($skip, $count)
+            
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            // Add test data
+            var service = context.GetOrganizationService();
+            for (int i = 1; i <= 15; i++)
+            {
+                service.Create(new Entity("contact") 
+                { 
+                    ["firstname"] = $"Contact{i}",
+                    ["lastname"] = "Test"
+                });
+            }
+
+            var flowJson = @"{
+  ""name"": ""list_contacts_with_paging"",
+  ""properties"": {
+    ""state"": ""Started"",
+    ""definition"": {
+      ""triggers"": {
+        ""manual"": {
+          ""type"": ""OpenApiConnectionWebhook"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""SubscribeWebhookTrigger""
+            },
+            ""parameters"": {
+              ""subscriptionRequest/message"": 1,
+              ""subscriptionRequest/entityname"": ""account"",
+              ""subscriptionRequest/scope"": 4
+            }
+          }
+        }
+      },
+      ""actions"": {
+        ""List_Contacts"": {
+          ""type"": ""OpenApiConnection"",
+          ""inputs"": {
+            ""host"": {
+              ""connectionName"": ""shared_commondataserviceforapps"",
+              ""operationId"": ""ListRecords""
+            },
+            ""parameters"": {
+              ""entityName"": ""contact"",
+              ""$top"": 5,
+              ""$skip"": 3,
+              ""$count"": true
+            }
+          },
+          ""runAfter"": {}
+        }
+      }
+    }
+  }
+}";
+
+            // Act
+            flowSimulator.RegisterFlowFromJson(flowJson);
+            var result = flowSimulator.SimulateTrigger("list_contacts_with_paging", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            Assert.Single(result.ActionResults);
+            Assert.True(result.ActionResults[0].Succeeded);
+
+            var outputs = result.ActionResults[0].Outputs;
+            Assert.Contains("value", outputs.Keys);
+            Assert.Contains("@odata.count", outputs.Keys);
+            
+            var records = outputs["value"] as List<Dictionary<string, object>>;
+            Assert.Equal(5, records.Count); // Page size
+            Assert.Equal(15, outputs["@odata.count"]); // Total count
+        }
+
+        #endregion
     }
 }

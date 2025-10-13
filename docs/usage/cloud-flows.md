@@ -424,10 +424,227 @@ Assert.Single(contacts);
 - `Retrieve` - Retrieve a single record by ID
 - `Update` - Update existing records
 - `Delete` - Delete records
-- `ListRecords` - Query multiple records with filtering, ordering, and top limit
+- `ListRecords` - Query multiple records with filtering, ordering, paging, and total count ✅ **ENHANCED**
 - `Relate` - Associate records (many-to-many or one-to-many)
 - `Unrelate` - Disassociate records
 - `ExecuteAction` - Execute custom actions or custom APIs
+- `UploadFile` - Upload files or images to entity columns ✅ **NEW**
+- `DownloadFile` - Download files or images from entity columns ✅ **NEW**
+
+#### File Operations (UploadFile & DownloadFile) ✅ **NEW**
+
+The `UploadFile` and `DownloadFile` actions simulate file and image column operations in Dataverse. These are commonly used for uploading contact photos, document attachments, or any binary data.
+
+**Reference:** [File Attributes in Dataverse](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/file-attributes)
+
+##### UploadFile Example
+```csharp
+// Upload a contact photo
+var contactId = Guid.NewGuid();
+var contact = new Entity("contact")
+{
+    Id = contactId,
+    ["firstname"] = "John",
+    ["lastname"] = "Doe"
+};
+context.Initialize(contact);
+
+// Read file content (e.g., from disk)
+byte[] imageBytes = File.ReadAllBytes("profile_photo.jpg");
+
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "upload_contact_photo",
+    Trigger = new DataverseTrigger(),
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "UploadPhoto",
+            DataverseActionType = DataverseActionType.UploadFile,
+            EntityLogicalName = "contact",
+            EntityId = contactId,
+            ColumnName = "entityimage",  // Image column name
+            FileContent = imageBytes,     // Byte array
+            FileName = "profile_photo.jpg" // Optional filename
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+var result = flowSimulator.SimulateTrigger("upload_contact_photo", new Dictionary<string, object>());
+
+// Verify upload succeeded
+Assert.True(result.Succeeded);
+
+// Verify file was stored in entity
+var updatedContact = context.CreateQuery("contact").First(c => c.Id == contactId);
+Assert.Contains("entityimage", updatedContact.Attributes.Keys);
+var uploadedImage = updatedContact["entityimage"] as byte[];
+Assert.NotNull(uploadedImage);
+Assert.Equal(imageBytes.Length, uploadedImage.Length);
+```
+
+##### DownloadFile Example
+```csharp
+// Download a contact photo
+var contactId = Guid.NewGuid();
+byte[] originalImageBytes = File.ReadAllBytes("avatar.png");
+
+var contact = new Entity("contact")
+{
+    Id = contactId,
+    ["firstname"] = "Jane",
+    ["entityimage"] = originalImageBytes,
+    ["entityimage_name"] = "avatar.png"
+};
+context.Initialize(contact);
+
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "download_contact_photo",
+    Trigger = new DataverseTrigger(),
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "DownloadPhoto",
+            DataverseActionType = DataverseActionType.DownloadFile,
+            EntityLogicalName = "contact",
+            EntityId = contactId,
+            ColumnName = "entityimage"
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+var result = flowSimulator.SimulateTrigger("download_contact_photo", new Dictionary<string, object>());
+
+// Verify download succeeded
+Assert.True(result.Succeeded);
+var outputs = result.ActionResults[0].Outputs;
+
+// Get file content (raw byte array for testing)
+var downloadedContent = outputs["fileContent"] as byte[];
+Assert.Equal(originalImageBytes, downloadedContent);
+
+// Get base64-encoded content (as returned by real Power Automate)
+var base64Content = outputs["$content"] as string;
+var decodedBytes = Convert.FromBase64String(base64Content);
+Assert.Equal(originalImageBytes, decodedBytes);
+
+// Get metadata
+Assert.Equal("avatar.png", outputs["fileName"]);
+Assert.Equal(originalImageBytes.Length, outputs["fileSize"]);
+```
+
+**Supported File Column Types:**
+- Image columns (e.g., `entityimage` on contact, account, etc.)
+- File columns (custom file columns created in Dataverse)
+
+**Notes:**
+- File content is stored as byte arrays in entity attributes
+- Filename is stored in a separate `{columnname}_name` attribute if provided
+- DownloadFile returns both raw byte array and base64-encoded content for flexibility
+- In real Power Automate, file content is always base64-encoded in the `$content` property
+
+#### Advanced ListRecords Features ✅ **ENHANCED**
+
+The `ListRecords` action now supports advanced paging and total count features for working with large datasets.
+
+**Reference:** [Query Data with Web API](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api)
+
+##### Paging with Skip and Top
+```csharp
+// Create 20 contacts
+var contacts = Enumerable.Range(1, 20).Select(i => new Entity("contact")
+{
+    Id = Guid.NewGuid(),
+    ["firstname"] = $"Contact{i}",
+    ["lastname"] = "Test"
+}).ToArray();
+context.Initialize(contacts);
+
+// Get page 2 (skip 10, take 5)
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "list_contacts_page_2",
+    Trigger = new DataverseTrigger(),
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "ListContacts",
+            DataverseActionType = DataverseActionType.ListRecords,
+            EntityLogicalName = "contact",
+            Top = 5,      // Page size
+            Skip = 10     // Skip first 10 records
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+var result = flowSimulator.SimulateTrigger("list_contacts_page_2", new Dictionary<string, object>());
+
+var outputs = result.ActionResults[0].Outputs;
+var records = outputs["value"] as List<Dictionary<string, object>>;
+Assert.Equal(5, records.Count);  // Got 5 records
+```
+
+##### Total Count with @odata.count
+```csharp
+// Get total count of records across all pages
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "list_with_count",
+    Trigger = new DataverseTrigger(),
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "ListContacts",
+            DataverseActionType = DataverseActionType.ListRecords,
+            EntityLogicalName = "contact",
+            Top = 5,
+            IncludeTotalCount = true  // Request total count
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+var result = flowSimulator.SimulateTrigger("list_with_count", new Dictionary<string, object>());
+
+var outputs = result.ActionResults[0].Outputs;
+Assert.Equal(5, outputs["count"]);        // Records in this page
+Assert.Equal(20, outputs["@odata.count"]); // Total records across all pages
+```
+
+##### Continuation with @odata.nextLink
+```csharp
+// When there are more records, @odata.nextLink indicates pagination
+var outputs = result.ActionResults[0].Outputs;
+
+if (outputs.ContainsKey("@odata.nextLink"))
+{
+    var nextLink = outputs["@odata.nextLink"] as string;
+    // Contains "?$skip=5" to get next page
+    // In production, you'd parse this and make another request
+}
+```
+
+**ListRecords Capabilities:**
+- ✅ `Filter` - OData filter expressions (basic support, complex parsing noted for future enhancement)
+- ✅ `OrderBy` - Sort by attribute (e.g., "createdon desc")
+- ✅ `Top` - Maximum records to return per page
+- ✅ `Skip` - Skip records for paging (offset-based)
+- ✅ `IncludeTotalCount` - Include total count with @odata.count
+- ✅ `@odata.nextLink` - Automatic generation when more records available
+- ⚠️ `Expand` - Navigation property expansion (placeholder for future enhancement)
+
+**Notes:**
+- Paging is implemented using LINQ Skip/Take for simplicity
+- Complex OData filter parsing is noted as a future enhancement (TODO in code)
+- $expand for related entities requires metadata mapping (future enhancement)
 
 #### Custom Connector Actions (Extensibility)
 ```csharp
