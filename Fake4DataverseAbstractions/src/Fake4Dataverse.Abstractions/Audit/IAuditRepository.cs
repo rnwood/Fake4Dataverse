@@ -77,7 +77,12 @@ namespace Fake4Dataverse.Abstractions.Audit
         void ClearAuditData();
 
         /// <summary>
-        /// Checks if auditing is enabled
+        /// Gets or sets whether auditing is enabled at the organization level.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/configure
+        /// 
+        /// In Dataverse, this is the global audit setting (IsAuditEnabled on Organization entity).
+        /// When false, no auditing occurs regardless of entity or attribute settings.
+        /// When true, entity and attribute level settings are also checked.
         /// </summary>
         bool IsAuditEnabled { get; set; }
     }

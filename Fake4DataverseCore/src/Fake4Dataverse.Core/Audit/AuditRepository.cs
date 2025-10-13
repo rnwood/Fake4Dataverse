@@ -1,3 +1,4 @@
+using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.Audit;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
@@ -15,13 +16,15 @@ namespace Fake4Dataverse.Audit
     {
         private readonly List<Entity> _auditRecords;
         private readonly Dictionary<Guid, AuditDetail> _auditDetails;
+        private readonly IXrmFakedContext _context;
 
         public bool IsAuditEnabled { get; set; }
 
-        public AuditRepository()
+        public AuditRepository(IXrmFakedContext context)
         {
             _auditRecords = new List<Entity>();
             _auditDetails = new Dictionary<Guid, AuditDetail>();
+            _context = context;
             IsAuditEnabled = false; // Disabled by default to match Dataverse behavior
         }
 
