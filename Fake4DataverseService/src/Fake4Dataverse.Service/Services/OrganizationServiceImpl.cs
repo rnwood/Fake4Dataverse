@@ -1,24 +1,24 @@
-using Fake4Dataverse.Service.Grpc;
-using Grpc.Core;
+using CoreWCF;
 using Microsoft.Extensions.Logging;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
-using System.Text.Json;
-using XrmEntityReference = Microsoft.Xrm.Sdk.EntityReference;
-using XrmOptionSetValue = Microsoft.Xrm.Sdk.OptionSetValue;
-using XrmMoney = Microsoft.Xrm.Sdk.Money;
-using GrpcEntityReference = Fake4Dataverse.Service.Grpc.EntityReference;
-using GrpcOptionSetValue = Fake4Dataverse.Service.Grpc.OptionSetValue;
-using GrpcMoney = Fake4Dataverse.Service.Grpc.Money;
 
 namespace Fake4Dataverse.Service.Services;
 
 /// <summary>
-/// gRPC service implementation that wraps IOrganizationService from Fake4Dataverse.
-/// This service provides 100% compatibility with Microsoft Dataverse SDK types.
+/// WCF service implementation that wraps IOrganizationService from Fake4Dataverse.
+/// This service provides 100% compatibility with Microsoft Dataverse SDK types and
+/// matches the actual Organization Service SOAP interface.
+/// 
 /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice
+/// The IOrganizationService interface is the core interface for interacting with Dataverse,
+/// providing methods for CRUD operations and executing organization requests.
+/// 
+/// This implementation uses the same method signatures as the real OrganizationService
+/// and exposes them via SOAP at the standard endpoint: /XRMServices/2011/Organization.svc
 /// </summary>
-public class OrganizationServiceImpl : Grpc.OrganizationService.OrganizationServiceBase
+[ServiceBehavior(IncludeExceptionDetailInFaults = true)]
+public class OrganizationServiceImpl : IOrganizationServiceContract
 {
     private readonly IOrganizationService _organizationService;
     private readonly ILogger<OrganizationServiceImpl> _logger;
@@ -29,301 +29,192 @@ public class OrganizationServiceImpl : Grpc.OrganizationService.OrganizationServ
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public override Task<CreateResponse> Create(CreateRequest request, ServerCallContext context)
+    /// <summary>
+    /// Creates a new entity record.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.create
+    /// Creates a record in Dataverse and returns the ID of the created record.
+    /// </summary>
+    public Guid Create(Entity entity)
     {
-        _logger.LogInformation("Create request for entity: {EntityLogicalName}", request.EntityLogicalName);
+        _logger.LogInformation("Create request for entity: {LogicalName}", entity?.LogicalName);
 
         try
         {
-            var entity = ConvertToEntity(request.EntityLogicalName, request.Attributes);
-            var id = _organizationService.Create(entity);
-
-            return Task.FromResult(new CreateResponse
+            if (entity == null)
             {
-                Id = id.ToString()
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating entity: {EntityLogicalName}", request.EntityLogicalName);
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
-        }
-    }
-
-    public override Task<RetrieveResponse> Retrieve(RetrieveRequest request, ServerCallContext context)
-    {
-        _logger.LogInformation("Retrieve request for entity: {EntityLogicalName}, Id: {Id}", 
-            request.EntityLogicalName, request.Id);
-
-        try
-        {
-            var columnSet = request.Columns.Count > 0 
-                ? new ColumnSet(request.Columns.ToArray()) 
-                : new ColumnSet(true);
-
-            var entity = _organizationService.Retrieve(
-                request.EntityLogicalName, 
-                Guid.Parse(request.Id), 
-                columnSet);
-
-            return Task.FromResult(new RetrieveResponse
-            {
-                Entity = ConvertToEntityRecord(entity)
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving entity: {EntityLogicalName}, Id: {Id}", 
-                request.EntityLogicalName, request.Id);
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
-        }
-    }
-
-    public override Task<UpdateResponse> Update(UpdateRequest request, ServerCallContext context)
-    {
-        _logger.LogInformation("Update request for entity: {EntityLogicalName}, Id: {Id}", 
-            request.EntityLogicalName, request.Id);
-
-        try
-        {
-            var entity = ConvertToEntity(request.EntityLogicalName, request.Attributes);
-            entity.Id = Guid.Parse(request.Id);
-            
-            _organizationService.Update(entity);
-
-            return Task.FromResult(new UpdateResponse());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating entity: {EntityLogicalName}, Id: {Id}", 
-                request.EntityLogicalName, request.Id);
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
-        }
-    }
-
-    public override Task<DeleteResponse> Delete(DeleteRequest request, ServerCallContext context)
-    {
-        _logger.LogInformation("Delete request for entity: {EntityLogicalName}, Id: {Id}", 
-            request.EntityLogicalName, request.Id);
-
-        try
-        {
-            _organizationService.Delete(request.EntityLogicalName, Guid.Parse(request.Id));
-            return Task.FromResult(new DeleteResponse());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting entity: {EntityLogicalName}, Id: {Id}", 
-                request.EntityLogicalName, request.Id);
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
-        }
-    }
-
-    public override Task<AssociateResponse> Associate(AssociateRequest request, ServerCallContext context)
-    {
-        _logger.LogInformation("Associate request for entity: {EntityLogicalName}, Id: {Id}, Relationship: {Relationship}", 
-            request.EntityLogicalName, request.EntityId, request.RelationshipName);
-
-        try
-        {
-            var relatedEntities = new EntityReferenceCollection();
-            foreach (var relatedEntity in request.RelatedEntities)
-            {
-                relatedEntities.Add(new XrmEntityReference(
-                    relatedEntity.LogicalName, 
-                    Guid.Parse(relatedEntity.Id)));
+                throw new ArgumentNullException(nameof(entity));
             }
 
-            _organizationService.Associate(
-                request.EntityLogicalName,
-                Guid.Parse(request.EntityId),
-                new Relationship(request.RelationshipName),
-                relatedEntities);
+            var id = _organizationService.Create(entity);
+            _logger.LogInformation("Created entity {LogicalName} with ID: {Id}", entity.LogicalName, id);
+            return id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating entity: {LogicalName}", entity?.LogicalName);
+            throw new FaultException(ex.Message);
+        }
+    }
 
-            return Task.FromResult(new AssociateResponse());
+    /// <summary>
+    /// Retrieves an entity record by ID.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.retrieve
+    /// Retrieves a single record from Dataverse with the specified columns.
+    /// </summary>
+    public Entity Retrieve(string entityName, Guid id, ColumnSet columnSet)
+    {
+        _logger.LogInformation("Retrieve request for entity: {EntityName}, Id: {Id}", entityName, id);
+
+        try
+        {
+            var entity = _organizationService.Retrieve(entityName, id, columnSet);
+            _logger.LogInformation("Retrieved entity {EntityName} with ID: {Id}", entityName, id);
+            return entity;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving entity: {EntityName}, Id: {Id}", entityName, id);
+            throw new FaultException(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Updates an existing entity record.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.update
+    /// Updates the attributes of an existing record in Dataverse.
+    /// </summary>
+    public void Update(Entity entity)
+    {
+        _logger.LogInformation("Update request for entity: {LogicalName}, Id: {Id}", 
+            entity?.LogicalName, entity?.Id);
+
+        try
+        {
+            if (entity == null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
+            _organizationService.Update(entity);
+            _logger.LogInformation("Updated entity {LogicalName} with ID: {Id}", entity.LogicalName, entity.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating entity: {LogicalName}, Id: {Id}", 
+                entity?.LogicalName, entity?.Id);
+            throw new FaultException(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Deletes an entity record.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.delete
+    /// Deletes a record from Dataverse.
+    /// </summary>
+    public void Delete(string entityName, Guid id)
+    {
+        _logger.LogInformation("Delete request for entity: {EntityName}, Id: {Id}", entityName, id);
+
+        try
+        {
+            _organizationService.Delete(entityName, id);
+            _logger.LogInformation("Deleted entity {EntityName} with ID: {Id}", entityName, id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting entity: {EntityName}, Id: {Id}", entityName, id);
+            throw new FaultException(ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Associates two entity records.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.associate
+    /// Creates a link between two records in Dataverse using a many-to-many relationship.
+    /// </summary>
+    public void Associate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
+    {
+        _logger.LogInformation("Associate request for entity: {EntityName}, Id: {Id}, Relationship: {Relationship}", 
+            entityName, entityId, relationship?.SchemaName);
+
+        try
+        {
+            _organizationService.Associate(entityName, entityId, relationship, relatedEntities);
+            _logger.LogInformation("Associated entities for {EntityName} with ID: {Id}", entityName, entityId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error associating entities");
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+            throw new FaultException(ex.Message);
         }
     }
 
-    public override Task<DisassociateResponse> Disassociate(DisassociateRequest request, ServerCallContext context)
+    /// <summary>
+    /// Disassociates two entity records.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.disassociate
+    /// Removes a link between two records in Dataverse.
+    /// </summary>
+    public void Disassociate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
     {
-        _logger.LogInformation("Disassociate request for entity: {EntityLogicalName}, Id: {Id}, Relationship: {Relationship}", 
-            request.EntityLogicalName, request.EntityId, request.RelationshipName);
+        _logger.LogInformation("Disassociate request for entity: {EntityName}, Id: {Id}, Relationship: {Relationship}", 
+            entityName, entityId, relationship?.SchemaName);
 
         try
         {
-            var relatedEntities = new EntityReferenceCollection();
-            foreach (var relatedEntity in request.RelatedEntities)
-            {
-                relatedEntities.Add(new XrmEntityReference(
-                    relatedEntity.LogicalName, 
-                    Guid.Parse(relatedEntity.Id)));
-            }
-
-            _organizationService.Disassociate(
-                request.EntityLogicalName,
-                Guid.Parse(request.EntityId),
-                new Relationship(request.RelationshipName),
-                relatedEntities);
-
-            return Task.FromResult(new DisassociateResponse());
+            _organizationService.Disassociate(entityName, entityId, relationship, relatedEntities);
+            _logger.LogInformation("Disassociated entities for {EntityName} with ID: {Id}", entityName, entityId);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error disassociating entities");
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+            throw new FaultException(ex.Message);
         }
     }
 
-    public override Task<RetrieveMultipleResponse> RetrieveMultiple(RetrieveMultipleRequest request, ServerCallContext context)
+    /// <summary>
+    /// Retrieves multiple entity records.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.retrievemultiple
+    /// Retrieves a collection of records from Dataverse based on a query.
+    /// Supports QueryExpression, FetchExpression, and QueryByAttribute.
+    /// </summary>
+    public EntityCollection RetrieveMultiple(QueryBase query)
     {
-        _logger.LogInformation("RetrieveMultiple request with query type: {QueryType}", request.QueryType);
+        var queryType = query?.GetType().Name ?? "Unknown";
+        _logger.LogInformation("RetrieveMultiple request with query type: {QueryType}", queryType);
 
         try
         {
-            QueryBase query = request.QueryType.ToLowerInvariant() switch
-            {
-                "queryexpression" => JsonSerializer.Deserialize<QueryExpression>(request.QueryData) 
-                    ?? throw new InvalidOperationException("Failed to deserialize QueryExpression"),
-                "fetchxml" => new FetchExpression(request.QueryData),
-                "querybyattribute" => JsonSerializer.Deserialize<QueryByAttribute>(request.QueryData) 
-                    ?? throw new InvalidOperationException("Failed to deserialize QueryByAttribute"),
-                _ => throw new ArgumentException($"Unsupported query type: {request.QueryType}")
-            };
-
             var result = _organizationService.RetrieveMultiple(query);
-
-            var response = new RetrieveMultipleResponse
-            {
-                MoreRecords = result.MoreRecords,
-                PagingCookie = result.PagingCookie ?? string.Empty
-            };
-
-            foreach (var entity in result.Entities)
-            {
-                response.Entities.Add(ConvertToEntityRecord(entity));
-            }
-
-            return Task.FromResult(response);
+            _logger.LogInformation("RetrieveMultiple returned {Count} entities", result?.Entities?.Count ?? 0);
+            return result;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving multiple entities");
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+            throw new FaultException(ex.Message);
         }
     }
 
-    public override Task<ExecuteResponse> Execute(ExecuteRequest request, ServerCallContext context)
+    /// <summary>
+    /// Executes an organization request.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.execute
+    /// Executes a message request and returns a response.
+    /// This method supports all OrganizationRequest types like WhoAmIRequest, RetrieveVersionRequest, etc.
+    /// </summary>
+    public OrganizationResponse Execute(OrganizationRequest request)
     {
-        _logger.LogInformation("Execute request for request type: {RequestType}", request.RequestType);
+        _logger.LogInformation("Execute request for request type: {RequestType}", request?.GetType().Name);
 
         try
         {
-            // This would need to be extended to support different request types
-            // For now, we'll throw a not implemented exception
-            throw new NotImplementedException("Execute method requires extension for specific request types");
+            var response = _organizationService.Execute(request);
+            _logger.LogInformation("Execute completed for request type: {RequestType}", request?.GetType().Name);
+            return response;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing request");
-            throw new RpcException(new Status(StatusCode.Internal, ex.Message));
+            throw new FaultException(ex.Message);
         }
-    }
-
-    private Entity ConvertToEntity(string logicalName, IDictionary<string, AttributeValue> attributes)
-    {
-        var entity = new Entity(logicalName);
-
-        foreach (var kvp in attributes)
-        {
-            entity[kvp.Key] = ConvertAttributeValue(kvp.Value);
-        }
-
-        return entity;
-    }
-
-    private object? ConvertAttributeValue(AttributeValue attributeValue)
-    {
-        return attributeValue.ValueCase switch
-        {
-            AttributeValue.ValueOneofCase.StringValue => attributeValue.StringValue,
-            AttributeValue.ValueOneofCase.IntValue => attributeValue.IntValue,
-            AttributeValue.ValueOneofCase.LongValue => attributeValue.LongValue,
-            AttributeValue.ValueOneofCase.DoubleValue => attributeValue.DoubleValue,
-            AttributeValue.ValueOneofCase.BoolValue => attributeValue.BoolValue,
-            AttributeValue.ValueOneofCase.DatetimeValue => DateTime.Parse(attributeValue.DatetimeValue),
-            AttributeValue.ValueOneofCase.GuidValue => Guid.Parse(attributeValue.GuidValue),
-            AttributeValue.ValueOneofCase.ReferenceValue => new XrmEntityReference(
-                attributeValue.ReferenceValue.LogicalName,
-                Guid.Parse(attributeValue.ReferenceValue.Id))
-            {
-                Name = attributeValue.ReferenceValue.Name
-            },
-            AttributeValue.ValueOneofCase.OptionsetValue => new XrmOptionSetValue(attributeValue.OptionsetValue.Value),
-            AttributeValue.ValueOneofCase.MoneyValue => new XrmMoney(Convert.ToDecimal(attributeValue.MoneyValue.Value)),
-            AttributeValue.ValueOneofCase.BinaryValue => attributeValue.BinaryValue.ToByteArray(),
-            _ => null
-        };
-    }
-
-    private EntityRecord ConvertToEntityRecord(Entity entity)
-    {
-        var record = new EntityRecord
-        {
-            LogicalName = entity.LogicalName,
-            Id = entity.Id.ToString()
-        };
-
-        foreach (var attribute in entity.Attributes)
-        {
-            var attributeValue = ConvertFromAttributeValue(attribute.Value);
-            if (attributeValue != null)
-            {
-                record.Attributes.Add(attribute.Key, attributeValue);
-            }
-        }
-
-        return record;
-    }
-
-    private AttributeValue? ConvertFromAttributeValue(object? value)
-    {
-        if (value == null)
-            return null;
-
-        return value switch
-        {
-            string s => new AttributeValue { StringValue = s },
-            int i => new AttributeValue { IntValue = i },
-            long l => new AttributeValue { LongValue = l },
-            double d => new AttributeValue { DoubleValue = d },
-            decimal dec => new AttributeValue { DoubleValue = Convert.ToDouble(dec) },
-            bool b => new AttributeValue { BoolValue = b },
-            DateTime dt => new AttributeValue { DatetimeValue = dt.ToString("o") },
-            Guid g => new AttributeValue { GuidValue = g.ToString() },
-            XrmEntityReference er => new AttributeValue
-            {
-                ReferenceValue = new GrpcEntityReference
-                {
-                    LogicalName = er.LogicalName,
-                    Id = er.Id.ToString(),
-                    Name = er.Name ?? string.Empty
-                }
-            },
-            XrmOptionSetValue osv => new AttributeValue
-            {
-                OptionsetValue = new GrpcOptionSetValue { Value = osv.Value }
-            },
-            XrmMoney m => new AttributeValue
-            {
-                MoneyValue = new GrpcMoney { Value = Convert.ToDouble(m.Value) }
-            },
-            byte[] bytes => new AttributeValue { BinaryValue = Google.Protobuf.ByteString.CopyFrom(bytes) },
-            _ => null
-        };
     }
 }

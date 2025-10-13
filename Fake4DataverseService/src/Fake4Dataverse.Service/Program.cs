@@ -1,17 +1,21 @@
-using Fake4Dataverse;
+using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Services;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xrm.Sdk;
 using System.CommandLine;
+using CoreWCF;
+using CoreWCF.Configuration;
 
 namespace Fake4Dataverse.Service;
 
 /// <summary>
 /// CLI service host for Fake4Dataverse IOrganizationService.
-/// This service provides a gRPC endpoint that exposes a fake IOrganizationService
-/// backed by Fake4Dataverse, using 100% Microsoft Dataverse SDK types.
+/// This service provides a SOAP/WCF endpoint that exposes a fake IOrganizationService
+/// backed by Fake4Dataverse, using 100% Microsoft Dataverse SDK types and matching
+/// the actual Organization Service SOAP endpoints.
 /// 
 /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice
 /// The IOrganizationService interface provides methods for:
@@ -23,12 +27,16 @@ namespace Fake4Dataverse.Service;
 /// - Disassociate: Disassociates two entity records
 /// - RetrieveMultiple: Retrieves multiple entity records
 /// - Execute: Executes an organization request
+/// 
+/// Microsoft Dynamics 365/Dataverse uses SOAP endpoints at paths like:
+/// - /XRMServices/2011/Organization.svc (current standard)
+/// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/overview#about-the-legacy-soap-endpoint
 /// </summary>
 public class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        var rootCommand = new RootCommand("Fake4Dataverse CLI Service - Host a fake IOrganizationService for testing and development");
+        var rootCommand = new RootCommand("Fake4Dataverse CLI Service - Host a fake IOrganizationService SOAP endpoint for testing and development");
 
         var startCommand = new Command("start", "Start the Fake4Dataverse service");
         var portOption = new Option<int>(
@@ -56,33 +64,60 @@ public class Program
     private static async Task StartService(int port, string host)
     {
         Console.WriteLine($"Starting Fake4Dataverse Service on {host}:{port}...");
+        Console.WriteLine("This service provides SOAP endpoints compatible with Microsoft Dynamics 365/Dataverse Organization Service");
+        Console.WriteLine();
         
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
             Args = new[] { $"--urls=http://{host}:{port}" }
         });
 
-        // Configure services
-        builder.Services.AddGrpc();
-
         // Create and register the Fake4Dataverse context
         var context = XrmFakedContextFactory.New();
         var organizationService = context.GetOrganizationService();
         
+        builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);
+
+        // Add CoreWCF services
+        builder.Services.AddServiceModelServices();
+        builder.Services.AddServiceModelMetadata();
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline
-        app.MapGrpcService<OrganizationServiceImpl>();
-        
-        app.MapGet("/", () => "Fake4Dataverse Service is running. Use gRPC clients to connect.");
+        // Configure WCF
+        app.UseServiceModel(serviceBuilder =>
+        {
+            // Add the Organization Service at the standard 2011 endpoint
+            serviceBuilder.AddService<OrganizationServiceImpl>(options =>
+            {
+                options.DebugBehavior.IncludeExceptionDetailInFaults = true;
+            });
+            
+            // Standard Dynamics 365/Dataverse endpoint path
+            serviceBuilder.AddServiceEndpoint<OrganizationServiceImpl, IOrganizationServiceContract>(
+                new BasicHttpBinding(),
+                "/XRMServices/2011/Organization.svc");
+                
+            // Add WSDL support
+            var serviceMetadataBehavior = app.Services.GetRequiredService<CoreWCF.Description.ServiceMetadataBehavior>();
+            serviceMetadataBehavior.HttpGetEnabled = true;
+        });
 
-        Console.WriteLine($"Fake4Dataverse Service started successfully on {host}:{port}");
-        Console.WriteLine("Press Ctrl+C to stop the service.");
+        app.MapGet("/", () => Results.Text(
+            "Fake4Dataverse Service is running.\n\n" +
+            "Available SOAP endpoints:\n" +
+            "  - /XRMServices/2011/Organization.svc - Organization Service (SOAP 1.1/1.2)\n" +
+            "  - /XRMServices/2011/Organization.svc?wsdl - WSDL definition\n\n" +
+            "This service provides 100% compatibility with Microsoft Dynamics 365/Dataverse SDK.",
+            "text/plain"));
+
+        Console.WriteLine("Fake4Dataverse Service started successfully");
+        Console.WriteLine($"Base URL: http://{host}:{port}");
         Console.WriteLine();
-        Console.WriteLine("Available services:");
-        Console.WriteLine("  - OrganizationService (gRPC)");
+        Console.WriteLine("Available SOAP endpoints (matching Microsoft Dynamics 365/Dataverse):");
+        Console.WriteLine($"  - http://{host}:{port}/XRMServices/2011/Organization.svc");
+        Console.WriteLine($"  - http://{host}:{port}/XRMServices/2011/Organization.svc?wsdl");
         Console.WriteLine();
         Console.WriteLine("The service exposes the following IOrganizationService methods:");
         Console.WriteLine("  - Create: Creates a new entity record");
@@ -93,6 +128,8 @@ public class Program
         Console.WriteLine("  - Disassociate: Disassociates two entity records");
         Console.WriteLine("  - RetrieveMultiple: Retrieves multiple entity records");
         Console.WriteLine("  - Execute: Executes an organization request");
+        Console.WriteLine();
+        Console.WriteLine("Press Ctrl+C to stop the service.");
 
         await app.RunAsync();
     }

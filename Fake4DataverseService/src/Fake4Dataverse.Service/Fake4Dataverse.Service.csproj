@@ -13,7 +13,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <PackageIcon>Fake4DataverseLogo_128x128.png</PackageIcon>
-    <PackageTags>dynamics;crm;365;unit testing;xrm;mock;mocking;fake;fakes;cds;common data service;power platform;Fake4Dataverse;dataverse;service;cli</PackageTags>
+    <PackageTags>dynamics;crm;365;unit testing;xrm;mock;mocking;fake;fakes;cds;common data service;power platform;Fake4Dataverse;dataverse;service;cli;soap;wcf</PackageTags>
     <RepositoryUrl>https://github.com/rnwood/fake-xrm-free</RepositoryUrl>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -25,18 +25,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.68.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="CoreWCF.Http" Version="1.6.1" />
+    <PackageReference Include="CoreWCF.Primitives" Version="1.6.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Fake4DataverseCore\src\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Protobuf Include="Protos\organizationservice.proto" GrpcServices="Server" />
   </ItemGroup>
 
 </Project>
