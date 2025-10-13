@@ -124,6 +124,11 @@ namespace Fake4Dataverse
 
         /// <summary>
         /// Records an audit entry for a Create operation
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
+        /// 
+        /// For Create operations in Dataverse:
+        /// - OldValue is an empty entity (the record didn't exist)
+        /// - NewValue contains the created entity's attributes
         /// </summary>
         internal void RecordCreateAudit(Entity entity)
         {
@@ -136,11 +141,13 @@ namespace Fake4Dataverse
             var userId = CallerProperties?.CallerId?.Id ?? Guid.Empty;
             var objectRef = new EntityReference(entity.LogicalName, entity.Id);
             
+            // Pass the created entity so audit details can capture the new values
             auditRepository.CreateAuditRecord(
                 AuditAction.Create,
                 "Create",
                 objectRef,
-                userId);
+                userId,
+                createdEntity: entity);
         }
 
         /// <summary>

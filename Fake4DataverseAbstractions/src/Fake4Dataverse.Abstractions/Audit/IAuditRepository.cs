@@ -25,13 +25,15 @@ namespace Fake4Dataverse.Abstractions.Audit
         /// <param name="objectId">Entity reference to the audited record</param>
         /// <param name="userId">User who performed the operation</param>
         /// <param name="attributeChanges">Dictionary of attribute changes (attribute name -> old/new value pair)</param>
+        /// <param name="createdEntity">The created entity (for Create operations only)</param>
         /// <returns>The created audit record</returns>
         Entity CreateAuditRecord(
             int action,
             string operation,
             EntityReference objectId,
             Guid userId,
-            Dictionary<string, (object oldValue, object newValue)> attributeChanges = null);
+            Dictionary<string, (object oldValue, object newValue)> attributeChanges = null,
+            Entity createdEntity = null);
 
         /// <summary>
         /// Retrieves audit records for a specific entity

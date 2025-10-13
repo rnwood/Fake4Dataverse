@@ -234,8 +234,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             var accountRef = new EntityReference("account", accountId);
             var nameAuditRecords = auditRepository.GetAuditRecordsForAttribute(accountRef, "name").ToList();
 
-            // Assert - Should have 2 audit records where name changed (not revenue-only update)
-            Assert.Equal(2, nameAuditRecords.Count);
+            // Assert - Should have 3 audit records where name is present:
+            // 1. Create (name was set)
+            // 2. First Update (name changed)
+            // 3. Second Update (name changed)
+            // The revenue-only update should not be included
+            Assert.Equal(3, nameAuditRecords.Count);
         }
 
         [Fact]

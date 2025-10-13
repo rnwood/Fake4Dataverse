@@ -40,13 +40,18 @@ namespace Fake4Dataverse.Audit
         /// - objecttypecode: Entity logical name
         /// - userid: User who performed the operation
         /// - createdon: Timestamp when the audit was created
+        /// 
+        /// For Create operations:
+        /// - OldValue is an empty entity (record didn't exist)
+        /// - NewValue contains the created entity's attributes
         /// </summary>
         public Entity CreateAuditRecord(
             int action,
             string operation,
             EntityReference objectId,
             Guid userId,
-            Dictionary<string, (object oldValue, object newValue)> attributeChanges = null)
+            Dictionary<string, (object oldValue, object newValue)> attributeChanges = null,
+            Entity createdEntity = null)
         {
             if (!IsAuditEnabled)
             {
@@ -70,12 +75,20 @@ namespace Fake4Dataverse.Audit
             // For Create operations, store the new entity values
             // For Update operations, store old and new values if there are changes
             // For Delete operations, no detail needed
-            if (action == AuditAction.Create)
+            if (action == AuditAction.Create && createdEntity != null)
             {
                 var auditDetail = new AttributeAuditDetail();
                 auditDetail.AuditRecord = auditRecord;
+                // OldValue is empty - the record didn't exist before
                 auditDetail.OldValue = new Entity(objectId.LogicalName, objectId.Id);
+                // NewValue contains the created entity's attributes
                 auditDetail.NewValue = new Entity(objectId.LogicalName, objectId.Id);
+                
+                foreach (var attr in createdEntity.Attributes)
+                {
+                    auditDetail.NewValue[attr.Key] = attr.Value;
+                }
+                
                 _auditDetails[auditId] = auditDetail;
             }
             else if (attributeChanges != null && attributeChanges.Any())
