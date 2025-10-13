@@ -176,11 +176,14 @@ namespace Fake4Dataverse.FakeMessageExecutors
         /// 
         /// The operatorcode attribute defines the comparison type:
         /// - 0 (ExactMatch): Values must be exactly the same
-        /// - 1 (SameFirstCharacters): Beginning characters must match
-        /// - 2 (SameLastCharacters): Ending characters must match
+        /// - 1 (SameFirstCharacters): Beginning characters must match (uses ignoreblanks for character count)
+        /// - 2 (SameLastCharacters): Ending characters must match (uses ignoreblanks for character count)
         /// - 3 (SameDate): Date values must match (ignoring time)
         /// - 4 (SameDateAndTime): Date and time must match
         /// - 5 (SameNotBlank): Both values must be non-blank and match
+        /// 
+        /// For SameFirstCharacters and SameLastCharacters, the ignoreblanks attribute specifies
+        /// the number of characters to compare. If not specified, compares entire strings.
         /// </summary>
         private bool EvaluateCondition(Entity baseEntity, Entity matchingEntity, Entity condition)
         {
@@ -217,12 +220,10 @@ namespace Fake4Dataverse.FakeMessageExecutors
                     return string.Equals(baseStr, matchingStr, StringComparison.OrdinalIgnoreCase);
                 
                 case 1: // SameFirstCharacters
-                    // Get the length to compare from ignoreblanks or default to full comparison
-                    // For simplicity, we'll use exact match if lengths aren't specified
-                    return string.Equals(baseStr, matchingStr, StringComparison.OrdinalIgnoreCase);
+                    return CompareSameFirstCharacters(baseStr, matchingStr, condition);
                 
                 case 2: // SameLastCharacters
-                    return string.Equals(baseStr, matchingStr, StringComparison.OrdinalIgnoreCase);
+                    return CompareSameLastCharacters(baseStr, matchingStr, condition);
                 
                 case 3: // SameDate
                     if (baseValue is DateTime baseDate && matchingValue is DateTime matchingDate)
@@ -248,6 +249,84 @@ namespace Fake4Dataverse.FakeMessageExecutors
                 default:
                     // Unknown operator, default to exact match
                     return string.Equals(baseStr, matchingStr, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
+        /// Compares the first N characters of two strings
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// The ignoreblanks attribute specifies the number of characters to compare.
+        /// If not specified, compares the entire strings.
+        /// </summary>
+        private bool CompareSameFirstCharacters(string baseStr, string matchingStr, Entity condition)
+        {
+            // Get the number of characters to compare from ignoreblanks attribute
+            int? charCount = null;
+            if (condition.Contains("ignoreblanks"))
+            {
+                var ignoreblanks = condition.GetAttributeValue<int?>("ignoreblanks");
+                if (ignoreblanks.HasValue && ignoreblanks.Value > 0)
+                {
+                    charCount = ignoreblanks.Value;
+                }
+            }
+
+            if (charCount.HasValue)
+            {
+                // Compare only the first N characters
+                var baseSubstr = baseStr.Length >= charCount.Value 
+                    ? baseStr.Substring(0, charCount.Value) 
+                    : baseStr;
+                var matchingSubstr = matchingStr.Length >= charCount.Value 
+                    ? matchingStr.Substring(0, charCount.Value) 
+                    : matchingStr;
+                
+                return string.Equals(baseSubstr, matchingSubstr, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                // If no character count specified, compare entire strings
+                return string.Equals(baseStr, matchingStr, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
+        /// Compares the last N characters of two strings
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// The ignoreblanks attribute specifies the number of characters to compare.
+        /// If not specified, compares the entire strings.
+        /// </summary>
+        private bool CompareSameLastCharacters(string baseStr, string matchingStr, Entity condition)
+        {
+            // Get the number of characters to compare from ignoreblanks attribute
+            int? charCount = null;
+            if (condition.Contains("ignoreblanks"))
+            {
+                var ignoreblanks = condition.GetAttributeValue<int?>("ignoreblanks");
+                if (ignoreblanks.HasValue && ignoreblanks.Value > 0)
+                {
+                    charCount = ignoreblanks.Value;
+                }
+            }
+
+            if (charCount.HasValue)
+            {
+                // Compare only the last N characters
+                var baseSubstr = baseStr.Length >= charCount.Value 
+                    ? baseStr.Substring(baseStr.Length - charCount.Value) 
+                    : baseStr;
+                var matchingSubstr = matchingStr.Length >= charCount.Value 
+                    ? matchingStr.Substring(matchingStr.Length - charCount.Value) 
+                    : matchingStr;
+                
+                return string.Equals(baseSubstr, matchingSubstr, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                // If no character count specified, compare entire strings
+                return string.Equals(baseStr, matchingStr, StringComparison.OrdinalIgnoreCase);
             }
         }
 

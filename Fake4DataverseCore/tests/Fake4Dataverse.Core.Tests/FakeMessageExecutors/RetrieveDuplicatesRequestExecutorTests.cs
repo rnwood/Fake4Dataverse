@@ -640,5 +640,429 @@ namespace Fake4Dataverse.Tests.FakeMessageExecutors
             Assert.Single(response.DuplicateCollection.Entities);
             Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
         }
+
+        /// <summary>
+        /// Test: SameFirstCharacters operator matches first N characters
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// The SameFirstCharacters operator (operatorcode=1) compares the first N characters
+        /// of attribute values, where N is specified in the ignoreblanks attribute.
+        /// </summary>
+        [Fact]
+        public void Should_Match_Using_SameFirstCharacters_Operator()
+        {
+            // Arrange
+            var account1 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Ltd",
+                AccountNumber = "ACC-001-ALPHA"
+            };
+
+            var account2 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Corporation",
+                AccountNumber = "ACC-001-BETA"  // First 7 chars match
+            };
+
+            var account3 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Fabrikam Inc",
+                AccountNumber = "FAB-002-GAMMA"  // First 7 chars don't match
+            };
+
+            var duplicateRule = new Entity("duplicaterule")
+            {
+                Id = Guid.NewGuid(),
+                ["baseentityname"] = Account.EntityLogicalName,
+                ["matchingentityname"] = Account.EntityLogicalName,
+                ["statecode"] = new OptionSetValue(0),
+                ["statuscode"] = new OptionSetValue(2)
+            };
+
+            var duplicateRuleCondition = new Entity("duplicaterulecondition")
+            {
+                Id = Guid.NewGuid(),
+                ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+                ["baseattributename"] = "accountnumber",
+                ["matchingattributename"] = "accountnumber",
+                ["operatorcode"] = new OptionSetValue(1),  // SameFirstCharacters
+                ["ignoreblanks"] = 7  // Compare first 7 characters
+            };
+
+            _context.Initialize(new Entity[] { account1, account2, account3, duplicateRule, duplicateRuleCondition });
+
+            var request = new RetrieveDuplicatesRequest
+            {
+                BusinessEntity = account1,
+                MatchingEntityName = Account.EntityLogicalName,
+                PagingInfo = new Microsoft.Xrm.Sdk.Query.PagingInfo { PageNumber = 1, Count = 50 }
+            };
+
+            // Act
+            var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+            // Assert
+            Assert.NotNull(response.DuplicateCollection);
+            Assert.Single(response.DuplicateCollection.Entities);
+            Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+        }
+
+        /// <summary>
+        /// Test: SameLastCharacters operator matches last N characters
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// The SameLastCharacters operator (operatorcode=2) compares the last N characters
+        /// of attribute values, where N is specified in the ignoreblanks attribute.
+        /// </summary>
+        [Fact]
+        public void Should_Match_Using_SameLastCharacters_Operator()
+        {
+            // Arrange
+            var account1 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Ltd",
+                AccountNumber = "ALPHA-ACC-001"
+            };
+
+            var account2 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Corporation",
+                AccountNumber = "BETA-ACC-001"  // Last 7 chars match
+            };
+
+            var account3 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Fabrikam Inc",
+                AccountNumber = "GAMMA-FAB-002"  // Last 7 chars don't match
+            };
+
+            var duplicateRule = new Entity("duplicaterule")
+            {
+                Id = Guid.NewGuid(),
+                ["baseentityname"] = Account.EntityLogicalName,
+                ["matchingentityname"] = Account.EntityLogicalName,
+                ["statecode"] = new OptionSetValue(0),
+                ["statuscode"] = new OptionSetValue(2)
+            };
+
+            var duplicateRuleCondition = new Entity("duplicaterulecondition")
+            {
+                Id = Guid.NewGuid(),
+                ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+                ["baseattributename"] = "accountnumber",
+                ["matchingattributename"] = "accountnumber",
+                ["operatorcode"] = new OptionSetValue(2),  // SameLastCharacters
+                ["ignoreblanks"] = 7  // Compare last 7 characters
+            };
+
+            _context.Initialize(new Entity[] { account1, account2, account3, duplicateRule, duplicateRuleCondition });
+
+            var request = new RetrieveDuplicatesRequest
+            {
+                BusinessEntity = account1,
+                MatchingEntityName = Account.EntityLogicalName,
+                PagingInfo = new Microsoft.Xrm.Sdk.Query.PagingInfo { PageNumber = 1, Count = 50 }
+            };
+
+            // Act
+            var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+            // Assert
+            Assert.NotNull(response.DuplicateCollection);
+            Assert.Single(response.DuplicateCollection.Entities);
+            Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+        }
+
+        /// <summary>
+        /// Test: SameDate operator matches date portion only
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// The SameDate operator (operatorcode=3) compares only the date portion of DateTime values,
+        /// ignoring the time component.
+        /// </summary>
+        [Fact]
+        public void Should_Match_Using_SameDate_Operator()
+        {
+            // Arrange
+            var baseDate = new DateTime(2025, 1, 15, 10, 30, 0);
+            var matchingDate = new DateTime(2025, 1, 15, 14, 45, 30);  // Same date, different time
+            var differentDate = new DateTime(2025, 1, 16, 10, 30, 0);
+
+            var account1 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Ltd",
+                ["createdon"] = baseDate
+            };
+
+            var account2 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Corporation",
+                ["createdon"] = matchingDate  // Same date, different time
+            };
+
+            var account3 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Fabrikam Inc",
+                ["createdon"] = differentDate  // Different date
+            };
+
+            var duplicateRule = new Entity("duplicaterule")
+            {
+                Id = Guid.NewGuid(),
+                ["baseentityname"] = Account.EntityLogicalName,
+                ["matchingentityname"] = Account.EntityLogicalName,
+                ["statecode"] = new OptionSetValue(0),
+                ["statuscode"] = new OptionSetValue(2)
+            };
+
+            var duplicateRuleCondition = new Entity("duplicaterulecondition")
+            {
+                Id = Guid.NewGuid(),
+                ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+                ["baseattributename"] = "createdon",
+                ["matchingattributename"] = "createdon",
+                ["operatorcode"] = new OptionSetValue(3)  // SameDate
+            };
+
+            _context.Initialize(new Entity[] { account1, account2, account3, duplicateRule, duplicateRuleCondition });
+
+            var request = new RetrieveDuplicatesRequest
+            {
+                BusinessEntity = account1,
+                MatchingEntityName = Account.EntityLogicalName,
+                PagingInfo = new Microsoft.Xrm.Sdk.Query.PagingInfo { PageNumber = 1, Count = 50 }
+            };
+
+            // Act
+            var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+            // Assert
+            Assert.NotNull(response.DuplicateCollection);
+            Assert.Single(response.DuplicateCollection.Entities);
+            Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+        }
+
+        /// <summary>
+        /// Test: SameDateAndTime operator matches both date and time
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// The SameDateAndTime operator (operatorcode=4) compares both the date and time portions
+        /// of DateTime values for an exact match.
+        /// </summary>
+        [Fact]
+        public void Should_Match_Using_SameDateAndTime_Operator()
+        {
+            // Arrange
+            var exactDateTime = new DateTime(2025, 1, 15, 10, 30, 0);
+            var differentTime = new DateTime(2025, 1, 15, 14, 45, 30);  // Same date, different time
+
+            var account1 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Ltd",
+                ["createdon"] = exactDateTime
+            };
+
+            var account2 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Match",
+                ["createdon"] = exactDateTime  // Exact same date and time
+            };
+
+            var account3 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Different",
+                ["createdon"] = differentTime  // Same date, different time
+            };
+
+            var duplicateRule = new Entity("duplicaterule")
+            {
+                Id = Guid.NewGuid(),
+                ["baseentityname"] = Account.EntityLogicalName,
+                ["matchingentityname"] = Account.EntityLogicalName,
+                ["statecode"] = new OptionSetValue(0),
+                ["statuscode"] = new OptionSetValue(2)
+            };
+
+            var duplicateRuleCondition = new Entity("duplicaterulecondition")
+            {
+                Id = Guid.NewGuid(),
+                ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+                ["baseattributename"] = "createdon",
+                ["matchingattributename"] = "createdon",
+                ["operatorcode"] = new OptionSetValue(4)  // SameDateAndTime
+            };
+
+            _context.Initialize(new Entity[] { account1, account2, account3, duplicateRule, duplicateRuleCondition });
+
+            var request = new RetrieveDuplicatesRequest
+            {
+                BusinessEntity = account1,
+                MatchingEntityName = Account.EntityLogicalName,
+                PagingInfo = new Microsoft.Xrm.Sdk.Query.PagingInfo { PageNumber = 1, Count = 50 }
+            };
+
+            // Act
+            var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+            // Assert
+            Assert.NotNull(response.DuplicateCollection);
+            Assert.Single(response.DuplicateCollection.Entities);
+            Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+        }
+
+        /// <summary>
+        /// Test: SameNotBlank operator ignores blank values
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// The SameNotBlank operator (operatorcode=5) only matches if both values are non-blank
+        /// and equal. Blank or null values don't match.
+        /// </summary>
+        [Fact]
+        public void Should_Match_Using_SameNotBlank_Operator()
+        {
+            // Arrange
+            var account1 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Ltd",
+                AccountNumber = "ACC-001"
+            };
+
+            var account2 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Match",
+                AccountNumber = "ACC-001"  // Matches and not blank
+            };
+
+            var account3 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Blank",
+                AccountNumber = ""  // Blank value
+            };
+
+            var account4 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Different",
+                AccountNumber = "ACC-002"  // Different value
+            };
+
+            var duplicateRule = new Entity("duplicaterule")
+            {
+                Id = Guid.NewGuid(),
+                ["baseentityname"] = Account.EntityLogicalName,
+                ["matchingentityname"] = Account.EntityLogicalName,
+                ["statecode"] = new OptionSetValue(0),
+                ["statuscode"] = new OptionSetValue(2)
+            };
+
+            var duplicateRuleCondition = new Entity("duplicaterulecondition")
+            {
+                Id = Guid.NewGuid(),
+                ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+                ["baseattributename"] = "accountnumber",
+                ["matchingattributename"] = "accountnumber",
+                ["operatorcode"] = new OptionSetValue(5)  // SameNotBlank
+            };
+
+            _context.Initialize(new Entity[] { account1, account2, account3, account4, duplicateRule, duplicateRuleCondition });
+
+            var request = new RetrieveDuplicatesRequest
+            {
+                BusinessEntity = account1,
+                MatchingEntityName = Account.EntityLogicalName,
+                PagingInfo = new Microsoft.Xrm.Sdk.Query.PagingInfo { PageNumber = 1, Count = 50 }
+            };
+
+            // Act
+            var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+            // Assert
+            Assert.NotNull(response.DuplicateCollection);
+            Assert.Single(response.DuplicateCollection.Entities);
+            Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+        }
+
+        /// <summary>
+        /// Test: SameFirstCharacters with no ignoreblanks compares entire strings
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
+        /// 
+        /// When ignoreblanks is not specified for SameFirstCharacters, it should compare
+        /// the entire strings (same as ExactMatch).
+        /// </summary>
+        [Fact]
+        public void Should_Compare_Entire_String_When_SameFirstCharacters_Has_No_CharCount()
+        {
+            // Arrange
+            var account1 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Ltd",
+                AccountNumber = "ACC-001"
+            };
+
+            var account2 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Contoso Corporation",
+                AccountNumber = "ACC-001"  // Exact match
+            };
+
+            var account3 = new Account
+            {
+                Id = Guid.NewGuid(),
+                Name = "Fabrikam Inc",
+                AccountNumber = "ACC-002"  // First chars match but not exact
+            };
+
+            var duplicateRule = new Entity("duplicaterule")
+            {
+                Id = Guid.NewGuid(),
+                ["baseentityname"] = Account.EntityLogicalName,
+                ["matchingentityname"] = Account.EntityLogicalName,
+                ["statecode"] = new OptionSetValue(0),
+                ["statuscode"] = new OptionSetValue(2)
+            };
+
+            var duplicateRuleCondition = new Entity("duplicaterulecondition")
+            {
+                Id = Guid.NewGuid(),
+                ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+                ["baseattributename"] = "accountnumber",
+                ["matchingattributename"] = "accountnumber",
+                ["operatorcode"] = new OptionSetValue(1)  // SameFirstCharacters without ignoreblanks
+            };
+
+            _context.Initialize(new Entity[] { account1, account2, account3, duplicateRule, duplicateRuleCondition });
+
+            var request = new RetrieveDuplicatesRequest
+            {
+                BusinessEntity = account1,
+                MatchingEntityName = Account.EntityLogicalName,
+                PagingInfo = new Microsoft.Xrm.Sdk.Query.PagingInfo { PageNumber = 1, Count = 50 }
+            };
+
+            // Act
+            var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+            // Assert
+            Assert.NotNull(response.DuplicateCollection);
+            Assert.Single(response.DuplicateCollection.Entities);
+            Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+        }
     }
 }

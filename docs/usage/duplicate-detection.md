@@ -192,6 +192,141 @@ public void Should_Match_Only_When_All_Conditions_Match()
 }
 ```
 
+### Partial String Matching
+
+Use `SameFirstCharacters` or `SameLastCharacters` for partial string matches:
+
+```csharp
+[Fact]
+public void Should_Detect_Duplicates_By_Prefix()
+{
+    // Arrange
+    var duplicateRule = new Entity("duplicaterule")
+    {
+        Id = Guid.NewGuid(),
+        ["baseentityname"] = "account",
+        ["matchingentityname"] = "account",
+        ["statecode"] = new OptionSetValue(0),
+        ["statuscode"] = new OptionSetValue(2)
+    };
+
+    // Match first 3 characters of account number
+    var condition = new Entity("duplicaterulecondition")
+    {
+        Id = Guid.NewGuid(),
+        ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+        ["baseattributename"] = "accountnumber",
+        ["matchingattributename"] = "accountnumber",
+        ["operatorcode"] = new OptionSetValue(1),  // SameFirstCharacters
+        ["ignoreblanks"] = 3  // Compare first 3 characters
+    };
+
+    var account1 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["name"] = "Contoso Ltd",
+        ["accountnumber"] = "ACC-001-ALPHA"
+    };
+
+    var account2 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["name"] = "Contoso Corp",
+        ["accountnumber"] = "ACC-002-BETA"  // First 3 chars match: "ACC"
+    };
+
+    var account3 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["name"] = "Fabrikam Inc",
+        ["accountnumber"] = "FAB-001-GAMMA"  // First 3 chars don't match
+    };
+
+    _context.Initialize(new[] { account1, account2, account3, duplicateRule, condition });
+
+    // Act
+    var request = new RetrieveDuplicatesRequest
+    {
+        BusinessEntity = account1,
+        MatchingEntityName = "account"
+    };
+
+    var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+    // Assert - account2 matches because first 3 chars are the same
+    Assert.Single(response.DuplicateCollection.Entities);
+    Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+}
+```
+
+### Date-Based Duplicate Detection
+
+Detect duplicates based on date fields:
+
+```csharp
+[Fact]
+public void Should_Detect_Duplicates_By_Date_Only()
+{
+    // Arrange
+    var duplicateRule = new Entity("duplicaterule")
+    {
+        Id = Guid.NewGuid(),
+        ["baseentityname"] = "account",
+        ["matchingentityname"] = "account",
+        ["statecode"] = new OptionSetValue(0),
+        ["statuscode"] = new OptionSetValue(2)
+    };
+
+    // Match on date only, ignoring time
+    var condition = new Entity("duplicaterulecondition")
+    {
+        Id = Guid.NewGuid(),
+        ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+        ["baseattributename"] = "createdon",
+        ["matchingattributename"] = "createdon",
+        ["operatorcode"] = new OptionSetValue(3)  // SameDate
+    };
+
+    var baseDate = new DateTime(2025, 1, 15, 10, 30, 0);
+    
+    var account1 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["name"] = "Contoso Ltd",
+        ["createdon"] = baseDate
+    };
+
+    var account2 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["name"] = "Contoso Corp",
+        ["createdon"] = new DateTime(2025, 1, 15, 16, 45, 0)  // Same date, different time
+    };
+
+    var account3 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["name"] = "Fabrikam Inc",
+        ["createdon"] = new DateTime(2025, 1, 16, 10, 30, 0)  // Different date
+    };
+
+    _context.Initialize(new[] { account1, account2, account3, duplicateRule, condition });
+
+    // Act
+    var request = new RetrieveDuplicatesRequest
+    {
+        BusinessEntity = account1,
+        MatchingEntityName = "account"
+    };
+
+    var response = (RetrieveDuplicatesResponse)_service.Execute(request);
+
+    // Assert - account2 matches because date is the same (time is ignored)
+    Assert.Single(response.DuplicateCollection.Entities);
+    Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+}
+```
+
 ### Cross-Entity Duplicate Detection
 
 Detect duplicates across different entity types:
@@ -334,16 +469,101 @@ public void Should_Ignore_Inactive_Or_Unpublished_Rules()
 
 The `operatorcode` attribute in `duplicaterulecondition` determines how attributes are compared:
 
-| Code | Name | Description |
-|------|------|-------------|
-| 0 | ExactMatch | Values must be exactly the same (case-insensitive for strings) |
-| 1 | SameFirstCharacters | Beginning characters must match |
-| 2 | SameLastCharacters | Ending characters must match |
-| 3 | SameDate | Date values must match (ignoring time) |
-| 4 | SameDateAndTime | Date and time must match exactly |
-| 5 | SameNotBlank | Both values must be non-blank and match |
+| Code | Name | Description | Supported |
+|------|------|-------------|-----------|
+| 0 | ExactMatch | Values must be exactly the same (case-insensitive for strings) | ✅ Full |
+| 1 | SameFirstCharacters | Beginning characters must match (uses `ignoreblanks` for count) | ✅ Full |
+| 2 | SameLastCharacters | Ending characters must match (uses `ignoreblanks` for count) | ✅ Full |
+| 3 | SameDate | Date values must match (ignoring time) | ✅ Full |
+| 4 | SameDateAndTime | Date and time must match exactly | ✅ Full |
+| 5 | SameNotBlank | Both values must be non-blank and match | ✅ Full |
 
-**Current Support:** Fake4Dataverse currently supports `ExactMatch` (0) for all attribute types. Other operators default to exact match behavior.
+### Using SameFirstCharacters and SameLastCharacters
+
+The `SameFirstCharacters` (operatorcode=1) and `SameLastCharacters` (operatorcode=2) operators support partial string matching using the `ignoreblanks` attribute to specify the number of characters to compare.
+
+**Example - First 5 characters:**
+```csharp
+var condition = new Entity("duplicaterulecondition")
+{
+    Id = Guid.NewGuid(),
+    ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+    ["baseattributename"] = "accountnumber",
+    ["matchingattributename"] = "accountnumber",
+    ["operatorcode"] = new OptionSetValue(1),  // SameFirstCharacters
+    ["ignoreblanks"] = 5  // Compare first 5 characters
+};
+
+// "ACC-001-ALPHA" and "ACC-001-BETA" would match (first 5 chars are "ACC-0")
+```
+
+**Example - Last 4 characters:**
+```csharp
+var condition = new Entity("duplicaterulecondition")
+{
+    Id = Guid.NewGuid(),
+    ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+    ["baseattributename"] = "accountnumber",
+    ["matchingattributename"] = "accountnumber",
+    ["operatorcode"] = new OptionSetValue(2),  // SameLastCharacters
+    ["ignoreblanks"] = 4  // Compare last 4 characters
+};
+
+// "ALPHA-001" and "BETA-001" would match (last 4 chars are "-001")
+```
+
+If `ignoreblanks` is not specified or is zero, the entire strings are compared (same as ExactMatch).
+
+### Using SameDate and SameDateAndTime
+
+For date comparisons, use `SameDate` to ignore time components or `SameDateAndTime` for exact matches:
+
+**Example - Same date, different time:**
+```csharp
+var condition = new Entity("duplicaterulecondition")
+{
+    Id = Guid.NewGuid(),
+    ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+    ["baseattributename"] = "createdon",
+    ["matchingattributename"] = "createdon",
+    ["operatorcode"] = new OptionSetValue(3)  // SameDate
+};
+
+// 2025-01-15 10:30:00 and 2025-01-15 14:45:00 would match (same date)
+```
+
+**Example - Exact date and time:**
+```csharp
+var condition = new Entity("duplicaterulecondition")
+{
+    Id = Guid.NewGuid(),
+    ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+    ["baseattributename"] = "createdon",
+    ["matchingattributename"] = "createdon",
+    ["operatorcode"] = new OptionSetValue(4)  // SameDateAndTime
+};
+
+// Only 2025-01-15 10:30:00 and 2025-01-15 10:30:00 would match (exact)
+```
+
+### Using SameNotBlank
+
+The `SameNotBlank` operator only matches non-blank values:
+
+```csharp
+var condition = new Entity("duplicaterulecondition")
+{
+    Id = Guid.NewGuid(),
+    ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+    ["baseattributename"] = "accountnumber",
+    ["matchingattributename"] = "accountnumber",
+    ["operatorcode"] = new OptionSetValue(5)  // SameNotBlank
+};
+
+// "ACC-001" and "ACC-001" would match
+// "ACC-001" and "" (blank) would NOT match
+// "" and "" would NOT match
+```
 
 ## Important Behaviors
 
@@ -560,10 +780,10 @@ var request = new RetrieveDuplicatesRequest
 
 ## Limitations
 
-1. **Operator Support** - Currently only `ExactMatch` (operatorcode=0) is fully implemented
-2. **No Asynchronous Detection** - Background duplicate detection jobs are not simulated
-3. **No Automatic Prevention** - Duplicates are detected but not automatically prevented during create/update
-4. **No Match Codes** - The `matchcode` table used by real Dataverse is not simulated
+1. **No Asynchronous Detection** - Background duplicate detection jobs are not simulated
+2. **No Automatic Prevention** - Duplicates are detected but not automatically prevented during create/update
+3. **No Match Codes** - The `matchcode` table used by real Dataverse is not simulated
+4. **No Paging Support** - The `PagingInfo` parameter is accepted but paging is not implemented
 
 ## See Also
 
