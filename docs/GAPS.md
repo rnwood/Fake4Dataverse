@@ -12,6 +12,7 @@ Fake4Dataverse is a community-driven testing framework that aims to simulate Mic
 
 The following features were recently implemented and are now fully functional:
 
+- **Audit Log Simulation** - Complete audit tracking for CRUD operations with attribute change history ✅ **NEW**
 - **Cloud Flow Simulation** - Complete Power Automate flow testing with JSON import
 - **Expression Language** - 80+ Power Automate expression functions (90%+ coverage)
 - **Safe Navigation Operator (?)** - Null-safe property access in expressions
@@ -19,10 +20,10 @@ The following features were recently implemented and are now fully functional:
 - **Compose Actions** - Data transformation and composition in flows
 - **Apply to Each Loops** - Collection iteration with `item()` function support
 - **Nested Loop Support** - Stack-based item tracking for complex loop scenarios
-- **Condition Actions** - If/then/else branching in flows ✅ **NEW**
-- **Switch Actions** - Multi-case branching in flows ✅ **NEW**
-- **Parallel Branches** - Parallel execution paths in flows ✅ **NEW**
-- **Do Until Loops** - Loop with exit condition in flows ✅ **NEW**
+- **Condition Actions** - If/then/else branching in flows
+- **Switch Actions** - Multi-case branching in flows
+- **Parallel Branches** - Parallel execution paths in flows
+- **Do Until Loops** - Loop with exit condition in flows
 
 ## 🔴 High-Priority Missing Features
 
@@ -82,15 +83,6 @@ These features are commonly used in Dataverse development and would provide sign
 **Workaround:**
 - Implement duplicate detection logic in plugins/tests
 - Use query-based checks in tests
-
-### 6. Audit Log Simulation
-**Status:** ❌ Not Supported
-
-**Impact:** Low - Audit log queries will not return data
-
-**Workaround:**
-- Test audit-related logic separately
-- Mock audit data in tests if needed
 
 ## 🟡 Modern Dataverse Features Not Supported
 
