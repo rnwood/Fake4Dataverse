@@ -1,8 +1,10 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Crm.Sdk.Messages;
 using System.ServiceModel;
 using System.ServiceModel.Description;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using Xunit;
 using System.Diagnostics;
 
@@ -385,5 +387,187 @@ public class OrganizationServiceEndToEndTests : IAsyncLifetime
             Assert.True(((Money)entity["revenue"]).Value > 100000m);
             Assert.True((int)entity["numberofemployees"] > 50);
         }
+    }
+
+    /// <summary>
+    /// Demonstrates connecting via ServiceClient using a direct connection string.
+    /// ServiceClient is the modern replacement for CrmServiceClient.
+    /// 
+    /// Note: ServiceClient typically requires OAuth authentication. For testing scenarios,
+    /// using WCF channels directly (as shown in other tests) is simpler and doesn't require
+    /// authentication setup. However, this test demonstrates that the service endpoint
+    /// structure is compatible with ServiceClient if authentication is configured.
+    /// 
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
+    /// ServiceClient supports connection strings with ServiceUri parameter.
+    /// </summary>
+    [Fact(Skip = "ServiceClient requires OAuth authentication which is complex to set up for testing. Use WCF channels instead (see other tests).")]
+    public void Should_Work_With_ServiceClient_When_Auth_Configured()
+    {
+        // This test is skipped because ServiceClient requires OAuth authentication setup.
+        // For real-world usage, users would need to:
+        // 1. Set up OAuth app registration in Azure AD
+        // 2. Configure appropriate permissions
+        // 3. Use connection string like: "AuthType=OAuth;Url=http://localhost:5558;..."
+        
+        // For testing purposes, using WCF ChannelFactory<IOrganizationService> (as shown in 
+        // CreateOrganizationServiceClient method) is much simpler and doesn't require authentication.
+        
+        // Example of what ServiceClient usage would look like (when auth is configured):
+        // var connectionString = "AuthType=OAuth;Url=http://localhost:5558;ClientId=...;RedirectUri=...;LoginPrompt=Auto";
+        // using (var serviceClient = new ServiceClient(connectionString))
+        // {
+        //     if (serviceClient.IsReady)
+        //     {
+        //         var account = new Entity("account") { ["name"] = "Test Account" };
+        //         var accountId = serviceClient.Create(account);
+        //         Assert.NotEqual(Guid.Empty, accountId);
+        //     }
+        // }
+    }
+
+    /// <summary>
+    /// Tests RetrieveVersion request via Execute method.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveversionrequest
+    /// RetrieveVersion returns version information about the Dataverse organization.
+    /// </summary>
+    [Fact]
+    public void Should_Execute_RetrieveVersion_Request_Via_WCF()
+    {
+        // Arrange
+        var retrieveVersionRequest = new RetrieveVersionRequest();
+
+        // Act
+        var retrieveVersionResponse = (RetrieveVersionResponse)_organizationService!.Execute(retrieveVersionRequest);
+
+        // Assert
+        Assert.NotNull(retrieveVersionResponse);
+        Assert.NotNull(retrieveVersionResponse.Version);
+        Assert.False(string.IsNullOrEmpty(retrieveVersionResponse.Version));
+    }
+
+    /// <summary>
+    /// Tests SetState request via Execute method.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.setstaterequest
+    /// SetState changes the state and status of an entity.
+    /// </summary>
+    [Fact]
+    public void Should_Execute_SetState_Request_Via_WCF()
+    {
+        // Arrange - Create an account
+        var account = new Entity("account") { ["name"] = "SetState Test Account" };
+        var accountId = _organizationService!.Create(account);
+
+        // Act - Change account state
+        var setStateRequest = new SetStateRequest
+        {
+            EntityMoniker = new EntityReference("account", accountId),
+            State = new OptionSetValue(1), // Inactive
+            Status = new OptionSetValue(2)  // Inactive status code
+        };
+        var setStateResponse = (SetStateResponse)_organizationService.Execute(setStateRequest);
+
+        // Assert
+        Assert.NotNull(setStateResponse);
+    }
+
+    /// <summary>
+    /// Tests Assign request via Execute method.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.assignrequest
+    /// Assign changes the owner of a record to another user or team.
+    /// </summary>
+    [Fact]
+    public void Should_Execute_Assign_Request_Via_WCF()
+    {
+        // Arrange - Create an account
+        var account = new Entity("account") { ["name"] = "Assign Test Account" };
+        var accountId = _organizationService!.Create(account);
+
+        // Act - Assign to a new owner (using a fake user ID)
+        var newOwnerId = Guid.NewGuid();
+        var assignRequest = new AssignRequest
+        {
+            Target = new EntityReference("account", accountId),
+            Assignee = new EntityReference("systemuser", newOwnerId)
+        };
+        var assignResponse = (AssignResponse)_organizationService.Execute(assignRequest);
+
+        // Assert
+        Assert.NotNull(assignResponse);
+        
+        // Verify the assignment by retrieving the record
+        var retrievedAccount = _organizationService.Retrieve("account", accountId, new ColumnSet("ownerid"));
+        Assert.Equal(newOwnerId, ((EntityReference)retrievedAccount["ownerid"]).Id);
+    }
+
+    /// <summary>
+    /// Tests ExecuteMultiple request via Execute method.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.executemultiplerequest
+    /// ExecuteMultiple allows batching multiple requests in a single call.
+    /// </summary>
+    [Fact]
+    public void Should_Execute_ExecuteMultiple_Request_Via_WCF()
+    {
+        // Arrange - Create multiple requests
+        var executeMultipleRequest = new ExecuteMultipleRequest
+        {
+            Settings = new ExecuteMultipleSettings
+            {
+                ContinueOnError = true,
+                ReturnResponses = true
+            },
+            Requests = new OrganizationRequestCollection()
+        };
+
+        // Add multiple create requests
+        for (int i = 0; i < 3; i++)
+        {
+            var account = new Entity("account") { ["name"] = $"Batch Account {i}" };
+            var createRequest = new CreateRequest { Target = account };
+            executeMultipleRequest.Requests.Add(createRequest);
+        }
+
+        // Act
+        var executeMultipleResponse = (ExecuteMultipleResponse)_organizationService!.Execute(executeMultipleRequest);
+
+        // Assert
+        Assert.NotNull(executeMultipleResponse);
+        Assert.NotNull(executeMultipleResponse.Responses);
+        Assert.Equal(3, executeMultipleResponse.Responses.Count);
+        
+        // Verify all succeeded
+        foreach (var response in executeMultipleResponse.Responses)
+        {
+            Assert.Null(response.Fault);
+            Assert.NotNull(response.Response);
+        }
+    }
+
+    /// <summary>
+    /// Tests Upsert request via Execute method.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.messages.upsertrequest
+    /// Upsert inserts or updates a record based on alternate key values.
+    /// </summary>
+    [Fact]
+    public void Should_Execute_Upsert_Request_Via_WCF()
+    {
+        // Arrange - Create entity with alternate key
+        var account = new Entity("account") { ["name"] = "Upsert Test Account" };
+        var accountId = _organizationService!.Create(account);
+
+        // Act - Upsert the same record (should update)
+        account.Id = accountId;
+        account["revenue"] = new Money(500000m);
+        var upsertRequest = new UpsertRequest { Target = account };
+        var upsertResponse = (UpsertResponse)_organizationService.Execute(upsertRequest);
+
+        // Assert
+        Assert.NotNull(upsertResponse);
+        Assert.False(upsertResponse.RecordCreated); // Should be false (updated existing)
+        Assert.Equal(accountId, upsertResponse.Target.Id);
+        
+        // Verify the update
+        var retrievedAccount = _organizationService.Retrieve("account", accountId, new ColumnSet("revenue"));
+        Assert.Equal(500000m, ((Money)retrievedAccount["revenue"]).Value);
     }
 }
