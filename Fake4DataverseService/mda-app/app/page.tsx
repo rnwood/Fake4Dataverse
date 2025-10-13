@@ -97,6 +97,10 @@ export default function Home() {
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
   const [appModuleId, setAppModuleId] = useState<string | null>(null);
   const [selectedViewId, setSelectedViewId] = useState<string | undefined>(undefined);
+  
+  // Navigation history stack
+  // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/clientapi/navigate-to-custom-page-examples
+  const [navigationHistory, setNavigationHistory] = useState<string[]>([]);
 
   useEffect(() => {
     loadSitemap();
@@ -171,8 +175,19 @@ export default function Home() {
 
   /**
    * Navigate to entity and update URL
+   * @param entityName Entity to navigate to
+   * @param clearHistory If true, clears the navigation history (used for navbar navigation)
    */
-  const handleNavigate = (entityName: string) => {
+  const handleNavigate = (entityName: string, clearHistory: boolean = false) => {
+    // Update navigation history
+    if (clearHistory) {
+      // Clear history when navigating from navbar
+      setNavigationHistory([]);
+    } else if (selectedEntity && selectedEntity !== entityName) {
+      // Add current entity to history when navigating away (not from navbar)
+      setNavigationHistory(prev => [...prev, selectedEntity]);
+    }
+    
     setSelectedEntity(entityName);
     setSelectedViewId(undefined); // Reset view when changing entity
     
@@ -185,6 +200,29 @@ export default function Home() {
       
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       window.history.pushState({}, '', newUrl);
+    }
+  };
+
+  /**
+   * Navigate back in history
+   */
+  const handleBack = () => {
+    if (navigationHistory.length > 0) {
+      const previousEntity = navigationHistory[navigationHistory.length - 1];
+      setNavigationHistory(prev => prev.slice(0, -1));
+      setSelectedEntity(previousEntity);
+      setSelectedViewId(undefined);
+      
+      // Update URL
+      if (typeof window !== 'undefined' && appModuleId) {
+        const params = new URLSearchParams();
+        params.set('appid', appModuleId);
+        params.set('pagetype', 'entitylist');
+        params.set('etn', previousEntity);
+        
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({}, '', newUrl);
+      }
     }
   };
 

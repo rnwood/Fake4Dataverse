@@ -2,26 +2,29 @@
 
 /**
  * Navigation component for Model-Driven App
- * Uses Fluent UI components to replicate Power Apps navigation
+ * Uses Fluent UI Nav component to replicate Power Apps navigation
+ * Reference: https://react.fluentui.dev/?path=/docs/components-nav--default
  */
 
+import React from 'react';
 import {
   makeStyles,
   tokens,
-  Button,
-  Tree,
-  TreeItem,
-  TreeItemLayout,
 } from '@fluentui/react-components';
 import {
+  Nav,
+  NavCategory,
+  NavCategoryItem,
+  NavItem,
+} from '@fluentui/react-nav';
+import {
   Navigation20Regular,
-  Home20Regular,
-  ChevronRight20Regular,
 } from '@fluentui/react-icons';
 import type { SiteMapArea, SiteMapGroup, SiteMapSubArea } from '../types/dataverse';
+import { getIconComponent } from '../lib/icon-mapping';
 
 const useStyles = makeStyles({
-  nav: {
+  container: {
     width: '250px',
     height: '100vh',
     backgroundColor: tokens.colorNeutralBackground3,
@@ -35,93 +38,80 @@ const useStyles = makeStyles({
     borderBottom: `1px solid ${tokens.colorNeutralStroke1}`,
     fontWeight: tokens.fontWeightSemibold,
     fontSize: tokens.fontSizeBase400,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
   },
-  scrollArea: {
+  nav: {
     flex: 1,
     overflow: 'auto',
-    padding: '8px',
-  },
-  areaTitle: {
-    padding: '8px 12px',
-    fontWeight: tokens.fontWeightSemibold,
-    fontSize: tokens.fontSizeBase300,
-    color: tokens.colorNeutralForeground2,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
-  },
-  groupTitle: {
-    padding: '4px 12px',
-    fontWeight: tokens.fontWeightSemibold,
-    fontSize: tokens.fontSizeBase200,
-    color: tokens.colorNeutralForeground3,
-  },
-  subAreaItem: {
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: tokens.colorNeutralBackground1Hover,
-    },
-  },
-  selectedSubArea: {
-    backgroundColor: tokens.colorNeutralBackground1Selected,
   },
 });
 
 interface NavigationProps {
   areas: SiteMapArea[];
   selectedEntity?: string;
-  onNavigate?: (entity: string) => void;
+  onNavigate?: (entity: string, clearHistory?: boolean) => void;
 }
 
+/**
+ * Navigation component using Fluent UI Nav
+ * Displays areas as categories and subareas as navigation items
+ * Supports icon display from entity metadata
+ */
 export default function Navigation({ areas, selectedEntity, onNavigate }: NavigationProps) {
   const styles = useStyles();
 
-  const handleSubAreaClick = (subarea: SiteMapSubArea) => {
-    if (subarea.entity && onNavigate) {
-      onNavigate(subarea.entity);
+  const handleNavItemSelect = (entity: string) => {
+    if (onNavigate) {
+      // Navigation from navbar should clear nav stack
+      onNavigate(entity, true);
     }
   };
 
+  // Build the selected value from entity
+  const selectedValue = selectedEntity || '';
+
   return (
-    <div className={styles.nav}>
+    <div className={styles.container}>
       <div className={styles.header}>
-        <Navigation20Regular /> Model-Driven App
+        <Navigation20Regular />
+        <span>Model-Driven App</span>
       </div>
-      <div className={styles.scrollArea}>
+      <Nav
+        className={styles.nav}
+        selectedValue={selectedValue}
+        multiple={true}
+      >
         {areas.map((area) => (
-          <div key={area.id}>
-            <div className={styles.areaTitle}>
+          <NavCategory key={area.id} value={area.id}>
+            <NavCategoryItem
+              icon={getIconComponent(area.icon) ? React.createElement(getIconComponent(area.icon)!) : undefined}
+            >
               {area.title}
-            </div>
-            {area.groups.map((group) => (
-              <div key={group.id}>
-                <div className={styles.groupTitle}>
-                  {group.title}
-                </div>
-                <Tree aria-label={group.title}>
-                  {group.subareas.map((subarea) => (
-                    <TreeItem
-                      key={subarea.id}
-                      itemType="leaf"
-                      value={subarea.id}
-                      className={
-                        subarea.entity === selectedEntity
-                          ? `${styles.subAreaItem} ${styles.selectedSubArea}`
-                          : styles.subAreaItem
+            </NavCategoryItem>
+            {area.groups.map((group) =>
+              group.subareas.map((subarea) => {
+                const IconComponent = getIconComponent(subarea.icon);
+                return (
+                  <NavItem
+                    key={subarea.id}
+                    value={subarea.entity || subarea.id}
+                    icon={IconComponent ? React.createElement(IconComponent) : undefined}
+                    onClick={() => {
+                      if (subarea.entity) {
+                        handleNavItemSelect(subarea.entity);
                       }
-                    >
-                      <TreeItemLayout
-                        onClick={() => handleSubAreaClick(subarea)}
-                      >
-                        {subarea.title}
-                      </TreeItemLayout>
-                    </TreeItem>
-                  ))}
-                </Tree>
-              </div>
-            ))}
-          </div>
+                    }}
+                  >
+                    {subarea.title}
+                  </NavItem>
+                );
+              })
+            )}
+          </NavCategory>
         ))}
-      </div>
+      </Nav>
     </div>
   );
 }

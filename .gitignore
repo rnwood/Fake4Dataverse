@@ -12,3 +12,8 @@ coverage/
 *.opencover.xml
 node_modules
 .next
+
+# MDA app build artifacts
+Fake4DataverseService/src/Fake4Dataverse.Service/wwwroot/mda/_next/
+Fake4DataverseService/src/Fake4Dataverse.Service/wwwroot/mda/*.html
+Fake4DataverseService/src/Fake4Dataverse.Service/wwwroot/mda/*.txt
