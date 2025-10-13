@@ -6,10 +6,11 @@ A .NET 8.0 CLI service that hosts a fake IOrganizationService backed by Fake4Dat
 
 Fake4DataverseService exposes the Fake4Dataverse testing framework as a SOAP/WCF service, allowing clients to interact with a fake Dataverse/Dynamics 365 organization service over the network using the standard SOAP protocol. This enables:
 
-- **Integration testing** using real Microsoft SDK clients (CrmServiceClient, ServiceClient)
+- **Integration testing** using standard WCF channels (IOrganizationService interface)
 - **Development and debugging** without needing a live Dataverse instance
 - **Continuous integration** with fast, isolated tests
-- **SDK compatibility** - Works with any tool or library that uses IOrganizationService
+- **SDK compatibility** - Works with any tool or library that uses IOrganizationService via WCF
+- **No authentication required** - Bypass OAuth complexity for testing scenarios
 
 ## Features
 
@@ -21,6 +22,7 @@ Fake4DataverseService exposes the Fake4Dataverse testing framework as a SOAP/WCF
 - **CLI interface**: Simple command-line interface for starting/stopping the service
 - **Configurable**: Specify host and port via command-line arguments
 - **In-memory storage**: Fast, isolated test data powered by Fake4Dataverse
+- **No authentication** - Perfect for testing without OAuth setup
 
 ## Installation
 
@@ -98,27 +100,39 @@ The service implements the following IOrganizationService methods:
 
 ## Client Examples
 
-### C# Client with ServiceClient
+### C# Client using WCF Channel (Recommended)
+
+The recommended way to connect to Fake4DataverseService is using standard WCF channels. This approach bypasses the OAuth authentication requirements of ServiceClient/CrmServiceClient, making it perfect for testing.
 
 ```csharp
-using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using System.ServiceModel;
+using System.ServiceModel.Description;
 
-// Connect to the Fake4Dataverse service
-var connectionString = "Url=http://localhost:5000/XRMServices/2011/Organization.svc;";
-var serviceClient = new ServiceClient(connectionString);
+// Create WCF channel to connect to the service
+var binding = new BasicHttpBinding
+{
+    MaxReceivedMessageSize = 2147483647,
+    MaxBufferSize = 2147483647,
+    SendTimeout = TimeSpan.FromMinutes(20),
+    ReceiveTimeout = TimeSpan.FromMinutes(20)
+};
+
+var endpoint = new EndpointAddress("http://localhost:5000/XRMServices/2011/Organization.svc");
+var factory = new ChannelFactory<IOrganizationService>(binding, endpoint);
+var service = factory.CreateChannel();
 
 // Create an account
 var account = new Entity("account");
 account["name"] = "Contoso Ltd";
 account["revenue"] = new Money(100000m);
 
-var accountId = serviceClient.Create(account);
+var accountId = service.Create(account);
 Console.WriteLine($"Created account with ID: {accountId}");
 
 // Retrieve the account
-var retrievedAccount = serviceClient.Retrieve("account", accountId, new ColumnSet("name", "revenue"));
+var retrievedAccount = service.Retrieve("account", accountId, new ColumnSet("name", "revenue"));
 Console.WriteLine($"Account name: {retrievedAccount["name"]}");
 
 // Query accounts
@@ -126,31 +140,11 @@ var query = new QueryExpression("account");
 query.ColumnSet.AddColumns("name", "revenue");
 query.Criteria.AddCondition("revenue", ConditionOperator.GreaterThan, 50000m);
 
-var results = serviceClient.RetrieveMultiple(query);
+var results = service.RetrieveMultiple(query);
 Console.WriteLine($"Found {results.Entities.Count} high-revenue accounts");
 ```
 
-### C# Client with CrmServiceClient
-
-```csharp
-using Microsoft.Xrm.Tooling.Connector;
-using Microsoft.Xrm.Sdk;
-
-// Connect to the service
-var connectionString = "Url=http://localhost:5000/XRMServices/2011/Organization.svc;";
-var service = new CrmServiceClient(connectionString);
-
-// Create a contact
-var contact = new Entity("contact");
-contact["firstname"] = "John";
-contact["lastname"] = "Doe";
-contact["emailaddress1"] = "john.doe@example.com";
-
-var contactId = service.Create(contact);
-Console.WriteLine($"Created contact: {contactId}");
-```
-
-### Using Standard OrganizationRequest Messages
+### Using Execute for Organization Requests
 
 ```csharp
 using Microsoft.Crm.Sdk.Messages;
@@ -158,14 +152,47 @@ using Microsoft.Xrm.Sdk;
 
 // Execute WhoAmI request
 var whoAmIRequest = new WhoAmIRequest();
-var whoAmIResponse = (WhoAmIResponse)serviceClient.Execute(whoAmIRequest);
+var whoAmIResponse = (WhoAmIResponse)service.Execute(whoAmIRequest);
 Console.WriteLine($"User ID: {whoAmIResponse.UserId}");
-
-// Execute RetrieveVersion request
-var versionRequest = new RetrieveVersionRequest();
-var versionResponse = (RetrieveVersionResponse)serviceClient.Execute(versionRequest);
-Console.WriteLine($"Version: {versionResponse.Version}");
 ```
+
+### Helper Class for Connection Management
+
+For convenience, you can create a helper class to manage connections:
+
+```csharp
+public static class Fake4DataverseClient
+{
+    public static IOrganizationService CreateService(string serviceUrl = "http://localhost:5000/XRMServices/2011/Organization.svc")
+    {
+        var binding = new BasicHttpBinding
+        {
+            MaxReceivedMessageSize = 2147483647,
+            MaxBufferSize = 2147483647
+        };
+
+        var endpoint = new EndpointAddress(serviceUrl);
+        var factory = new ChannelFactory<IOrganizationService>(binding, endpoint);
+        
+        return factory.CreateChannel();
+    }
+}
+
+// Usage
+var service = Fake4DataverseClient.CreateService();
+var accountId = service.Create(new Entity("account") { ["name"] = "Test" });
+```
+
+### Why Not ServiceClient/CrmServiceClient?
+
+ServiceClient and CrmServiceClient are designed for production scenarios and require OAuth authentication. While it's possible to configure them to work with Fake4DataverseService, it adds unnecessary complexity for testing scenarios.
+
+The WCF channel approach shown above:
+- ✅ Works immediately without authentication setup
+- ✅ Uses the same IOrganizationService interface
+- ✅ Is what ServiceClient uses internally anyway
+- ✅ Perfect for integration testing
+- ✅ Demonstrated in the E2E tests
 
 ## Architecture
 
@@ -237,27 +264,11 @@ context.Initialize(new[] { testAccount });
 
 The service can be tested using:
 
-- **Microsoft SDK**: Standard CrmServiceClient or ServiceClient
-- **PowerShell**: Using Microsoft.Xrm.Tooling.CrmConnector.PowerShell
-- **Plugin Registration Tool**: Configure it to connect to the local service
-- **Custom client applications**: Any tool that supports SOAP/WCF
+- **WCF Channels**: Standard ChannelFactory<IOrganizationService> (recommended for testing)
+- **Custom client applications**: Any tool that supports SOAP/WCF and IOrganizationService
+- **Plugin Registration Tool**: May work if configured to connect to the local service (not tested)
 
-Example PowerShell test:
-
-```powershell
-# Install module if needed
-Install-Module Microsoft.Xrm.Tooling.CrmConnector.PowerShell
-
-# Connect
-$conn = Get-CrmConnection -ConnectionString "Url=http://localhost:5000/XRMServices/2011/Organization.svc;"
-
-# Create a record
-$account = @{
-    "name" = "Test Account"
-    "revenue" = [decimal]100000
-}
-New-CrmRecord -conn $conn -EntityLogicalName "account" -Fields $account
-```
+Note: ServiceClient and CrmServiceClient require OAuth authentication setup and are not recommended for simple testing scenarios. Use WCF channels directly as shown in the examples above.
 
 ## Limitations
 

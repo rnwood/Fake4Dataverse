@@ -13,6 +13,30 @@ Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi
 **Original Author:** Jordi Montaña (@jordimontana)  
 **License:** MIT (see LICENSE.txt files in each project folder)
 
+## 🆕 Fake4DataverseService - Network-Accessible Testing
+
+**NEW**: Fake4Dataverse now includes a CLI service that exposes a fake IOrganizationService over SOAP/WCF, matching Microsoft's actual Dynamics 365/Dataverse endpoints!
+
+- **SOAP/WCF Protocol**: Uses standard `/XRMServices/2011/Organization.svc` endpoint
+- **SDK Compatible**: Works with standard WCF channels and IOrganizationService interface
+- **Integration Testing**: Perfect for testing across multiple services or applications
+- **No Authentication Required**: Bypass OAuth for testing - just connect and go
+- **100% Type Compatible**: Uses Microsoft's official Dataverse SDK types
+
+**[Learn more about Fake4DataverseService →](./Fake4DataverseService/README.md)**
+
+```bash
+# Start the service
+cd Fake4DataverseService/src/Fake4Dataverse.Service
+dotnet run -- start --port 5000
+
+# Connect from any application using standard WCF
+var binding = new BasicHttpBinding();
+var endpoint = new EndpointAddress("http://localhost:5000/XRMServices/2011/Organization.svc");
+var factory = new ChannelFactory<IOrganizationService>(binding, endpoint);
+var service = factory.CreateChannel();
+```
+
 ### Fork Basis
 
 This fork is based on an early development version of FakeXrmEasy v2, which was released under the MIT License. The original FakeXrmEasy project subsequently changed its licensing model. This fork preserves the last MIT-licensed version to ensure continued open-source availability for the community.
