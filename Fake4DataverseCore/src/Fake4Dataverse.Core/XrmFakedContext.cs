@@ -137,6 +137,9 @@ namespace Fake4Dataverse
             SetProperty<IAccessRightsRepository>(new AccessRightsRepository());
             SetProperty<IOptionSetMetadataRepository>(new OptionSetMetadataRepository());
             SetProperty<IStatusAttributeMetadataRepository>(new StatusAttributeMetadataRepository());
+            
+            // Initialize audit repository
+            InitializeAuditRepository();
 
             SystemTimeZone = TimeZoneInfo.Local;
 
