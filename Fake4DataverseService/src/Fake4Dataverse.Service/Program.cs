@@ -78,6 +78,9 @@ public class Program
         
         builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);
+        
+        // Register the WCF service implementation
+        builder.Services.AddSingleton<OrganizationServiceImpl>();
 
         // Add CoreWCF services
         builder.Services.AddServiceModelServices();

@@ -1,0 +1,389 @@
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Crm.Sdk.Messages;
+using System.ServiceModel;
+using System.ServiceModel.Description;
+using Xunit;
+using System.Diagnostics;
+
+namespace Fake4Dataverse.Service.IntegrationTests;
+
+/// <summary>
+/// End-to-end integration tests that verify the Fake4DataverseService works with standard WCF/SOAP clients.
+/// These tests start the service and connect using the IOrganizationService interface directly via WCF.
+/// 
+/// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice
+/// The IOrganizationService interface is the core interface for interacting with Dataverse.
+/// 
+/// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/overview
+/// The Organization Service uses SOAP 1.1/1.2 protocol via WCF bindings.
+/// </summary>
+public class OrganizationServiceEndToEndTests : IAsyncLifetime
+{
+    private Process? _serviceProcess;
+    private const int ServicePort = 5558;
+    private static readonly string ServiceUrl = $"http://localhost:{ServicePort}/XRMServices/2011/Organization.svc";
+    private IOrganizationService? _organizationService;
+
+    public async Task InitializeAsync()
+    {
+        // Start the Fake4DataverseService in the background
+        var serviceProjectPath = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            "..", "..", "..", "..", "..", "src", "Fake4Dataverse.Service");
+
+        _serviceProcess = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost",
+                WorkingDirectory = serviceProjectPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
+
+        _serviceProcess.Start();
+
+        // Wait for the service to start
+        var startTime = DateTime.UtcNow;
+        var timeout = TimeSpan.FromSeconds(30);
+        var isServiceReady = false;
+
+        while (DateTime.UtcNow - startTime < timeout && !isServiceReady)
+        {
+            try
+            {
+                using var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync($"http://localhost:{ServicePort}/");
+                if (response.IsSuccessStatusCode)
+                {
+                    isServiceReady = true;
+                }
+            }
+            catch
+            {
+                await Task.Delay(500);
+            }
+        }
+
+        if (!isServiceReady)
+        {
+            throw new Exception("Failed to start Fake4DataverseService within timeout period");
+        }
+
+        // Give the service a bit more time to fully initialize
+        await Task.Delay(2000);
+
+        // Create WCF client for IOrganizationService
+        _organizationService = CreateOrganizationServiceClient();
+    }
+
+    public Task DisposeAsync()
+    {
+        if (_organizationService is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
+
+        if (_serviceProcess != null && !_serviceProcess.HasExited)
+        {
+            _serviceProcess.Kill(entireProcessTree: true);
+            _serviceProcess.WaitForExit();
+            _serviceProcess.Dispose();
+        }
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Creates a WCF channel to connect to the IOrganizationService endpoint.
+    /// This uses the same approach that CrmServiceClient uses internally.
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/how-to-create-a-wcf-client
+    /// </summary>
+    private IOrganizationService CreateOrganizationServiceClient()
+    {
+        var binding = new BasicHttpBinding
+        {
+            MaxReceivedMessageSize = 2147483647,
+            MaxBufferSize = 2147483647,
+            MaxBufferPoolSize = 2147483647,
+            SendTimeout = TimeSpan.FromMinutes(20),
+            ReceiveTimeout = TimeSpan.FromMinutes(20)
+        };
+
+        var endpoint = new EndpointAddress(ServiceUrl);
+        var factory = new ChannelFactory<IOrganizationService>(binding, endpoint);
+
+        // Disable authentication for local testing
+        factory.Credentials.Windows.AllowedImpersonationLevel =
+            System.Security.Principal.TokenImpersonationLevel.Impersonation;
+
+        return factory.CreateChannel();
+    }
+
+    [Fact]
+    public void Should_Connect_To_Service_Via_WCF()
+    {
+        // Assert - Verify we have a valid service proxy
+        Assert.NotNull(_organizationService);
+    }
+
+    [Fact]
+    public void Should_Create_Entity_Via_WCF()
+    {
+        // Arrange
+        var account = new Entity("account");
+        account["name"] = "Contoso Ltd - E2E Test";
+        account["revenue"] = new Money(250000m);
+        account["numberofemployees"] = 150;
+
+        // Act - Create entity via WCF channel
+        var accountId = _organizationService!.Create(account);
+
+        // Assert
+        Assert.NotEqual(Guid.Empty, accountId);
+    }
+
+    [Fact]
+    public void Should_Retrieve_Entity_Via_WCF()
+    {
+        // Arrange - First create an entity
+        var account = new Entity("account");
+        account["name"] = "Fabrikam Inc - E2E";
+        account["revenue"] = new Money(500000m);
+        var accountId = _organizationService!.Create(account);
+
+        // Act - Retrieve the entity via WCF
+        var retrievedAccount = _organizationService.Retrieve("account", accountId, 
+            new ColumnSet("name", "revenue"));
+
+        // Assert
+        Assert.NotNull(retrievedAccount);
+        Assert.Equal("Fabrikam Inc - E2E", retrievedAccount["name"]);
+        Assert.Equal(500000m, ((Money)retrievedAccount["revenue"]).Value);
+    }
+
+    [Fact]
+    public void Should_Update_Entity_Via_WCF()
+    {
+        // Arrange
+        var account = new Entity("account");
+        account["name"] = "Original Name - E2E";
+        var accountId = _organizationService!.Create(account);
+
+        // Act - Update via WCF
+        var updateAccount = new Entity("account", accountId);
+        updateAccount["name"] = "Updated Name via WCF";
+        _organizationService.Update(updateAccount);
+
+        // Assert - Retrieve and verify
+        var retrievedAccount = _organizationService.Retrieve("account", accountId, 
+            new ColumnSet("name"));
+        Assert.Equal("Updated Name via WCF", retrievedAccount["name"]);
+    }
+
+    [Fact]
+    public void Should_Delete_Entity_Via_WCF()
+    {
+        // Arrange
+        var account = new Entity("account");
+        account["name"] = "To Be Deleted - E2E";
+        var accountId = _organizationService!.Create(account);
+
+        // Act - Delete via WCF
+        _organizationService.Delete("account", accountId);
+
+        // Assert - Should throw when trying to retrieve deleted entity
+        Assert.Throws<FaultException>(() =>
+        {
+            _organizationService.Retrieve("account", accountId, new ColumnSet("name"));
+        });
+    }
+
+    [Fact]
+    public void Should_RetrieveMultiple_With_QueryExpression_Via_WCF()
+    {
+        // Arrange - Create multiple entities
+        var account1 = new Entity("account") 
+        { 
+            ["name"] = "High Revenue 1 - E2E", 
+            ["revenue"] = new Money(800000m) 
+        };
+        var account2 = new Entity("account") 
+        { 
+            ["name"] = "High Revenue 2 - E2E", 
+            ["revenue"] = new Money(900000m) 
+        };
+        var account3 = new Entity("account") 
+        { 
+            ["name"] = "Low Revenue - E2E", 
+            ["revenue"] = new Money(50000m) 
+        };
+
+        _organizationService!.Create(account1);
+        _organizationService.Create(account2);
+        _organizationService.Create(account3);
+
+        // Act - Query using QueryExpression via WCF
+        var query = new QueryExpression("account");
+        query.ColumnSet.AddColumns("name", "revenue");
+        query.Criteria.AddCondition("name", ConditionOperator.Like, "%E2E%");
+        query.Criteria.AddCondition("revenue", ConditionOperator.GreaterThan, 100000m);
+
+        var results = _organizationService.RetrieveMultiple(query);
+
+        // Assert
+        Assert.NotNull(results);
+        Assert.True(results.Entities.Count >= 2, 
+            $"Expected at least 2 high-revenue accounts, found {results.Entities.Count}");
+    }
+
+    [Fact]
+    public void Should_Execute_WhoAmI_Request_Via_WCF()
+    {
+        // Arrange - Create WhoAmI request
+        // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.whoamirequest
+        // WhoAmI returns the SystemUser ID of the currently authenticated user
+        var whoAmIRequest = new WhoAmIRequest();
+
+        // Act - Execute via WCF
+        var whoAmIResponse = (WhoAmIResponse)_organizationService!.Execute(whoAmIRequest);
+
+        // Assert
+        Assert.NotNull(whoAmIResponse);
+        Assert.NotEqual(Guid.Empty, whoAmIResponse.UserId);
+        Assert.NotEqual(Guid.Empty, whoAmIResponse.BusinessUnitId);
+        Assert.NotEqual(Guid.Empty, whoAmIResponse.OrganizationId);
+    }
+
+    [Fact]
+    public void Should_Query_Using_FetchXml_Via_WCF()
+    {
+        // Arrange - Create test data
+        var account1 = new Entity("account") 
+        { 
+            ["name"] = "FetchXml E2E Test 1", 
+            ["revenue"] = new Money(300000m) 
+        };
+        var account2 = new Entity("account") 
+        { 
+            ["name"] = "FetchXml E2E Test 2", 
+            ["revenue"] = new Money(400000m) 
+        };
+        _organizationService!.Create(account1);
+        _organizationService.Create(account2);
+
+        // Act - Query using FetchXml via WCF
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/fetchxml/overview
+        // FetchXml is an XML-based query language used in Dataverse
+        var fetchXml = @"
+            <fetch>
+                <entity name='account'>
+                    <attribute name='name' />
+                    <attribute name='revenue' />
+                    <filter>
+                        <condition attribute='name' operator='like' value='%FetchXml E2E%' />
+                    </filter>
+                </entity>
+            </fetch>";
+
+        var query = new FetchExpression(fetchXml);
+        var results = _organizationService.RetrieveMultiple(query);
+
+        // Assert
+        Assert.NotNull(results);
+        Assert.True(results.Entities.Count >= 2, 
+            $"Expected at least 2 accounts matching FetchXml, found {results.Entities.Count}");
+    }
+
+    [Fact]
+    public void Should_Handle_Multiple_Operations_In_Sequence()
+    {
+        // This test verifies that the service can handle multiple operations
+        // in a row without issues, simulating real-world usage patterns
+
+        // Create
+        var contact = new Entity("contact");
+        contact["firstname"] = "John";
+        contact["lastname"] = "Doe";
+        contact["emailaddress1"] = "john.doe@example.com";
+        var contactId = _organizationService!.Create(contact);
+        Assert.NotEqual(Guid.Empty, contactId);
+
+        // Retrieve
+        var retrievedContact = _organizationService.Retrieve("contact", contactId, 
+            new ColumnSet("firstname", "lastname", "emailaddress1"));
+        Assert.Equal("John", retrievedContact["firstname"]);
+
+        // Update
+        var updateContact = new Entity("contact", contactId);
+        updateContact["lastname"] = "Smith";
+        _organizationService.Update(updateContact);
+
+        // Retrieve again to verify update
+        retrievedContact = _organizationService.Retrieve("contact", contactId, 
+            new ColumnSet("lastname"));
+        Assert.Equal("Smith", retrievedContact["lastname"]);
+
+        // Delete
+        _organizationService.Delete("contact", contactId);
+
+        // Verify deletion
+        Assert.Throws<FaultException>(() =>
+        {
+            _organizationService.Retrieve("contact", contactId, new ColumnSet("firstname"));
+        });
+    }
+
+    [Fact]
+    public void Should_Support_Complex_Queries_With_Multiple_Conditions()
+    {
+        // Arrange - Create varied test data
+        _organizationService!.Create(new Entity("account") 
+        { 
+            ["name"] = "Large Corp E2E", 
+            ["revenue"] = new Money(1000000m),
+            ["numberofemployees"] = 500,
+            ["creditonhold"] = false
+        });
+        _organizationService.Create(new Entity("account") 
+        { 
+            ["name"] = "Small Business E2E", 
+            ["revenue"] = new Money(50000m),
+            ["numberofemployees"] = 10,
+            ["creditonhold"] = false
+        });
+        _organizationService.Create(new Entity("account") 
+        { 
+            ["name"] = "Medium Corp E2E", 
+            ["revenue"] = new Money(500000m),
+            ["numberofemployees"] = 200,
+            ["creditonhold"] = true
+        });
+
+        // Act - Complex query with multiple conditions
+        var query = new QueryExpression("account");
+        query.ColumnSet.AddColumns("name", "revenue", "numberofemployees");
+        query.Criteria.AddCondition("name", ConditionOperator.Like, "%E2E%");
+        query.Criteria.AddCondition("revenue", ConditionOperator.GreaterThan, 100000m);
+        query.Criteria.AddCondition("numberofemployees", ConditionOperator.GreaterThan, 50);
+        query.Criteria.AddCondition("creditonhold", ConditionOperator.Equal, false);
+
+        var results = _organizationService.RetrieveMultiple(query);
+
+        // Assert
+        Assert.NotNull(results);
+        Assert.True(results.Entities.Count >= 1, 
+            $"Expected at least 1 account matching all criteria, found {results.Entities.Count}");
+        
+        // Verify all results meet the criteria
+        foreach (var entity in results.Entities)
+        {
+            Assert.True(((Money)entity["revenue"]).Value > 100000m);
+            Assert.True((int)entity["numberofemployees"] > 50);
+        }
+    }
+}
