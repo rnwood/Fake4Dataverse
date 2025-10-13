@@ -54,6 +54,10 @@ public static class MdaInitializer
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
         CreateSystemForms(service, appModuleId);
         
+        // Create web resources (form scripts)
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+        CreateWebResources(service);
+        
         // Create some sample data for testing
         CreateSampleData(service);
         
@@ -359,8 +363,23 @@ public static class MdaInitializer
     private static void CreateAccountForm(IOrganizationService service, Guid appModuleId)
     {
         var formId = Guid.NewGuid();
+        var libraryId = Guid.NewGuid();
         var formXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <form>
+  <formLibraries>
+    <Library name=""fake4dataverse_account_form_script.js"" libraryUniqueId=""" + libraryId + @""" />
+  </formLibraries>
+  <events>
+    <event name=""onload"" application=""true"" active=""true"">
+      <Handler functionName=""OnLoad"" libraryName=""fake4dataverse_account_form_script.js"" handlerUniqueId=""" + Guid.NewGuid() + @""" enabled=""true"" parameters="""" passExecutionContext=""true"" />
+    </event>
+    <event name=""onsave"" application=""true"" active=""true"">
+      <Handler functionName=""OnSave"" libraryName=""fake4dataverse_account_form_script.js"" handlerUniqueId=""" + Guid.NewGuid() + @""" enabled=""true"" parameters="""" passExecutionContext=""true"" />
+    </event>
+    <event name=""onchange"" application=""true"" active=""true"" attribute=""name"">
+      <Handler functionName=""ValidateAccountName"" libraryName=""fake4dataverse_account_form_script.js"" handlerUniqueId=""" + Guid.NewGuid() + @""" enabled=""true"" parameters="""" passExecutionContext=""true"" />
+    </event>
+  </events>
   <tabs>
     <tab id=""tab_general"" name=""general"" verticallayout=""true"" visible=""true"">
       <labels>
@@ -599,5 +618,154 @@ public static class MdaInitializer
         };
         service.Create(opportunityForm);
         CreateAppModuleComponent(service, appModuleId, formId, 60);
+    }
+    
+    /// <summary>
+    /// Create example web resources (JavaScript files for form scripts)
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+    /// WebResourceType: 1=HTML, 2=CSS, 3=JavaScript, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO
+    /// </summary>
+    private static void CreateWebResources(IOrganizationService service)
+    {
+        Console.WriteLine("  Creating web resources (form scripts)...");
+        
+        // Create a sample form script for Account
+        var accountScriptContent = @"
+// Sample Account Form Script
+// This script demonstrates the Xrm API usage
+
+function OnLoad(executionContext) {
+    console.log('Account form OnLoad event triggered');
+    
+    var formContext = executionContext.getFormContext();
+    
+    // Get the account name
+    var accountName = formContext.getAttribute('name');
+    if (accountName) {
+        console.log('Account Name:', accountName.getValue());
+        
+        // Add onChange handler
+        accountName.addOnChange(function() {
+            console.log('Account name changed to:', accountName.getValue());
+        });
+    }
+    
+    // Example: Disable account number field
+    var accountNumberControl = formContext.getControl('accountnumber');
+    if (accountNumberControl) {
+        accountNumberControl.setDisabled(false);
+    }
+    
+    // Example: Show a notification
+    formContext.ui.setFormNotification(
+        'Welcome to the Account form!', 
+        'INFO', 
+        'welcome_notification'
+    );
+    
+    // Clear notification after 3 seconds
+    setTimeout(function() {
+        formContext.ui.clearFormNotification('welcome_notification');
+    }, 3000);
+}
+
+function OnSave(executionContext) {
+    console.log('Account form OnSave event triggered');
+    
+    var formContext = executionContext.getFormContext();
+    
+    // Example: Validate account name is not empty
+    var accountName = formContext.getAttribute('name');
+    if (accountName && !accountName.getValue()) {
+        executionContext.getEventArgs().preventDefault();
+        Xrm.Navigation.openAlertDialog({
+            text: 'Account Name is required',
+            title: 'Validation Error'
+        });
+        return false;
+    }
+    
+    return true;
+}
+
+function ValidateAccountName(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var accountName = formContext.getAttribute('name');
+    
+    if (accountName) {
+        var value = accountName.getValue();
+        if (value && value.length < 3) {
+            formContext.ui.setFormNotification(
+                'Account name should be at least 3 characters', 
+                'WARNING', 
+                'name_validation'
+            );
+        } else {
+            formContext.ui.clearFormNotification('name_validation');
+        }
+    }
+}
+";
+        
+        // Encode script content to base64
+        var base64Content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(accountScriptContent));
+        
+        var webResourceId = Guid.NewGuid();
+        var webResource = new Entity("webresource")
+        {
+            Id = webResourceId,
+            ["name"] = "fake4dataverse_account_form_script.js",
+            ["displayname"] = "Account Form Script",
+            ["description"] = "Example form script for Account entity",
+            ["webresourcetype"] = 3, // JavaScript
+            ["content"] = base64Content,
+            ["languagecode"] = 1033
+        };
+        service.Create(webResource);
+        Console.WriteLine($"    Created WebResource: {webResourceId} (fake4dataverse_account_form_script.js)");
+        
+        // Create a sample utility script
+        var utilityScriptContent = @"
+// Sample Utility Functions
+// Common functions that can be used across forms
+
+var Fake4DataverseUtils = Fake4DataverseUtils || {};
+
+Fake4DataverseUtils.formatPhoneNumber = function(phoneNumber) {
+    // Simple phone number formatting
+    if (!phoneNumber) return '';
+    var cleaned = phoneNumber.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+        return '(' + cleaned.substring(0, 3) + ') ' + 
+               cleaned.substring(3, 6) + '-' + 
+               cleaned.substring(6);
+    }
+    return phoneNumber;
+};
+
+Fake4DataverseUtils.validateEmail = function(email) {
+    if (!email) return false;
+    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+};
+
+console.log('Fake4Dataverse utility functions loaded');
+";
+        
+        var utilityBase64Content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(utilityScriptContent));
+        
+        var utilityResourceId = Guid.NewGuid();
+        var utilityResource = new Entity("webresource")
+        {
+            Id = utilityResourceId,
+            ["name"] = "fake4dataverse_utils.js",
+            ["displayname"] = "Fake4Dataverse Utilities",
+            ["description"] = "Common utility functions",
+            ["webresourcetype"] = 3, // JavaScript
+            ["content"] = utilityBase64Content,
+            ["languagecode"] = 1033
+        };
+        service.Create(utilityResource);
+        Console.WriteLine($"    Created WebResource: {utilityResourceId} (fake4dataverse_utils.js)");
     }
 }
