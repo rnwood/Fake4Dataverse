@@ -3,6 +3,7 @@ using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xrm.Sdk;
 using System.CommandLine;
@@ -87,12 +88,27 @@ public class Program
         builder.Services.AddServiceModelMetadata();
 
         // Add REST API controllers for OData endpoints
+        // Using Microsoft.AspNetCore.OData for advanced OData support
+        // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/overview
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
                 // Configure JSON serialization for OData compatibility
                 options.JsonSerializerOptions.PropertyNamingPolicy = null; // Preserve property names
                 options.JsonSerializerOptions.WriteIndented = true; // Pretty print for readability
+            })
+            .AddOData(options =>
+            {
+                // Enable OData query options for all routes
+                // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/query-options
+                options.Select().Filter().OrderBy().Expand().Count().SetMaxTop(1000);
+                
+                // Enable OData batch requests
+                // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/batch-requests
+                options.EnableQueryFeatures();
+                
+                // Set timezone to UTC for consistency
+                options.TimeZone = System.TimeZoneInfo.Utc;
             });
 
         var app = builder.Build();

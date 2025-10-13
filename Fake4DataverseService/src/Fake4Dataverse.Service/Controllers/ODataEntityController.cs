@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.CloudFlows;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -23,18 +24,22 @@ namespace Fake4Dataverse.Service.Controllers
     /// - PATCH /api/data/v9.2/{entityPluralName}({id}) - Update an entity
     /// - DELETE /api/data/v9.2/{entityPluralName}({id}) - Delete an entity
     /// 
-    /// OData Query Options:
+    /// Leverages Microsoft.AspNetCore.OData for advanced query processing:
     /// - $select: Choose specific columns
-    /// - $filter: Filter records with OData expressions
+    /// - $filter: Filter records with OData expressions (full OData syntax support)
     /// - $orderby: Sort records
     /// - $top: Limit number of results
     /// - $skip: Skip records for pagination
     /// - $expand: Include related entities
     /// - $count: Include total count
+    /// 
+    /// Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/query-options
+    /// The Microsoft.AspNetCore.OData library provides automatic parsing and validation
+    /// of OData query options, including complex $filter expressions.
     /// </summary>
     [ApiController]
     [Route("api/data/v9.2")]
-    public class ODataEntityController : ControllerBase
+    public class ODataEntityController : ODataController
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
@@ -50,106 +55,46 @@ namespace Fake4Dataverse.Service.Controllers
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api
         /// 
         /// GET /api/data/v9.2/{entityPluralName}
-        /// Supports OData query options: $select, $filter, $orderby, $top, $skip, $expand, $count
+        /// 
+        /// Supports full OData v4.0 query options via Microsoft.AspNetCore.OData:
+        /// - $select, $filter, $orderby, $top, $skip, $expand, $count
+        /// 
+        /// The EnableQuery attribute enables automatic OData query processing,
+        /// including complex filter expressions like:
+        /// - $filter=revenue gt 100000 and name eq 'Contoso'
+        /// - $filter=contains(name, 'Corp')
+        /// - $filter=startswith(name, 'A')
+        /// 
+        /// Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/query-options
         /// </summary>
         [HttpGet("{entityPluralName}")]
+        [EnableQuery(MaxTop = 1000)]
         [Produces("application/json")]
-        public IActionResult ListEntities(
-            string entityPluralName,
-            [FromQuery(Name = "$select")] string select = null,
-            [FromQuery(Name = "$filter")] string filter = null,
-            [FromQuery(Name = "$orderby")] string orderby = null,
-            [FromQuery(Name = "$top")] int? top = null,
-            [FromQuery(Name = "$skip")] int? skip = null,
-            [FromQuery(Name = "$expand")] string expand = null,
-            [FromQuery(Name = "$count")] bool count = false)
+        public IActionResult ListEntities(string entityPluralName)
         {
             try
             {
                 // Convert plural entity name to logical name (e.g., "accounts" -> "account")
                 var entityLogicalName = ConvertPluralToSingular(entityPluralName);
 
-                // Build QueryExpression
-                var query = new QueryExpression(entityLogicalName);
-
-                // Apply $select
-                if (!string.IsNullOrWhiteSpace(select))
+                // Build QueryExpression to retrieve all records
+                // The EnableQuery attribute will apply OData filtering, ordering, paging, etc.
+                var query = new QueryExpression(entityLogicalName)
                 {
-                    var columns = select.Split(',').Select(c => c.Trim()).ToArray();
-                    query.ColumnSet = new ColumnSet(columns);
-                }
-                else
-                {
-                    query.ColumnSet = new ColumnSet(true); // All columns by default
-                }
-
-                // Apply $orderby
-                if (!string.IsNullOrWhiteSpace(orderby))
-                {
-                    var orderParts = orderby.Split(' ');
-                    var attributeName = orderParts[0];
-                    var orderType = orderParts.Length > 1 && orderParts[1].ToLower() == "desc"
-                        ? OrderType.Descending
-                        : OrderType.Ascending;
-                    query.Orders.Add(new OrderExpression(attributeName, orderType));
-                }
-
-                // Apply $filter (basic implementation)
-                if (!string.IsNullOrWhiteSpace(filter))
-                {
-                    // TODO: Full OData filter parsing would require a complete parser
-                    // For now, we'll just retrieve all records
-                    // This is noted for future enhancement
-                }
-
-                // Execute query
-                var results = _service.RetrieveMultiple(query);
-                var allEntities = results.Entities.ToList();
-
-                // Get total count before paging
-                var totalCount = allEntities.Count;
-
-                // Apply $skip and $top for paging
-                var skipCount = skip ?? 0;
-                var takeCount = top ?? allEntities.Count;
-                var pagedEntities = allEntities.Skip(skipCount).Take(takeCount).ToList();
-
-                // Create EntityCollection for conversion
-                var entityCollection = new EntityCollection
-                {
-                    EntityName = entityLogicalName,
-                    Entities = { },
-                    TotalRecordCount = count ? totalCount : -1
+                    ColumnSet = new ColumnSet(true) // All columns by default
                 };
-                foreach (var entity in pagedEntities)
-                {
-                    entityCollection.Entities.Add(entity);
-                }
 
-                // Determine if there's a next page
-                string nextLink = null;
-                if (skipCount + pagedEntities.Count < totalCount)
-                {
-                    var nextSkip = skipCount + pagedEntities.Count;
-                    nextLink = $"{Request.Path}?$skip={nextSkip}";
-                    if (top.HasValue)
-                        nextLink += $"&$top={top.Value}";
-                    if (!string.IsNullOrWhiteSpace(select))
-                        nextLink += $"&$select={select}";
-                    if (!string.IsNullOrWhiteSpace(filter))
-                        nextLink += $"&$filter={filter}";
-                    if (!string.IsNullOrWhiteSpace(orderby))
-                        nextLink += $"&$orderby={orderby}";
-                }
-
+                // Execute query to get all entities
+                var results = _service.RetrieveMultiple(query);
+                
                 // Convert to OData format
-                var odataResponse = ODataEntityConverter.ToODataCollection(
-                    entityCollection,
-                    entityLogicalName,
-                    includeCount: count,
-                    nextLink: nextLink);
+                var odataEntities = results.Entities
+                    .Select(e => ODataEntityConverter.ToODataEntity(e, includeODataMetadata: false))
+                    .ToList();
 
-                return Ok(odataResponse);
+                // Return as IQueryable for OData query processing
+                // The EnableQuery attribute will automatically apply $filter, $orderby, $top, $skip, etc.
+                return Ok(odataEntities.AsQueryable());
             }
             catch (Exception ex)
             {
