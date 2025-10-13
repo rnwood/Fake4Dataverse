@@ -8,6 +8,7 @@ using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Abstractions;
+using System.Threading.Tasks;
 
 namespace Fake4Dataverse
 {
@@ -55,6 +56,58 @@ namespace Fake4Dataverse
         public void InitializeMetadata(Assembly earlyBoundEntitiesAssembly)
         {
             IEnumerable<EntityMetadata> entityMetadatas = MetadataGenerator.FromEarlyBoundEntities(earlyBoundEntitiesAssembly);
+            if (entityMetadatas.Any())
+            {
+                this.InitializeMetadata(entityMetadatas);
+            }
+        }
+
+        /// <summary>
+        /// Initialize metadata from a CDM (Common Data Model) JSON file.
+        /// Reference: https://github.com/microsoft/CDM
+        /// 
+        /// CDM is Microsoft's standard schema definition format that provides a shared data language
+        /// across business applications and data sources. This method allows initializing entity metadata
+        /// from CDM JSON files exported from Power Platform, Dynamics 365, or other CDM-compliant systems.
+        /// </summary>
+        /// <param name="cdmJsonFilePath">Path to the CDM JSON file</param>
+        public void InitializeMetadataFromCdmFile(string cdmJsonFilePath)
+        {
+            IEnumerable<EntityMetadata> entityMetadatas = MetadataGenerator.FromCdmJsonFile(cdmJsonFilePath);
+            if (entityMetadatas.Any())
+            {
+                this.InitializeMetadata(entityMetadatas);
+            }
+        }
+
+        /// <summary>
+        /// Initialize metadata from multiple CDM JSON files.
+        /// </summary>
+        /// <param name="cdmJsonFilePaths">Collection of paths to CDM JSON files</param>
+        public void InitializeMetadataFromCdmFiles(IEnumerable<string> cdmJsonFilePaths)
+        {
+            IEnumerable<EntityMetadata> entityMetadatas = MetadataGenerator.FromCdmJsonFiles(cdmJsonFilePaths);
+            if (entityMetadatas.Any())
+            {
+                this.InitializeMetadata(entityMetadatas);
+            }
+        }
+
+        /// <summary>
+        /// Initialize metadata from standard CDM entities by downloading them from Microsoft's CDM repository.
+        /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+        /// 
+        /// This method downloads standard entity schemas (Account, Contact, etc.) directly from
+        /// Microsoft's official CDM repository on GitHub. This is useful for quickly setting up tests
+        /// with standard Dynamics 365/Dataverse entities without needing local CDM files.
+        /// 
+        /// Available standard entities include: Account, Contact, Lead, Opportunity, User, Team, 
+        /// BusinessUnit, Organization, and more.
+        /// </summary>
+        /// <param name="entityNames">Names of standard entities to load (e.g., "Account", "Contact")</param>
+        public async Task InitializeMetadataFromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        {
+            IEnumerable<EntityMetadata> entityMetadatas = await MetadataGenerator.FromStandardCdmEntitiesAsync(entityNames);
             if (entityMetadatas.Any())
             {
                 this.InitializeMetadata(entityMetadatas);

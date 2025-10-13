@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Fake4Dataverse.Abstractions
 {
@@ -115,6 +116,9 @@ namespace Fake4Dataverse.Abstractions
         void InitializeMetadata(IEnumerable<EntityMetadata> entityMetadataList);
         void InitializeMetadata(EntityMetadata entityMetadata);
         void InitializeMetadata(Assembly earlyBoundEntitiesAssembly);
+        void InitializeMetadataFromCdmFile(string cdmJsonFilePath);
+        void InitializeMetadataFromCdmFiles(IEnumerable<string> cdmJsonFilePaths);
+        Task InitializeMetadataFromStandardCdmEntitiesAsync(IEnumerable<string> entityNames);
         IQueryable<EntityMetadata> CreateMetadataQuery();
         EntityMetadata GetEntityMetadataByName(string sLogicalName);
         void SetEntityMetadata(EntityMetadata em);

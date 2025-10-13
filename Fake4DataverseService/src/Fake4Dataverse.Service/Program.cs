@@ -56,22 +56,32 @@ public class Program
             name: "--access-token",
             description: "Optional access token for authentication. If not provided, allows anonymous access. If provided, clients must include this token in the Authorization header.",
             getDefaultValue: () => null);
+        var cdmFilesOption = new Option<string[]?>(
+            name: "--cdm-files",
+            description: "Optional paths to CDM (Common Data Model) JSON files to initialize entity metadata. Multiple files can be specified.",
+            getDefaultValue: () => null);
+        var cdmEntitiesOption = new Option<string[]?>(
+            name: "--cdm-entities",
+            description: "Optional list of standard CDM entity names to download and initialize (e.g., Account, Contact, Lead). Downloads from Microsoft's CDM repository.",
+            getDefaultValue: () => null);
 
         startCommand.AddOption(portOption);
         startCommand.AddOption(hostOption);
         startCommand.AddOption(accessTokenOption);
+        startCommand.AddOption(cdmFilesOption);
+        startCommand.AddOption(cdmEntitiesOption);
 
-        startCommand.SetHandler(async (int port, string host, string? accessToken) =>
+        startCommand.SetHandler(async (int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmEntities) =>
         {
-            await StartService(port, host, accessToken);
-        }, portOption, hostOption, accessTokenOption);
+            await StartService(port, host, accessToken, cdmFiles, cdmEntities);
+        }, portOption, hostOption, accessTokenOption, cdmFilesOption, cdmEntitiesOption);
 
         rootCommand.AddCommand(startCommand);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    private static async Task StartService(int port, string host, string? accessToken)
+    private static async Task StartService(int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmEntities)
     {
         Console.WriteLine($"Starting Fake4Dataverse Service on {host}:{port}...");
         Console.WriteLine("This service provides SOAP endpoints compatible with Microsoft Dynamics 365/Dataverse Organization Service");
@@ -93,6 +103,48 @@ public class Program
 
         // Create and register the Fake4Dataverse context
         var context = XrmFakedContextFactory.New();
+        
+        // Initialize CDM metadata if requested
+        // Reference: https://github.com/microsoft/CDM
+        // The Common Data Model provides standard entity schemas for Dynamics 365 and Power Platform
+        if (cdmFiles != null && cdmFiles.Length > 0)
+        {
+            Console.WriteLine($"Loading metadata from {cdmFiles.Length} CDM file(s)...");
+            foreach (var cdmFile in cdmFiles)
+            {
+                Console.WriteLine($"  - {cdmFile}");
+            }
+            try
+            {
+                context.InitializeMetadataFromCdmFiles(cdmFiles);
+                Console.WriteLine($"Successfully loaded metadata from CDM files");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading CDM files: {ex.Message}");
+                throw;
+            }
+        }
+        
+        if (cdmEntities != null && cdmEntities.Length > 0)
+        {
+            Console.WriteLine($"Downloading and loading {cdmEntities.Length} standard CDM entity schema(s) from Microsoft's CDM repository...");
+            foreach (var entity in cdmEntities)
+            {
+                Console.WriteLine($"  - {entity}");
+            }
+            try
+            {
+                await context.InitializeMetadataFromStandardCdmEntitiesAsync(cdmEntities);
+                Console.WriteLine($"Successfully loaded standard CDM entities");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading standard CDM entities: {ex.Message}");
+                throw;
+            }
+        }
+        
         var organizationService = context.GetOrganizationService();
         
         // Initialize example Model-Driven App metadata
