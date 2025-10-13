@@ -447,6 +447,55 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
                 action.Top = GetIntValue(topObj);
             }
 
+            // Parse skip (for ListRecords - advanced paging)
+            if (parameters.TryGetValue("$skip", out var skipObj))
+            {
+                action.Skip = GetIntValue(skipObj);
+            }
+
+            // Parse includeTotalCount (for ListRecords - returns @odata.count)
+            if (parameters.TryGetValue("$count", out var countObj))
+            {
+                action.IncludeTotalCount = GetBoolValue(countObj);
+            }
+
+            // Parse expand (for ListRecords - navigation properties)
+            if (parameters.TryGetValue("$expand", out var expandObj))
+            {
+                action.Expand = GetStringValue(expandObj);
+            }
+
+            // Parse column name (for UploadFile/DownloadFile)
+            if (parameters.TryGetValue("columnName", out var columnNameObj))
+            {
+                action.ColumnName = GetStringValue(columnNameObj);
+            }
+
+            // Parse file name (for UploadFile/DownloadFile)
+            if (parameters.TryGetValue("fileName", out var fileNameObj))
+            {
+                action.FileName = GetStringValue(fileNameObj);
+            }
+
+            // Parse file content (for UploadFile - base64 encoded in JSON)
+            if (parameters.TryGetValue("fileContent", out var fileContentObj))
+            {
+                var fileContentStr = GetStringValue(fileContentObj);
+                if (!string.IsNullOrWhiteSpace(fileContentStr))
+                {
+                    // In JSON, file content is typically base64-encoded
+                    try
+                    {
+                        action.FileContent = Convert.FromBase64String(fileContentStr);
+                    }
+                    catch (FormatException)
+                    {
+                        // If not base64, treat as expression and store in Parameters
+                        action.Parameters["fileContentExpression"] = fileContentStr;
+                    }
+                }
+            }
+
             return action;
         }
 
@@ -459,7 +508,13 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
         /// - UpdateRecord: Update an existing record  
         /// - DeleteRecord: Delete a record
         /// - GetItem: Retrieve a single record by ID
-        /// - ListRecords: Query records (with $filter, $orderby, $top)
+        /// - ListRecords: Query records (with $filter, $orderby, $top, $skip)
+        /// - AssociateEntities: Relate two records (Associate)
+        /// - UnassociateEntities: Unrelate two records (Disassociate)
+        /// - PerformBoundAction: Execute a bound custom action
+        /// - PerformUnboundAction: Execute an unbound custom action
+        /// - UploadFile: Upload a file or image to a column
+        /// - DownloadFile: Download a file or image from a column
         /// </summary>
         private DataverseActionType MapOperationId(string operationId)
         {
@@ -475,10 +530,26 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
                     return DataverseActionType.Retrieve;
                 case "ListRecords":
                     return DataverseActionType.ListRecords;
+                case "AssociateEntities":
+                case "RelateEntities":
+                    return DataverseActionType.Relate;
+                case "UnassociateEntities":
+                case "UnrelateEntities":
+                    return DataverseActionType.Unrelate;
+                case "PerformBoundAction":
+                    return DataverseActionType.ExecuteAction;
+                case "PerformUnboundAction":
+                    return DataverseActionType.PerformUnboundAction;
+                case "UploadFile":
+                    return DataverseActionType.UploadFile;
+                case "DownloadFile":
+                    return DataverseActionType.DownloadFile;
                 default:
                     throw new NotSupportedException(
                         $"Operation ID '{operationId}' is not yet supported. " +
-                        "Currently supported: CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords.");
+                        "Currently supported: CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords, " +
+                        "AssociateEntities, UnassociateEntities, PerformBoundAction, PerformUnboundAction, " +
+                        "UploadFile, DownloadFile.");
             }
         }
 
@@ -532,6 +603,38 @@ namespace Fake4Dataverse.CloudFlows.JsonImport
             }
 
             return value.ToString();
+        }
+
+        /// <summary>
+        /// Helper method to safely extract a boolean value from a parameter object.
+        /// Handles both direct booleans and JsonElement objects from JSON deserialization.
+        /// </summary>
+        private bool GetBoolValue(object value)
+        {
+            if (value == null)
+                return false;
+
+            if (value is bool boolValue)
+                return boolValue;
+
+            if (value is JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == JsonValueKind.True)
+                    return true;
+                if (jsonElement.ValueKind == JsonValueKind.False)
+                    return false;
+                
+                if (jsonElement.ValueKind == JsonValueKind.String && 
+                    bool.TryParse(jsonElement.GetString(), out var parsed))
+                    return parsed;
+            }
+
+            if (bool.TryParse(value.ToString(), out var result))
+                return result;
+
+            // Handle common string representations
+            var strValue = value.ToString().ToLowerInvariant();
+            return strValue == "true" || strValue == "1" || strValue == "yes";
         }
 
         /// <summary>
