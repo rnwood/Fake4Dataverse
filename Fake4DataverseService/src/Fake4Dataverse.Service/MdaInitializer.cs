@@ -600,7 +600,4 @@ public static class MdaInitializer
         service.Create(opportunityForm);
         CreateAppModuleComponent(service, appModuleId, formId, 60);
     }
-        };
-        service.Create(appModuleComponent);
-    }
 }

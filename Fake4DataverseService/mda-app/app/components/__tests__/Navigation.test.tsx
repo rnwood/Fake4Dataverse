@@ -82,14 +82,18 @@ describe('Navigation', () => {
 
   it('renders all areas', () => {
     render(<Navigation areas={mockAreas} />);
-    expect(screen.getByText('Sales')).toBeInTheDocument();
+    // Use getAllByText since "Sales" appears in both area and group
+    const salesElements = screen.getAllByText('Sales');
+    expect(salesElements.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Service')).toBeInTheDocument();
   });
 
   it('renders all groups', () => {
     render(<Navigation areas={mockAreas} />);
     expect(screen.getByText('Customers')).toBeInTheDocument();
-    expect(screen.getByText('Cases')).toBeInTheDocument();
+    // Cases appears as both group and subarea, so use getAllByText
+    const casesElements = screen.getAllByText('Cases');
+    expect(casesElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders all subareas', () => {
@@ -97,7 +101,9 @@ describe('Navigation', () => {
     expect(screen.getByText('Accounts')).toBeInTheDocument();
     expect(screen.getByText('Contacts')).toBeInTheDocument();
     expect(screen.getByText('Opportunities')).toBeInTheDocument();
-    expect(screen.getByText('Cases')).toBeInTheDocument();
+    // Cases appears multiple times
+    const casesElements = screen.getAllByText('Cases');
+    expect(casesElements.length).toBeGreaterThanOrEqual(1);
   });
 
   it('calls onNavigate when subarea is clicked', () => {
