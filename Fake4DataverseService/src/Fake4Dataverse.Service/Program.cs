@@ -4,10 +4,12 @@ using Fake4Dataverse.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Xrm.Sdk;
 using System.CommandLine;
+using System.IO;
 using CoreWCF;
 using CoreWCF.Configuration;
 
@@ -138,12 +140,21 @@ public class Program
         var app = builder.Build();
         
         // Enable static file serving for Model-Driven App
+        // NOTE: Order matters - UseDefaultFiles must come before UseStaticFiles
+        var mdaPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "mda");
+        
         app.UseDefaultFiles(new DefaultFilesOptions
         {
             DefaultFileNames = new List<string> { "index.html" },
+            FileProvider = new PhysicalFileProvider(mdaPath),
             RequestPath = "/mda"
         });
-        app.UseStaticFiles();
+        
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(mdaPath),
+            RequestPath = "/mda"
+        });
         
         // Add authentication middleware if token is provided
         if (!string.IsNullOrEmpty(accessToken))

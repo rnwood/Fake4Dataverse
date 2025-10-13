@@ -26,9 +26,7 @@ public static class MdaInitializer
             ["name"] = "Fake4Dataverse Example App",
             ["uniquename"] = "fake4dataverse_example",
             ["description"] = "Example Model-Driven App for testing",
-            ["clienttype"] = 4, // Unified Interface
-            ["statecode"] = 0,
-            ["statuscode"] = 1
+            ["clienttype"] = 4 // Unified Interface
         };
         service.Create(appModule);
         Console.WriteLine($"  Created AppModule: {appModuleId}");
@@ -43,9 +41,7 @@ public static class MdaInitializer
             ["sitemapname"] = "Example Sitemap",
             ["sitemapnameunique"] = "fake4dataverse_example_sitemap",
             ["appmoduleid"] = new EntityReference("appmodule", appModuleId),
-            ["sitemapxml"] = sitemapXml,
-            ["statecode"] = 0,
-            ["statuscode"] = 1
+            ["sitemapxml"] = sitemapXml
         };
         service.Create(sitemap);
         Console.WriteLine($"  Created SiteMap: {sitemapId}");
@@ -91,9 +87,7 @@ public static class MdaInitializer
                 ["name"] = $"Sample Account {i}",
                 ["accountnumber"] = $"ACC-{i:000}",
                 ["revenue"] = new Money(100000 * i),
-                ["numberofemployees"] = 50 * i,
-                ["statecode"] = 0,
-                ["statuscode"] = 1
+                ["numberofemployees"] = 50 * i
             };
             service.Create(account);
         }
@@ -108,9 +102,7 @@ public static class MdaInitializer
                 ["firstname"] = $"First{i}",
                 ["lastname"] = $"Last{i}",
                 ["emailaddress1"] = $"user{i}@example.com",
-                ["telephone1"] = $"+1-555-{i:000}-0000",
-                ["statecode"] = 0,
-                ["statuscode"] = 1
+                ["telephone1"] = $"+1-555-{i:000}-0000"
             };
             service.Create(contact);
         }
@@ -124,9 +116,7 @@ public static class MdaInitializer
                 Id = Guid.NewGuid(),
                 ["name"] = $"Sample Opportunity {i}",
                 ["estimatedvalue"] = new Money(50000 * i),
-                ["estimatedclosedate"] = DateTime.UtcNow.AddMonths(i),
-                ["statecode"] = 0,
-                ["statuscode"] = 1
+                ["estimatedclosedate"] = DateTime.UtcNow.AddMonths(i)
             };
             service.Create(opportunity);
         }
