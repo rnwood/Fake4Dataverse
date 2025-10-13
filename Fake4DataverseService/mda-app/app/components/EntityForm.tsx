@@ -334,8 +334,7 @@ export default function EntityForm({
         await dataverseClient.updateEntity(entityPluralName, recordId, record);
       } else {
         // Create new record
-        const response = await dataverseClient.createEntity(entityPluralName, record);
-        savedRecordId = response.id;
+        savedRecordId = await dataverseClient.createEntity(entityPluralName, record);
       }
 
       setIsDirty(false);
@@ -376,13 +375,13 @@ export default function EntityForm({
         key={control.id}
         label={control.label || fieldName}
         className={styles.field}
-        disabled={control.disabled}
       >
         <Input
           value={String(value)}
           onChange={(e) => handleFieldChange(fieldName, e.target.value)}
           disabled={control.disabled}
         />
+      </Field>
       </Field>
     );
   };
