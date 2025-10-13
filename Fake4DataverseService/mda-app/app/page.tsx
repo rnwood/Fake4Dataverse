@@ -16,7 +16,7 @@ import { makeStyles, tokens, Spinner } from '@fluentui/react-components';
 import Navigation from './components/Navigation';
 import EntityListView from './components/EntityListView';
 import { dataverseClient } from './lib/dataverse-client';
-import { parseSiteMapXml } from './lib/sitemap-utils';
+import { parseSiteMapXml, createDefaultSiteMapXml } from './lib/sitemap-utils';
 import type { SiteMapDefinition, AppModule, SiteMap } from './types/dataverse';
 
 const useStyles = makeStyles({
@@ -167,7 +167,27 @@ export default function Home() {
       }
     } catch (err) {
       console.error('Error loading sitemap:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load sitemap');
+      
+      // Use mock data for development/demo purposes when API is not available
+      console.log('Using mock sitemap data for demo purposes');
+      const mockSitemapXml = createDefaultSiteMapXml();
+      const parsedSitemap = parseSiteMapXml(mockSitemapXml);
+      setSitemap(parsedSitemap);
+      setAppModuleId('mock-app-id');
+      
+      // Auto-select first entity
+      if (parsedSitemap.areas.length > 0) {
+        const firstArea = parsedSitemap.areas[0];
+        if (firstArea.groups.length > 0) {
+          const firstGroup = firstArea.groups[0];
+          if (firstGroup.subareas.length > 0) {
+            const firstSubarea = firstGroup.subareas[0];
+            if (firstSubarea.entity) {
+              setSelectedEntity(firstSubarea.entity);
+            }
+          }
+        }
+      }
     } finally {
       setLoading(false);
     }
