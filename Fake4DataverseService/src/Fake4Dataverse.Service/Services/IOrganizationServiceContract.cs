@@ -82,75 +82,13 @@ public interface IOrganizationServiceContract
     /// Executes an organization request.
     /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.execute
     /// 
-    /// ServiceKnownType attributes are required for WCF to properly serialize/deserialize
-    /// the various OrganizationRequest and OrganizationResponse derived types.
+    /// Known types are discovered dynamically at runtime using the KnownTypesProvider.
+    /// This automatically includes all OrganizationRequest and OrganizationResponse derived types
+    /// from Microsoft.Xrm.Sdk and Microsoft.Crm.Sdk assemblies (123+ types discovered automatically).
     /// Reference: https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/data-contract-known-types
-    /// Known types tell the DataContractSerializer about types that may be present during deserialization.
     /// </summary>
     [OperationContract(Action = "http://schemas.microsoft.com/xrm/2011/Contracts/Services/IOrganizationService/Execute",
                       ReplyAction = "http://schemas.microsoft.com/xrm/2011/Contracts/Services/IOrganizationService/ExecuteResponse")]
-    // Common message types from Microsoft.Crm.Sdk.Messages
-    [ServiceKnownType(typeof(WhoAmIRequest))]
-    [ServiceKnownType(typeof(WhoAmIResponse))]
-    [ServiceKnownType(typeof(RetrieveVersionRequest))]
-    [ServiceKnownType(typeof(RetrieveVersionResponse))]
-    [ServiceKnownType(typeof(AssignRequest))]
-    [ServiceKnownType(typeof(AssignResponse))]
-    [ServiceKnownType(typeof(GrantAccessRequest))]
-    [ServiceKnownType(typeof(GrantAccessResponse))]
-    [ServiceKnownType(typeof(ModifyAccessRequest))]
-    [ServiceKnownType(typeof(ModifyAccessResponse))]
-    [ServiceKnownType(typeof(RevokeAccessRequest))]
-    [ServiceKnownType(typeof(RevokeAccessResponse))]
-    [ServiceKnownType(typeof(RetrieveSharedPrincipalsAndAccessRequest))]
-    [ServiceKnownType(typeof(RetrieveSharedPrincipalsAndAccessResponse))]
-    [ServiceKnownType(typeof(RetrievePrincipalAccessRequest))]
-    [ServiceKnownType(typeof(RetrievePrincipalAccessResponse))]
-    [ServiceKnownType(typeof(SetStateRequest))]
-    [ServiceKnownType(typeof(SetStateResponse))]
-    [ServiceKnownType(typeof(MergeRequest))]
-    [ServiceKnownType(typeof(MergeResponse))]
-    [ServiceKnownType(typeof(WinOpportunityRequest))]
-    [ServiceKnownType(typeof(WinOpportunityResponse))]
-    [ServiceKnownType(typeof(LoseOpportunityRequest))]
-    [ServiceKnownType(typeof(LoseOpportunityResponse))]
-    [ServiceKnownType(typeof(CloseIncidentRequest))]
-    [ServiceKnownType(typeof(CloseIncidentResponse))]
-    [ServiceKnownType(typeof(CloseQuoteRequest))]
-    [ServiceKnownType(typeof(CloseQuoteResponse))]
-    [ServiceKnownType(typeof(ExecuteMultipleRequest))]
-    [ServiceKnownType(typeof(ExecuteMultipleResponse))]
-    [ServiceKnownType(typeof(ExecuteFetchRequest))]
-    [ServiceKnownType(typeof(ExecuteFetchResponse))]
-    [ServiceKnownType(typeof(RetrieveAttributeRequest))]
-    [ServiceKnownType(typeof(RetrieveAttributeResponse))]
-    [ServiceKnownType(typeof(RetrieveEntityRequest))]
-    [ServiceKnownType(typeof(RetrieveEntityResponse))]
-    [ServiceKnownType(typeof(RetrieveRelationshipRequest))]
-    [ServiceKnownType(typeof(RetrieveRelationshipResponse))]
-    [ServiceKnownType(typeof(RetrieveOptionSetRequest))]
-    [ServiceKnownType(typeof(RetrieveOptionSetResponse))]
-    [ServiceKnownType(typeof(AddMembersTeamRequest))]
-    [ServiceKnownType(typeof(AddMembersTeamResponse))]
-    [ServiceKnownType(typeof(RemoveMembersTeamRequest))]
-    [ServiceKnownType(typeof(RemoveMembersTeamResponse))]
-    [ServiceKnownType(typeof(AddToQueueRequest))]
-    [ServiceKnownType(typeof(AddToQueueResponse))]
-    [ServiceKnownType(typeof(PickFromQueueRequest))]
-    [ServiceKnownType(typeof(PickFromQueueResponse))]
-    [ServiceKnownType(typeof(SendEmailRequest))]
-    [ServiceKnownType(typeof(SendEmailResponse))]
-    [ServiceKnownType(typeof(PublishXmlRequest))]
-    [ServiceKnownType(typeof(PublishXmlResponse))]
-    [ServiceKnownType(typeof(BulkDeleteRequest))]
-    [ServiceKnownType(typeof(BulkDeleteResponse))]
-    [ServiceKnownType(typeof(UpsertRequest))]
-    [ServiceKnownType(typeof(UpsertResponse))]
-    [ServiceKnownType(typeof(InsertOptionValueRequest))]
-    [ServiceKnownType(typeof(InsertOptionValueResponse))]
-    [ServiceKnownType(typeof(AddListMembersListRequest))]
-    [ServiceKnownType(typeof(AddListMembersListResponse))]
-    [ServiceKnownType(typeof(ReviseQuoteRequest))]
-    [ServiceKnownType(typeof(ReviseQuoteResponse))]
+    [ServiceKnownType("GetKnownTypes", typeof(KnownTypesProvider))]
     OrganizationResponse Execute(OrganizationRequest request);
 }

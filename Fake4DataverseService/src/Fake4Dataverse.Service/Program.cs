@@ -140,6 +140,10 @@ public class Program
                 options.DebugBehavior.IncludeExceptionDetailInFaults = true;
             });
             
+            // Discover and register known types for Execute method
+            var knownTypes = KnownTypesProvider.GetKnownTypes(null);
+            Console.WriteLine($"[KnownTypesProvider] Registering {knownTypes.Count()} known types for WCF serialization");
+            
             // Standard Dynamics 365/Dataverse endpoint path
             serviceBuilder.AddServiceEndpoint<OrganizationServiceImpl, IOrganizationServiceContract>(
                 new BasicHttpBinding(),
