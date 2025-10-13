@@ -220,7 +220,7 @@ namespace Fake4Dataverse
                     // Trigger Cloud Flows after PostOperation plugins
                     // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
                     // Cloud Flows trigger asynchronously after the operation completes
-                    CloudFlowSimulator.TriggerDataverseFlows("Update", e.LogicalName, cachedEntity, modifiedAttributes);
+                    CloudFlowSimulator?.TriggerDataverseFlows("Update", e.LogicalName, cachedEntity, modifiedAttributes);
                 }
             }
             else
@@ -377,7 +377,7 @@ namespace Fake4Dataverse
                     // Trigger Cloud Flows after PostOperation plugins
                     // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
                     // Cloud Flows trigger asynchronously after the operation completes
-                    CloudFlowSimulator.TriggerDataverseFlows("Delete", er.LogicalName, entityToDelete);
+                    CloudFlowSimulator?.TriggerDataverseFlows("Delete", er.LogicalName, entityToDelete);
                 }
             }
             else
@@ -583,7 +583,7 @@ namespace Fake4Dataverse
                 // Trigger Cloud Flows after PostOperation plugins
                 // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
                 // Cloud Flows trigger asynchronously after the operation completes
-                CloudFlowSimulator.TriggerDataverseFlows("Create", e.LogicalName, e);
+                CloudFlowSimulator?.TriggerDataverseFlows("Create", e.LogicalName, e);
             }
 
             // Record audit entry for Create operation

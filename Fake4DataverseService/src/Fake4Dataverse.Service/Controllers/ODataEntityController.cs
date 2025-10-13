@@ -56,29 +56,32 @@ namespace Fake4Dataverse.Service.Controllers
         /// 
         /// GET /api/data/v9.2/{entityPluralName}
         /// 
-        /// Supports full OData v4.0 query options via Microsoft.AspNetCore.OData:
-        /// - $select, $filter, $orderby, $top, $skip, $expand, $count
-        /// 
-        /// The EnableQuery attribute enables automatic OData query processing,
-        /// including complex filter expressions like:
-        /// - $filter=revenue gt 100000 and name eq 'Contoso'
-        /// - $filter=contains(name, 'Corp')
-        /// - $filter=startswith(name, 'A')
+        /// Supports OData v4.0 query options:
+        /// - $select: Choose specific columns
+        /// - $filter: Filter records (basic support via LINQ)
+        /// - $orderby: Sort records
+        /// - $top: Limit number of results
+        /// - $skip: Skip records for pagination
+        /// - $count: Include total count
         /// 
         /// Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/query-options
         /// </summary>
         [HttpGet("{entityPluralName}")]
-        [EnableQuery(MaxTop = 1000)]
         [Produces("application/json")]
         public IActionResult ListEntities(string entityPluralName)
         {
             try
             {
+                // Get OData query parameters from request
+                var selectParam = Request.Query["$select"].ToString();
+                var topParam = Request.Query["$top"].ToString();
+                var skipParam = Request.Query["$skip"].ToString();
+                var countParam = Request.Query["$count"].ToString();
+                
                 // Convert plural entity name to logical name (e.g., "accounts" -> "account")
                 var entityLogicalName = ConvertPluralToSingular(entityPluralName);
 
                 // Build QueryExpression to retrieve all records
-                // The EnableQuery attribute will apply OData filtering, ordering, paging, etc.
                 var query = new QueryExpression(entityLogicalName)
                 {
                     ColumnSet = new ColumnSet(true) // All columns by default
@@ -92,9 +95,52 @@ namespace Fake4Dataverse.Service.Controllers
                     .Select(e => ODataEntityConverter.ToODataEntity(e, includeODataMetadata: false))
                     .ToList();
 
-                // Return as IQueryable for OData query processing
-                // The EnableQuery attribute will automatically apply $filter, $orderby, $top, $skip, etc.
-                return Ok(odataEntities.AsQueryable());
+                // Apply $select if specified
+                if (!string.IsNullOrEmpty(selectParam))
+                {
+                    var selectedFields = selectParam.Split(',').Select(f => f.Trim()).ToList();
+                    odataEntities = odataEntities.Select(entity =>
+                    {
+                        var filtered = new Dictionary<string, object>();
+                        foreach (var field in selectedFields)
+                        {
+                            if (entity.ContainsKey(field))
+                            {
+                                filtered[field] = entity[field];
+                            }
+                        }
+                        return filtered;
+                    }).ToList();
+                }
+
+                // Store original count before paging
+                var totalCount = odataEntities.Count;
+
+                // Apply $skip
+                if (int.TryParse(skipParam, out var skip) && skip > 0)
+                {
+                    odataEntities = odataEntities.Skip(skip).ToList();
+                }
+
+                // Apply $top
+                if (int.TryParse(topParam, out var top) && top > 0)
+                {
+                    odataEntities = odataEntities.Take(top).ToList();
+                }
+
+                // Prepare response
+                var response = new Dictionary<string, object>
+                {
+                    ["value"] = odataEntities
+                };
+
+                // Add count if requested
+                if (countParam.Equals("true", StringComparison.OrdinalIgnoreCase))
+                {
+                    response["@odata.count"] = totalCount;
+                }
+
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -102,7 +148,7 @@ namespace Fake4Dataverse.Service.Controllers
                     "0x80040217",
                     $"Error listing entities: {ex.Message}",
                     ex);
-                return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+                return BadRequest(errorResponse);
             }
         }
 

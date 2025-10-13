@@ -4,9 +4,13 @@ using Fake4Dataverse.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using System.CommandLine;
+using System.IO;
 using CoreWCF;
 using CoreWCF.Configuration;
 
@@ -91,6 +95,9 @@ public class Program
         var context = XrmFakedContextFactory.New();
         var organizationService = context.GetOrganizationService();
         
+        // Initialize example Model-Driven App metadata
+        MdaInitializer.InitializeExampleMda(organizationService);
+        
         builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);
         
@@ -132,6 +139,25 @@ public class Program
             });
 
         var app = builder.Build();
+        
+        // Enable static file serving for Model-Driven App
+        // NOTE: Order matters - UseDefaultFiles must come before UseStaticFiles
+        var mdaPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "mda");
+        
+        // Serve MDA at /main.aspx to match real Dynamics 365 MDA URLs
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
+        app.UseDefaultFiles(new DefaultFilesOptions
+        {
+            DefaultFileNames = new List<string> { "index.html" },
+            FileProvider = new PhysicalFileProvider(mdaPath),
+            RequestPath = ""  // Serve from root
+        });
+        
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(mdaPath),
+            RequestPath = ""  // Serve from root
+        });
         
         // Add authentication middleware if token is provided
         if (!string.IsNullOrEmpty(accessToken))
@@ -182,8 +208,58 @@ public class Program
         // Configure REST API for OData endpoints
         app.MapControllers();
 
-        app.MapGet("/", () => Results.Text(
+        // Serve main.aspx for MDA (matching Dynamics 365 URL pattern)
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
+        app.MapGet("/main.aspx", async (HttpContext context) =>
+        {
+            var indexPath = Path.Combine(mdaPath, "index.html");
+            if (File.Exists(indexPath))
+            {
+                context.Response.ContentType = "text/html";
+                await context.Response.SendFileAsync(indexPath);
+            }
+            else
+            {
+                context.Response.StatusCode = 404;
+                await context.Response.WriteAsync("Model-Driven App not found. Please build the Next.js app.");
+            }
+        });
+
+        // Redirect root to main.aspx with default app
+        app.MapGet("/", async (HttpContext context) =>
+        {
+            // Load default app module ID
+            var service = context.RequestServices.GetRequiredService<OrganizationServiceImpl>();
+            var query = new QueryExpression("appmodule")
+            {
+                ColumnSet = new ColumnSet("appmoduleid"),
+                TopCount = 1
+            };
+            
+            try
+            {
+                var result = service.RetrieveMultiple(query);
+                if (result.Entities.Count > 0)
+                {
+                    var appId = result.Entities[0].Id;
+                    context.Response.Redirect($"/main.aspx?appid={appId}&pagetype=entitylist");
+                }
+                else
+                {
+                    context.Response.Redirect("/main.aspx");
+                }
+            }
+            catch
+            {
+                context.Response.Redirect("/main.aspx");
+            }
+        });
+
+        app.MapGet("/info", () => Results.Text(
             "Fake4Dataverse Service is running.\n\n" +
+            "Model-Driven App:\n" +
+            "  - /main.aspx - Web interface for testing (matches Dynamics 365 URL pattern)\n" +
+            "  - Supports query parameters: ?appid={guid}&pagetype=entitylist&etn={entityname}&viewid={guid}\n\n" +
             "Available SOAP endpoints:\n" +
             "  - /XRMServices/2011/Organization.svc - Organization Service (SOAP 1.1/1.2)\n" +
             "  - /XRMServices/2011/Organization.svc?wsdl - WSDL definition\n\n" +
@@ -199,6 +275,13 @@ public class Program
 
         Console.WriteLine("Fake4Dataverse Service started successfully");
         Console.WriteLine($"Base URL: http://{host}:{port}");
+        Console.WriteLine();
+        Console.WriteLine("Model-Driven App (matches Dynamics 365 URL pattern):");
+        Console.WriteLine($"  - http://{host}:{port}/main.aspx - Web interface");
+        Console.WriteLine($"  - Supports query parameters: ?appid={{guid}}&pagetype=entitylist&etn={{entityname}}&viewid={{guid}}");
+        Console.WriteLine();
+        Console.WriteLine("Service Information:");
+        Console.WriteLine($"  - http://{host}:{port}/info - Service info page");
         Console.WriteLine();
         Console.WriteLine("Available SOAP endpoints (matching Microsoft Dynamics 365/Dataverse):");
         Console.WriteLine($"  - http://{host}:{port}/XRMServices/2011/Organization.svc");
