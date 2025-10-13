@@ -164,11 +164,24 @@ namespace Fake4Dataverse
             var userId = CallerProperties?.CallerId?.Id ?? Guid.Empty;
             var objectRef = new EntityReference(newEntity.LogicalName, newEntity.Id);
 
+            // System-managed attributes that should not be audited as user changes
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
+            var systemManagedAttributes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "modifiedon", "modifiedby", "createdon", "createdby", "ownerid"
+            };
+
             // Track attribute changes
             var attributeChanges = new Dictionary<string, (object oldValue, object newValue)>();
             
             foreach (var attr in newEntity.Attributes.Keys)
             {
+                // Skip system-managed attributes
+                if (systemManagedAttributes.Contains(attr))
+                {
+                    continue;
+                }
+
                 var newValue = newEntity.Attributes[attr];
                 var oldValue = oldEntity.Contains(attr) ? oldEntity.Attributes[attr] : null;
                 

@@ -61,6 +61,12 @@ namespace Fake4Dataverse
 
         protected internal bool Initialised { get; set; }
 
+        /// <summary>
+        /// Lock object for thread-safe CRUD operations
+        /// Provides database-like serialization of transactions
+        /// </summary>
+        private readonly object _dataLock = new object();
+
         public Dictionary<string, Dictionary<Guid, Entity>> Data { get; set; }
 
         [Obsolete("Please use ProxyTypesAssemblies to retrieve assemblies and EnableProxyTypes to add new ones")]

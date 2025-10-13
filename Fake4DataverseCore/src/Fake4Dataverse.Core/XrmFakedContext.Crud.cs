@@ -104,10 +104,13 @@ namespace Fake4Dataverse
             var reference = e.ToEntityReferenceWithKeyAttributes();
             e.Id = GetRecordUniqueId(reference);
 
-            // Update specific validations: The entity record must exist in the context
-            if (Data.ContainsKey(e.LogicalName) &&
-                Data[e.LogicalName].ContainsKey(e.Id))
+            // Thread-safe update operation with database-like transaction serialization
+            lock (_dataLock)
             {
+                // Update specific validations: The entity record must exist in the context
+                if (Data.ContainsKey(e.LogicalName) &&
+                    Data[e.LogicalName].ContainsKey(e.Id))
+                {
                 // Track modified attributes for filtering
                 var modifiedAttributes = new HashSet<string>(e.Attributes.Keys, StringComparer.OrdinalIgnoreCase);
                 
@@ -222,42 +225,49 @@ namespace Fake4Dataverse
                     // Cloud Flows trigger asynchronously after the operation completes
                     CloudFlowSimulator?.TriggerDataverseFlows("Update", e.LogicalName, cachedEntity, modifiedAttributes);
                 }
-            }
-            else
-            {
-                // The entity record was not found, return a CRM-ish update error message
-                throw FakeOrganizationServiceFaultFactory.New($"{e.LogicalName} with Id {e.Id} Does Not Exist");
+                }
+                else
+                {
+                    // The entity record was not found, return a CRM-ish update error message
+                    throw FakeOrganizationServiceFaultFactory.New($"{e.LogicalName} with Id {e.Id} Does Not Exist");
+                }
             }
         }
 
         public Entity GetEntityById(string sLogicalName, Guid id)
         {
-            if(!Data.ContainsKey(sLogicalName)) 
+            lock (_dataLock)
             {
-                throw new InvalidOperationException($"The entity logical name '{sLogicalName}' is not valid.");
-            }
+                if(!Data.ContainsKey(sLogicalName)) 
+                {
+                    throw new InvalidOperationException($"The entity logical name '{sLogicalName}' is not valid.");
+                }
 
-            if(!Data[sLogicalName].ContainsKey(id)) 
-            {
-                throw new InvalidOperationException($"The id parameter '{id.ToString()}' for entity logical name '{sLogicalName}' is not valid.");
-            }
+                if(!Data[sLogicalName].ContainsKey(id)) 
+                {
+                    throw new InvalidOperationException($"The id parameter '{id.ToString()}' for entity logical name '{sLogicalName}' is not valid.");
+                }
 
-            return Data[sLogicalName][id];
+                return Data[sLogicalName][id];
+            }
         }
 
         public bool ContainsEntity(string sLogicalName, Guid id)
         {
-            if(!Data.ContainsKey(sLogicalName)) 
+            lock (_dataLock)
             {
-                return false;
-            }
+                if(!Data.ContainsKey(sLogicalName)) 
+                {
+                    return false;
+                }
 
-            if(!Data[sLogicalName].ContainsKey(id)) 
-            {
-                return false;
-            }
+                if(!Data[sLogicalName].ContainsKey(id)) 
+                {
+                    return false;
+                }
 
-            return true;
+                return true;
+            }
         }
 
         public T GetEntityById<T>(Guid id) where T: Entity
@@ -309,24 +319,27 @@ namespace Fake4Dataverse
 
         public void DeleteEntity(EntityReference er)
         {
-            // Don't fail with invalid operation exception, if no record of this entity exists, but entity is known
-            if (!this.Data.ContainsKey(er.LogicalName))
+            // Thread-safe delete operation with database-like transaction serialization
+            lock (_dataLock)
             {
-                if (ProxyTypesAssemblies.Count() == 0)
+                // Don't fail with invalid operation exception, if no record of this entity exists, but entity is known
+                if (!this.Data.ContainsKey(er.LogicalName))
                 {
-                    throw new InvalidOperationException($"The entity logical name {er.LogicalName} is not valid.");
+                    if (ProxyTypesAssemblies.Count() == 0)
+                    {
+                        throw new InvalidOperationException($"The entity logical name {er.LogicalName} is not valid.");
+                    }
+
+                    if (FindReflectedType(er.LogicalName) == null)
+                    {
+                        throw new InvalidOperationException($"The entity logical name {er.LogicalName} is not valid.");
+                    }
                 }
 
-                if (FindReflectedType(er.LogicalName) == null)
+                // Entity logical name exists, so , check if the requested entity exists
+                if (this.Data.ContainsKey(er.LogicalName) && this.Data[er.LogicalName] != null &&
+                    this.Data[er.LogicalName].ContainsKey(er.Id))
                 {
-                    throw new InvalidOperationException($"The entity logical name {er.LogicalName} is not valid.");
-                }
-            }
-
-            // Entity logical name exists, so , check if the requested entity exists
-            if (this.Data.ContainsKey(er.LogicalName) && this.Data[er.LogicalName] != null &&
-                this.Data[er.LogicalName].ContainsKey(er.Id))
-            {
                 // Get the entity before deletion for plugin execution
                 var entityToDelete = this.Data[er.LogicalName][er.Id];
                 
@@ -379,12 +392,13 @@ namespace Fake4Dataverse
                     // Cloud Flows trigger asynchronously after the operation completes
                     CloudFlowSimulator?.TriggerDataverseFlows("Delete", er.LogicalName, entityToDelete);
                 }
-            }
-            else
-            {
-                // Entity not found in the context => throw not found exception
-                // The entity record was not found, return a CRM-ish update error message
-                throw FakeOrganizationServiceFaultFactory.New($"{er.LogicalName} with Id {er.Id} Does Not Exist");
+                }
+                else
+                {
+                    // Entity not found in the context => throw not found exception
+                    // The entity record was not found, return a CRM-ish update error message
+                    throw FakeOrganizationServiceFaultFactory.New($"{er.LogicalName} with Id {er.Id} Does Not Exist");
+                }
             }
         }
         #endregion
@@ -594,76 +608,80 @@ namespace Fake4Dataverse
 
         public void AddEntity(Entity e)
         {
-            //Automatically detect proxy types assembly if an early bound type was used.
-            if (ProxyTypesAssemblies.Count() == 0 &&
-                e.GetType().IsSubclassOf(typeof(Entity)))
+            // Thread-safe add operation with database-like transaction serialization
+            lock (_dataLock)
             {
-                EnableProxyTypes(Assembly.GetAssembly(e.GetType()));
-            }
-
-            ValidateEntity(e); //Entity must have a logical name and an Id
-
-            var integrityOptions = GetProperty<IIntegrityOptions>();
-
-            foreach (var sAttributeName in e.Attributes.Keys.ToList())
-            {
-                var attribute = e[sAttributeName];
-                if (attribute is DateTime)
+                //Automatically detect proxy types assembly if an early bound type was used.
+                if (ProxyTypesAssemblies.Count() == 0 &&
+                    e.GetType().IsSubclassOf(typeof(Entity)))
                 {
-                    e[sAttributeName] = ConvertToUtc((DateTime)e[sAttributeName]);
+                    EnableProxyTypes(Assembly.GetAssembly(e.GetType()));
                 }
-                if (attribute is EntityReference && integrityOptions.ValidateEntityReferences)
+
+                ValidateEntity(e); //Entity must have a logical name and an Id
+
+                var integrityOptions = GetProperty<IIntegrityOptions>();
+
+                foreach (var sAttributeName in e.Attributes.Keys.ToList())
                 {
-                    var target = (EntityReference)e[sAttributeName];
-                    e[sAttributeName] = ResolveEntityReference(target);
-                }
-            }
-
-            //Add the entity collection
-            if (!Data.ContainsKey(e.LogicalName))
-            {
-                Data.Add(e.LogicalName, new Dictionary<Guid, Entity>());
-            }
-
-            if (Data[e.LogicalName].ContainsKey(e.Id))
-            {
-                Data[e.LogicalName][e.Id] = e;
-            }
-            else
-            {
-                Data[e.LogicalName].Add(e.Id, e);
-            }
-
-            //Update metadata for that entity
-            if (!AttributeMetadataNames.ContainsKey(e.LogicalName))
-                AttributeMetadataNames.Add(e.LogicalName, new Dictionary<string, string>());
-
-            //Update attribute metadata
-            if (ProxyTypesAssemblies.Count() > 0)
-            {
-                //If the context is using a proxy types assembly then we can just guess the metadata from the generated attributes
-                var type = FindReflectedType(e.LogicalName);
-                if (type != null)
-                {
-                    var props = type.GetProperties();
-                    foreach (var p in props)
+                    var attribute = e[sAttributeName];
+                    if (attribute is DateTime)
                     {
-                        if (!AttributeMetadataNames[e.LogicalName].ContainsKey(p.Name))
-                            AttributeMetadataNames[e.LogicalName].Add(p.Name, p.Name);
+                        e[sAttributeName] = ConvertToUtc((DateTime)e[sAttributeName]);
+                    }
+                    if (attribute is EntityReference && integrityOptions.ValidateEntityReferences)
+                    {
+                        var target = (EntityReference)e[sAttributeName];
+                        e[sAttributeName] = ResolveEntityReference(target);
                     }
                 }
-                else
-                    throw new Exception(string.Format("Couldnt find reflected type for {0}", e.LogicalName));
 
-            }
-            else
-            {
-                //If dynamic entities are being used, then the only way of guessing if a property exists is just by checking
-                //if the entity has the attribute in the dictionary
-                foreach (var attKey in e.Attributes.Keys)
+                //Add the entity collection
+                if (!Data.ContainsKey(e.LogicalName))
                 {
-                    if (!AttributeMetadataNames[e.LogicalName].ContainsKey(attKey))
-                        AttributeMetadataNames[e.LogicalName].Add(attKey, attKey);
+                    Data.Add(e.LogicalName, new Dictionary<Guid, Entity>());
+                }
+
+                if (Data[e.LogicalName].ContainsKey(e.Id))
+                {
+                    Data[e.LogicalName][e.Id] = e;
+                }
+                else
+                {
+                    Data[e.LogicalName].Add(e.Id, e);
+                }
+
+                //Update metadata for that entity
+                if (!AttributeMetadataNames.ContainsKey(e.LogicalName))
+                    AttributeMetadataNames.Add(e.LogicalName, new Dictionary<string, string>());
+
+                //Update attribute metadata
+                if (ProxyTypesAssemblies.Count() > 0)
+                {
+                    //If the context is using a proxy types assembly then we can just guess the metadata from the generated attributes
+                    var type = FindReflectedType(e.LogicalName);
+                    if (type != null)
+                    {
+                        var props = type.GetProperties();
+                        foreach (var p in props)
+                        {
+                            if (!AttributeMetadataNames[e.LogicalName].ContainsKey(p.Name))
+                                AttributeMetadataNames[e.LogicalName].Add(p.Name, p.Name);
+                        }
+                    }
+                    else
+                        throw new Exception(string.Format("Couldnt find reflected type for {0}", e.LogicalName));
+
+                }
+                else
+                {
+                    //If dynamic entities are being used, then the only way of guessing if a property exists is just by checking
+                    //if the entity has the attribute in the dictionary
+                    foreach (var attKey in e.Attributes.Keys)
+                    {
+                        if (!AttributeMetadataNames[e.LogicalName].ContainsKey(attKey))
+                            AttributeMetadataNames[e.LogicalName].Add(attKey, attKey);
+                    }
                 }
             }
 
