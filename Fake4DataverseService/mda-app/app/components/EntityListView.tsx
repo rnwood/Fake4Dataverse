@@ -492,7 +492,19 @@ export default function EntityListView({
           </ToolbarButton>
           <ToolbarButton
             icon={<Add20Regular />}
-            disabled
+            onClick={() => {
+              // Open form for new record
+              if (typeof window !== 'undefined') {
+                const params = new URLSearchParams(window.location.search);
+                params.set('pagetype', 'entityrecord');
+                params.set('etn', entityName);
+                params.delete('id'); // Ensure no id for new record
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                window.history.pushState({}, '', newUrl);
+                // Trigger a custom event to notify the parent
+                window.dispatchEvent(new Event('urlchange'));
+              }
+            }}
           >
             New
           </ToolbarButton>
@@ -550,7 +562,24 @@ export default function EntityListView({
               </DataGridHeader>
               <DataGridBody<EntityRecord>>
                 {({ item, rowId }) => (
-                  <DataGridRow<EntityRecord> key={rowId}>
+                  <DataGridRow<EntityRecord> 
+                    key={rowId}
+                    onClick={() => {
+                      // Open form for this record
+                      const recordId = item[entityName + 'id'];
+                      if (recordId && typeof window !== 'undefined') {
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('pagetype', 'entityrecord');
+                        params.set('etn', entityName);
+                        params.set('id', recordId);
+                        const newUrl = `${window.location.pathname}?${params.toString()}`;
+                        window.history.pushState({}, '', newUrl);
+                        // Trigger a custom event to notify the parent
+                        window.dispatchEvent(new Event('urlchange'));
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
                     {({ renderCell }) => (
                       <DataGridCell>{renderCell(item)}</DataGridCell>
                     )}

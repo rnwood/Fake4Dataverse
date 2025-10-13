@@ -50,6 +50,10 @@ public static class MdaInitializer
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/savedquery
         CreateSystemViews(service, appModuleId);
         
+        // Create system forms for entities
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
+        CreateSystemForms(service, appModuleId);
+        
         // Create some sample data for testing
         CreateSampleData(service);
         
@@ -331,7 +335,271 @@ public static class MdaInitializer
             Id = Guid.NewGuid(),
             ["appmoduleidunique"] = appModuleId,
             ["objectid"] = componentId,
-            ["componenttype"] = componentType // 26 = SavedQuery, 1 = Entity
+            ["componenttype"] = componentType // 26 = SavedQuery, 1 = Entity, 60 = SystemForm
+        };
+        service.Create(appModuleComponent);
+    }
+    
+    /// <summary>
+    /// Create system forms for entities
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
+    /// Form types: 2=Main, 4=Quick Create, 6=Quick View, 7=Quick View Form, 8=Dialog, 9=Task Flow Form
+    /// </summary>
+    private static void CreateSystemForms(IOrganizationService service, Guid appModuleId)
+    {
+        Console.WriteLine("  Creating system forms...");
+        
+        CreateAccountForm(service, appModuleId);
+        CreateContactForm(service, appModuleId);
+        CreateOpportunityForm(service, appModuleId);
+        
+        Console.WriteLine($"    Created system forms for Account, Contact, and Opportunity");
+    }
+    
+    private static void CreateAccountForm(IOrganizationService service, Guid appModuleId)
+    {
+        var formId = Guid.NewGuid();
+        var formXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<form>
+  <tabs>
+    <tab id=""tab_general"" name=""general"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""General"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_account_info"" name=""account_information"" visible=""true"">
+              <labels>
+                <label description=""Account Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""accountname"">
+                    <labels>
+                      <label description=""Account Name"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""accountname"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""name"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""accountnumber"">
+                    <labels>
+                      <label description=""Account Number"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""accountnumber"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""accountnumber"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""revenue"">
+                    <labels>
+                      <label description=""Annual Revenue"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""revenue"" classid=""{533B9E00-756B-4312-95A0-DC888637AC78}"" datafieldname=""revenue"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""numberofemployees"">
+                    <labels>
+                      <label description=""Number of Employees"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""numberofemployees"" classid=""{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}"" datafieldname=""numberofemployees"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+    <tab id=""tab_details"" name=""details"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""Details"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_contact_info"" name=""contact_information"" visible=""true"">
+              <labels>
+                <label description=""Contact Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""telephone1"">
+                    <labels>
+                      <label description=""Main Phone"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""telephone1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""telephone1"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""emailaddress1"">
+                    <labels>
+                      <label description=""Email"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""emailaddress1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""emailaddress1"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+  </tabs>
+</form>";
+        
+        var accountForm = new Entity("systemform")
+        {
+            Id = formId,
+            ["name"] = "Account Main Form",
+            ["objecttypecode"] = "account",
+            ["type"] = 2, // Main form
+            ["formxml"] = formXml,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(accountForm);
+        CreateAppModuleComponent(service, appModuleId, formId, 60); // 60 = SystemForm
+    }
+    
+    private static void CreateContactForm(IOrganizationService service, Guid appModuleId)
+    {
+        var formId = Guid.NewGuid();
+        var formXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<form>
+  <tabs>
+    <tab id=""tab_general"" name=""general"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""General"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_contact_info"" name=""contact_information"" visible=""true"">
+              <labels>
+                <label description=""Contact Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""firstname"">
+                    <labels>
+                      <label description=""First Name"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""firstname"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""firstname"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""lastname"">
+                    <labels>
+                      <label description=""Last Name"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""lastname"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""lastname"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""emailaddress1"">
+                    <labels>
+                      <label description=""Email"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""emailaddress1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""emailaddress1"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""telephone1"">
+                    <labels>
+                      <label description=""Business Phone"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""telephone1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""telephone1"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+  </tabs>
+</form>";
+        
+        var contactForm = new Entity("systemform")
+        {
+            Id = formId,
+            ["name"] = "Contact Main Form",
+            ["objecttypecode"] = "contact",
+            ["type"] = 2,
+            ["formxml"] = formXml,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(contactForm);
+        CreateAppModuleComponent(service, appModuleId, formId, 60);
+    }
+    
+    private static void CreateOpportunityForm(IOrganizationService service, Guid appModuleId)
+    {
+        var formId = Guid.NewGuid();
+        var formXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<form>
+  <tabs>
+    <tab id=""tab_general"" name=""general"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""General"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_opportunity_info"" name=""opportunity_information"" visible=""true"">
+              <labels>
+                <label description=""Opportunity Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""name"">
+                    <labels>
+                      <label description=""Topic"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""name"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""name"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""estimatedvalue"">
+                    <labels>
+                      <label description=""Est. Revenue"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""estimatedvalue"" classid=""{533B9E00-756B-4312-95A0-DC888637AC78}"" datafieldname=""estimatedvalue"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""estimatedclosedate"">
+                    <labels>
+                      <label description=""Est. Close Date"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""estimatedclosedate"" classid=""{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}"" datafieldname=""estimatedclosedate"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+  </tabs>
+</form>";
+        
+        var opportunityForm = new Entity("systemform")
+        {
+            Id = formId,
+            ["name"] = "Opportunity Main Form",
+            ["objecttypecode"] = "opportunity",
+            ["type"] = 2,
+            ["formxml"] = formXml,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(opportunityForm);
+        CreateAppModuleComponent(service, appModuleId, formId, 60);
+    }
         };
         service.Create(appModuleComponent);
     }

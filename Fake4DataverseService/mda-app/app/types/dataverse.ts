@@ -104,3 +104,60 @@ export interface ViewColumn {
   width: number;
   label: string;
 }
+
+/**
+ * SystemForm entity - Defines entity forms
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
+ */
+export interface SystemForm {
+  formid: string;
+  name: string;
+  objecttypecode: string; // Entity logical name
+  type: number; // Form type: 2=Main, 4=Quick Create, 6=Quick View, etc.
+  formxml?: string;
+  description?: string;
+  isdefault?: boolean;
+  statecode?: number;
+  statuscode?: number;
+}
+
+/**
+ * Parsed form definition from formxml
+ */
+export interface FormDefinition {
+  tabs: FormTab[];
+}
+
+export interface FormTab {
+  id: string;
+  name: string;
+  label: string;
+  visible: boolean;
+  sections: FormSection[];
+}
+
+export interface FormSection {
+  id: string;
+  name: string;
+  label: string;
+  visible: boolean;
+  rows: FormRow[];
+}
+
+export interface FormRow {
+  cells: FormCell[];
+}
+
+export interface FormCell {
+  control?: FormControl;
+  colspan?: number;
+  rowspan?: number;
+}
+
+export interface FormControl {
+  id: string;
+  datafieldname?: string;
+  classid: string;
+  label?: string;
+  disabled?: boolean;
+}
