@@ -2,7 +2,6 @@
 
 Testing audit functionality is essential for ensuring your Dataverse applications properly track changes to data. This guide covers enabling auditing, testing audit records, and retrieving audit history.
 
-**Implementation Date:** October 2025 (Issue #XXX)
 
 **Reference:** [Dataverse Auditing Overview](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview) - Microsoft documentation on the auditing system in Dataverse, including audit entity structure, audit details, and auditing configuration.
 
