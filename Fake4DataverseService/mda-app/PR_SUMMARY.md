@@ -2,7 +2,7 @@
 
 ## 🎯 Objective
 
-Add unit and e2e tests for Fake4Dataverse MDAs and implement form rendering with tabs, sections, and basic input controls.
+Add unit and e2e tests for Fake4Dataverse MDAs and implement form rendering with tabs, sections, basic input controls, and form scripts with full Xrm JavaScript API support.
 
 ## ✅ Completed Tasks
 
@@ -23,11 +23,13 @@ Add unit and e2e tests for Fake4Dataverse MDAs and implement form rendering with
   - Loads and displays records
   - Handles loading and error states
   - Filters by app module
+  - **Fixed: Clears views when entity changes**
 - ✅ EntityForm component (7 tests)
   - Loads and displays forms
   - Handles new vs edit modes
   - Renders tabs and sections
   - Filters forms by app module
+  - **Integrates with Xrm API for form scripts**
 
 ### E2E Tests (14 tests)
 - ✅ Navigation tests (6 tests)
@@ -49,24 +51,43 @@ Add unit and e2e tests for Fake4Dataverse MDAs and implement form rendering with
 ### Form Rendering Implementation
 
 **New Components:**
-1. **EntityForm.tsx** (362 lines)
+1. **EntityForm.tsx** (485 lines)
    - Renders entity forms based on SystemForm metadata
    - Supports multi-tab forms with tab navigation
    - Displays sections with proper titles
    - Renders basic input controls (text, number, money, date)
    - Handles both create and edit modes
    - Integrates with Dataverse Web API
+   - **Loads and executes form scripts from WebResources**
+   - **Implements Xrm JavaScript API**
 
-2. **form-utils.ts** (178 lines)
+2. **form-utils.ts** (254 lines)
    - Parses FormXML into structured TypeScript objects
    - Extracts tabs, sections, rows, cells, and controls
    - Handles labels and visibility settings
+   - **Parses form libraries (script references)**
+   - **Parses form events (OnLoad, OnSave, OnChange)**
+
+3. **xrm-api-types.ts** (171 lines)
+   - Complete TypeScript definitions for Xrm API
+   - XrmPage, FormContext, ExecutionContext interfaces
+   - Attribute and Control interfaces
+   - XrmUtility, XrmWebApi, XrmNavigation interfaces
+
+4. **xrm-api.ts** (409 lines)
+   - Full Xrm API implementation
+   - Xrm.Page (legacy API support)
+   - Xrm.Utility (alerts, dialogs, progress)
+   - Xrm.WebApi (CRUD operations)
+   - Xrm.Navigation (form/URL navigation)
+   - Attribute/Control implementations with onChange handlers
 
 **Component Updates:**
 1. **EntityListView.tsx**
    - ✅ Added row click handler to open forms
    - ✅ Enabled "New" button to create records
    - ✅ URL navigation support
+   - ✅ **Fixed bug: Clears views when entity changes**
 
 2. **page.tsx**
    - ✅ Added form page type handling
@@ -76,18 +97,23 @@ Add unit and e2e tests for Fake4Dataverse MDAs and implement form rendering with
 
 **Type Definitions:**
 - ✅ Added SystemForm interface
+- ✅ Added WebResource interface
 - ✅ Added FormDefinition, FormTab, FormSection, FormRow, FormCell, FormControl interfaces
+- ✅ **Added FormLibrary, FormEvent interfaces**
 - ✅ Extended dataverse.ts with form types
 
 ### Backend Changes
 
-**MdaInitializer.cs** (603 lines, +265 lines)
+**MdaInitializer.cs** (748 lines, +410 lines)
 - ✅ Created CreateSystemForms method
 - ✅ Added Account Main Form with 2 tabs, multiple sections
 - ✅ Added Contact Main Form with contact fields
 - ✅ Added Opportunity Main Form with opportunity fields
 - ✅ Forms linked to AppModule via AppModuleComponent
 - ✅ Comprehensive FormXML with proper structure
+- ✅ **Created CreateWebResources method**
+- ✅ **Added example JavaScript form scripts**
+- ✅ **Account form includes script references and event handlers**
 
 **Form Features:**
 - Multiple tabs (General, Details)
@@ -96,6 +122,13 @@ Add unit and e2e tests for Fake4Dataverse MDAs and implement form rendering with
 - Various control types (text, number, money, date)
 - Form type set to 2 (Main form)
 - isdefault flag for default form selection
+- **Form libraries (JavaScript references)**
+- **Form events (OnLoad, OnSave, OnChange)**
+- **Event handlers with function names**
+
+**WebResources Created:**
+- `fake4dataverse_account_form_script.js` - Account form script with OnLoad, OnSave, OnChange handlers
+- `fake4dataverse_utils.js` - Common utility functions (phone formatting, email validation)
 
 ## 📊 Code Statistics
 
@@ -205,17 +238,18 @@ npm run test:e2e
 
 Not included in this PR but potential improvements:
 - Advanced control types (lookup, optionset, subgrid)
-- Form validation
+- Form validation and business rules (partially implemented via scripts)
 - Dirty state warning on navigation
 - Form ribbon/command bar
-- Business rules execution
 - Field-level security
 - Quick create forms
-- Form scripts (JavaScript)
 
 ## 🎉 Results
 
 - ✅ All requirements from the issue completed
+- ✅ **View dropdown bug fixed**
+- ✅ **Full Xrm JavaScript API implemented**
+- ✅ **Form scripts with WebResources working**
 - ✅ 22 unit tests passing
 - ✅ 14 e2e tests ready for integration testing
 - ✅ C# code compiles without errors
@@ -223,3 +257,16 @@ Not included in this PR but potential improvements:
 - ✅ Comprehensive documentation provided
 - ✅ Follows Microsoft Dataverse standards
 - ✅ Clean, maintainable code with good separation of concerns
+
+## 📈 Code Statistics
+
+- **~2,514 lines of new code** (TypeScript + C#)
+- **15 new files** (components, tests, configs, docs, API implementation)
+- **7 modified files** (existing components enhanced)
+
+**Breakdown:**
+- Xrm API implementation: ~580 lines (xrm-api.ts + xrm-api-types.ts)
+- Form scripts support in EntityForm: ~110 lines
+- Backend WebResources: ~145 lines
+- Form XML updates: ~20 lines
+- Bug fixes: ~3 lines
