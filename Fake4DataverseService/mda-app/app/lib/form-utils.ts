@@ -3,7 +3,7 @@
  * Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/customize-entity-forms
  */
 
-import type { FormDefinition, FormTab, FormSection, FormRow, FormCell, FormControl } from '../types/dataverse';
+import type { FormDefinition, FormTab, FormSection, FormRow, FormCell, FormControl, FormLibrary, FormEvent } from '../types/dataverse';
 
 /**
  * Parse FormXML string into structured FormDefinition
@@ -17,12 +17,18 @@ export function parseFormXml(formXml: string): FormDefinition {
     const formElement = xmlDoc.getElementsByTagName('form')[0];
     if (!formElement) {
       console.warn('No form element found in FormXML');
-      return { tabs: [] };
+      return { tabs: [], formLibraries: [], events: [] };
     }
+    
+    // Parse form libraries (script references)
+    const formLibraries = parseFormLibraries(formElement);
+    
+    // Parse form events
+    const events = parseFormEvents(formElement);
     
     const tabsElement = formElement.getElementsByTagName('tabs')[0];
     if (!tabsElement) {
-      return { tabs: [] };
+      return { tabs: [], formLibraries, events };
     }
     
     const tabs: FormTab[] = [];
@@ -36,10 +42,10 @@ export function parseFormXml(formXml: string): FormDefinition {
       }
     }
     
-    return { tabs };
+    return { tabs, formLibraries, events };
   } catch (error) {
     console.error('Error parsing FormXML:', error);
-    return { tabs: [] };
+    return { tabs: [], formLibraries: [], events: [] };
   }
 }
 
@@ -172,4 +178,74 @@ function parseCell(cellElement: Element): FormCell | null {
     colspan,
     rowspan,
   };
+}
+
+/**
+ * Parse form libraries (script references) from FormXML
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/clientapi/reference/formcontext-data-process
+ */
+function parseFormLibraries(formElement: Element): FormLibrary[] {
+  const libraries: FormLibrary[] = [];
+  
+  const formLibrariesElement = formElement.getElementsByTagName('formLibraries')[0];
+  if (!formLibrariesElement) {
+    return libraries;
+  }
+  
+  const libraryElements = formLibrariesElement.getElementsByTagName('Library');
+  for (let i = 0; i < libraryElements.length; i++) {
+    const libraryElement = libraryElements[i];
+    const name = libraryElement.getAttribute('name') || '';
+    const libraryUniqueId = libraryElement.getAttribute('libraryUniqueId') || '';
+    
+    if (name) {
+      libraries.push({ name, libraryUniqueId });
+    }
+  }
+  
+  return libraries;
+}
+
+/**
+ * Parse form events from FormXML
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/clientapi/reference/events
+ */
+function parseFormEvents(formElement: Element): FormEvent[] {
+  const events: FormEvent[] = [];
+  
+  const eventsElement = formElement.getElementsByTagName('events')[0];
+  if (!eventsElement) {
+    return events;
+  }
+  
+  const eventElements = eventsElement.getElementsByTagName('event');
+  for (let i = 0; i < eventElements.length; i++) {
+    const eventElement = eventElements[i];
+    const name = eventElement.getAttribute('name') || '';
+    const application = eventElement.getAttribute('application') === 'true';
+    const active = eventElement.getAttribute('active') === 'true';
+    const attribute = eventElement.getAttribute('attribute') || undefined;
+    
+    // Parse handlers for this event
+    const handlerElements = eventElement.getElementsByTagName('Handler');
+    for (let j = 0; j < handlerElements.length; j++) {
+      const handlerElement = handlerElements[j];
+      const functionName = handlerElement.getAttribute('functionName') || undefined;
+      const libraryName = handlerElement.getAttribute('libraryName') || undefined;
+      const parametersAttr = handlerElement.getAttribute('parameters') || '';
+      const parameters = parametersAttr ? parametersAttr.split(',').map(p => p.trim()) : [];
+      
+      events.push({
+        name,
+        application,
+        active,
+        attribute,
+        functionName,
+        libraryName,
+        parameters,
+      });
+    }
+  }
+  
+  return events;
 }

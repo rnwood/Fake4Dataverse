@@ -25,7 +25,8 @@ import {
 } from '@fluentui/react-icons';
 import { dataverseClient } from '../lib/dataverse-client';
 import { parseFormXml } from '../lib/form-utils';
-import type { EntityRecord, SystemForm, FormDefinition } from '../types/dataverse';
+import { XrmApiImplementation, executeFormScript } from '../lib/xrm-api';
+import type { EntityRecord, SystemForm, FormDefinition, WebResource } from '../types/dataverse';
 
 const useStyles = makeStyles({
   container: {
@@ -115,10 +116,129 @@ export default function EntityForm({
   const [record, setRecord] = useState<EntityRecord>({});
   const [selectedTab, setSelectedTab] = useState<TabValue>('');
   const [isDirty, setIsDirty] = useState(false);
+  const [xrmApi, setXrmApi] = useState<any>(null);
+  const [scriptsLoaded, setScriptsLoaded] = useState(false);
 
   useEffect(() => {
     loadFormAndRecord();
   }, [entityName, recordId]);
+
+  // Initialize Xrm API and load scripts when form is loaded
+  useEffect(() => {
+    if (formDefinition && !scriptsLoaded) {
+      initializeXrmApi();
+    }
+  }, [formDefinition, record]);
+
+  const initializeXrmApi = async () => {
+    try {
+      // Create Xrm API instance
+      const xrmApiImpl = new XrmApiImplementation(
+        entityName,
+        entityPluralName,
+        record,
+        (savedRecordId) => {
+          if (onSave) {
+            onSave(savedRecordId);
+          }
+        }
+      );
+
+      // Register attributes from form
+      if (formDefinition) {
+        formDefinition.tabs.forEach(tab => {
+          tab.sections.forEach(section => {
+            section.rows.forEach(row => {
+              row.cells.forEach(cell => {
+                if (cell.control?.datafieldname) {
+                  xrmApiImpl.registerAttribute(cell.control.datafieldname);
+                  xrmApiImpl.registerControl(cell.control.id, cell.control.datafieldname);
+                }
+              });
+            });
+          });
+        });
+      }
+
+      const api = xrmApiImpl.createXrmApi();
+      setXrmApi(api);
+
+      // Load and execute form libraries (scripts)
+      if (formDefinition?.formLibraries && formDefinition.formLibraries.length > 0) {
+        await loadFormScripts(formDefinition, api);
+      }
+
+      // Execute OnLoad events
+      if (formDefinition?.events) {
+        executeFormEvents(formDefinition.events.filter(e => e.name === 'onload'), api);
+      }
+
+      setScriptsLoaded(true);
+    } catch (error) {
+      console.error('Error initializing Xrm API:', error);
+    }
+  };
+
+  const loadFormScripts = async (formDef: FormDefinition, api: any) => {
+    try {
+      // Load all webresources referenced in the form
+      for (const library of formDef.formLibraries) {
+        try {
+          // Fetch the webresource
+          const webResourceResponse = await dataverseClient.fetchEntities('webresources', {
+            filter: `name eq '${library.name}'`,
+            select: ['webresourceid', 'name', 'content', 'webresourcetype'],
+            top: 1,
+          });
+
+          if (webResourceResponse.value.length > 0) {
+            const webResource = webResourceResponse.value[0] as WebResource;
+            
+            // Only load JavaScript webresources (type 3)
+            if (webResource.webresourcetype === 3 && webResource.content) {
+              // Decode base64 content
+              const scriptContent = atob(webResource.content);
+              
+              // Execute the script to load functions into global scope
+              await executeFormScript(scriptContent, api);
+              
+              console.log(`Loaded form script: ${library.name}`);
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to load webresource ${library.name}:`, err);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading form scripts:', error);
+    }
+  };
+
+  const executeFormEvents = (events: any[], api: any) => {
+    events.forEach(event => {
+      if (event.active && event.functionName) {
+        try {
+          // Get the function from global scope
+          const func = (window as any)[event.functionName];
+          if (typeof func === 'function') {
+            // Create execution context
+            const executionContext = {
+              getFormContext: () => api.Page,
+              getEventSource: () => null,
+              getDepth: () => 1,
+            };
+            
+            // Call the function with execution context
+            func(executionContext);
+          } else {
+            console.warn(`Function ${event.functionName} not found for event ${event.name}`);
+          }
+        } catch (err) {
+          console.error(`Error executing ${event.name} event handler ${event.functionName}:`, err);
+        }
+      }
+    });
+  };
 
   const loadFormAndRecord = async () => {
     setLoading(true);

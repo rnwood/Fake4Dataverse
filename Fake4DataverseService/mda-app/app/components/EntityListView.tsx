@@ -119,6 +119,9 @@ export default function EntityListView({
 
   // Load available views for this entity
   useEffect(() => {
+    // Clear previous views when entity changes to prevent showing views from previous entity
+    setViews([]);
+    setSelectedViewId(null);
     loadViews();
   }, [entityName, appModuleId]);
 

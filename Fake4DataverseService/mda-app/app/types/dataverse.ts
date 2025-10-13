@@ -122,10 +122,41 @@ export interface SystemForm {
 }
 
 /**
+ * WebResource entity - Stores web resources (JavaScript, CSS, images, etc.)
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+ */
+export interface WebResource {
+  webresourceid: string;
+  name: string;
+  displayname?: string;
+  description?: string;
+  webresourcetype: number; // 1=HTML, 2=CSS, 3=JavaScript, 4=XML, 5=PNG, etc.
+  content?: string; // Base64 encoded content
+  languagecode?: number;
+}
+
+/**
  * Parsed form definition from formxml
  */
 export interface FormDefinition {
   tabs: FormTab[];
+  formLibraries: FormLibrary[];
+  events: FormEvent[];
+}
+
+export interface FormLibrary {
+  name: string; // WebResource name
+  libraryUniqueId: string;
+}
+
+export interface FormEvent {
+  name: string; // Event name (onload, onsave, etc.)
+  application: boolean;
+  active: boolean;
+  attribute?: string; // For field events
+  functionName?: string;
+  libraryName?: string;
+  parameters?: string[];
 }
 
 export interface FormTab {
