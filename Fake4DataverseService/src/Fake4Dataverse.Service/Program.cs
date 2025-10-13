@@ -62,7 +62,7 @@ public class Program
             getDefaultValue: () => null);
         var cdmSchemasOption = new Option<string[]?>(
             name: "--cdm-schemas",
-            description: "Optional list of standard CDM schema groups to download and initialize (e.g., crmcommon, sales, service, portals, customerInsights). Downloads from Microsoft's CDM repository. Defaults to 'crmcommon' if no CDM options are specified.",
+            description: "Optional list of standard CDM schema groups to download and initialize (e.g., crmcommon, sales, service, portals, customerInsights). Downloads from Microsoft's CDM repository.",
             getDefaultValue: () => null);
 
         startCommand.AddOption(portOption);
@@ -124,13 +124,6 @@ public class Program
                 Console.WriteLine($"Error loading CDM files: {ex.Message}");
                 throw;
             }
-        }
-        
-        // Default to crmcommon if no CDM options were specified
-        if (cdmSchemas == null && cdmFiles == null)
-        {
-            cdmSchemas = new[] { "crmcommon" };
-            Console.WriteLine("No CDM options specified. Defaulting to 'crmcommon' schema...");
         }
         
         if (cdmSchemas != null && cdmSchemas.Length > 0)
