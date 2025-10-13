@@ -98,6 +98,7 @@ interface EntityListViewProps {
   entityPluralName: string;
   displayName?: string;
   appModuleId?: string;
+  initialViewId?: string;
 }
 
 export default function EntityListView({
@@ -105,6 +106,7 @@ export default function EntityListView({
   entityPluralName,
   displayName,
   appModuleId,
+  initialViewId,
 }: EntityListViewProps) {
   const styles = useStyles();
   const [records, setRecords] = useState<EntityRecord[]>([]);
@@ -112,7 +114,7 @@ export default function EntityListView({
   const [error, setError] = useState<string | null>(null);
   const [columns, setColumns] = useState<TableColumnDefinition<EntityRecord>[]>([]);
   const [views, setViews] = useState<SavedQuery[]>([]);
-  const [selectedViewId, setSelectedViewId] = useState<string | null>(null);
+  const [selectedViewId, setSelectedViewId] = useState<string | null>(initialViewId || null);
   const [viewsLoading, setViewsLoading] = useState(true);
 
   // Load available views for this entity
@@ -167,10 +169,19 @@ export default function EntityListView({
       const loadedViews = viewsResponse.value as SavedQuery[];
       setViews(loadedViews);
       
-      // Select default view or first view
+      // Select initial view, default view, or first view
       if (loadedViews.length > 0) {
-        const defaultView = loadedViews.find(v => v.isdefault) || loadedViews[0];
-        setSelectedViewId(defaultView.savedqueryid);
+        let viewToSelect: SavedQuery | undefined;
+        
+        if (initialViewId) {
+          viewToSelect = loadedViews.find(v => v.savedqueryid === initialViewId);
+        }
+        
+        if (!viewToSelect) {
+          viewToSelect = loadedViews.find(v => v.isdefault) || loadedViews[0];
+        }
+        
+        setSelectedViewId(viewToSelect.savedqueryid);
       }
     } catch (err) {
       console.error('Error loading views:', err);
@@ -195,6 +206,17 @@ export default function EntityListView({
         viewColumns = parseLayoutXml(selectedView.layoutxml);
       }
       
+      // Parse FetchXML to get filter and order
+      // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/use-fetchxml-construct-query
+      let filterConditions: string | undefined;
+      let orderBy: string | undefined;
+      
+      if (selectedView?.fetchxml) {
+        const fetchInfo = parseFetchXml(selectedView.fetchxml);
+        filterConditions = fetchInfo.filter;
+        orderBy = fetchInfo.orderby;
+      }
+      
       // Build query parameters
       const queryParams: any = {
         top: 50,
@@ -204,6 +226,16 @@ export default function EntityListView({
       // Use columns from view if available
       if (viewColumns.length > 0) {
         queryParams.select = viewColumns;
+      }
+      
+      // Apply filter from FetchXML
+      if (filterConditions) {
+        queryParams.filter = filterConditions;
+      }
+      
+      // Apply ordering from FetchXML
+      if (orderBy) {
+        queryParams.orderby = orderBy;
       }
       
       const response = await dataverseClient.fetchEntities(entityPluralName, queryParams);
@@ -288,6 +320,128 @@ export default function EntityListView({
   };
 
   /**
+   * Parse FetchXML to extract filter conditions and ordering
+   * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/use-fetchxml-construct-query
+   * 
+   * This is a simplified parser that converts FetchXML to OData query syntax.
+   * Supports basic filter conditions and ordering.
+   */
+  const parseFetchXml = (fetchxml: string): { filter?: string; orderby?: string } => {
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(fetchxml, 'text/xml');
+      
+      const result: { filter?: string; orderby?: string } = {};
+      
+      // Parse filter conditions
+      const filterElement = xmlDoc.getElementsByTagName('filter')[0];
+      if (filterElement) {
+        const conditions = filterElement.getElementsByTagName('condition');
+        const filterParts: string[] = [];
+        
+        for (let i = 0; i < conditions.length; i++) {
+          const condition = conditions[i];
+          const attribute = condition.getAttribute('attribute');
+          const operator = condition.getAttribute('operator');
+          const value = condition.getAttribute('value');
+          
+          if (attribute && operator) {
+            // Convert FetchXML operator to OData operator
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/fetchxml-operators
+            let odataCondition = '';
+            
+            switch (operator) {
+              case 'eq':
+                odataCondition = `${attribute} eq ${value !== null ? `'${value}'` : 'null'}`;
+                break;
+              case 'ne':
+                odataCondition = `${attribute} ne ${value !== null ? `'${value}'` : 'null'}`;
+                break;
+              case 'gt':
+                odataCondition = `${attribute} gt ${value}`;
+                break;
+              case 'ge':
+                odataCondition = `${attribute} ge ${value}`;
+                break;
+              case 'lt':
+                odataCondition = `${attribute} lt ${value}`;
+                break;
+              case 'le':
+                odataCondition = `${attribute} le ${value}`;
+                break;
+              case 'like':
+                // OData uses 'contains' for like
+                odataCondition = `contains(${attribute}, '${value}')`;
+                break;
+              case 'not-like':
+                odataCondition = `not contains(${attribute}, '${value}')`;
+                break;
+              case 'null':
+                odataCondition = `${attribute} eq null`;
+                break;
+              case 'not-null':
+                odataCondition = `${attribute} ne null`;
+                break;
+              default:
+                console.warn(`Unsupported FetchXML operator: ${operator}`);
+            }
+            
+            if (odataCondition) {
+              filterParts.push(odataCondition);
+            }
+          }
+        }
+        
+        // Combine filters based on type (default is 'and')
+        const filterType = filterElement.getAttribute('type') || 'and';
+        if (filterParts.length > 0) {
+          result.filter = filterParts.join(` ${filterType} `);
+        }
+      }
+      
+      // Parse order element
+      const orderElements = xmlDoc.getElementsByTagName('order');
+      if (orderElements.length > 0) {
+        const orderParts: string[] = [];
+        
+        for (let i = 0; i < orderElements.length; i++) {
+          const order = orderElements[i];
+          const attribute = order.getAttribute('attribute');
+          const descending = order.getAttribute('descending') === 'true';
+          
+          if (attribute) {
+            orderParts.push(`${attribute} ${descending ? 'desc' : 'asc'}`);
+          }
+        }
+        
+        if (orderParts.length > 0) {
+          result.orderby = orderParts.join(',');
+        }
+      }
+      
+      return result;
+    } catch (err) {
+      console.error('Error parsing FetchXML:', err);
+      return {};
+    }
+  };
+
+  /**
+   * Handle view selection change and update URL
+   */
+  const handleViewChange = (viewId: string) => {
+    setSelectedViewId(viewId);
+    
+    // Update URL with viewid parameter
+    if (typeof window !== 'undefined' && appModuleId) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('viewid', viewId);
+      
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({}, '', newUrl);
+    }
+  };
+  /**
    * Format column name for display (convert camelCase to Title Case)
    */
   const formatColumnName = (name: string): string => {
@@ -317,7 +471,7 @@ export default function EntityListView({
               className={styles.viewSwitcher}
               value={views.find(v => v.savedqueryid === selectedViewId)?.name || ''}
               selectedOptions={selectedViewId ? [selectedViewId] : []}
-              onOptionSelect={(_, data) => setSelectedViewId(data.optionValue as string)}
+              onOptionSelect={(_, data) => handleViewChange(data.optionValue as string)}
               placeholder="Select view"
             >
               {views.map((view) => (

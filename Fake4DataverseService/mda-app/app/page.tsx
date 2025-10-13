@@ -3,6 +3,12 @@
 /**
  * Main Model-Driven App page
  * Displays navigation and entity list views based on sitemap
+ * Supports URL parameters matching Dynamics 365:
+ * - appid: Application ID (GUID)
+ * - pagetype: Page type (e.g., "entitylist")
+ * - etn: Entity type name
+ * - viewid: View ID (SavedQuery GUID)
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
  */
 
 import { useState, useEffect } from 'react';
@@ -67,6 +73,22 @@ const ENTITY_DISPLAY_NAMES: Record<string, string> = {
   'team': 'Teams',
 };
 
+/**
+ * Parse URL parameters from window.location
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
+ */
+function parseUrlParameters() {
+  if (typeof window === 'undefined') return {};
+  
+  const params = new URLSearchParams(window.location.search);
+  return {
+    appid: params.get('appid') || undefined,
+    pagetype: params.get('pagetype') || undefined,
+    etn: params.get('etn') || undefined,  // Entity type name
+    viewid: params.get('viewid') || undefined,
+  };
+}
+
 export default function Home() {
   const styles = useStyles();
   const [sitemap, setSitemap] = useState<SiteMapDefinition | null>(null);
@@ -74,6 +96,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
   const [appModuleId, setAppModuleId] = useState<string | null>(null);
+  const [selectedViewId, setSelectedViewId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadSitemap();
@@ -84,10 +107,15 @@ export default function Home() {
     setError(null);
 
     try {
+      // Parse URL parameters
+      const urlParams = parseUrlParameters();
+      
       // Try to load sitemap from appmodule
       const appModulesResponse = await dataverseClient.fetchEntities('appmodules', {
         top: 1,
         select: ['appmoduleid', 'name'],
+        // If appid is provided in URL, filter by it
+        ...(urlParams.appid && { filter: `appmoduleid eq ${urlParams.appid}` }),
       });
 
       if (appModulesResponse.value.length > 0) {
@@ -107,15 +135,21 @@ export default function Home() {
             const parsedSitemap = parseSiteMapXml(sitemapData.sitemapxml);
             setSitemap(parsedSitemap);
             
-            // Auto-select first entity
-            if (parsedSitemap.areas.length > 0) {
-              const firstArea = parsedSitemap.areas[0];
-              if (firstArea.groups.length > 0) {
-                const firstGroup = firstArea.groups[0];
-                if (firstGroup.subareas.length > 0) {
-                  const firstSubarea = firstGroup.subareas[0];
-                  if (firstSubarea.entity) {
-                    setSelectedEntity(firstSubarea.entity);
+            // Check if entity is specified in URL
+            if (urlParams.etn) {
+              setSelectedEntity(urlParams.etn);
+              setSelectedViewId(urlParams.viewid);
+            } else {
+              // Auto-select first entity
+              if (parsedSitemap.areas.length > 0) {
+                const firstArea = parsedSitemap.areas[0];
+                if (firstArea.groups.length > 0) {
+                  const firstGroup = firstArea.groups[0];
+                  if (firstGroup.subareas.length > 0) {
+                    const firstSubarea = firstGroup.subareas[0];
+                    if (firstSubarea.entity) {
+                      setSelectedEntity(firstSubarea.entity);
+                    }
                   }
                 }
               }
@@ -132,6 +166,25 @@ export default function Home() {
       setError(err instanceof Error ? err.message : 'Failed to load sitemap');
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Navigate to entity and update URL
+   */
+  const handleNavigate = (entityName: string) => {
+    setSelectedEntity(entityName);
+    setSelectedViewId(undefined); // Reset view when changing entity
+    
+    // Update URL with query parameters
+    if (typeof window !== 'undefined' && appModuleId) {
+      const params = new URLSearchParams();
+      params.set('appid', appModuleId);
+      params.set('pagetype', 'entitylist');
+      params.set('etn', entityName);
+      
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({}, '', newUrl);
     }
   };
 
@@ -169,7 +222,7 @@ export default function Home() {
       <Navigation
         areas={sitemap.areas}
         selectedEntity={selectedEntity || undefined}
-        onNavigate={setSelectedEntity}
+        onNavigate={handleNavigate}
       />
       <main className={styles.main}>
         {selectedEntity ? (
@@ -178,6 +231,7 @@ export default function Home() {
             entityPluralName={ENTITY_PLURAL_NAMES[selectedEntity] || selectedEntity + 's'}
             displayName={ENTITY_DISPLAY_NAMES[selectedEntity]}
             appModuleId={appModuleId || undefined}
+            initialViewId={selectedViewId}
           />
         ) : (
           <div className={styles.welcomeContainer}>
