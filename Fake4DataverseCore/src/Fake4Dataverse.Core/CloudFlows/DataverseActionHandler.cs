@@ -229,8 +229,17 @@ namespace Fake4Dataverse.CloudFlows
         /// - Total count with @odata.count when IncludeTotalCount is true
         /// - Skip-based paging for offset scenarios
         /// 
-        /// Note: Complex OData filter parsing (functions, operators) is partially implemented.
-        /// Full OData filter support would require a complete OData expression parser.
+        /// OData Filter Support:
+        /// For basic filtering (simple equality checks), filters are parsed directly.
+        /// For complex OData filter expressions (e.g., "revenue gt 100000 and contains(name, 'Corp')"),
+        /// the REST API endpoints (/api/data/v9.2) leverage Microsoft.AspNetCore.OData for full OData v4.0
+        /// filter parsing including comparison operators, logical operators, and string functions.
+        /// 
+        /// Cloud flows can use the REST API for advanced filtering scenarios, or implement custom
+        /// filtering logic using the IOrganizationService RetrieveMultiple with QueryExpression.
+        /// 
+        /// Note: The ODataEntityConverter class is shared between REST API and Cloud Flows for
+        /// consistent type conversion between OData JSON and SDK types.
         /// </summary>
         private IDictionary<string, object> HandleListRecords(DataverseAction action, IOrganizationService service)
         {
@@ -242,9 +251,36 @@ namespace Fake4Dataverse.CloudFlows
             // Apply filter if specified
             if (!string.IsNullOrWhiteSpace(action.Filter))
             {
-                // TODO: Parse OData-style filter to QueryExpression
-                // For now, retrieve all records
-                // Full filter parsing would be implemented in a future enhancement
+                // Basic filter support: Simple equality checks can be parsed
+                // For example: "name eq 'Test'" or "statecode eq 0"
+                // 
+                // For complex OData filter expressions with operators (gt, lt, contains, startswith, etc.),
+                // use the REST API endpoints (/api/data/v9.2) which leverage Microsoft.AspNetCore.OData
+                // for full OData v4.0 filter parsing.
+                //
+                // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/query-options
+                // The REST API provides automatic parsing of complex filter expressions including:
+                // - Comparison operators: eq, ne, gt, lt, ge, le
+                // - Logical operators: and, or, not
+                // - String functions: contains, startswith, endswith
+                // - Date/time functions and arithmetic operations
+                //
+                // For simple equality filters in cloud flows, you can parse them here.
+                // For advanced scenarios, consider calling the REST API from your flow.
+                
+                // Simple equality parsing example (for basic use cases):
+                if (action.Filter.Contains(" eq "))
+                {
+                    var parts = action.Filter.Split(new[] { " eq " }, StringSplitOptions.None);
+                    if (parts.Length == 2)
+                    {
+                        var attributeName = parts[0].Trim();
+                        var value = parts[1].Trim().Trim('\'');
+                        
+                        query.Criteria.AddCondition(attributeName, ConditionOperator.Equal, value);
+                    }
+                }
+                // For complex filters, they're not parsed here - use REST API instead
             }
 
             // Apply ordering if specified
