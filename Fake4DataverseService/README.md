@@ -2,6 +2,8 @@
 
 A .NET 8.0 CLI service that hosts a fake IOrganizationService backed by Fake4Dataverse. This service provides **100% compatibility** with Microsoft Dataverse SDK types and uses **SOAP/WCF** protocol matching the actual Dynamics 365/Dataverse Organization Service endpoints.
 
+> **💡 For ServiceClient Users:** See [SERVICECLIENT.md](./SERVICECLIENT.md) for guidance on testing existing ServiceClient-based code with Fake4DataverseService.
+
 ## Overview
 
 Fake4DataverseService exposes the Fake4Dataverse testing framework as a SOAP/WCF service, allowing clients to interact with a fake Dataverse/Dynamics 365 organization service over the network using the standard SOAP protocol. This enables:

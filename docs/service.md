@@ -3,6 +3,8 @@
 **Implementation Date:** October 2025  
 **Issue:** N/A (New feature)
 
+> **💡 For ServiceClient Users:** See the [ServiceClient Compatibility Guide](../Fake4DataverseService/SERVICECLIENT.md) for patterns and best practices when testing existing ServiceClient-based code.
+
 ## Overview
 
 Fake4DataverseService is a .NET 8.0 CLI application that exposes Fake4Dataverse as a network-accessible SOAP/WCF service. This enables integration testing scenarios where multiple applications or services need to interact with a fake Dataverse instance.
