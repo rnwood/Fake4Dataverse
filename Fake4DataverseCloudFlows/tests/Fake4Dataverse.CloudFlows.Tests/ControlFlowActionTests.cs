@@ -29,7 +29,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Reference: Condition action executes TrueActions when expression evaluates to true
             // https://learn.microsoft.com/en-us/power-automate/use-expressions-in-conditions
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -84,7 +84,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Condition action executes FalseActions when expression evaluates to false
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -136,7 +136,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Each branch can contain multiple actions that execute sequentially
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -189,7 +189,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Conditions can be nested within other conditions
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -257,7 +257,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Reference: Switch action executes actions for the matching case
             // https://learn.microsoft.com/en-us/power-automate/use-switch-action
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -321,7 +321,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Switch action executes default actions when no case matches
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -376,7 +376,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Each case can contain multiple sequential actions
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -436,7 +436,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Reference: Parallel branches execute multiple independent action sequences
             // https://learn.microsoft.com/en-us/power-automate/use-parallel-branches
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -501,7 +501,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Each parallel branch can contain multiple sequential actions
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -574,7 +574,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Reference: Do Until loops execute actions repeatedly until condition becomes true
             // https://learn.microsoft.com/en-us/power-automate/do-until-loop
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             int counter = 0;
@@ -623,7 +623,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Do Until loops have a maximum iteration limit to prevent infinite loops
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>();
@@ -664,7 +664,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Do Until loops can contain multiple actions per iteration
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>();
@@ -723,7 +723,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Control actions can be combined to create complex workflows
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>

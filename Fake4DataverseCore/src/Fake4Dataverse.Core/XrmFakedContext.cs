@@ -43,8 +43,12 @@ namespace Fake4Dataverse
         /// - Dataverse connector actions within flows
         /// - Custom connector actions (via extensibility)
         /// - Flow execution verification and assertion
+        /// 
+        /// Note: To use Cloud Flow simulation, install the Fake4Dataverse.CloudFlows package
+        /// and set this property to an instance of CloudFlowSimulator.
+        /// Example: context.CloudFlowSimulator = new CloudFlowSimulator(context);
         /// </summary>
-        public ICloudFlowSimulator CloudFlowSimulator { get; private set; }
+        public ICloudFlowSimulator CloudFlowSimulator { get; set; }
 
         /// <summary>
         /// All proxy type assemblies available on mocked database.

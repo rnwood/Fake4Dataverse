@@ -22,7 +22,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleCreateAction_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -75,7 +75,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleRetrieveAction_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contactId = Guid.NewGuid();
@@ -121,7 +121,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleUpdateAction_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contactId = Guid.NewGuid();
@@ -173,7 +173,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleDeleteAction_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contactId = Guid.NewGuid();
@@ -216,7 +216,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleListRecordsAction_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contact1 = new Entity("contact")
@@ -274,7 +274,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleListRecordsAction_WithOrdering()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contact1 = new Entity("contact")
@@ -330,7 +330,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleListRecordsAction_WithTopLimit()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contacts = Enumerable.Range(1, 10).Select(i => new Entity("contact")
@@ -371,7 +371,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ChainMultipleDataverseActions()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -430,7 +430,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/file-attributes
             // The UploadFile action uploads binary data to a file or image column.
             // Common use case: Uploading contact photos (entityimage column)
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Create a contact to upload file to
@@ -506,7 +506,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/file-attributes
             // The DownloadFile action retrieves binary data from a file or image column.
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Create a contact with an image
@@ -580,7 +580,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenUploadFile_MissingEntityId()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -615,7 +615,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenUploadFile_MissingColumnName()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contactId = Guid.NewGuid();
@@ -654,7 +654,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenDownloadFile_ColumnNotFound()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contactId = Guid.NewGuid();
@@ -699,7 +699,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api#paging
             // The $skip query option enables paging through large result sets.
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Create 10 contacts
@@ -748,7 +748,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api#count
             // The $count query option returns the total count of records matching the filter.
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Create 15 contacts
@@ -800,7 +800,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api#paging
             // When there are more records, @odata.nextLink is included for continuation.
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Create 10 contacts
@@ -851,7 +851,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleListRecords_WithoutNextLink_WhenNoMoreRecords()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Create exactly 5 contacts
@@ -898,7 +898,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleMissingEntityId_ForRetrieve()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -931,7 +931,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_BeRegisteredByDefault_InCloudFlowSimulator()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Act
@@ -946,7 +946,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_HandleDataverseAction_InFlowExecution()
         {
             // Arrange - Full integration test
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition

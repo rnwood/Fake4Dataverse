@@ -26,7 +26,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Compose action evaluates an expression and returns the result
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -67,7 +67,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Compose can create structured objects
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -120,7 +120,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Compose action outputs can be referenced with @outputs('ActionName')['value']
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -168,7 +168,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Apply to Each iterates over a collection
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var contacts = new[]
@@ -221,7 +221,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: @item() function returns the current item in the loop
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var items = new[]
@@ -269,7 +269,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Loop should handle empty collections gracefully
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var triggerInputs = new Dictionary<string, object>
@@ -311,7 +311,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Reference: Multiple actions can be executed for each iteration
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var simulator = new CloudFlowSimulator(context);
 
             var numbers = new[] { 5, 10, 15 };

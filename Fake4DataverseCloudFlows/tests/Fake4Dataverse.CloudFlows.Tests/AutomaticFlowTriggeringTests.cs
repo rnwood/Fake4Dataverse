@@ -21,7 +21,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_TriggerFlow_WhenEntityIsCreated()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true; // Enable pipeline simulation
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -74,7 +74,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_TriggerFlow_WhenEntityIsUpdated()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -128,7 +128,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_TriggerFlow_WhenEntityIsDeleted()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -178,7 +178,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_NotTriggerFlow_WhenPipelineSimulationDisabled()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = false; // Disabled
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -209,7 +209,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger#trigger-conditions
             // Filtered attributes allow triggering only when specific attributes are modified
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -266,7 +266,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_NotTriggerFlow_WithFilteredAttributes_WhenOtherAttributeIsModified()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -308,7 +308,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_TriggerMultipleFlows_ForSameOperation()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -350,7 +350,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_NotTriggerFlow_WhenEntityNameDoesNotMatch()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -379,7 +379,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_NotTriggerFlow_WhenFlowIsDisabled()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -409,7 +409,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_IncludeTriggerInputs_FromCreatedEntity()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -448,7 +448,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-automate/dataverse/create-update-delete-trigger
             // CreateOrUpdate message triggers on both Create and Update operations
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -477,7 +477,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_TriggerFlow_WithCreateOrUpdateMessage_OnUpdate()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -518,7 +518,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         {
             // Arrange
             // Reference: In real Dataverse, flows run asynchronously and don't fail the triggering operation
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 

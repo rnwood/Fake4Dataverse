@@ -28,7 +28,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with a simple Create trigger and one action
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = @"{
@@ -95,7 +95,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with Update trigger and filtered attributes
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = @"{
@@ -141,7 +141,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with multiple Dataverse actions
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = @"{
@@ -222,7 +222,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Message code 1 = Create
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -271,7 +271,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Message code 2 = Update
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -321,7 +321,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Message code 3 = Delete
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -369,7 +369,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Message code 4 = CreateOrUpdate
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -425,7 +425,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // CreateRecord operation creates a new record with specified attributes
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -495,7 +495,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // ListRecords operation queries records with $filter, $top, $orderby parameters
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -565,7 +565,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenJsonIsNull()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Act & Assert
@@ -576,7 +576,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenJsonIsEmpty()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Act & Assert
@@ -587,7 +587,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenJsonIsInvalid()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var invalidJson = "{ this is not valid json }";
@@ -602,7 +602,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenTriggerIsMissing()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = @"{
@@ -629,7 +629,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Only Dataverse triggers (OpenApiConnectionWebhook with commondataserviceforapps) are currently supported
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = @"{
@@ -664,7 +664,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Only Dataverse actions are currently supported via JSON import
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = @"{
@@ -732,7 +732,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Scope codes: 1=Organization, 2=BusinessUnit, 3=ParentChildBusinessUnits, 4=User
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = $@"{{
@@ -780,7 +780,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Full end-to-end test: Import JSON, trigger flow, verify actions executed
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
 
@@ -862,7 +862,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with a Condition (If) action
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
             var service = context.GetOrganizationService();
@@ -961,7 +961,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with a Switch action
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
             var service = context.GetOrganizationService();
@@ -1078,7 +1078,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with a Foreach (Apply to Each) action
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
             var service = context.GetOrganizationService();
@@ -1167,7 +1167,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with an Until (Do Until) action
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
             var service = context.GetOrganizationService();
@@ -1231,7 +1231,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with a Compose action
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
             var service = context.GetOrganizationService();
@@ -1289,7 +1289,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with multiple control flow actions combined
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             context.UsePipelineSimulation = true;
             var flowSimulator = context.CloudFlowSimulator;
             var service = context.GetOrganizationService();
@@ -1393,7 +1393,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with UploadFile operation
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contactId = Guid.NewGuid();
@@ -1478,7 +1478,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with DownloadFile operation
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var contactId = Guid.NewGuid();
@@ -1557,7 +1557,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
             // Tests importing a flow with ListRecords using advanced paging ($skip, $count)
             
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Add test data
