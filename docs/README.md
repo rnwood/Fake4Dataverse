@@ -33,6 +33,9 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Hierarchical Queries](./usage/hierarchical-queries.md) - Querying hierarchical data
 - [Fiscal Period Operators](./usage/fiscal-period-operators.md) - Fiscal calendar queries
 
+### 🌐 [Network Testing](.)
+- [Fake4DataverseService](./service.md) - Network-accessible SOAP/WCF service for integration testing ✅ **NEW**
+
 ### 🏗️ [Architecture & Planning](.)
 - [Cloud Flow API Design](./API_DESIGN_CLOUD_FLOWS.md) - Technical design for Cloud Flow simulation
 - [Cloud Flow Architecture](./CLOUD_FLOW_ARCHITECTURE.md) - Architecture diagrams and patterns
@@ -74,6 +77,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Test security**: See [Security and Permissions](./usage/security-permissions.md)
 - **Migrate from FakeXrmEasy**: Check the [Migration Guides](./migration/)
 - **Find supported messages**: Browse [Message Executors](./messages/)
+- **Do integration testing**: Use [Fake4DataverseService](./service.md) for network-accessible testing
 
 ## Quick Example
 
