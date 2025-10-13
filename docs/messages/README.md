@@ -338,6 +338,104 @@ public void Should_Throw_When_EntityNotFound()
 }
 ```
 
+
+## Cloud Flow Actions ✅ **NEW**
+
+In addition to traditional message executors, Fake4Dataverse supports **Cloud Flow (Power Automate) actions** through the Dataverse connector. These actions provide an alternative, higher-level API for testing flows.
+
+**Reference:** [Cloud Flow Simulation Documentation](../usage/cloud-flows.md)
+
+### Supported Dataverse Connector Actions
+
+| Action Type | Description | Status |
+|------------|-------------|---------|
+| `Create` | Create new records | ✅ Supported |
+| `Retrieve` | Retrieve single record by ID | ✅ Supported |
+| `Update` | Update existing records | ✅ Supported |
+| `Delete` | Delete records | ✅ Supported |
+| `ListRecords` | Query multiple records with paging | ✅ Enhanced |
+| `Relate` | Associate records | ✅ Supported |
+| `Unrelate` | Disassociate records | ✅ Supported |
+| `ExecuteAction` | Execute custom actions/APIs | ✅ Supported |
+| `UploadFile` | Upload files/images to columns | ✅ **NEW** |
+| `DownloadFile` | Download files/images from columns | ✅ **NEW** |
+
+### File Operations Example
+
+```csharp
+using Fake4Dataverse.Abstractions.CloudFlows;
+using Fake4Dataverse.Abstractions.CloudFlows.Enums;
+
+var context = XrmFakedContextFactory.New();
+var flowSimulator = context.CloudFlowSimulator;
+
+// Upload a contact photo
+var contactId = Guid.NewGuid();
+context.Initialize(new Entity("contact") { Id = contactId, ["firstname"] = "John" });
+
+byte[] imageBytes = File.ReadAllBytes("photo.jpg");
+
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "upload_photo_flow",
+    Trigger = new DataverseTrigger(),
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "UploadPhoto",
+            DataverseActionType = DataverseActionType.UploadFile,
+            EntityLogicalName = "contact",
+            EntityId = contactId,
+            ColumnName = "entityimage",
+            FileContent = imageBytes,
+            FileName = "photo.jpg"
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+var result = flowSimulator.SimulateTrigger("upload_photo_flow", new Dictionary<string, object>());
+
+Assert.True(result.Succeeded);
+```
+
+### Advanced ListRecords with Paging
+
+```csharp
+// List records with paging and total count
+var flowDefinition = new CloudFlowDefinition
+{
+    Name = "list_contacts_flow",
+    Trigger = new DataverseTrigger(),
+    Actions = new List<IFlowAction>
+    {
+        new DataverseAction
+        {
+            Name = "ListContacts",
+            DataverseActionType = DataverseActionType.ListRecords,
+            EntityLogicalName = "contact",
+            Top = 10,              // Page size
+            Skip = 0,              // Offset
+            IncludeTotalCount = true,  // Include @odata.count
+            OrderBy = "createdon desc"
+        }
+    }
+};
+
+flowSimulator.RegisterFlow(flowDefinition);
+var result = flowSimulator.SimulateTrigger("list_contacts_flow", new Dictionary<string, object>());
+
+var outputs = result.ActionResults[0].Outputs;
+var records = outputs["value"] as List<Dictionary<string, object>>;
+var totalCount = outputs["@odata.count"];  // Total across all pages
+var nextLink = outputs.ContainsKey("@odata.nextLink") ? outputs["@odata.nextLink"] : null;
+```
+
+**For more details, see:**
+- [Cloud Flow Simulation Guide](../usage/cloud-flows.md) - Complete documentation
+- [Expression Language Reference](../expression-language.md) - Power Automate expressions
+
 ## Message-Specific Documentation
 
 For detailed information about specific message categories, see:
