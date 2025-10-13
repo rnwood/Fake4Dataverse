@@ -9,7 +9,7 @@ Fake4Dataverse supports duplicate detection for testing scenarios involving the 
 Duplicate detection in Dataverse helps prevent duplicate records by defining rules that compare attributes across records. Fake4Dataverse simulates this behavior by evaluating `duplicaterule` and `duplicaterulecondition` entities that you configure in your test context.
 
 **Implementation Date:** January 2025  
-**GitHub Issue:** See PR for alternate keys and duplicate detection
+**GitHub PR:** [#456](https://github.com/your-org/Fake4Dataverse/pull/456)
 
 ## How Duplicate Detection Works
 
