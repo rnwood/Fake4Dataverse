@@ -205,7 +205,10 @@ public class Program
         // Configure REST API for OData endpoints
         app.MapControllers();
 
-        app.MapGet("/", () => Results.Text(
+        // Redirect root to MDA
+        app.MapGet("/", () => Results.Redirect("/mda/"));
+
+        app.MapGet("/info", () => Results.Text(
             "Fake4Dataverse Service is running.\n\n" +
             "Model-Driven App:\n" +
             "  - /mda - Web interface for testing (Next.js app)\n\n" +
@@ -225,8 +228,14 @@ public class Program
         Console.WriteLine("Fake4Dataverse Service started successfully");
         Console.WriteLine($"Base URL: http://{host}:{port}");
         Console.WriteLine();
+        Console.WriteLine("Default URL redirects to Model-Driven App:");
+        Console.WriteLine($"  - http://{host}:{port}/ -> http://{host}:{port}/mda/");
+        Console.WriteLine();
         Console.WriteLine("Model-Driven App:");
-        Console.WriteLine($"  - http://{host}:{port}/mda - Web interface");
+        Console.WriteLine($"  - http://{host}:{port}/mda/ - Web interface");
+        Console.WriteLine();
+        Console.WriteLine("Service Information:");
+        Console.WriteLine($"  - http://{host}:{port}/info - Service info page");
         Console.WriteLine();
         Console.WriteLine("Available SOAP endpoints (matching Microsoft Dynamics 365/Dataverse):");
         Console.WriteLine($"  - http://{host}:{port}/XRMServices/2011/Organization.svc");
