@@ -1,4 +1,5 @@
 using Fake4Dataverse.Abstractions.Audit;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
@@ -13,14 +14,14 @@ namespace Fake4Dataverse.Audit
     public class AuditRepository : IAuditRepository
     {
         private readonly List<Entity> _auditRecords;
-        private readonly Dictionary<Guid, object> _auditDetails;
+        private readonly Dictionary<Guid, AuditDetail> _auditDetails;
 
         public bool IsAuditEnabled { get; set; }
 
         public AuditRepository()
         {
             _auditRecords = new List<Entity>();
-            _auditDetails = new Dictionary<Guid, object>();
+            _auditDetails = new Dictionary<Guid, AuditDetail>();
             IsAuditEnabled = false; // Disabled by default to match Dataverse behavior
         }
 
@@ -62,20 +63,29 @@ namespace Fake4Dataverse.Audit
 
             _auditRecords.Add(auditRecord);
 
-            // Store audit details if there are attribute changes
-            if (attributeChanges != null && attributeChanges.Any())
+            // Store audit details
+            // For Create operations, store the new entity values
+            // For Update operations, store old and new values if there are changes
+            // For Delete operations, no detail needed
+            if (action == AuditAction.Create)
             {
-                var auditDetail = new AttributeAuditDetail
-                {
-                    AuditRecord = auditRecord,
-                    OldValues = new Entity(objectId.LogicalName, objectId.Id),
-                    NewValues = new Entity(objectId.LogicalName, objectId.Id)
-                };
+                var auditDetail = new AttributeAuditDetail();
+                auditDetail.AuditRecord = auditRecord;
+                auditDetail.OldValue = new Entity(objectId.LogicalName, objectId.Id);
+                auditDetail.NewValue = new Entity(objectId.LogicalName, objectId.Id);
+                _auditDetails[auditId] = auditDetail;
+            }
+            else if (attributeChanges != null && attributeChanges.Any())
+            {
+                var auditDetail = new AttributeAuditDetail();
+                auditDetail.AuditRecord = auditRecord;
+                auditDetail.OldValue = new Entity(objectId.LogicalName, objectId.Id);
+                auditDetail.NewValue = new Entity(objectId.LogicalName, objectId.Id);
 
                 foreach (var change in attributeChanges)
                 {
-                    auditDetail.OldValues[change.Key] = change.Value.oldValue;
-                    auditDetail.NewValues[change.Key] = change.Value.newValue;
+                    auditDetail.OldValue[change.Key] = change.Value.oldValue;
+                    auditDetail.NewValue[change.Key] = change.Value.newValue;
                 }
 
                 _auditDetails[auditId] = auditDetail;
@@ -115,8 +125,8 @@ namespace Fake4Dataverse.Audit
                 {
                     if (detail is AttributeAuditDetail attrDetail)
                     {
-                        return attrDetail.OldValues.Contains(attributeName) || 
-                               attrDetail.NewValues.Contains(attributeName);
+                        return attrDetail.OldValue.Contains(attributeName) || 
+                               attrDetail.NewValue.Contains(attributeName);
                     }
                 }
                 return false;
@@ -151,30 +161,5 @@ namespace Fake4Dataverse.Audit
             _auditRecords.Clear();
             _auditDetails.Clear();
         }
-    }
-
-    /// <summary>
-    /// Represents attribute audit details
-    /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.attributeauditdetail
-    /// 
-    /// AttributeAuditDetail contains the old and new values for attributes that changed during an operation.
-    /// This allows tracking what specific values changed from one update to another.
-    /// </summary>
-    public class AttributeAuditDetail
-    {
-        /// <summary>
-        /// The audit record this detail belongs to
-        /// </summary>
-        public Entity AuditRecord { get; set; }
-
-        /// <summary>
-        /// Entity containing the old attribute values before the change
-        /// </summary>
-        public Entity OldValues { get; set; }
-
-        /// <summary>
-        /// Entity containing the new attribute values after the change
-        /// </summary>
-        public Entity NewValues { get; set; }
     }
 }

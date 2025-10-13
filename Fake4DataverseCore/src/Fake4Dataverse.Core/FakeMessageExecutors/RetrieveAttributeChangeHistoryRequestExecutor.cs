@@ -69,7 +69,7 @@ namespace Fake4Dataverse.FakeMessageExecutors
                 
                 if (detail != null)
                 {
-                    auditDetailCollection.AuditDetails.Add((Microsoft.Crm.Sdk.Messages.AuditDetail)detail);
+                    auditDetailCollection.AuditDetails.Add((AuditDetail)detail);
                 }
             }
 

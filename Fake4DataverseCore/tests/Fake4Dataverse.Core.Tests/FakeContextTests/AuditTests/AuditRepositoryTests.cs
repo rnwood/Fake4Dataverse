@@ -178,11 +178,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             var auditDetail = auditRepository.GetAuditDetails(auditId);
             
             Assert.NotNull(auditDetail);
-            Assert.IsType<Fake4Dataverse.Audit.AttributeAuditDetail>(auditDetail);
+            Assert.IsType<AttributeAuditDetail>(auditDetail);
             
-            var attrDetail = (Fake4Dataverse.Audit.AttributeAuditDetail)auditDetail;
-            Assert.Equal("Original Name", attrDetail.OldValues.GetAttributeValue<string>("name"));
-            Assert.Equal("Updated Name", attrDetail.NewValues.GetAttributeValue<string>("name"));
+            var attrDetail = (AttributeAuditDetail)auditDetail;
+            Assert.Equal("Original Name", attrDetail.OldValue.GetAttributeValue<string>("name"));
+            Assert.Equal("Updated Name", attrDetail.NewValue.GetAttributeValue<string>("name"));
         }
 
         [Fact]
