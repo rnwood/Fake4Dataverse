@@ -12,6 +12,8 @@ Fake4DataverseService is a .NET 8.0 CLI application that exposes Fake4Dataverse 
 ## Key Features
 
 - **SOAP/WCF Protocol**: Standard `/XRMServices/2011/Organization.svc` endpoint matching real Dynamics 365
+- **REST/OData v4.0 Protocol**: Standard `/api/data/v9.2` endpoints matching Dataverse Web API
+- **Advanced OData Query Support**: Full $filter, $select, $orderby, $top, $skip, $count via Microsoft.AspNetCore.OData
 - **No Authentication Required**: Bypasses OAuth complexity for testing scenarios
 - **100% SDK Compatible**: Uses Microsoft's official Dataverse SDK types (IOrganizationService, Entity, etc.)
 - **In-Memory Storage**: Fast, isolated test data powered by Fake4Dataverse
@@ -402,3 +404,49 @@ The Fake4DataverseService is a new addition. Contributions welcome for:
 - Additional endpoint versions for backward compatibility
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
+
+## REST/OData Endpoints
+
+In addition to SOAP/WCF endpoints, Fake4DataverseService also provides REST/OData v4.0 endpoints compatible with the Dataverse Web API.
+
+**Base URL:** `http://localhost:5000/api/data/v9.2`
+
+### Quick Example
+
+```bash
+# List accounts with OData query
+curl "http://localhost:5000/api/data/v9.2/accounts?\$filter=revenue gt 100000&\$select=name,revenue"
+
+# Create a new account
+curl -X POST http://localhost:5000/api/data/v9.2/accounts \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test Account","revenue":150000}'
+
+# Retrieve an account by ID
+curl http://localhost:5000/api/data/v9.2/accounts(12345678-1234-1234-1234-123456789012)
+
+# Update an account
+curl -X PATCH http://localhost:5000/api/data/v9.2/accounts(guid) \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Updated Name"}'
+
+# Delete an account
+curl -X DELETE http://localhost:5000/api/data/v9.2/accounts(guid)
+```
+
+### Supported Features
+
+- ✅ Full CRUD operations (GET, POST, PATCH, DELETE)
+- ✅ Advanced OData query options via Microsoft.AspNetCore.OData v9.4.0
+  - `$select` - Choose specific columns
+  - `$filter` - Complex filter expressions with full OData syntax
+  - `$orderby` - Sort results
+  - `$top` - Limit results
+  - `$skip` - Pagination
+  - `$count` - Include total count
+  - `$expand` - Include related entities
+- ✅ OData v4.0 compliance
+- ✅ Automatic type conversion (OptionSet, Money, EntityReference, etc.)
+
+**For complete REST API documentation, see [REST/OData API Documentation](./rest-api.md)**
+

@@ -3,6 +3,7 @@ using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Xrm.Sdk;
 using System.CommandLine;
@@ -102,9 +103,33 @@ public class Program
         // Register the WCF service implementation
         builder.Services.AddSingleton<OrganizationServiceImpl>();
 
-        // Add CoreWCF services
+        // Add CoreWCF services for SOAP endpoints
         builder.Services.AddServiceModelServices();
         builder.Services.AddServiceModelMetadata();
+
+        // Add REST API controllers for OData endpoints
+        // Using Microsoft.AspNetCore.OData for advanced OData support
+        // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/overview
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                // Configure JSON serialization for OData compatibility
+                options.JsonSerializerOptions.PropertyNamingPolicy = null; // Preserve property names
+                options.JsonSerializerOptions.WriteIndented = true; // Pretty print for readability
+            })
+            .AddOData(options =>
+            {
+                // Enable OData query options for all routes
+                // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/query-options
+                options.Select().Filter().OrderBy().Expand().Count().SetMaxTop(1000);
+                
+                // Enable OData batch requests
+                // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/batch-requests
+                options.EnableQueryFeatures();
+                
+                // Set timezone to UTC for consistency
+                options.TimeZone = System.TimeZoneInfo.Utc;
+            });
 
         var app = builder.Build();
         
@@ -131,7 +156,7 @@ public class Program
             });
         }
 
-        // Configure WCF
+        // Configure WCF for SOAP endpoints
         app.UseServiceModel(serviceBuilder =>
         {
             // Add the Organization Service at the standard 2011 endpoint
@@ -154,11 +179,21 @@ public class Program
             serviceMetadataBehavior.HttpGetEnabled = true;
         });
 
+        // Configure REST API for OData endpoints
+        app.MapControllers();
+
         app.MapGet("/", () => Results.Text(
             "Fake4Dataverse Service is running.\n\n" +
             "Available SOAP endpoints:\n" +
             "  - /XRMServices/2011/Organization.svc - Organization Service (SOAP 1.1/1.2)\n" +
             "  - /XRMServices/2011/Organization.svc?wsdl - WSDL definition\n\n" +
+            "Available REST/OData endpoints:\n" +
+            "  - /api/data/v9.2/{entityPluralName} - List entities (GET)\n" +
+            "  - /api/data/v9.2/{entityPluralName}({id}) - Retrieve entity (GET)\n" +
+            "  - /api/data/v9.2/{entityPluralName} - Create entity (POST)\n" +
+            "  - /api/data/v9.2/{entityPluralName}({id}) - Update entity (PATCH)\n" +
+            "  - /api/data/v9.2/{entityPluralName}({id}) - Delete entity (DELETE)\n\n" +
+            "OData Query Options: $select, $filter, $orderby, $top, $skip, $expand, $count\n\n" +
             "This service provides 100% compatibility with Microsoft Dynamics 365/Dataverse SDK.",
             "text/plain"));
 
@@ -168,6 +203,18 @@ public class Program
         Console.WriteLine("Available SOAP endpoints (matching Microsoft Dynamics 365/Dataverse):");
         Console.WriteLine($"  - http://{host}:{port}/XRMServices/2011/Organization.svc");
         Console.WriteLine($"  - http://{host}:{port}/XRMServices/2011/Organization.svc?wsdl");
+        Console.WriteLine();
+        Console.WriteLine("Available REST/OData v4.0 endpoints:");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/{{entityPluralName}} (GET, POST)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/{{entityPluralName}}({{id}}) (GET, PATCH, DELETE)");
+        Console.WriteLine();
+        Console.WriteLine("OData Query Options:");
+        Console.WriteLine("  - $select: Choose specific columns");
+        Console.WriteLine("  - $filter: Filter records (basic support)");
+        Console.WriteLine("  - $orderby: Sort records");
+        Console.WriteLine("  - $top: Limit results");
+        Console.WriteLine("  - $skip: Skip records for pagination");
+        Console.WriteLine("  - $count: Include total count");
         Console.WriteLine();
         
         if (!string.IsNullOrEmpty(accessToken))

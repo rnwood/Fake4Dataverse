@@ -27,7 +27,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Calculated Fields](./usage/calculated-fields.md) - Simulating calculated field evaluation
 - [Rollup Fields](./usage/rollup-fields.md) - Simulating rollup field evaluation
 - [Custom API Support](./usage/custom-api.md) - Implementing Custom APIs
-- [Cloud Flows](./usage/cloud-flows.md) - Testing Power Automate flows ✅ **IMPLEMENTED**
+- [Cloud Flows](./usage/cloud-flows.md) - Testing Power Automate flows ✅ **IMPLEMENTED** (requires Fake4DataverseCloudFlows package)
 - [Expression Language](./expression-language.md) - Power Automate expressions ✅ **NEW**
 - [Merge Request Operations](./usage/merge-request.md) - Merging entity records
 - [Hierarchical Queries](./usage/hierarchical-queries.md) - Querying hierarchical data
@@ -35,6 +35,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 
 ### 🌐 [Network Testing](.)
 - [Fake4DataverseService](./service.md) - Network-accessible SOAP/WCF service for integration testing ✅ **NEW**
+- [REST/OData API Endpoints](./rest-api.md) - OData v4.0 endpoints with advanced query support ✅ **NEW**
 
 ### 🏗️ [Architecture & Planning](.)
 - [Cloud Flow API Design](./API_DESIGN_CLOUD_FLOWS.md) - Technical design for Cloud Flow simulation

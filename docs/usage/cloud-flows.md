@@ -6,7 +6,15 @@ Cloud Flows (Power Automate flows) are an increasingly common integration patter
 
 **Status:** ✅ **Implemented** (October 12, 2025) - Phases 1-7 Complete, JSON Import Extended
 
-**Test Coverage:** 157 unit tests, all passing ✅ (includes control flow actions and JSON import)
+**Package:** `Fake4DataverseCloudFlows` (.NET 8.0 only) - Separate package for advanced OData support
+
+**Test Coverage:** 208 unit tests, all passing ✅ (includes control flow actions, JSON import, and OData conversion)
+
+> **Note:** Cloud Flow simulation has been moved to a separate `Fake4DataverseCloudFlows` project targeting .NET 8.0 only. This allows it to use Microsoft.OData.Core for advanced OData query processing. Install the `Fake4Dataverse.CloudFlows` package and initialize with:
+> ```csharp
+> var context = XrmFakedContextFactory.New();
+> context.CloudFlowSimulator = new CloudFlowSimulator(context);
+> ```
 
 ## Microsoft Documentation
 
@@ -633,7 +641,7 @@ if (outputs.ContainsKey("@odata.nextLink"))
 ```
 
 **ListRecords Capabilities:**
-- ✅ `Filter` - OData filter expressions (basic support, complex parsing noted for future enhancement)
+- ✅ `Filter` - Basic OData filter expressions (simple equality: `field eq 'value'`)
 - ✅ `OrderBy` - Sort by attribute (e.g., "createdon desc")
 - ✅ `Top` - Maximum records to return per page
 - ✅ `Skip` - Skip records for paging (offset-based)
@@ -641,10 +649,35 @@ if (outputs.ContainsKey("@odata.nextLink"))
 - ✅ `@odata.nextLink` - Automatic generation when more records available
 - ⚠️ `Expand` - Navigation property expansion (placeholder for future enhancement)
 
+**Advanced OData Filter Support:**
+
+For complex OData filter expressions with operators and functions (e.g., `revenue gt 100000 and contains(name, 'Corp')`), 
+use the **REST API endpoints** (`/api/data/v9.2`) which leverage Microsoft.AspNetCore.OData v9.4.0 for full OData v4.0 compliance.
+
+The REST API provides automatic parsing of complex filter expressions including:
+- Comparison operators: `eq`, `ne`, `gt`, `lt`, `ge`, `le`
+- Logical operators: `and`, `or`, `not`
+- String functions: `contains()`, `startswith()`, `endswith()`
+- Date/time functions and arithmetic operations
+
+**Reference:** [REST/OData API Documentation](../rest-api.md)
+
+Cloud flows using complex filters can:
+1. Call the REST API endpoints directly from the flow
+2. Use the Fake4DataverseService REST endpoints for testing
+3. Implement custom filtering logic using QueryExpression conditions
+
+**Shared OData Implementation:**
+
+Both the Cloud Flows connector and REST API endpoints share the same `ODataEntityConverter` 
+and `ODataValueConverter` classes for consistent type conversion between OData JSON and SDK types.
+This ensures that OptionSet values, Money fields, EntityReferences, and DateTime values are 
+handled identically in both contexts.
+
 **Notes:**
-- Paging is implemented using LINQ Skip/Take for simplicity
-- Complex OData filter parsing is noted as a future enhancement (TODO in code)
-- $expand for related entities requires metadata mapping (future enhancement)
+- Basic filter parsing (simple equality checks) is implemented for cloud flows
+- Complex OData filter parsing requires the Microsoft.AspNetCore.OData library (REST API only)
+- For cloud flows needing advanced filtering, consider using the REST API or QueryExpression
 
 #### Custom Connector Actions (Extensibility)
 ```csharp

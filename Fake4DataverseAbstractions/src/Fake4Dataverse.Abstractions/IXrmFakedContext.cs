@@ -93,8 +93,12 @@ namespace Fake4Dataverse.Abstractions
         /// - Dataverse connector actions within flows
         /// - Custom connector actions (via extensibility)
         /// - Flow execution verification and assertion
+        /// 
+        /// Note: To use Cloud Flow simulation, install the Fake4Dataverse.CloudFlows package
+        /// and set this property to an instance of CloudFlowSimulator.
+        /// Example: context.CloudFlowSimulator = new CloudFlowSimulator(context);
         /// </summary>
-        ICloudFlowSimulator CloudFlowSimulator { get; }
+        ICloudFlowSimulator CloudFlowSimulator { get; set; }
 
         void AddEntity(Entity e);
         void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false);

@@ -21,7 +21,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_RegisterFlow_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -47,7 +47,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenRegisteringFlowWithoutName()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -64,7 +64,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenRegisteringFlowWithoutTrigger()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -81,7 +81,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_UnregisterFlow_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -108,7 +108,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ClearAllFlows_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             flowSimulator.RegisterFlow(new CloudFlowDefinition
@@ -135,7 +135,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_SimulateTrigger_WithEmptyActions()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -173,7 +173,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenSimulatingUnregisteredFlow()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Act & Assert
@@ -185,7 +185,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenSimulatingDisabledFlow()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -206,7 +206,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ExecuteMultipleActions_InSequence()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Register a test handler
@@ -241,7 +241,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_StopExecution_OnFirstActionFailure()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var testHandler = new TestConnectorHandler { ShouldFail = true };
@@ -275,7 +275,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_TrackExecutionHistory()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -307,7 +307,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_AssertFlowTriggered_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -328,7 +328,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenAssertingUntriggeredFlow()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -349,7 +349,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_AssertFlowNotTriggered_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -369,7 +369,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ThrowException_WhenAssertingFlowNotTriggered_ButItWas()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -391,7 +391,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ClearExecutionHistory_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -416,7 +416,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_RegisterConnectorHandler_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var handler = new TestConnectorHandler();
@@ -433,7 +433,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ReturnNull_WhenGettingUnregisteredConnectorHandler()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             // Act
@@ -447,7 +447,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_FailAction_WhenNoHandlerRegistered()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowDefinition = new CloudFlowDefinition
@@ -476,7 +476,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_ImportFlowFromJson_Successfully()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var flowJson = @"{
@@ -518,7 +518,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_PassExecutionContext_ToActionHandler()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var testHandler = new ContextCapturingHandler();
@@ -553,7 +553,7 @@ namespace Fake4Dataverse.Tests.CloudFlows
         public void Should_PassActionOutputs_ToSubsequentActions()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            var context = XrmFakedContextFactory.New().WithCloudFlowSimulator();
             var flowSimulator = context.CloudFlowSimulator;
 
             var handler = new OutputProducingHandler();
