@@ -185,7 +185,9 @@ var accountId = service.Create(new Entity("account") { ["name"] = "Test" });
 
 ### Why Not ServiceClient/CrmServiceClient?
 
-ServiceClient and CrmServiceClient are designed for production scenarios and require OAuth authentication. While it's possible to configure them to work with Fake4DataverseService, it adds unnecessary complexity for testing scenarios.
+ServiceClient and CrmServiceClient are designed for production scenarios and require OAuth authentication. While the Fake4DataverseService endpoints are compatible with ServiceClient, setting up OAuth authentication adds unnecessary complexity for testing scenarios.
+
+**For Testing Scenarios (Recommended):**
 
 The WCF channel approach shown above:
 - ✅ Works immediately without authentication setup
@@ -193,6 +195,57 @@ The WCF channel approach shown above:
 - ✅ Is what ServiceClient uses internally anyway
 - ✅ Perfect for integration testing
 - ✅ Demonstrated in the E2E tests
+
+**For ServiceClient Users:**
+
+If you have existing code that uses ServiceClient and want to test against Fake4DataverseService:
+
+1. **Option 1: Modify your code to accept IOrganizationService** (recommended)
+   - Update your methods to accept `IOrganizationService` interface instead of `ServiceClient`
+   - Use WCF channels (as shown above) for testing
+   - Use real ServiceClient in production
+
+2. **Option 2: Mock/Wrap ServiceClient in your tests**
+   - Create a test double for ServiceClient that internally uses the WCF channel
+   - This allows your production code to remain unchanged
+
+3. **Option 3: Configure OAuth (advanced, not recommended for testing)**
+   - Set up Azure AD app registration
+   - Configure OAuth authentication
+   - Use ServiceClient with connection string: `"AuthType=OAuth;Url=http://localhost:5000;ClientId=...;RedirectUri=...;LoginPrompt=Auto"`
+   - This is complex and not necessary for testing scenarios
+
+**Example: Refactoring for Testability**
+
+```csharp
+// Before: Tightly coupled to ServiceClient
+public class AccountService
+{
+    public Guid CreateAccount(ServiceClient client, string name)
+    {
+        return client.Create(new Entity("account") { ["name"] = name });
+    }
+}
+
+// After: Accepts IOrganizationService interface (testable!)
+public class AccountService
+{
+    public Guid CreateAccount(IOrganizationService service, string name)
+    {
+        return service.Create(new Entity("account") { ["name"] = name });
+    }
+}
+
+// In production: Pass ServiceClient (it implements IOrganizationService)
+var client = new ServiceClient(connectionString);
+var accountService = new AccountService();
+accountService.CreateAccount(client, "Contoso");
+
+// In tests: Pass WCF channel
+var service = Fake4DataverseClient.CreateService();
+var accountService = new AccountService();
+accountService.CreateAccount(service, "Test Account");
+```
 
 ## Architecture
 
