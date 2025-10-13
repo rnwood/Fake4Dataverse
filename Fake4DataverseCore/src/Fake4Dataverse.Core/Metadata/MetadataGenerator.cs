@@ -266,18 +266,20 @@ namespace Fake4Dataverse.Metadata
         }
 
         /// <summary>
-        /// Creates entity metadata from standard CDM entities by downloading them from Microsoft's CDM repository.
+        /// Creates entity metadata from standard CDM schema groups by downloading them from Microsoft's CDM repository.
         /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
         /// 
-        /// This method downloads standard entity schemas (Account, Contact, etc.) directly from
-        /// Microsoft's official CDM repository on GitHub. Available standard entities include:
-        /// Account, Contact, Lead, Opportunity, User, Team, BusinessUnit, Organization, and more.
+        /// This method downloads standard schema groups (crmcommon, sales, service, portals, customerInsights) directly from
+        /// Microsoft's official CDM repository on GitHub. It follows the imports in each schema file to recursively
+        /// load all dependent entity definitions.
+        /// 
+        /// Available standard schemas: crmcommon, sales, service, portals, customerInsights
         /// </summary>
-        /// <param name="entityNames">Names of standard entities (e.g., "Account", "Contact")</param>
-        /// <returns>Task that resolves to collection of EntityMetadata for the requested entities</returns>
-        public static Task<IEnumerable<EntityMetadata>> FromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        /// <param name="schemaNames">Names of standard schemas (e.g., "crmcommon", "sales", "service")</param>
+        /// <returns>Task that resolves to collection of EntityMetadata for all entities in the requested schemas</returns>
+        public static Task<IEnumerable<EntityMetadata>> FromStandardCdmSchemasAsync(IEnumerable<string> schemaNames)
         {
-            return CdmJsonParser.FromStandardCdmEntitiesAsync(entityNames);
+            return CdmJsonParser.FromStandardCdmSchemasAsync(schemaNames);
         }
     }
 }

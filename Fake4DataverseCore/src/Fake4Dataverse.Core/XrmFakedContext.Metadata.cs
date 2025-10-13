@@ -94,20 +94,20 @@ namespace Fake4Dataverse
         }
 
         /// <summary>
-        /// Initialize metadata from standard CDM entities by downloading them from Microsoft's CDM repository.
+        /// Initialize metadata from standard CDM schema groups by downloading them from Microsoft's CDM repository.
         /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
         /// 
-        /// This method downloads standard entity schemas (Account, Contact, etc.) directly from
-        /// Microsoft's official CDM repository on GitHub. This is useful for quickly setting up tests
-        /// with standard Dynamics 365/Dataverse entities without needing local CDM files.
+        /// This method downloads standard schema groups (crmcommon, sales, service, portals, customerInsights) directly from
+        /// Microsoft's official CDM repository on GitHub. It follows the imports in each schema file to recursively
+        /// load all dependent entity definitions. This is useful for quickly setting up tests with standard 
+        /// Dynamics 365/Dataverse entities without needing local CDM files.
         /// 
-        /// Available standard entities include: Account, Contact, Lead, Opportunity, User, Team, 
-        /// BusinessUnit, Organization, and more.
+        /// Available standard schemas: crmcommon, sales, service, portals, customerInsights
         /// </summary>
-        /// <param name="entityNames">Names of standard entities to load (e.g., "Account", "Contact")</param>
-        public async Task InitializeMetadataFromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        /// <param name="schemaNames">Names of standard schemas to load (e.g., "crmcommon", "sales")</param>
+        public async Task InitializeMetadataFromStandardCdmSchemasAsync(IEnumerable<string> schemaNames)
         {
-            IEnumerable<EntityMetadata> entityMetadatas = await MetadataGenerator.FromStandardCdmEntitiesAsync(entityNames);
+            IEnumerable<EntityMetadata> entityMetadatas = await MetadataGenerator.FromStandardCdmSchemasAsync(schemaNames);
             if (entityMetadatas.Any())
             {
                 this.InitializeMetadata(entityMetadatas);

@@ -27,20 +27,17 @@ namespace Fake4Dataverse.Metadata.Cdm
         
         // Base URL for Microsoft's CDM GitHub repository
         private const string CDM_GITHUB_BASE_URL = "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments";
+        private const string CDM_CRM_COMMON_PATH = "core/applicationCommon/foundationCommon/crmCommon";
         
-        // Standard CDM paths for D365/Dataverse entities
+        // Standard CDM schema groups for D365/Dataverse
         // Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon/foundationCommon/crmCommon
-        private static readonly Dictionary<string, string> StandardEntityPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, string> StandardSchemaPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            // Foundation entities
-            { "Account", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/crmCommon/Account.cdm.json" },
-            { "Contact", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/crmCommon/Contact.cdm.json" },
-            { "Lead", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/crmCommon/Lead.cdm.json" },
-            { "Opportunity", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/crmCommon/sales/Opportunity.cdm.json" },
-            { "User", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/User.cdm.json" },
-            { "Team", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/Team.cdm.json" },
-            { "BusinessUnit", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/BusinessUnit.cdm.json" },
-            { "Organization", $"{CDM_GITHUB_BASE_URL}/core/applicationCommon/foundationCommon/Organization.cdm.json" },
+            { "crmcommon", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/crmCommon.cdm.json" },
+            { "sales", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/sales.cdm.json" },
+            { "service", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/service.cdm.json" },
+            { "portals", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/portals/portals.cdm.json" },
+            { "customerinsights", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/customerInsights/customerInsights.cdm.json" },
         };
         
         /// <summary>
@@ -87,37 +84,135 @@ namespace Fake4Dataverse.Metadata.Cdm
         }
         
         /// <summary>
-        /// Downloads and parses standard CDM entity schemas from Microsoft's CDM repository.
+        /// Downloads and parses standard CDM schema groups from Microsoft's CDM repository.
         /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
         /// 
-        /// This method downloads standard entity schemas (Account, Contact, etc.) directly from
-        /// Microsoft's official CDM repository on GitHub.
+        /// This method downloads standard schema groups (crmcommon, sales, service, etc.) directly from
+        /// Microsoft's official CDM repository on GitHub. It follows the imports in each schema file
+        /// to recursively load all dependent entity definitions.
         /// </summary>
-        /// <param name="entityNames">Names of standard entities to download (e.g., "Account", "Contact")</param>
-        /// <returns>Collection of EntityMetadata objects for the requested entities</returns>
-        public static async Task<IEnumerable<EntityMetadata>> FromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        /// <param name="schemaNames">Names of standard schemas to download (e.g., "crmcommon", "sales", "service")</param>
+        /// <returns>Collection of EntityMetadata objects for all entities in the requested schemas</returns>
+        public static async Task<IEnumerable<EntityMetadata>> FromStandardCdmSchemasAsync(IEnumerable<string> schemaNames)
         {
-            if (entityNames == null)
+            if (schemaNames == null)
             {
-                throw new ArgumentNullException(nameof(entityNames));
+                throw new ArgumentNullException(nameof(schemaNames));
             }
             
             var allMetadata = new List<EntityMetadata>();
-            foreach (var entityName in entityNames)
+            var processedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            
+            foreach (var schemaName in schemaNames)
             {
-                if (!StandardEntityPaths.TryGetValue(entityName, out string url))
+                if (!StandardSchemaPaths.TryGetValue(schemaName, out string url))
                 {
-                    throw new ArgumentException($"Unknown standard CDM entity: {entityName}. Available entities: {string.Join(", ", StandardEntityPaths.Keys)}");
+                    throw new ArgumentException($"Unknown standard CDM schema: {schemaName}. Available schemas: {string.Join(", ", StandardSchemaPaths.Keys)}");
                 }
                 
                 try
                 {
-                    var json = await _httpClient.GetStringAsync(url);
-                    allMetadata.AddRange(FromCdmJson(json));
+                    var metadata = await DownloadAndParseWithImportsAsync(url, processedUrls);
+                    allMetadata.AddRange(metadata);
                 }
                 catch (HttpRequestException ex)
                 {
-                    throw new InvalidOperationException($"Failed to download CDM schema for {entityName} from {url}", ex);
+                    throw new InvalidOperationException($"Failed to download CDM schema for {schemaName} from {url}", ex);
+                }
+            }
+            
+            return allMetadata;
+        }
+        
+        /// <summary>
+        /// Recursively downloads and parses a CDM JSON file and all its imports.
+        /// </summary>
+        /// <param name="url">URL of the CDM JSON file to download</param>
+        /// <param name="processedUrls">Set of already processed URLs to avoid circular dependencies</param>
+        /// <returns>Collection of EntityMetadata objects from this file and all imports</returns>
+        private static async Task<IEnumerable<EntityMetadata>> DownloadAndParseWithImportsAsync(string url, HashSet<string> processedUrls)
+        {
+            // Avoid processing the same file twice
+            if (processedUrls.Contains(url))
+            {
+                return Enumerable.Empty<EntityMetadata>();
+            }
+            
+            processedUrls.Add(url);
+            
+            var json = await _httpClient.GetStringAsync(url);
+            var allMetadata = new List<EntityMetadata>();
+            
+            // Parse the current document
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                AllowTrailingCommas = true,
+                ReadCommentHandling = JsonCommentHandling.Skip
+            };
+            
+            CdmDocument document;
+            try
+            {
+                document = JsonSerializer.Deserialize<CdmDocument>(json, options);
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException($"Failed to parse CDM JSON from {url}. Ensure the file is valid CDM JSON format.", ex);
+            }
+            
+            // Process imports first (dependencies must be loaded before entities that reference them)
+            if (document?.Imports != null && document.Imports.Any())
+            {
+                var baseUrl = url.Substring(0, url.LastIndexOf('/') + 1);
+                
+                foreach (var import in document.Imports)
+                {
+                    if (string.IsNullOrWhiteSpace(import.CorpusPath))
+                    {
+                        continue;
+                    }
+                    
+                    // Resolve relative import paths
+                    string importUrl;
+                    if (import.CorpusPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                        import.CorpusPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        importUrl = import.CorpusPath;
+                    }
+                    else
+                    {
+                        // Handle relative paths - remove leading "./" if present
+                        var relativePath = import.CorpusPath.TrimStart('.', '/');
+                        importUrl = baseUrl + relativePath;
+                    }
+                    
+                    try
+                    {
+                        var importedMetadata = await DownloadAndParseWithImportsAsync(importUrl, processedUrls);
+                        allMetadata.AddRange(importedMetadata);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't fail - some imports might not be critical
+                        Console.WriteLine($"Warning: Failed to load import {import.CorpusPath} from {url}: {ex.Message}");
+                    }
+                }
+            }
+            
+            // Process entity definitions in this document
+            if (document?.Definitions != null && document.Definitions.Any())
+            {
+                foreach (var definition in document.Definitions)
+                {
+                    // Only process LocalEntity types (entity definitions)
+                    if (definition.Type != "LocalEntity" && definition.Type != "CdmEntityDefinition")
+                    {
+                        continue;
+                    }
+                    
+                    var entityMetadata = ConvertToEntityMetadata(definition);
+                    allMetadata.Add(entityMetadata);
                 }
             }
             
