@@ -15,15 +15,24 @@ Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi
 
 ## 🆕 Fake4DataverseService - Network-Accessible Testing
 
-**NEW**: Fake4Dataverse now includes a CLI service that exposes a fake IOrganizationService over SOAP/WCF, matching Microsoft's actual Dynamics 365/Dataverse endpoints!
+**NEW**: Fake4Dataverse now includes a CLI service that exposes both SOAP/WCF and REST/OData endpoints, matching Microsoft's actual Dynamics 365/Dataverse endpoints!
 
+### SOAP/WCF Endpoints
 - **SOAP/WCF Protocol**: Uses standard `/XRMServices/2011/Organization.svc` endpoint
 - **SDK Compatible**: Works with standard WCF channels and IOrganizationService interface
-- **Integration Testing**: Perfect for testing across multiple services or applications
-- **No Authentication Required**: Bypass OAuth for testing - just connect and go
 - **100% Type Compatible**: Uses Microsoft's official Dataverse SDK types
 
-**[Learn more about Fake4DataverseService →](./Fake4DataverseService/README.md)**
+### REST/OData v4.0 Endpoints ✅ **NEW**
+- **OData v4.0 Protocol**: Uses `/api/data/v9.2` endpoint
+- **Advanced Queries**: Full $filter, $select, $orderby, $top, $skip, $expand support
+- **Microsoft.AspNetCore.OData**: Leverages official Microsoft OData library for full compliance
+- **JSON Format**: Standard Dataverse Web API JSON format with @odata annotations
+
+### Common Features
+- **Integration Testing**: Perfect for testing across multiple services or applications
+- **No Authentication Required**: Bypass OAuth for testing - just connect and go
+
+**[Learn more about Fake4DataverseService →](./Fake4DataverseService/README.md)** | **[REST API Documentation →](./docs/rest-api.md)**
 
 ```bash
 # Start the service
@@ -114,7 +123,7 @@ We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releas
 
 ## Project Structure
 
-This is a monorepo containing three main projects:
+This is a monorepo containing multiple projects:
 
 ### 1. Fake4DataverseAbstractions
 - **Location**: `/Fake4DataverseAbstractions/`
@@ -125,8 +134,23 @@ This is a monorepo containing three main projects:
 - **Location**: `/Fake4DataverseCore/`
 - **Purpose**: Core implementation including middleware, CRUD operations, query translation, and message executors
 - **Former Name**: FakeXrmEasy.Core
+- **Note**: Plugins and workflows are tested within Core (no separate plugin project)
 
-### 3. Fake4Dataverse (Legacy Package)
+### 3. Fake4DataverseCloudFlows ✅ **NEW**
+- **Location**: `/Fake4DataverseCloudFlows/`
+- **Purpose**: Cloud Flow (Power Automate) simulation for testing automated flows
+- **Target**: .NET 8.0 only (for advanced OData support via Microsoft.OData.Core)
+- **Features**: Flow execution, expression evaluation, OData query support
+
+### 4. Fake4DataverseService ✅ **NEW**
+- **Location**: `/Fake4DataverseService/`
+- **Purpose**: Network-accessible service exposing SOAP/WCF and REST/OData endpoints
+- **Features**: 
+  - SOAP endpoint at `/XRMServices/2011/Organization.svc`
+  - REST/OData v4.0 endpoints at `/api/data/v9.2`
+  - Integration testing across services and applications
+
+### 5. Fake4Dataverse (Legacy Package)
 - **Location**: `/Fake4Dataverse/`
 - **Purpose**: Legacy/compatibility package
 - **Former Name**: FakeXrmEasy
@@ -134,6 +158,8 @@ This is a monorepo containing three main projects:
 For project-specific information, see:
 - [Fake4DataverseAbstractions README](./Fake4DataverseAbstractions/README.md)
 - [Fake4DataverseCore README](./Fake4DataverseCore/README.md)
+- [Fake4DataverseCloudFlows](./Fake4DataverseCloudFlows/) (see test files for usage examples)
+- [Fake4DataverseService README](./Fake4DataverseService/README.md)
 - [Fake4Dataverse README](./Fake4Dataverse/README.md)
 
 ## Building

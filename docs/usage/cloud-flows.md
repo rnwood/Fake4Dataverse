@@ -6,7 +6,15 @@ Cloud Flows (Power Automate flows) are an increasingly common integration patter
 
 **Status:** ✅ **Implemented** (October 12, 2025) - Phases 1-7 Complete, JSON Import Extended
 
-**Test Coverage:** 157 unit tests, all passing ✅ (includes control flow actions and JSON import)
+**Package:** `Fake4DataverseCloudFlows` (.NET 8.0 only) - Separate package for advanced OData support
+
+**Test Coverage:** 208 unit tests, all passing ✅ (includes control flow actions, JSON import, and OData conversion)
+
+> **Note:** Cloud Flow simulation has been moved to a separate `Fake4DataverseCloudFlows` project targeting .NET 8.0 only. This allows it to use Microsoft.OData.Core for advanced OData query processing. Install the `Fake4Dataverse.CloudFlows` package and initialize with:
+> ```csharp
+> var context = XrmFakedContextFactory.New();
+> context.CloudFlowSimulator = new CloudFlowSimulator(context);
+> ```
 
 ## Microsoft Documentation
 
