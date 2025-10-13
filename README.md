@@ -276,7 +276,7 @@ The following table compares the features available across different versions of
 | **Business Rules** | ❌ No | ✅ Yes | ✅ Yes |
 | **Rollup Fields** | ❌ No | ✅ Yes | ⚠️ Unknown¹ |
 | **Duplicate Detection** | ❌ No | ❌ No | ✅ Yes |
-| **Audit Log** | ❌ No | ❌ No | ✅ Yes |
+| **Audit Log** | ❌ No | ✅ Yes | ✅ Yes |
 | **Virtual Entities** | ❌ No | ❌ No | ✅ Yes |
 | **Elastic Tables** | ❌ No | ❌ No | ✅ Yes |
 | **Connection References** | ❌ No | ❌ No | ✅ Yes |
@@ -346,7 +346,6 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 1. **Workflow/Custom Workflow Activities** - Removed due to SDK limitations
 2. **Custom Actions** - Limited support for custom actions
 4. **Duplicate Detection** - No duplicate detection simulation
-5. **Audit Log** - No audit log simulation
 
 #### Modern Dataverse Features Not Supported:
 7. **Virtual Entities** - No virtual entity support

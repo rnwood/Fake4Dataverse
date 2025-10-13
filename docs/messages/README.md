@@ -23,7 +23,7 @@ Guid userId = response.UserId;
 
 ## Supported Message Categories
 
-Fake4Dataverse currently supports **43+ message executors** across these categories:
+Fake4Dataverse currently supports **46+ message executors** across these categories:
 
 ### 📝 CRUD Messages
 Basic create, read, update, delete operations.
@@ -36,6 +36,10 @@ Managing relationships between entities.
 ### 🔒 Security Messages
 Managing access rights and sharing.
 - [Learn more](./security.md)
+
+### 📝 Audit Messages
+Tracking and retrieving change history.
+- [Learn more](./audit.md)
 
 ### 💼 Business Process Messages
 Business-specific operations like closing cases, winning opportunities.
@@ -83,6 +87,13 @@ Other supported messages.
 | RevokeAccess | `RevokeAccessRequest` | Revoke access to a record |
 | RetrievePrincipalAccess | `RetrievePrincipalAccessRequest` | Get access rights for a principal |
 | RetrieveSharedPrincipalsAndAccess | `RetrieveSharedPrincipalsAndAccessRequest` | Get shared access info |
+
+### Audit Operations
+| Message | Request Type | Description |
+|---------|-------------|-------------|
+| RetrieveAuditDetails | `RetrieveAuditDetailsRequest` | Retrieve audit details for specific audit record |
+| RetrieveRecordChangeHistory | `RetrieveRecordChangeHistoryRequest` | Get complete change history for a record |
+| RetrieveAttributeChangeHistory | `RetrieveAttributeChangeHistoryRequest` | Get change history for specific attribute |
 
 ### Business Process Messages
 | Message | Request Type | Description |

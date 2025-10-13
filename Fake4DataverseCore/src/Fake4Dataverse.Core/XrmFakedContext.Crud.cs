@@ -159,6 +159,10 @@ namespace Fake4Dataverse
 
                 var integrityOptions = GetProperty<IIntegrityOptions>();
 
+                // Capture old entity state for audit tracking
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
+                var oldEntityForAudit = Data[e.LogicalName][e.Id].Clone(Data[e.LogicalName][e.Id].GetType(), this);
+
                 // Add as many attributes to the entity as the ones received (this will keep existing ones)
                 var cachedEntity = Data[e.LogicalName][e.Id];
                 foreach (var sAttributeName in e.Attributes.Keys.ToList())
@@ -196,6 +200,10 @@ namespace Fake4Dataverse
                 // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields
                 // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
                 TriggerRollupRecalculationForRelatedEntities(cachedEntity);
+
+                // Record audit entry for Update operation
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
+                RecordUpdateAudit(oldEntityForAudit, cachedEntity);
 
                 if (this.UsePipelineSimulation)
                 {
@@ -350,6 +358,10 @@ namespace Fake4Dataverse
                 // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields
                 // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
                 TriggerRollupRecalculationForRelatedEntities(entityToDelete);
+
+                // Record audit entry for Delete operation
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
+                RecordDeleteAudit(er);
 
                 if (this.UsePipelineSimulation)
                 {
@@ -573,6 +585,11 @@ namespace Fake4Dataverse
                 // Cloud Flows trigger asynchronously after the operation completes
                 CloudFlowSimulator.TriggerDataverseFlows("Create", e.LogicalName, e);
             }
+
+            // Record audit entry for Create operation
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
+            // Auditing tracks Create, Update, Delete operations and attribute changes
+            RecordCreateAudit(e);
         }
 
         public void AddEntity(Entity e)
