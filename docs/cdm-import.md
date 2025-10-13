@@ -44,21 +44,20 @@ var account = new Entity("account")
 var accountId = service.Create(account);
 ```
 
-### Loading Standard CDM Entities
+### Loading Standard CDM Schema Groups
 
-Fake4Dataverse can download standard entity schemas directly from Microsoft's CDM repository:
+Fake4Dataverse can download standard schema groups directly from Microsoft's CDM repository. Schema groups automatically include all their dependencies through CDM imports:
 
 ```csharp
 // Arrange
 var context = XrmFakedContextFactory.New();
 
-// Load standard CDM entities by name
+// Load standard CDM schema groups by name
 // This downloads the schemas from Microsoft's official CDM repository
-await context.InitializeMetadataFromStandardCdmEntitiesAsync(new[] {
-    "Account",
-    "Contact",
-    "Lead",
-    "Opportunity"
+// and follows all imports to load dependent entities
+await context.InitializeMetadataFromStandardCdmSchemasAsync(new[] {
+    "crmcommon",  // Base CRM entities (Account, Contact, Lead, etc.)
+    "sales"       // Sales entities (Opportunity, Quote, Order, Invoice, etc.)
 });
 
 // Now use the entities in your tests
@@ -70,6 +69,14 @@ var contact = new Entity("contact")
 };
 var contactId = service.Create(contact);
 ```
+
+### Available Schema Groups
+
+- **crmcommon** - Base CRM entities (Account, Contact, Lead, etc.)
+- **sales** - Sales-specific entities (Opportunity, Quote, Order, Invoice, etc.)
+- **service** - Service/Support entities (Case, Queue, etc.)
+- **portals** - Portal-related entities
+- **customerInsights** - Customer Insights entities
 
 ### Using MetadataGenerator Directly
 
@@ -87,10 +94,10 @@ var allMetadata = MetadataGenerator.FromCdmJsonFiles(new[] {
     "path/to/Contact.cdm.json"
 });
 
-// Download standard entities
-var standardMetadata = await MetadataGenerator.FromStandardCdmEntitiesAsync(new[] {
-    "Account",
-    "Contact"
+// Download standard schema groups
+var standardMetadata = await MetadataGenerator.FromStandardCdmSchemasAsync(new[] {
+    "crmcommon",
+    "sales"
 });
 
 // Initialize context with parsed metadata
@@ -99,7 +106,16 @@ context.InitializeMetadata(entityMetadataList);
 
 ## Fake4DataverseService CLI
 
-The Fake4DataverseService command-line tool supports CDM import via command-line arguments:
+The Fake4DataverseService command-line tool supports CDM import via command-line arguments.
+
+### Default Behavior
+
+By default, the service loads the **crmcommon** schema group when started:
+
+```bash
+# Starts service with crmcommon schema loaded by default
+dotnet run -- start
+```
 
 ### Load CDM from Local Files
 
@@ -111,14 +127,17 @@ dotnet run -- start --cdm-files Account.cdm.json Contact.cdm.json Lead.cdm.json
 dotnet run -- start --cdm-files /path/to/schemas/Account.cdm.json /path/to/schemas/Contact.cdm.json
 ```
 
-### Load Standard CDM Entities
+### Load Standard CDM Schema Groups
 
 ```bash
-# Download and load standard CDM entities
-dotnet run -- start --cdm-entities Account Contact Lead Opportunity
+# Download and load standard CDM schema groups
+dotnet run -- start --cdm-schemas crmcommon sales service
+
+# Load only sales (without crmcommon default)
+dotnet run -- start --cdm-schemas sales
 
 # Combine with other options
-dotnet run -- start --port 8080 --cdm-entities Account Contact User Team
+dotnet run -- start --port 8080 --cdm-schemas crmcommon sales
 ```
 
 ### Combine CDM with Other Options
@@ -129,7 +148,11 @@ dotnet run -- start \
   --port 8080 \
   --access-token mytoken123 \
   --cdm-files Account.cdm.json \
-  --cdm-entities Contact Lead
+  --cdm-schemas sales service
+
+# Note: When --cdm-files is specified, crmcommon is NOT loaded by default
+# Explicitly include it if needed:
+dotnet run -- start --cdm-files custom.cdm.json --cdm-schemas crmcommon
 ```
 
 ## CDM JSON Format
@@ -139,7 +162,14 @@ CDM JSON files follow this basic structure:
 ```json
 {
   "jsonSchemaSemanticVersion": "1.0.0",
-  "imports": [],
+  "imports": [
+    {
+      "corpusPath": "Contact.cdm.json"
+    },
+    {
+      "corpusPath": "Lead.cdm.json"
+    }
+  ],
   "definitions": [
     {
       "$type": "LocalEntity",
@@ -175,6 +205,9 @@ CDM JSON files follow this basic structure:
 
 ### Key CDM Properties
 
+- **`imports`**: Array of dependencies - other CDM files to load before this one
+  - **`corpusPath`**: Relative or absolute path to the imported CDM file
+  - Fake4Dataverse recursively follows imports to load all dependencies
 - **`$type`**: Must be "LocalEntity" or "CdmEntityDefinition" for entity definitions
 - **`name`**: The schema name (typically PascalCase, e.g., "Account")
 - **`sourceName`**: The Dataverse logical name (lowercase, e.g., "account")
@@ -184,6 +217,16 @@ CDM JSON files follow this basic structure:
   - **`dataType`**: Data type (string, guid, integer, datetime, money, lookup, etc.)
   - **`isPrimaryKey`**: Set to `true` for the primary key attribute
   - **`maximumLength`**: For string attributes, the maximum length
+
+### Import/Dependency Following
+
+When you load a CDM schema group like "crmcommon", Fake4Dataverse:
+
+1. Downloads the main crmCommon.cdm.json file
+2. Parses its `imports` array to find dependencies
+3. Recursively downloads and parses each imported file
+4. Loads dependencies before entities that reference them
+5. Avoids circular dependencies by tracking processed files
 
 ## Supported Data Types
 
@@ -205,20 +248,38 @@ Fake4Dataverse CDM import supports the following data types:
 | `memo`, `multilinetext` | MemoAttributeMetadata |
 | `image`, `file` | ImageAttributeMetadata |
 
-## Available Standard CDM Entities
+## Available Standard CDM Schema Groups
 
-The following standard entities can be downloaded from Microsoft's CDM repository:
+The following standard schema groups can be downloaded from Microsoft's CDM repository:
 
-- **Account** - Business account entity
-- **Contact** - Contact person entity
-- **Lead** - Sales lead entity
-- **Opportunity** - Sales opportunity entity
-- **User** - System user entity
-- **Team** - Team entity
-- **BusinessUnit** - Business unit entity
-- **Organization** - Organization entity
+### crmcommon (Default)
+Base CRM entities including:
+- Account - Business account entity
+- Contact - Contact person entity
+- Lead - Sales lead entity
+- And many more foundation entities
 
-More entities may be available. Check Microsoft's CDM repository: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+### sales
+Sales-specific entities including:
+- Opportunity - Sales opportunity entity
+- Quote - Quote entity
+- Order - Sales order entity
+- Invoice - Invoice entity
+- And more sales entities
+
+### service
+Service/Support entities including:
+- Case - Customer service case entity
+- Queue - Queue entity
+- And more service entities
+
+### portals
+Portal-related entities for Power Pages and Portals
+
+### customerInsights
+Customer Insights entities for analytics and insights
+
+**Reference**: Check Microsoft's CDM repository for the complete list: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
 
 ## Exporting CDM from Dataverse
 
@@ -248,16 +309,28 @@ To export CDM JSON schemas from your Dataverse environment, you can:
 
 ## Best Practices
 
-### 1. Use Standard Entities When Possible
+### 1. Use Standard Schema Groups When Possible
 
-If you're testing with standard Dataverse entities, prefer downloading them:
+If you're testing with standard Dataverse entities, prefer downloading schema groups:
 
 ```csharp
-// Good - Downloads official Microsoft schemas
-await context.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "Account", "Contact" });
+// Good - Downloads official Microsoft schemas with all dependencies
+await context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "crmcommon", "sales" });
 ```
 
-### 2. Store CDM Files in Your Test Project
+### 2. Let the Service Default to crmcommon
+
+When using Fake4DataverseService, the default crmcommon schema provides a good baseline:
+
+```bash
+# Simple - starts with crmcommon loaded
+dotnet run -- start
+
+# Explicit - same as above
+dotnet run -- start --cdm-schemas crmcommon
+```
+
+### 3. Store CDM Files in Your Test Project
 
 Keep CDM files alongside your tests for portability:
 
@@ -271,19 +344,29 @@ MyProject.Tests/
       └── MyEntityTests.cs
 ```
 
-### 3. Combine with Early-Bound for Custom Entities
+### 4. Combine Standard and Custom Schemas
 
-Use CDM for standard entities and early-bound for custom entities:
+Use CDM schema groups for standard entities and local files for custom entities:
 
 ```csharp
 // Load standard entities from CDM
-await context.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "Account", "Contact" });
+await context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "crmcommon" });
+
+// Load custom entities from local files
+context.InitializeMetadataFromCdmFile("CustomEntity.cdm.json");
+```
+
+Or combine with early-bound for custom entities:
+
+```csharp
+// Load standard entities from CDM
+await context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "crmcommon" });
 
 // Load custom entities from early-bound assembly
 context.InitializeMetadata(typeof(custom_entity).Assembly);
 ```
 
-### 4. Version Control Your CDM Files
+### 5. Version Control Your CDM Files
 
 Check CDM files into source control so all developers have consistent schemas.
 
@@ -316,10 +399,10 @@ InvalidOperationException: CDM document contains no entity definitions
 ### Unknown Standard Entity Error
 
 ```
-ArgumentException: Unknown standard CDM entity: CustomEntity
+ArgumentException: Unknown standard CDM schema: CustomEntity
 ```
 
-**Solution**: The entity name must be a standard Microsoft CDM entity. Check available entities at: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+**Solution**: The schema name must be one of the standard groups: crmcommon, sales, service, portals, customerInsights. Check available schemas at: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
 
 ## Related Documentation
 
