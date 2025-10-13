@@ -5,7 +5,6 @@ using Fake4Dataverse.Abstractions.FakeMessageExecutors;
 using Fake4Dataverse.Abstractions.Metadata;
 using Fake4Dataverse.Abstractions.Permissions;
 using Fake4Dataverse.Abstractions.Plugins;
-using Fake4Dataverse.CloudFlows;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Permissions;
 using Fake4Dataverse.Services;
@@ -154,8 +153,8 @@ namespace Fake4Dataverse
             // Initialize plugin pipeline simulator
             PluginPipelineSimulator = new PluginPipelineSimulator(this);
 
-            // Initialize Cloud Flow simulator
-            CloudFlowSimulator = new CloudFlowSimulator(this);
+            // CloudFlowSimulator is now in a separate package (Fake4Dataverse.CloudFlows)
+            // To use it, install that package and set: CloudFlowSimulator = new CloudFlowSimulator(this);
 
             GetOrganizationService();
 
