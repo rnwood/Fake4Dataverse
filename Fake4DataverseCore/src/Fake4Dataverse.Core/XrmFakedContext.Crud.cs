@@ -161,7 +161,7 @@ namespace Fake4Dataverse
 
                 // Capture old entity state for audit tracking
                 // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
-                var oldEntityForAudit = Data[e.LogicalName][e.Id].Clone(Data[e.LogicalName][e.Id].GetType());
+                var oldEntityForAudit = Data[e.LogicalName][e.Id].Clone(Data[e.LogicalName][e.Id].GetType(), this);
 
                 // Add as many attributes to the entity as the ones received (this will keep existing ones)
                 var cachedEntity = Data[e.LogicalName][e.Id];
