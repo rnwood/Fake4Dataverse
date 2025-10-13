@@ -73,6 +73,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
+  const [appModuleId, setAppModuleId] = useState<string | null>(null);
 
   useEffect(() => {
     loadSitemap();
@@ -91,6 +92,7 @@ export default function Home() {
 
       if (appModulesResponse.value.length > 0) {
         const appModule = appModulesResponse.value[0] as AppModule;
+        setAppModuleId(appModule.appmoduleid);
         
         // Load sitemap for this app module
         const sitemapsResponse = await dataverseClient.fetchEntities('sitemaps', {
@@ -175,6 +177,7 @@ export default function Home() {
             entityName={selectedEntity}
             entityPluralName={ENTITY_PLURAL_NAMES[selectedEntity] || selectedEntity + 's'}
             displayName={ENTITY_DISPLAY_NAMES[selectedEntity]}
+            appModuleId={appModuleId || undefined}
           />
         ) : (
           <div className={styles.welcomeContainer}>

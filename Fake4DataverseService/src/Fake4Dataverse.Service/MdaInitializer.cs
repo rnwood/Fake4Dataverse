@@ -46,6 +46,10 @@ public static class MdaInitializer
         service.Create(sitemap);
         Console.WriteLine($"  Created SiteMap: {sitemapId}");
         
+        // Create saved queries (system views) for entities
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/savedquery
+        CreateSystemViews(service, appModuleId);
+        
         // Create some sample data for testing
         CreateSampleData(service);
         
@@ -121,5 +125,214 @@ public static class MdaInitializer
             service.Create(opportunity);
         }
         Console.WriteLine($"    Created 3 sample opportunities");
+    }
+    
+    /// <summary>
+    /// Create system views (SavedQuery) for entities
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/savedquery
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/appmodulecomponent
+    /// </summary>
+    private static void CreateSystemViews(IOrganizationService service, Guid appModuleId)
+    {
+        Console.WriteLine("  Creating system views...");
+        
+        // Account views
+        CreateAccountViews(service, appModuleId);
+        
+        // Contact views  
+        CreateContactViews(service, appModuleId);
+        
+        // Opportunity views
+        CreateOpportunityViews(service, appModuleId);
+        
+        Console.WriteLine($"    Created system views for Account, Contact, and Opportunity");
+    }
+    
+    private static void CreateAccountViews(IOrganizationService service, Guid appModuleId)
+    {
+        // Active Accounts view
+        var activeAccountsView = new Entity("savedquery")
+        {
+            Id = Guid.NewGuid(),
+            ["name"] = "Active Accounts",
+            ["returnedtypecode"] = "account",
+            ["fetchxml"] = @"<fetch version='1.0' output-format='xml-platform' mapping='logical'>
+  <entity name='account'>
+    <attribute name='accountid' />
+    <attribute name='name' />
+    <attribute name='accountnumber' />
+    <attribute name='revenue' />
+    <attribute name='numberofemployees' />
+    <attribute name='createdon' />
+    <order attribute='name' descending='false' />
+    <filter type='and'>
+      <condition attribute='statecode' operator='eq' value='0' />
+    </filter>
+  </entity>
+</fetch>",
+            ["layoutxml"] = @"<grid name='resultset' object='1' jump='name' select='1' icon='1' preview='1'>
+  <row name='result' id='accountid'>
+    <cell name='name' width='200' />
+    <cell name='accountnumber' width='100' />
+    <cell name='revenue' width='100' />
+    <cell name='numberofemployees' width='100' />
+    <cell name='createdon' width='150' />
+  </row>
+</grid>",
+            ["querytype"] = 0, // 0 = Public View
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(activeAccountsView);
+        CreateAppModuleComponent(service, appModuleId, activeAccountsView.Id, 26); // 26 = SavedQuery
+        
+        // All Accounts view
+        var allAccountsView = new Entity("savedquery")
+        {
+            Id = Guid.NewGuid(),
+            ["name"] = "All Accounts",
+            ["returnedtypecode"] = "account",
+            ["fetchxml"] = @"<fetch version='1.0' output-format='xml-platform' mapping='logical'>
+  <entity name='account'>
+    <attribute name='accountid' />
+    <attribute name='name' />
+    <attribute name='accountnumber' />
+    <attribute name='revenue' />
+    <attribute name='primarycontactid' />
+    <order attribute='name' descending='false' />
+  </entity>
+</fetch>",
+            ["layoutxml"] = @"<grid name='resultset' object='1' jump='name' select='1' icon='1' preview='1'>
+  <row name='result' id='accountid'>
+    <cell name='name' width='200' />
+    <cell name='accountnumber' width='100' />
+    <cell name='revenue' width='100' />
+  </row>
+</grid>",
+            ["querytype"] = 0,
+            ["isdefault"] = false,
+            ["iscustomizable"] = true
+        };
+        service.Create(allAccountsView);
+        CreateAppModuleComponent(service, appModuleId, allAccountsView.Id, 26);
+    }
+    
+    private static void CreateContactViews(IOrganizationService service, Guid appModuleId)
+    {
+        // Active Contacts view
+        var activeContactsView = new Entity("savedquery")
+        {
+            Id = Guid.NewGuid(),
+            ["name"] = "Active Contacts",
+            ["returnedtypecode"] = "contact",
+            ["fetchxml"] = @"<fetch version='1.0' output-format='xml-platform' mapping='logical'>
+  <entity name='contact'>
+    <attribute name='contactid' />
+    <attribute name='firstname' />
+    <attribute name='lastname' />
+    <attribute name='emailaddress1' />
+    <attribute name='telephone1' />
+    <order attribute='lastname' descending='false' />
+    <filter type='and'>
+      <condition attribute='statecode' operator='eq' value='0' />
+    </filter>
+  </entity>
+</fetch>",
+            ["layoutxml"] = @"<grid name='resultset' object='2' jump='fullname' select='1' icon='1' preview='1'>
+  <row name='result' id='contactid'>
+    <cell name='firstname' width='100' />
+    <cell name='lastname' width='100' />
+    <cell name='emailaddress1' width='150' />
+    <cell name='telephone1' width='120' />
+  </row>
+</grid>",
+            ["querytype"] = 0,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(activeContactsView);
+        CreateAppModuleComponent(service, appModuleId, activeContactsView.Id, 26);
+        
+        // All Contacts view
+        var allContactsView = new Entity("savedquery")
+        {
+            Id = Guid.NewGuid(),
+            ["name"] = "All Contacts",
+            ["returnedtypecode"] = "contact",
+            ["fetchxml"] = @"<fetch version='1.0' output-format='xml-platform' mapping='logical'>
+  <entity name='contact'>
+    <attribute name='contactid' />
+    <attribute name='firstname' />
+    <attribute name='lastname' />
+    <attribute name='emailaddress1' />
+    <attribute name='jobtitle' />
+    <order attribute='lastname' descending='false' />
+  </entity>
+</fetch>",
+            ["layoutxml"] = @"<grid name='resultset' object='2' jump='fullname' select='1' icon='1' preview='1'>
+  <row name='result' id='contactid'>
+    <cell name='firstname' width='100' />
+    <cell name='lastname' width='100' />
+    <cell name='emailaddress1' width='150' />
+  </row>
+</grid>",
+            ["querytype"] = 0,
+            ["isdefault"] = false,
+            ["iscustomizable"] = true
+        };
+        service.Create(allContactsView);
+        CreateAppModuleComponent(service, appModuleId, allContactsView.Id, 26);
+    }
+    
+    private static void CreateOpportunityViews(IOrganizationService service, Guid appModuleId)
+    {
+        // Open Opportunities view
+        var openOpportunitiesView = new Entity("savedquery")
+        {
+            Id = Guid.NewGuid(),
+            ["name"] = "Open Opportunities",
+            ["returnedtypecode"] = "opportunity",
+            ["fetchxml"] = @"<fetch version='1.0' output-format='xml-platform' mapping='logical'>
+  <entity name='opportunity'>
+    <attribute name='opportunityid' />
+    <attribute name='name' />
+    <attribute name='estimatedvalue' />
+    <attribute name='estimatedclosedate' />
+    <attribute name='createdon' />
+    <order attribute='estimatedclosedate' descending='false' />
+    <filter type='and'>
+      <condition attribute='statecode' operator='eq' value='0' />
+    </filter>
+  </entity>
+</fetch>",
+            ["layoutxml"] = @"<grid name='resultset' object='3' jump='name' select='1' icon='1' preview='1'>
+  <row name='result' id='opportunityid'>
+    <cell name='name' width='200' />
+    <cell name='estimatedvalue' width='100' />
+    <cell name='estimatedclosedate' width='120' />
+  </row>
+</grid>",
+            ["querytype"] = 0,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(openOpportunitiesView);
+        CreateAppModuleComponent(service, appModuleId, openOpportunitiesView.Id, 26);
+    }
+    
+    /// <summary>
+    /// Create AppModuleComponent to link a component (like SavedQuery) to an AppModule
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/appmodulecomponent
+    /// </summary>
+    private static void CreateAppModuleComponent(IOrganizationService service, Guid appModuleId, Guid componentId, int componentType)
+    {
+        var appModuleComponent = new Entity("appmodulecomponent")
+        {
+            Id = Guid.NewGuid(),
+            ["appmoduleidunique"] = appModuleId,
+            ["objectid"] = componentId,
+            ["componenttype"] = componentType // 26 = SavedQuery, 1 = Entity
+        };
+        service.Create(appModuleComponent);
     }
 }
