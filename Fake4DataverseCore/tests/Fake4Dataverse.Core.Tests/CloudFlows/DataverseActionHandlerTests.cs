@@ -424,23 +424,45 @@ namespace Fake4Dataverse.Tests.CloudFlows
         }
 
         [Fact]
-        public void Should_ThrowException_ForUnsupportedActionType()
+        public void Should_HandleUploadFile_Successfully()
         {
             // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/file-attributes
+            // The UploadFile action uploads binary data to a file or image column.
+            // Common use case: Uploading contact photos (entityimage column)
             var context = XrmFakedContextFactory.New();
             var flowSimulator = context.CloudFlowSimulator;
 
+            // Create a contact to upload file to
+            var contactId = Guid.NewGuid();
+            var contact = new Entity("contact")
+            {
+                Id = contactId,
+                ["firstname"] = "John",
+                ["lastname"] = "Doe"
+            };
+            context.Initialize(contact);
+
+            // Create test file content
+            var random = new Random();
+            byte[] imageBytes = new byte[1024];
+            random.NextBytes(imageBytes);
+
             var flowDefinition = new CloudFlowDefinition
             {
-                Name = "unsupported_action_flow",
+                Name = "upload_contact_photo_flow",
                 Trigger = new DataverseTrigger(),
                 Actions = new List<IFlowAction>
                 {
                     new DataverseAction
                     {
-                        Name = "UploadFile",
+                        Name = "UploadPhoto",
                         DataverseActionType = DataverseActionType.UploadFile,
-                        EntityLogicalName = "contact"
+                        EntityLogicalName = "contact",
+                        EntityId = contactId,
+                        ColumnName = "entityimage",
+                        FileContent = imageBytes,
+                        FileName = "profile_photo.jpg"
                     }
                 }
             };
@@ -448,13 +470,428 @@ namespace Fake4Dataverse.Tests.CloudFlows
             flowSimulator.RegisterFlow(flowDefinition);
 
             // Act
-            var result = flowSimulator.SimulateTrigger("unsupported_action_flow", new Dictionary<string, object>());
+            var result = flowSimulator.SimulateTrigger("upload_contact_photo_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            Assert.Single(result.ActionResults);
+            Assert.True(result.ActionResults[0].Succeeded);
+
+            var outputs = result.ActionResults[0].Outputs;
+            Assert.Contains("success", outputs.Keys);
+            Assert.True((bool)outputs["success"]);
+            Assert.Contains("columnName", outputs.Keys);
+            Assert.Equal("entityimage", outputs["columnName"]);
+            Assert.Contains("fileName", outputs.Keys);
+            Assert.Equal("profile_photo.jpg", outputs["fileName"]);
+            Assert.Contains("fileSize", outputs.Keys);
+            Assert.Equal(1024, outputs["fileSize"]);
+
+            // Verify file was uploaded to entity
+            var updatedContact = context.CreateQuery("contact").First(c => c.Id == contactId);
+            Assert.Contains("entityimage", updatedContact.Attributes.Keys);
+            var uploadedImage = updatedContact["entityimage"] as byte[];
+            Assert.NotNull(uploadedImage);
+            Assert.Equal(1024, uploadedImage.Length);
+            Assert.Equal(imageBytes, uploadedImage);
+
+            // Verify filename was stored
+            Assert.Contains("entityimage_name", updatedContact.Attributes.Keys);
+            Assert.Equal("profile_photo.jpg", updatedContact["entityimage_name"]);
+        }
+
+        [Fact]
+        public void Should_HandleDownloadFile_Successfully()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/file-attributes
+            // The DownloadFile action retrieves binary data from a file or image column.
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            // Create a contact with an image
+            var contactId = Guid.NewGuid();
+            var random = new Random();
+            byte[] imageBytes = new byte[2048];
+            random.NextBytes(imageBytes);
+
+            var contact = new Entity("contact")
+            {
+                Id = contactId,
+                ["firstname"] = "Jane",
+                ["lastname"] = "Smith",
+                ["entityimage"] = imageBytes,
+                ["entityimage_name"] = "avatar.png"
+            };
+            context.Initialize(contact);
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "download_contact_photo_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "DownloadPhoto",
+                        DataverseActionType = DataverseActionType.DownloadFile,
+                        EntityLogicalName = "contact",
+                        EntityId = contactId,
+                        ColumnName = "entityimage"
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("download_contact_photo_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            Assert.Single(result.ActionResults);
+            Assert.True(result.ActionResults[0].Succeeded);
+
+            var outputs = result.ActionResults[0].Outputs;
+            Assert.Contains("success", outputs.Keys);
+            Assert.True((bool)outputs["success"]);
+            Assert.Contains("columnName", outputs.Keys);
+            Assert.Equal("entityimage", outputs["columnName"]);
+            Assert.Contains("fileName", outputs.Keys);
+            Assert.Equal("avatar.png", outputs["fileName"]);
+            Assert.Contains("fileSize", outputs.Keys);
+            Assert.Equal(2048, outputs["fileSize"]);
+
+            // Verify file content
+            Assert.Contains("fileContent", outputs.Keys);
+            var downloadedContent = outputs["fileContent"] as byte[];
+            Assert.NotNull(downloadedContent);
+            Assert.Equal(imageBytes, downloadedContent);
+
+            // Verify base64 content (as returned by real Power Automate connector)
+            Assert.Contains("$content", outputs.Keys);
+            var base64Content = outputs["$content"] as string;
+            Assert.NotNull(base64Content);
+            var decodedBytes = Convert.FromBase64String(base64Content);
+            Assert.Equal(imageBytes, decodedBytes);
+        }
+
+        [Fact]
+        public void Should_ThrowException_WhenUploadFile_MissingEntityId()
+        {
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "upload_without_id_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "UploadFile",
+                        DataverseActionType = DataverseActionType.UploadFile,
+                        EntityLogicalName = "contact",
+                        ColumnName = "entityimage",
+                        FileContent = new byte[100]
+                        // Missing EntityId
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("upload_without_id_flow", new Dictionary<string, object>());
 
             // Assert
             Assert.False(result.Succeeded);
-            Assert.Single(result.ActionResults);
-            Assert.False(result.ActionResults[0].Succeeded);
-            Assert.Contains("not yet implemented", result.ActionResults[0].ErrorMessage);
+            Assert.Contains("EntityId is required", result.ActionResults[0].ErrorMessage);
+        }
+
+        [Fact]
+        public void Should_ThrowException_WhenUploadFile_MissingColumnName()
+        {
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            var contactId = Guid.NewGuid();
+            var contact = new Entity("contact") { Id = contactId };
+            context.Initialize(contact);
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "upload_without_column_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "UploadFile",
+                        DataverseActionType = DataverseActionType.UploadFile,
+                        EntityLogicalName = "contact",
+                        EntityId = contactId,
+                        FileContent = new byte[100]
+                        // Missing ColumnName
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("upload_without_column_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.False(result.Succeeded);
+            Assert.Contains("ColumnName is required", result.ActionResults[0].ErrorMessage);
+        }
+
+        [Fact]
+        public void Should_ThrowException_WhenDownloadFile_ColumnNotFound()
+        {
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            var contactId = Guid.NewGuid();
+            var contact = new Entity("contact")
+            {
+                Id = contactId,
+                ["firstname"] = "John"
+                // No entityimage column
+            };
+            context.Initialize(contact);
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "download_missing_column_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "DownloadFile",
+                        DataverseActionType = DataverseActionType.DownloadFile,
+                        EntityLogicalName = "contact",
+                        EntityId = contactId,
+                        ColumnName = "entityimage"
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("download_missing_column_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.False(result.Succeeded);
+            Assert.Contains("does not exist or has no value", result.ActionResults[0].ErrorMessage);
+        }
+
+        [Fact]
+        public void Should_HandleListRecords_WithPaging()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api#paging
+            // The $skip query option enables paging through large result sets.
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            // Create 10 contacts
+            var contacts = Enumerable.Range(1, 10).Select(i => new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = $"Contact{i}",
+                ["lastname"] = "Test"
+            }).ToArray();
+            context.Initialize(contacts);
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "list_contacts_with_paging_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "ListContacts",
+                        DataverseActionType = DataverseActionType.ListRecords,
+                        EntityLogicalName = "contact",
+                        Top = 5,
+                        Skip = 3  // Skip first 3 records
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("list_contacts_with_paging_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            var outputs = result.ActionResults[0].Outputs;
+            
+            var records = outputs["value"] as List<Dictionary<string, object>>;
+            Assert.Equal(5, records.Count);  // Top 5 after skipping 3
+            Assert.Equal(5, outputs["count"]);
+        }
+
+        [Fact]
+        public void Should_HandleListRecords_WithTotalCount()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api#count
+            // The $count query option returns the total count of records matching the filter.
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            // Create 15 contacts
+            var contacts = Enumerable.Range(1, 15).Select(i => new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = $"Contact{i}"
+            }).ToArray();
+            context.Initialize(contacts);
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "list_with_count_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "ListContacts",
+                        DataverseActionType = DataverseActionType.ListRecords,
+                        EntityLogicalName = "contact",
+                        Top = 5,
+                        IncludeTotalCount = true
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("list_with_count_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            var outputs = result.ActionResults[0].Outputs;
+            
+            var records = outputs["value"] as List<Dictionary<string, object>>;
+            Assert.Equal(5, records.Count);  // Page size
+            Assert.Equal(5, outputs["count"]);  // Count in current page
+            
+            // Verify total count is included
+            Assert.Contains("@odata.count", outputs.Keys);
+            Assert.Equal(15, outputs["@odata.count"]);  // Total across all pages
+        }
+
+        [Fact]
+        public void Should_HandleListRecords_WithNextLink()
+        {
+            // Arrange
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-data-web-api#paging
+            // When there are more records, @odata.nextLink is included for continuation.
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            // Create 10 contacts
+            var contacts = Enumerable.Range(1, 10).Select(i => new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = $"Contact{i}"
+            }).ToArray();
+            context.Initialize(contacts);
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "list_with_nextlink_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "ListContacts",
+                        DataverseActionType = DataverseActionType.ListRecords,
+                        EntityLogicalName = "contact",
+                        Top = 4,
+                        Skip = 0,
+                        IncludeTotalCount = true
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("list_with_nextlink_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            var outputs = result.ActionResults[0].Outputs;
+            
+            var records = outputs["value"] as List<Dictionary<string, object>>;
+            Assert.Equal(4, records.Count);
+            
+            // Verify next link is present
+            Assert.Contains("@odata.nextLink", outputs.Keys);
+            var nextLink = outputs["@odata.nextLink"] as string;
+            Assert.Contains("$skip=4", nextLink);  // Next page starts at record 4
+        }
+
+        [Fact]
+        public void Should_HandleListRecords_WithoutNextLink_WhenNoMoreRecords()
+        {
+            // Arrange
+            var context = XrmFakedContextFactory.New();
+            var flowSimulator = context.CloudFlowSimulator;
+
+            // Create exactly 5 contacts
+            var contacts = Enumerable.Range(1, 5).Select(i => new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = $"Contact{i}"
+            }).ToArray();
+            context.Initialize(contacts);
+
+            var flowDefinition = new CloudFlowDefinition
+            {
+                Name = "list_last_page_flow",
+                Trigger = new DataverseTrigger(),
+                Actions = new List<IFlowAction>
+                {
+                    new DataverseAction
+                    {
+                        Name = "ListContacts",
+                        DataverseActionType = DataverseActionType.ListRecords,
+                        EntityLogicalName = "contact",
+                        Top = 5
+                    }
+                }
+            };
+
+            flowSimulator.RegisterFlow(flowDefinition);
+
+            // Act
+            var result = flowSimulator.SimulateTrigger("list_last_page_flow", new Dictionary<string, object>());
+
+            // Assert
+            Assert.True(result.Succeeded);
+            var outputs = result.ActionResults[0].Outputs;
+            
+            var records = outputs["value"] as List<Dictionary<string, object>>;
+            Assert.Equal(5, records.Count);
+            
+            // Verify NO next link when all records fit in one page
+            Assert.DoesNotContain("@odata.nextLink", outputs.Keys);
         }
 
         [Fact]
