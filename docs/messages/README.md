@@ -136,6 +136,7 @@ Other supported messages.
 |---------|-------------|-------------|
 | WhoAmI | `WhoAmIRequest` | Get current user info |
 | RetrieveVersion | `RetrieveVersionRequest` | Get organization version |
+| RetrieveDuplicates | `RetrieveDuplicatesRequest` | Detect duplicate records |
 | ExecuteFetch | `ExecuteFetchRequest` | Execute FetchXML query |
 | FetchXmlToQueryExpression | `FetchXmlToQueryExpressionRequest` | Convert FetchXML to QueryExpression |
 | RetrieveExchangeRate | `RetrieveExchangeRateRequest` | Get exchange rate |

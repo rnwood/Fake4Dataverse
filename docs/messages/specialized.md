@@ -12,6 +12,7 @@ This section covers other specialized messages supported by Fake4Dataverse that 
 |---------|-------------|-------------|
 | WhoAmI | `WhoAmIRequest` | Get current user information |
 | RetrieveVersion | `RetrieveVersionRequest` | Get organization version |
+| RetrieveDuplicates | `RetrieveDuplicatesRequest` | Detect duplicate records |
 | ExecuteFetch | `ExecuteFetchRequest` | Execute FetchXML query |
 | FetchXmlToQueryExpression | `FetchXmlToQueryExpressionRequest` | Convert FetchXML to QueryExpression |
 | RetrieveExchangeRate | `RetrieveExchangeRateRequest` | Get exchange rate |
@@ -42,6 +43,109 @@ public void Should_Execute_WhoAmI()
     Assert.Equal(userId, response.UserId);
 }
 ```
+
+### RetrieveDuplicates
+
+Detect duplicate records based on configured duplicate detection rules.
+
+**Reference:** [RetrieveDuplicatesRequest](https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveduplicatesrequest) - Detects and retrieves duplicate records for a specified record based on duplicate detection rules (duplicaterule and duplicaterulecondition entities). Only active and published rules are evaluated.
+
+The implementation supports all comparison operators:
+- **ExactMatch** (operatorcode=0): Values must be exactly the same
+- **SameFirstCharacters** (operatorcode=1): First N characters match (uses `ignoreblanks` attribute)
+- **SameLastCharacters** (operatorcode=2): Last N characters match (uses `ignoreblanks` attribute)
+- **SameDate** (operatorcode=3): Date matches (ignoring time)
+- **SameDateAndTime** (operatorcode=4): Date and time match exactly
+- **SameNotBlank** (operatorcode=5): Both values non-blank and match
+
+```csharp
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.Xrm.Sdk;
+
+[Fact]
+public void Should_Detect_Duplicate_Accounts()
+{
+    var context = XrmFakedContextFactory.New();
+    var service = context.GetOrganizationService();
+    
+    // Set up duplicate detection rule
+    var duplicateRule = new Entity("duplicaterule")
+    {
+        Id = Guid.NewGuid(),
+        ["baseentityname"] = "account",
+        ["matchingentityname"] = "account",
+        ["statecode"] = new OptionSetValue(0),  // Active
+        ["statuscode"] = new OptionSetValue(2)   // Published
+    };
+    
+    var condition = new Entity("duplicaterulecondition")
+    {
+        Id = Guid.NewGuid(),
+        ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+        ["baseattributename"] = "accountnumber",
+        ["matchingattributename"] = "accountnumber",
+        ["operatorcode"] = new OptionSetValue(0)  // ExactMatch
+    };
+    
+    var account1 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["accountnumber"] = "ACC-001"
+    };
+    
+    var account2 = new Entity("account")
+    {
+        Id = Guid.NewGuid(),
+        ["accountnumber"] = "ACC-001"  // Duplicate!
+    };
+    
+    context.Initialize(new[] { account1, account2, duplicateRule, condition });
+    
+    var request = new RetrieveDuplicatesRequest
+    {
+        BusinessEntity = account1,
+        MatchingEntityName = "account"
+    };
+    
+    var response = (RetrieveDuplicatesResponse)service.Execute(request);
+    
+    Assert.Single(response.DuplicateCollection.Entities);
+    Assert.Equal(account2.Id, response.DuplicateCollection.Entities[0].Id);
+}
+```
+
+**Partial String Matching Example:**
+```csharp
+// Match first 3 characters of account number
+var condition = new Entity("duplicaterulecondition")
+{
+    Id = Guid.NewGuid(),
+    ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+    ["baseattributename"] = "accountnumber",
+    ["matchingattributename"] = "accountnumber",
+    ["operatorcode"] = new OptionSetValue(1),  // SameFirstCharacters
+    ["ignoreblanks"] = 3  // Compare first 3 characters
+};
+
+// "ACC-001" and "ACC-999" would match (both start with "ACC")
+```
+
+**Date Matching Example:**
+```csharp
+// Match date only, ignoring time
+var condition = new Entity("duplicaterulecondition")
+{
+    Id = Guid.NewGuid(),
+    ["duplicateruleid"] = duplicateRule.ToEntityReference(),
+    ["baseattributename"] = "createdon",
+    ["matchingattributename"] = "createdon",
+    ["operatorcode"] = new OptionSetValue(3)  // SameDate
+};
+
+// 2025-01-15 10:30:00 and 2025-01-15 16:45:00 would match (same date)
+```
+
+**See also:** [Duplicate Detection Guide](../usage/duplicate-detection.md) for comprehensive examples
 
 ### ExecuteFetch
 
