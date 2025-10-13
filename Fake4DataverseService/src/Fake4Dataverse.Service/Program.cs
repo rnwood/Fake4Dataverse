@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.OData;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Xrm.Sdk;
 using System.CommandLine;
 using CoreWCF;
@@ -91,6 +92,9 @@ public class Program
         var context = XrmFakedContextFactory.New();
         var organizationService = context.GetOrganizationService();
         
+        // Initialize example Model-Driven App metadata
+        MdaInitializer.InitializeExampleMda(organizationService);
+        
         builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);
         
@@ -132,6 +136,14 @@ public class Program
             });
 
         var app = builder.Build();
+        
+        // Enable static file serving for Model-Driven App
+        app.UseDefaultFiles(new DefaultFilesOptions
+        {
+            DefaultFileNames = new List<string> { "index.html" },
+            RequestPath = "/mda"
+        });
+        app.UseStaticFiles();
         
         // Add authentication middleware if token is provided
         if (!string.IsNullOrEmpty(accessToken))
@@ -184,6 +196,8 @@ public class Program
 
         app.MapGet("/", () => Results.Text(
             "Fake4Dataverse Service is running.\n\n" +
+            "Model-Driven App:\n" +
+            "  - /mda - Web interface for testing (Next.js app)\n\n" +
             "Available SOAP endpoints:\n" +
             "  - /XRMServices/2011/Organization.svc - Organization Service (SOAP 1.1/1.2)\n" +
             "  - /XRMServices/2011/Organization.svc?wsdl - WSDL definition\n\n" +
@@ -199,6 +213,9 @@ public class Program
 
         Console.WriteLine("Fake4Dataverse Service started successfully");
         Console.WriteLine($"Base URL: http://{host}:{port}");
+        Console.WriteLine();
+        Console.WriteLine("Model-Driven App:");
+        Console.WriteLine($"  - http://{host}:{port}/mda - Web interface");
         Console.WriteLine();
         Console.WriteLine("Available SOAP endpoints (matching Microsoft Dynamics 365/Dataverse):");
         Console.WriteLine($"  - http://{host}:{port}/XRMServices/2011/Organization.svc");

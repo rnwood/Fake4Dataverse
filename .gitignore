@@ -10,3 +10,5 @@ obj/
 # Test coverage
 coverage/
 *.opencover.xml
+node_modules
+.next
