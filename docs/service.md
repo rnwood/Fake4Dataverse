@@ -3,6 +3,8 @@
 **Implementation Date:** October 2025  
 **Issue:** N/A (New feature)
 
+> **💡 For ServiceClient Users:** See the [ServiceClient Compatibility Guide](../Fake4DataverseService/SERVICECLIENT.md) for patterns and best practices when testing existing ServiceClient-based code.
+
 ## Overview
 
 Fake4DataverseService is a .NET 8.0 CLI application that exposes Fake4Dataverse as a network-accessible SOAP/WCF service. This enables integration testing scenarios where multiple applications or services need to interact with a fake Dataverse instance.
@@ -134,6 +136,50 @@ var client = new ServiceClient("Url=http://localhost:5000/...");  // ❌ Require
 ```
 
 While it's technically possible to implement OAuth token validation, it adds complexity without benefit for testing. The WCF channel approach is simpler and more direct.
+
+**For ServiceClient Users:**
+
+If you have existing code using ServiceClient, consider these approaches:
+
+1. **Refactor for Testability (Recommended)**
+   ```csharp
+   // Production code accepts IOrganizationService
+   public class MyService
+   {
+       public void DoWork(IOrganizationService org) 
+       {
+           // Your logic here
+       }
+   }
+   
+   // Production: Pass ServiceClient (implements IOrganizationService)
+   var client = new ServiceClient(prodConnectionString);
+   myService.DoWork(client);
+   
+   // Testing: Pass WCF channel to Fake4DataverseService
+   var testService = Fake4DataverseClient.CreateService();
+   myService.DoWork(testService);
+   ```
+
+2. **Create Test Wrapper**
+   ```csharp
+   // Wrap WCF channel with same interface as ServiceClient
+   public class TestOrganizationServiceWrapper : IOrganizationService
+   {
+       private readonly IOrganizationService _inner;
+       
+       public TestOrganizationServiceWrapper(IOrganizationService inner)
+       {
+           _inner = inner;
+       }
+       
+       // Implement IOrganizationService by delegating to _inner
+   }
+   ```
+
+3. **OAuth Setup (Advanced, Not Recommended for Testing)**
+   - Requires Azure AD app registration and OAuth configuration
+   - Adds significant complexity for minimal benefit in testing scenarios
 
 ## Supported Operations
 

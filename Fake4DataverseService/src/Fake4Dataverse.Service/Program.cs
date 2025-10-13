@@ -48,24 +48,38 @@ public class Program
             name: "--host",
             description: "The host to bind to",
             getDefaultValue: () => "localhost");
+        var accessTokenOption = new Option<string?>(
+            name: "--access-token",
+            description: "Optional access token for authentication. If not provided, allows anonymous access. If provided, clients must include this token in the Authorization header.",
+            getDefaultValue: () => null);
 
         startCommand.AddOption(portOption);
         startCommand.AddOption(hostOption);
+        startCommand.AddOption(accessTokenOption);
 
-        startCommand.SetHandler(async (int port, string host) =>
+        startCommand.SetHandler(async (int port, string host, string? accessToken) =>
         {
-            await StartService(port, host);
-        }, portOption, hostOption);
+            await StartService(port, host, accessToken);
+        }, portOption, hostOption, accessTokenOption);
 
         rootCommand.AddCommand(startCommand);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    private static async Task StartService(int port, string host)
+    private static async Task StartService(int port, string host, string? accessToken)
     {
         Console.WriteLine($"Starting Fake4Dataverse Service on {host}:{port}...");
         Console.WriteLine("This service provides SOAP endpoints compatible with Microsoft Dynamics 365/Dataverse Organization Service");
+        
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            Console.WriteLine($"Authentication: ENABLED (Access token required)");
+        }
+        else
+        {
+            Console.WriteLine($"Authentication: DISABLED (Anonymous access allowed)");
+        }
         Console.WriteLine();
         
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -79,6 +93,12 @@ public class Program
         
         builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);
+        
+        // Register the access token as a singleton if provided
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            builder.Services.AddSingleton(new AccessTokenValidator(accessToken));
+        }
         
         // Register the WCF service implementation
         builder.Services.AddSingleton<OrganizationServiceImpl>();
@@ -112,6 +132,29 @@ public class Program
             });
 
         var app = builder.Build();
+        
+        // Add authentication middleware if token is provided
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            app.Use(async (context, next) =>
+            {
+                // Check for Authorization header
+                if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
+                {
+                    var token = authHeader.ToString().Replace("Bearer ", "").Trim();
+                    if (token == accessToken)
+                    {
+                        await next();
+                        return;
+                    }
+                }
+                
+                // Unauthorized
+                context.Response.StatusCode = 401;
+                context.Response.Headers.Add("WWW-Authenticate", "Bearer");
+                await context.Response.WriteAsync("Unauthorized: Invalid or missing access token");
+            });
+        }
 
         // Configure WCF for SOAP endpoints
         app.UseServiceModel(serviceBuilder =>
@@ -121,6 +164,10 @@ public class Program
             {
                 options.DebugBehavior.IncludeExceptionDetailInFaults = true;
             });
+            
+            // Discover and register known types for Execute method
+            var knownTypes = KnownTypesProvider.GetKnownTypes(null);
+            Console.WriteLine($"[KnownTypesProvider] Registering {knownTypes.Count()} known types for WCF serialization");
             
             // Standard Dynamics 365/Dataverse endpoint path
             serviceBuilder.AddServiceEndpoint<OrganizationServiceImpl, IOrganizationServiceContract>(
@@ -169,6 +216,14 @@ public class Program
         Console.WriteLine("  - $skip: Skip records for pagination");
         Console.WriteLine("  - $count: Include total count");
         Console.WriteLine();
+        
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            Console.WriteLine("ServiceClient connection string example:");
+            Console.WriteLine($"  AuthType=OAuth;Url=http://{host}:{port};AccessToken={accessToken}");
+            Console.WriteLine();
+        }
+        
         Console.WriteLine("The service exposes the following IOrganizationService methods:");
         Console.WriteLine("  - Create: Creates a new entity record");
         Console.WriteLine("  - Retrieve: Retrieves an entity record by ID");
@@ -182,5 +237,18 @@ public class Program
         Console.WriteLine("Press Ctrl+C to stop the service.");
 
         await app.RunAsync();
+    }
+}
+
+/// <summary>
+/// Simple access token validator for authentication
+/// </summary>
+internal class AccessTokenValidator
+{
+    public string ExpectedToken { get; }
+    
+    public AccessTokenValidator(string expectedToken)
+    {
+        ExpectedToken = expectedToken ?? throw new ArgumentNullException(nameof(expectedToken));
     }
 }

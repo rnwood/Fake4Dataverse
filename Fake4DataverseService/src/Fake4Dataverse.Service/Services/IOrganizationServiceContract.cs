@@ -1,6 +1,9 @@
 using CoreWCF;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Crm.Sdk.Messages;
+using System.Runtime.Serialization;
 
 namespace Fake4Dataverse.Service.Services;
 
@@ -78,8 +81,14 @@ public interface IOrganizationServiceContract
     /// <summary>
     /// Executes an organization request.
     /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.iorganizationservice.execute
+    /// 
+    /// Known types are discovered dynamically at runtime using the KnownTypesProvider.
+    /// This automatically includes all OrganizationRequest and OrganizationResponse derived types
+    /// from Microsoft.Xrm.Sdk and Microsoft.Crm.Sdk assemblies (123+ types discovered automatically).
+    /// Reference: https://learn.microsoft.com/en-us/dotnet/framework/wcf/feature-details/data-contract-known-types
     /// </summary>
     [OperationContract(Action = "http://schemas.microsoft.com/xrm/2011/Contracts/Services/IOrganizationService/Execute",
                       ReplyAction = "http://schemas.microsoft.com/xrm/2011/Contracts/Services/IOrganizationService/ExecuteResponse")]
+    [ServiceKnownType("GetKnownTypes", typeof(KnownTypesProvider))]
     OrganizationResponse Execute(OrganizationRequest request);
 }
