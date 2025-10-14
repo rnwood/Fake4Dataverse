@@ -30,12 +30,20 @@ public class ODataRestApiEndToEndTests : IAsyncLifetime
             Directory.GetCurrentDirectory(),
             "..", "..", "..", "..", "..", "src", "Fake4Dataverse.Service");
 
+        // Use local CDM files for faster, more reliable tests (no network download required)
+        var cdmFilesPath = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            "..", "..", "..", "..", "..", "..", "cdm-schema-files");
+        var accountFile = Path.Combine(cdmFilesPath, "Account.cdm.json");
+        var contactFile = Path.Combine(cdmFilesPath, "Contact.cdm.json");
+        var opportunityFile = Path.Combine(cdmFilesPath, "Opportunity.cdm.json");
+
         _serviceProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-entities account contact opportunity",
+                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-files {accountFile} --cdm-files {contactFile} --cdm-files {opportunityFile}",
                 WorkingDirectory = serviceProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

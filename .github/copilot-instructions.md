@@ -94,12 +94,14 @@ dotnet restore Fake4DataverseFree.sln
 # Build all projects
 dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
 
-# Run all unit tests (excluding integration tests which require the service to be running)
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --filter "FullyQualifiedName!~IntegrationTests"
+# Run all tests including integration tests (self-contained, no external service needed)
+dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build
 
 # Run tests for .NET Framework 4.6.2 (Windows only)
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build
 ```
+
+**Note**: Integration tests are self-contained and automatically start the Fake4DataverseService during test execution. They use local CDM schema files for fast, reliable testing without network downloads.
 
 ### Building Individual Projects
 
@@ -132,11 +134,13 @@ Tests are automatically run as part of the build scripts. To run tests separatel
 cd <project-directory>
 dotnet test --configuration Debug --verbosity normal
 
-# Run all unit tests (excluding integration tests)
+# Run all tests (including self-contained integration tests)
+dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0
+
+# Run only unit tests (exclude integration tests if needed)
 dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName!~IntegrationTests"
 
-# Run integration tests (requires Fake4DataverseService to be running)
-# Start the service first, then:
+# Run only integration tests
 dotnet test Fake4DataverseService/tests/Fake4Dataverse.Service.IntegrationTests --configuration Debug --framework net8.0
 ```
 

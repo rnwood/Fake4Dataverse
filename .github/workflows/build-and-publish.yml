@@ -98,10 +98,10 @@ jobs:
       run: dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
 
     - name: Test net8.0
-      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --verbosity normal --filter "FullyQualifiedName!~IntegrationTests"
+      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --verbosity normal
 
     - name: Test net462
-      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build --verbosity normal --filter "FullyQualifiedName!~IntegrationTests"
+      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build --verbosity normal
 
     - name: Pack Fake4Dataverse.Abstractions
       shell: pwsh
