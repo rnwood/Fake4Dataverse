@@ -37,14 +37,28 @@ Fake4DataverseService is a .NET 8.0 CLI application that exposes Fake4Dataverse 
 
 ## Quick Start
 
-### 1. Start the Service
+### 1. Install the Service
+
+Install as a global .NET tool:
+
+```bash
+dotnet tool install --global Fake4Dataverse.Service
+```
+
+### 2. Start the Service
+
+```bash
+fake4dataverse start --port 5000 --host localhost
+```
+
+Or if building from source:
 
 ```bash
 cd Fake4DataverseService/src/Fake4Dataverse.Service
 dotnet run -- start --port 5000 --host localhost
 ```
 
-### 2. Connect from Your Application
+### 3. Connect from Your Application
 
 ```csharp
 using Microsoft.Xrm.Sdk;
