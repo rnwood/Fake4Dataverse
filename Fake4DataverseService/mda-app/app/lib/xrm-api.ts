@@ -127,8 +127,8 @@ export class XrmApiImplementation {
         await dataverseClient.updateEntity(this.entityPluralName, recordId, this.recordData);
       } else {
         // Create new record
-        const response = await dataverseClient.createEntity(this.entityPluralName, this.recordData);
-        this.recordData[`${this.entityName}id`] = response.id;
+        const newRecordId = await dataverseClient.createEntity(this.entityPluralName, this.recordData);
+        this.recordData[`${this.entityName}id`] = newRecordId;
       }
       
       this.isDirty = false;
