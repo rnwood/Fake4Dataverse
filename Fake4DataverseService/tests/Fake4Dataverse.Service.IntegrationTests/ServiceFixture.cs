@@ -1,4 +1,3 @@
-#if !NET462
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -164,4 +163,3 @@ namespace Fake4Dataverse.Service.IntegrationTests
         // ICollectionFixture<> interfaces.
     }
 }
-#endif

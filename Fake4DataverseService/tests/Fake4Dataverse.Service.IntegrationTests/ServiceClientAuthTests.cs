@@ -1,4 +1,3 @@
-#if !NET462
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -270,4 +269,3 @@ public class AuthHeaderMessageInspector : System.ServiceModel.Dispatcher.IClient
 
     public void AfterReceiveReply(ref System.ServiceModel.Channels.Message reply, object? correlationState) { }
 }
-#endif

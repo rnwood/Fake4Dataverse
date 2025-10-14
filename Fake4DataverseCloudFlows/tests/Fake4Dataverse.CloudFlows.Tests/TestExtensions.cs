@@ -1,4 +1,3 @@
-#if !NET462
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.CloudFlows;
 
@@ -21,4 +20,3 @@ namespace Fake4Dataverse.Tests.CloudFlows
         }
     }
 }
-#endif

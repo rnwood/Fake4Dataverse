@@ -1,4 +1,3 @@
-#if !NET462
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -992,4 +991,3 @@ namespace Fake4Dataverse.Tests.CloudFlows
         }
     }
 }
-#endif

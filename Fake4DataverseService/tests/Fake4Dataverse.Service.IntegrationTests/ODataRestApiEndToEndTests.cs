@@ -1,4 +1,3 @@
-#if !NET462
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -201,4 +200,3 @@ public class ODataRestApiEndToEndTests : IDisposable
         Assert.NotNull(content);
     }
 }
-#endif
