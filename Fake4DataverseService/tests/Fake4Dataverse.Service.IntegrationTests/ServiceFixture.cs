@@ -17,7 +17,8 @@ namespace Fake4Dataverse.Service.IntegrationTests
         private Process? _serviceProcess;
         public const int ServicePort = 5559;
         public static readonly string ServiceUrl = $"http://localhost:{ServicePort}";
-        public static readonly string BaseUrl = $"{ServiceUrl}/api/data/v9.2";
+        // Note: BaseUrl must end with '/' for relative URIs to work correctly with HttpClient
+        public static readonly string BaseUrl = $"{ServiceUrl}/api/data/v9.2/";
 
         public async Task InitializeAsync()
         {

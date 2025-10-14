@@ -58,7 +58,7 @@ public class ODataRestApiEndToEndTests : IDisposable
         };
 
         // Act
-        var response = await _httpClient!.PostAsJsonAsync("/accounts", account);
+        var response = await _httpClient!.PostAsJsonAsync("accounts", account);
 
         // Assert
         Assert.Equal(System.Net.HttpStatusCode.Created, response.StatusCode);
@@ -78,11 +78,11 @@ public class ODataRestApiEndToEndTests : IDisposable
             ["name"] = "Contoso Ltd",
             ["revenue"] = 500000m
         };
-        await _httpClient!.PostAsJsonAsync("/accounts", account);
+        await _httpClient!.PostAsJsonAsync("accounts", account);
 
         // Act - Note: In real scenario, we'd use the created ID from the POST response
         // For this test, we're just verifying the endpoint structure works
-        var response = await _httpClient.GetAsync($"/accounts({accountId})");
+        var response = await _httpClient.GetAsync($"accounts({accountId})");
 
         // Assert - Should return 404 since we used a random GUID
         // In a real test, this would be 200 OK with the entity data
@@ -105,11 +105,11 @@ public class ODataRestApiEndToEndTests : IDisposable
 
         foreach (var account in accounts)
         {
-            await _httpClient!.PostAsJsonAsync("/accounts", account);
+            await _httpClient!.PostAsJsonAsync("accounts", account);
         }
 
         // Act - Query with OData options
-        var response = await _httpClient!.GetAsync("/accounts?$select=name,revenue&$orderby=revenue desc&$top=2");
+        var response = await _httpClient!.GetAsync("accounts?$select=name,revenue&$orderby=revenue desc&$top=2");
 
         // Assert
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -133,7 +133,7 @@ public class ODataRestApiEndToEndTests : IDisposable
         {
             ["name"] = "Update Test"
         };
-        var createResponse = await _httpClient!.PostAsJsonAsync("/accounts", account);
+        var createResponse = await _httpClient!.PostAsJsonAsync("accounts", account);
         var entityId = Guid.NewGuid(); // In real test, extract from OData-EntityId header
 
         // Act
@@ -142,7 +142,7 @@ public class ODataRestApiEndToEndTests : IDisposable
             ["name"] = "Updated Name"
         };
         var patchResponse = await _httpClient.PatchAsync(
-            $"/accounts({entityId})",
+            $"accounts({entityId})",
             JsonContent.Create(updateData));
 
         // Assert - Should be NotFound since we used a random ID
@@ -160,7 +160,7 @@ public class ODataRestApiEndToEndTests : IDisposable
         var entityId = Guid.NewGuid();
 
         // Act
-        var response = await _httpClient!.DeleteAsync($"/accounts({entityId})");
+        var response = await _httpClient!.DeleteAsync($"accounts({entityId})");
 
         // Assert - Should be NotFound since entity doesn't exist
         // In real scenario with valid ID, this would be 204 No Content
@@ -183,13 +183,13 @@ public class ODataRestApiEndToEndTests : IDisposable
 
         foreach (var account in accounts)
         {
-            await _httpClient!.PostAsJsonAsync("/accounts", account);
+            await _httpClient!.PostAsJsonAsync("accounts", account);
         }
 
         // Act - Use advanced OData filter
         // Filter: revenue greater than 150000 AND name contains 'Corp' OR 'LLC'
         var response = await _httpClient!.GetAsync(
-            "/accounts?$filter=revenue gt 150000");
+            "accounts?$filter=revenue gt 150000");
 
         // Assert
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);

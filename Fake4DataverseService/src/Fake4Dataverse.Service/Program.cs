@@ -239,22 +239,29 @@ public class Program
         
         // Enable static file serving for Model-Driven App
         // NOTE: Order matters - UseDefaultFiles must come before UseStaticFiles
-        var mdaPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "mda");
+        // Use AppContext.BaseDirectory to get the application's base directory (where the DLL is)
+        // This ensures the path works correctly whether running with 'dotnet run' or 'dotnet run --no-build'
+        var mdaPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "mda");
         
-        // Serve MDA at /main.aspx to match real Dynamics 365 MDA URLs
-        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
-        app.UseDefaultFiles(new DefaultFilesOptions
+        // Only configure static file serving if the MDA path exists
+        // This allows the service to run even without MDA files (for testing)
+        if (Directory.Exists(mdaPath))
         {
-            DefaultFileNames = new List<string> { "index.html" },
-            FileProvider = new PhysicalFileProvider(mdaPath),
-            RequestPath = ""  // Serve from root
-        });
-        
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = new PhysicalFileProvider(mdaPath),
-            RequestPath = ""  // Serve from root
-        });
+            // Serve MDA at /main.aspx to match real Dynamics 365 MDA URLs
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
+            app.UseDefaultFiles(new DefaultFilesOptions
+            {
+                DefaultFileNames = new List<string> { "index.html" },
+                FileProvider = new PhysicalFileProvider(mdaPath),
+                RequestPath = ""  // Serve from root
+            });
+            
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(mdaPath),
+                RequestPath = ""  // Serve from root
+            });
+        }
         
         // Add authentication middleware if token is provided
         if (!string.IsNullOrEmpty(accessToken))
