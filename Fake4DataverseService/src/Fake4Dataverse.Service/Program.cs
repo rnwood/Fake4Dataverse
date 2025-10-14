@@ -62,26 +62,31 @@ public class Program
             getDefaultValue: () => null);
         var cdmSchemasOption = new Option<string[]?>(
             name: "--cdm-schemas",
-            description: "Optional list of standard CDM schema groups to download and initialize (e.g., crmcommon, sales, service, portals, customerInsights). Downloads from Microsoft's CDM repository.",
+            description: "Optional list of standard CDM schema groups to download and initialize (e.g., crmcommon, sales, service, portals, customerInsights). Downloads from Microsoft's CDM repository. Defaults to 'crmcommon' if no CDM options specified.",
             getDefaultValue: () => null);
+        var noCdmOption = new Option<bool>(
+            name: "--no-cdm",
+            description: "Skip loading default CDM schemas. Useful for testing or when metadata is not needed.",
+            getDefaultValue: () => false);
 
         startCommand.AddOption(portOption);
         startCommand.AddOption(hostOption);
         startCommand.AddOption(accessTokenOption);
         startCommand.AddOption(cdmFilesOption);
         startCommand.AddOption(cdmSchemasOption);
+        startCommand.AddOption(noCdmOption);
 
-        startCommand.SetHandler(async (int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas) =>
+        startCommand.SetHandler(async (int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas, bool noCdm) =>
         {
-            await StartService(port, host, accessToken, cdmFiles, cdmSchemas);
-        }, portOption, hostOption, accessTokenOption, cdmFilesOption, cdmSchemasOption);
+            await StartService(port, host, accessToken, cdmFiles, cdmSchemas, noCdm);
+        }, portOption, hostOption, accessTokenOption, cdmFilesOption, cdmSchemasOption, noCdmOption);
 
         rootCommand.AddCommand(startCommand);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    private static async Task StartService(int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas)
+    private static async Task StartService(int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas, bool noCdm)
     {
         Console.WriteLine($"Starting Fake4Dataverse Service on {host}:{port}...");
         Console.WriteLine("This service provides SOAP endpoints compatible with Microsoft Dynamics 365/Dataverse Organization Service");
@@ -124,6 +129,14 @@ public class Program
                 Console.WriteLine($"Error loading CDM files: {ex.Message}");
                 throw;
             }
+        }
+        
+        // Default to crmcommon if no CDM options were specified and --no-cdm not set
+        if (!noCdm && cdmSchemas == null && cdmFiles == null)
+        {
+            cdmSchemas = new[] { "crmcommon" };
+            Console.WriteLine("No CDM options specified. Defaulting to 'crmcommon' schema...");
+            Console.WriteLine("Use --no-cdm to skip CDM loading.");
         }
         
         if (cdmSchemas != null && cdmSchemas.Length > 0)

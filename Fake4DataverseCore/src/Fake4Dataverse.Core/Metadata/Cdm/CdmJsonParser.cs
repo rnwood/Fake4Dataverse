@@ -25,6 +25,10 @@ namespace Fake4Dataverse.Metadata.Cdm
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         
+        // Cache for downloaded CDM JSON content to avoid repeated network calls
+        private static readonly Dictionary<string, string> _cdmCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private static readonly object _cacheLock = new object();
+        
         // Base URL for Microsoft's CDM GitHub repository
         private const string CDM_GITHUB_BASE_URL = "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments";
         private const string CDM_CRM_COMMON_PATH = "core/applicationCommon/foundationCommon/crmCommon";
@@ -126,6 +130,7 @@ namespace Fake4Dataverse.Metadata.Cdm
         
         /// <summary>
         /// Recursively downloads and parses a CDM JSON file and all its imports.
+        /// Uses caching to avoid repeated downloads of the same file.
         /// </summary>
         /// <param name="url">URL of the CDM JSON file to download</param>
         /// <param name="processedUrls">Set of already processed URLs to avoid circular dependencies</param>
@@ -140,7 +145,35 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             processedUrls.Add(url);
             
-            var json = await _httpClient.GetStringAsync(url);
+            // Check cache first
+            string json;
+            lock (_cacheLock)
+            {
+                if (_cdmCache.TryGetValue(url, out string cachedJson))
+                {
+                    json = cachedJson;
+                }
+                else
+                {
+                    json = null;
+                }
+            }
+            
+            // Download if not cached
+            if (json == null)
+            {
+                json = await _httpClient.GetStringAsync(url);
+                
+                // Store in cache
+                lock (_cacheLock)
+                {
+                    if (!_cdmCache.ContainsKey(url))
+                    {
+                        _cdmCache[url] = json;
+                    }
+                }
+            }
+            
             var allMetadata = new List<EntityMetadata>();
             
             // Parse the current document
