@@ -382,7 +382,6 @@ export default function EntityForm({
           disabled={control.disabled}
         />
       </Field>
-      </Field>
     );
   };
 
