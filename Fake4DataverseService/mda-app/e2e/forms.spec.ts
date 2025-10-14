@@ -37,18 +37,30 @@ test.describe('MDA Forms', () => {
     // Wait for list to load
     await page.waitForTimeout(2000);
     
-    // Try to click first row if records exist
-    const firstRow = page.locator('[role="row"]').nth(1); // Skip header row
-    if (await firstRow.isVisible()) {
-      await firstRow.click();
+    // Get first data row (skip header)
+    const dataRows = page.locator('[role="row"]');
+    const rowCount = await dataRows.count();
+    
+    if (rowCount > 1) {
+      // Click on the first data row (index 1, after header)
+      const firstDataRow = dataRows.nth(1);
       
-      // Wait for navigation
-      await page.waitForTimeout(1000);
+      // Get the current URL before clicking
+      const urlBefore = page.url();
       
-      // Check URL changed to include pagetype=entityrecord and id
-      const url = page.url();
-      expect(url).toContain('pagetype=entityrecord');
-      expect(url).toContain('id=');
+      // Click the row
+      await firstDataRow.click();
+      
+      // Wait a moment for the click handler to execute
+      await page.waitForTimeout(500);
+      
+      // Check if URL changed
+      const urlAfter = page.url();
+      
+      // Verify URL changed and contains expected parameters
+      expect(urlAfter).not.toEqual(urlBefore);
+      expect(urlAfter).toContain('pagetype=entityrecord');
+      expect(urlAfter).toContain('id=');
     }
   });
 

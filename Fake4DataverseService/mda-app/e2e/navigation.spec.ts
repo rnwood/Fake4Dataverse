@@ -24,10 +24,11 @@ test.describe('MDA Navigation', () => {
     await page.waitForTimeout(2000);
     
     // Check for common areas (if sitemap is initialized)
-    const hasContent = await page.locator('text=Sales, text=Service').count();
+    const hasSales = await page.locator('text=Sales').first().isVisible();
+    const hasService = await page.locator('text=Service').first().isVisible();
     
     // Either we see the sitemap or we see a welcome message
-    const hasSitemap = hasContent > 0;
+    const hasSitemap = hasSales || hasService;
     const hasWelcome = await page.locator('text=Welcome to Fake4Dataverse').isVisible();
     
     expect(hasSitemap || hasWelcome).toBeTruthy();
@@ -46,9 +47,9 @@ test.describe('MDA Navigation', () => {
       // Wait for entity list to load
       await page.waitForTimeout(1000);
       
-      // Should see some content or loading indicator
-      const hasContent = await page.locator('text=Loading, text=Accounts').count();
-      expect(hasContent).toBeGreaterThan(0);
+      // Should see the Accounts heading or grid
+      const hasAccountsHeading = await page.locator('text=Accounts').count();
+      expect(hasAccountsHeading).toBeGreaterThan(0);
     }
   });
 

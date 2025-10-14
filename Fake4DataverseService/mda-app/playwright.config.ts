@@ -29,7 +29,7 @@ export default defineConfig({
     {
       // Start Fake4Dataverse backend service on port 5000
       command: 'dotnet run --project ../src/Fake4Dataverse.Service/Fake4Dataverse.Service.csproj -- start --port 5000',
-      url: 'http://localhost:5000/api/data/v9.2',
+      url: 'http://localhost:5000/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
       stdout: 'pipe',
@@ -37,7 +37,7 @@ export default defineConfig({
     },
     {
       // Start Next.js MDA app on port 3000
-      command: 'npm run dev',
+      command: 'npm run dev:test',
       url: 'http://localhost:3000',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,
