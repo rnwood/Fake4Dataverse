@@ -22,6 +22,12 @@ public class ODataRestApiEndToEndTests : IDisposable
 
     public ODataRestApiEndToEndTests(ServiceFixture fixture)
     {
+        // Ensure fixture is not null - if this fails, xUnit isn't injecting the fixture
+        if (fixture == null)
+        {
+            throw new ArgumentNullException(nameof(fixture), "ServiceFixture was not injected by xUnit");
+        }
+
         // Create HTTP client for REST API calls (service is already running via fixture)
         _httpClient = new HttpClient
         {

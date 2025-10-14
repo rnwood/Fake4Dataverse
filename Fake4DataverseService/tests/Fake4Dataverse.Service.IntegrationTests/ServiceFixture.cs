@@ -21,25 +21,53 @@ namespace Fake4Dataverse.Service.IntegrationTests
 
         public async Task InitializeAsync()
         {
+            // Find repository root by looking for the solution file
+            // Start from test binary directory and walk up until we find it
+            var testBinaryDir = Directory.GetCurrentDirectory();
+            DirectoryInfo? currentDir = new DirectoryInfo(testBinaryDir);
+            string? repoRoot = null;
+            
+            for (int i = 0; i < 10 && currentDir != null; i++)  // Safety limit of 10 levels
+            {
+                var solutionFile = Path.Combine(currentDir.FullName, "Fake4DataverseFree.sln");
+                if (File.Exists(solutionFile))
+                {
+                    repoRoot = currentDir.FullName;
+                    break;
+                }
+                currentDir = currentDir.Parent;
+            }
+            
+            if (repoRoot == null)
+            {
+                throw new DirectoryNotFoundException($"Could not find repository root (with Fake4DataverseFree.sln) from test binary dir: {testBinaryDir}");
+            }
+            
             // Start the Fake4DataverseService in the background
-            var serviceProjectPath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "..", "..", "..", "..", "..", "src", "Fake4Dataverse.Service");
+            var serviceProjectPath = Path.Combine(repoRoot, "Fake4DataverseService", "src", "Fake4Dataverse.Service");
 
             // Use local CDM files for faster, more reliable tests (no network download required)
-            var cdmFilesPath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "..", "..", "..", "..", "..", "..", "cdm-schema-files");
+            var cdmFilesPath = Path.Combine(repoRoot, "cdm-schema-files");
             var accountFile = Path.Combine(cdmFilesPath, "Account.cdm.json");
             var contactFile = Path.Combine(cdmFilesPath, "Contact.cdm.json");
             var opportunityFile = Path.Combine(cdmFilesPath, "Opportunity.cdm.json");
+
+            // Verify paths exist before starting service
+            if (!Directory.Exists(serviceProjectPath))
+            {
+                throw new DirectoryNotFoundException($"Service project path not found: {serviceProjectPath}. Repo root: {repoRoot}");
+            }
+            if (!File.Exists(accountFile))
+            {
+                throw new FileNotFoundException($"Account CDM file not found: {accountFile}");
+            }
 
             _serviceProcess = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
-                    Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-files {accountFile} --cdm-files {contactFile} --cdm-files {opportunityFile}",
+                    Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-files \"{accountFile}\" --cdm-files \"{contactFile}\" --cdm-files \"{opportunityFile}\"",
                     WorkingDirectory = serviceProjectPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
