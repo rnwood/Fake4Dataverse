@@ -398,6 +398,11 @@ public class Program
             "  - /api/data/v9.2/{entityPluralName} - Create entity (POST)\n" +
             "  - /api/data/v9.2/{entityPluralName}({id}) - Update entity (PATCH)\n" +
             "  - /api/data/v9.2/{entityPluralName}({id}) - Delete entity (DELETE)\n\n" +
+            "Metadata REST/OData endpoints:\n" +
+            "  - /api/data/v9.2/EntityDefinitions - List entity metadata (GET)\n" +
+            "  - /api/data/v9.2/EntityDefinitions({id}) - Get entity metadata by MetadataId (GET)\n" +
+            "  - /api/data/v9.2/EntityDefinitions(LogicalName='{name}') - Get entity metadata by name (GET)\n" +
+            "  - /api/data/v9.2/$metadata - OData service document (EDMX/CSDL)\n\n" +
             "OData Query Options: $select, $filter, $orderby, $top, $skip, $expand, $count\n\n" +
             "This service provides 100% compatibility with Microsoft Dynamics 365/Dataverse SDK.",
             "text/plain"));
@@ -419,6 +424,12 @@ public class Program
         Console.WriteLine("Available REST/OData v4.0 endpoints:");
         Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/{{entityPluralName}} (GET, POST)");
         Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/{{entityPluralName}}({{id}}) (GET, PATCH, DELETE)");
+        Console.WriteLine();
+        Console.WriteLine("Metadata REST/OData endpoints:");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions({{id}}) (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions(LogicalName='{{name}}') (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/$metadata (GET - EDMX/CSDL)");
         Console.WriteLine();
         Console.WriteLine("OData Query Options:");
         Console.WriteLine("  - $select: Choose specific columns");
