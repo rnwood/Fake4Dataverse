@@ -12,14 +12,16 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.UpsertRequestTests
 {
-    public class UpsertRequestTests
+    public class UpsertRequestTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
         public UpsertRequestTests() 
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class but also expose as instance fields
+            // for compatibility with existing test code
+            _context = base._context;
+            _service = base._service;
         }
 
         [Fact]
