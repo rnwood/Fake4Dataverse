@@ -163,9 +163,36 @@ For project-specific information, see:
 - [Fake4DataverseService README](./Fake4DataverseService/README.md)
 - [Fake4Dataverse README](./Fake4Dataverse/README.md)
 
-## Building
+## Building and Testing
 
-Each project has its own build script. See individual project READMEs for details.
+### Quick Start
+
+Build the entire solution and run unit tests:
+
+```bash
+# Restore dependencies
+dotnet restore Fake4DataverseFree.sln
+
+# Build all projects
+dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
+
+# Run unit tests (excluding integration tests which require the service to be running)
+dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --filter "FullyQualifiedName!~IntegrationTests"
+```
+
+### Build the MDA App
+
+```bash
+cd Fake4DataverseService/mda-app
+npm ci                  # Install dependencies
+npm test                # Run unit tests
+npm run build           # Build Next.js app
+```
+
+### More Information
+
+- **[Testing Guide](./docs/TESTING_GUIDE.md)** - Comprehensive guide to running all tests
+- Each project has its own build script. See individual project READMEs for details.
 
 ## Feature Comparison: FakeXrmEasy v1 vs Fake4Dataverse vs FakeXrmEasy v2
 
