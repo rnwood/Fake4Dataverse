@@ -83,21 +83,39 @@ This is a monorepo containing three main projects:
 
 ## Build and Test Commands
 
-### Building Projects
+### Building the Entire Solution
 
-Each project can be built using PowerShell scripts:
+The preferred method is to build the entire solution:
 
 ```bash
-# Build FakeXrmEasyAbstrations
-cd FakeXrmEasyAbstrations
+# Restore dependencies
+dotnet restore Fake4DataverseFree.sln
+
+# Build all projects
+dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
+
+# Run all unit tests (excluding integration tests which require the service to be running)
+dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --filter "FullyQualifiedName!~IntegrationTests"
+
+# Run tests for .NET Framework 4.6.2 (Windows only)
+dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build --filter "FullyQualifiedName!~IntegrationTests"
+```
+
+### Building Individual Projects
+
+Each project can also be built using PowerShell scripts:
+
+```bash
+# Build Fake4DataverseAbstractions
+cd Fake4DataverseAbstractions
 pwsh ./build.ps1
 
-# Build FakeXrmEasyCore
-cd FakeXrmEasyCore
+# Build Fake4DataverseCore
+cd Fake4DataverseCore
 pwsh ./build.ps1
 
-# Build FakeXrmEasy
-cd FakeXrmEasy
+# Build Fake4Dataverse
+cd Fake4Dataverse
 pwsh ./build.ps1
 ```
 
@@ -110,9 +128,39 @@ pwsh ./build.ps1
 Tests are automatically run as part of the build scripts. To run tests separately:
 
 ```bash
-# Run tests for a specific project
+# Run unit tests for a specific project
 cd <project-directory>
-dotnet test --configuration <configuration> --verbosity normal
+dotnet test --configuration Debug --verbosity normal
+
+# Run all unit tests (excluding integration tests)
+dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName!~IntegrationTests"
+
+# Run integration tests (requires Fake4DataverseService to be running)
+# Start the service first, then:
+dotnet test Fake4DataverseService/tests/Fake4Dataverse.Service.IntegrationTests --configuration Debug --framework net8.0
+```
+
+### Building and Testing the MDA App
+
+The Model-Driven App (MDA) front-end has its own build and test steps:
+
+```bash
+cd Fake4DataverseService/mda-app
+
+# Install dependencies
+npm ci
+
+# Run unit tests
+npm test
+
+# Run unit tests with coverage
+npm test -- --coverage
+
+# Build the Next.js app
+npm run build
+
+# Run E2E tests (requires Fake4DataverseService to be running)
+npm run test:e2e
 ```
 
 ### Local Package Build
