@@ -141,20 +141,17 @@ npm run test:e2e:ui
 
 ## Continuous Integration
 
-The GitHub Actions workflow consists of two jobs:
+The GitHub Actions workflow runs all tests in a single job on windows-latest:
 
-### Job 1: test-mda (runs first on ubuntu-latest)
-1. **MDA unit tests** with coverage reporting
-2. **MDA build** to verify the Next.js app compiles
-3. **MDA E2E tests** with Playwright
-
-### Job 2: build-and-publish (runs only if test-mda succeeds, on windows-latest)
 1. **Unit tests** for net8.0 and net462
-2. **Package creation** for all 5 NuGet packages (Abstractions, Core, Fake4Dataverse, CloudFlows, Service)
-3. **Publishing to NuGet** (only on non-PR builds)
-4. **GitHub Release creation** (only on non-PR builds)
+2. **MDA unit tests** with coverage reporting
+3. **MDA build** to verify the Next.js app compiles
+4. **MDA E2E tests** with Playwright (Playwright works on Windows)
+5. **Package creation** for all 4 NuGet packages (Abstractions, Core, Fake4Dataverse, Fake4DataverseService)
+6. **Publishing to NuGet** (only on non-PR builds)
+7. **GitHub Release creation** (only on non-PR builds)
 
-This ensures that if MDA tests fail, nothing is published to NuGet or GitHub Releases.
+All tests must pass before any packages are published to NuGet or GitHub Releases.
 
 Integration tests are excluded from the main CI build to prevent timeouts, but they can be run manually or in a separate workflow that starts the service first.
 

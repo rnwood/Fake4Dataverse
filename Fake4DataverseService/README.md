@@ -38,13 +38,13 @@ Fake4DataverseService exposes the Fake4Dataverse testing framework as a SOAP/WCF
 Install the service as a global .NET tool from NuGet:
 
 ```bash
-dotnet tool install --global Fake4Dataverse.Service
+dotnet tool install --global Fake4DataverseService
 ```
 
 Or update an existing installation:
 
 ```bash
-dotnet tool update --global Fake4Dataverse.Service
+dotnet tool update --global Fake4DataverseService
 ```
 
 After installation, the `fake4dataverse` command will be available globally:
@@ -58,7 +58,7 @@ fake4dataverse start --port 5000 --host localhost
 Install as a project-local tool:
 
 ```bash
-dotnet tool install Fake4Dataverse.Service
+dotnet tool install Fake4DataverseService
 ```
 
 Then run using:

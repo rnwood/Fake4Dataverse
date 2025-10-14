@@ -42,7 +42,7 @@ Fake4DataverseService is a .NET 8.0 CLI application that exposes Fake4Dataverse 
 Install as a global .NET tool:
 
 ```bash
-dotnet tool install --global Fake4Dataverse.Service
+dotnet tool install --global Fake4DataverseService
 ```
 
 ### 2. Start the Service
