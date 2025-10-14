@@ -23,6 +23,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
 - [CDM Import](./cdm-import.md) - Import entity metadata from Common Data Model JSON ✅ **NEW**
+- [Thread Safety](./thread-safety.md) - Concurrent operations and thread safety ✅ **NEW**
 - [Alternate Keys](./usage/alternate-keys.md) - Using alternate keys for record identification ✅ **NEW**
 - [Duplicate Detection](./usage/duplicate-detection.md) - Testing duplicate detection rules ✅ **NEW**
 - [Calculated Fields](./usage/calculated-fields.md) - Simulating calculated field evaluation
@@ -74,6 +75,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Test a plugin**: See [Testing Plugins](./usage/testing-plugins.md)
 - **Query test data**: Check [Querying Data](./usage/querying-data.md)
 - **Use standard entity schemas**: See [CDM Import](./cdm-import.md)
+- **Test concurrent operations**: See [Thread Safety](./thread-safety.md)
 - **Use alternate keys**: See [Alternate Keys](./usage/alternate-keys.md)
 - **Test duplicate detection**: Check [Duplicate Detection](./usage/duplicate-detection.md)
 - **Understand the architecture**: Read [Middleware Architecture](./concepts/middleware.md)

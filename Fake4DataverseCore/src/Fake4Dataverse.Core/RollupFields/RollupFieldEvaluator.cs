@@ -150,9 +150,9 @@ namespace Fake4Dataverse.RollupFields
                 throw new ArgumentException("recordId cannot be empty", nameof(recordId));
 
             // Retrieve the entity from context
-            var entity = _context.Data.ContainsKey(entityLogicalName) &&
-                        _context.Data[entityLogicalName].ContainsKey(recordId)
-                ? _context.Data[entityLogicalName][recordId]
+            var entity = _context.Data.TryGetValue(entityLogicalName, out var entityCollection) &&
+                        entityCollection.TryGetValue(recordId, out var foundEntity)
+                ? foundEntity
                 : null;
 
             if (entity == null)
@@ -187,12 +187,12 @@ namespace Fake4Dataverse.RollupFields
         {
             var relatedRecords = new List<Entity>();
 
-            if (!_context.Data.ContainsKey(definition.RelatedEntityLogicalName))
+            if (!_context.Data.TryGetValue(definition.RelatedEntityLogicalName, out var relatedEntityCollection))
                 return relatedRecords;
 
             // Find all related records
             // We need to find records where the lookup field points to our entity
-            var allRelatedEntities = _context.Data[definition.RelatedEntityLogicalName].Values;
+            var allRelatedEntities = relatedEntityCollection.Values;
 
             foreach (var relatedEntity in allRelatedEntities)
             {
