@@ -67,7 +67,7 @@ public class Program
             getDefaultValue: () => null);
         var cdmEntitiesOption = new Option<string[]?>(
             name: "--cdm-entities",
-            description: "Optional list of standard CDM entities to download and initialize. Downloads from Microsoft's CDM repository. Available: account, contact, lead, systemuser, team, businessunit, organization, email, phonecall, appointment, task, opportunity, quote, order, invoice, incident, case, contract, campaign, workorder, and more.",
+            description: "Optional list of standard CDM entities to download and initialize. Downloads from Microsoft's CDM repository. Examples: account, contact, lead, systemuser, team, businessunit, organization, email, phonecall, appointment, task, opportunity, quote, order, invoice, incident, case, contract, campaign, workorder. For a full list of available entities, see: https://github.com/microsoft/CDM/blob/master/entity/reference.md",
             getDefaultValue: () => null);
         var noCdmOption = new Option<bool>(
             name: "--no-cdm",
