@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <PackageId>Fake4Dataverse.Service</PackageId>
+    <PackageId>Fake4DataverseService</PackageId>
     <VersionPrefix>4.0.0</VersionPrefix>
     <Authors>Rob Wood (Fake4Dataverse fork); Jordi Montaña (original FakeXrmEasy)</Authors>
     <Company>Rob Wood</Company>
@@ -17,6 +17,8 @@
     <RepositoryUrl>https://github.com/rnwood/fake-xrm-free</RepositoryUrl>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fake4dataverse</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>

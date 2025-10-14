@@ -33,14 +33,48 @@ Fake4DataverseService exposes the Fake4Dataverse testing framework as a SOAP/WCF
 
 - .NET 8.0 SDK or later
 
-### Build from Source
+### Option 1: Install as a Global Tool (Recommended)
+
+Install the service as a global .NET tool from NuGet:
+
+```bash
+dotnet tool install --global Fake4DataverseService
+```
+
+Or update an existing installation:
+
+```bash
+dotnet tool update --global Fake4DataverseService
+```
+
+After installation, the `fake4dataverse` command will be available globally:
+
+```bash
+fake4dataverse start --port 5000 --host localhost
+```
+
+### Option 2: Install as a Local Tool
+
+Install as a project-local tool:
+
+```bash
+dotnet tool install Fake4DataverseService
+```
+
+Then run using:
+
+```bash
+dotnet fake4dataverse start --port 5000 --host localhost
+```
+
+### Option 3: Build from Source
 
 ```bash
 cd Fake4DataverseService/src/Fake4Dataverse.Service
 dotnet build -c Release
 ```
 
-### Run
+### Run from Source
 
 ```bash
 dotnet run -- start --port 5000 --host localhost
@@ -59,8 +93,10 @@ cd bin/Release/net8.0
 
 #### Without Authentication (Anonymous Access)
 
+If installed as a global tool:
+
 ```bash
-Fake4Dataverse.Service start [options]
+fake4dataverse start [options]
 
 Options:
   --port <port>              The port to listen on (default: 5000)
@@ -68,17 +104,26 @@ Options:
   --access-token <token>     Optional access token for authentication
 ```
 
+If built from source:
+
+```bash
+Fake4Dataverse.Service start [options]
+```
+
 **Examples:**
 
 ```bash
-# Start with anonymous access (no authentication)
+# Start with anonymous access (no authentication) - Global tool
+fake4dataverse start
+
+# Start with anonymous access - From source
 Fake4Dataverse.Service start
 
 # Start on custom port
-Fake4Dataverse.Service start --port 8080
+fake4dataverse start --port 8080
 
 # Bind to all interfaces
-Fake4Dataverse.Service start --host 0.0.0.0 --port 5000
+fake4dataverse start --host 0.0.0.0 --port 5000
 ```
 
 #### With Authentication (Token Required)
