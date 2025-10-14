@@ -24,11 +24,23 @@ export default defineConfig({
     },
   ],
 
-  // Run the dev server before starting tests
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // Run both the backend service and Next.js dev server before starting tests
+  webServer: [
+    {
+      // Start Fake4Dataverse backend service on port 5000
+      command: 'dotnet run --project ../src/Fake4Dataverse.Service/Fake4Dataverse.Service.csproj -- start --port 5000',
+      url: 'http://localhost:5000/api/data/v9.2',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      // Start Next.js MDA app on port 3000
+      command: 'npm run dev',
+      url: 'http://localhost:3000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120 * 1000,
+    },
+  ],
 });
