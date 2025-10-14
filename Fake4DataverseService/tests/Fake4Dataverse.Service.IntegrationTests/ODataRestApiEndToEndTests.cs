@@ -65,7 +65,8 @@ public class ODataRestApiEndToEndTests : IAsyncLifetime
             {
                 using var httpClient = new HttpClient();
                 var response = await httpClient.GetAsync($"http://localhost:{ServicePort}/");
-                if (response.IsSuccessStatusCode)
+                // Accept both success codes and redirects as indication service is ready
+                if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Found)
                 {
                     isServiceReady = true;
                 }

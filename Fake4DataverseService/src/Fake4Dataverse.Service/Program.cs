@@ -261,6 +261,13 @@ public class Program
         {
             app.Use(async (context, next) =>
             {
+                // Skip authentication for info endpoint
+                if (context.Request.Path.StartsWithSegments("/info"))
+                {
+                    await next();
+                    return;
+                }
+
                 // Check for Authorization header
                 if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
                 {
