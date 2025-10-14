@@ -24,16 +24,16 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         
         public ValidateAttributeTypesTests()
         {
-            // Context with validation enabled
-            _contextWithValidation = XrmFakedContextFactory.New(new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = true 
-            });
+            // Context with validation enabled (default behavior)
+            _contextWithValidation = XrmFakedContextFactory.New();
             _serviceWithValidation = _contextWithValidation.GetOrganizationService();
             
-            // Context without validation
-            _contextWithoutValidation = XrmFakedContextFactory.New();
+            // Context without validation (must explicitly disable)
+            _contextWithoutValidation = XrmFakedContextFactory.New(new IntegrityOptions 
+            { 
+                ValidateEntityReferences = false,
+                ValidateAttributeTypes = false 
+            });
             _serviceWithoutValidation = _contextWithoutValidation.GetOrganizationService();
         }
 
@@ -258,7 +258,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             Assert.NotEqual(Guid.Empty, id);
         }
 
-        [Fact(Skip = "Lookup target validation needs investigation - Targets property may not be properly set via SetFieldValue")]
+        [Fact(Skip = "Lookup target type validation is overridden by ValidateEntityReferences which checks entity existence first")]
         public void Should_Reject_Lookup_To_Invalid_Target()
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
@@ -309,20 +309,24 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         }
 
         [Fact]
-        public void Should_Skip_Validation_When_No_Metadata_Available()
+        public void Should_Throw_Error_When_No_Metadata_Available()
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
-            // When metadata is not initialized, validation should be skipped gracefully
+            // When metadata is not initialized and validation is enabled, should throw error like Dataverse
             
             // Don't initialize metadata
             var account = new Entity("account")
             {
                 ["name"] = "Test Account",
-                ["numberofemployees"] = "should be int but no metadata to validate"
+                ["numberofemployees"] = 100
             };
 
-            var id = _serviceWithValidation.Create(account);
-            Assert.NotEqual(Guid.Empty, id);
+            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => 
+                _serviceWithValidation.Create(account));
+            
+            Assert.Contains("Could not find entity", ex.Message);
+            Assert.Contains("account", ex.Message);
+            Assert.Contains("metadata", ex.Message.ToLower());
         }
 
         [Fact]

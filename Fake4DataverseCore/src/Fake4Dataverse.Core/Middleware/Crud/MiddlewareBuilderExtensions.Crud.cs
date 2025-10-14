@@ -37,11 +37,11 @@ namespace Fake4Dataverse.Middleware.Crud
 
                 context.SetProperty(crudMessageExecutors);
                 
-                // Set default IntegrityOptions with validation disabled for backward compatibility
+                // Set default IntegrityOptions with validation enabled to match production Dataverse behavior
                 context.SetProperty<IIntegrityOptions>(new IntegrityOptions 
                 { 
-                    ValidateEntityReferences = false,
-                    ValidateAttributeTypes = false
+                    ValidateEntityReferences = true,
+                    ValidateAttributeTypes = true
                 });
                 
                 AddFakeCreate(context, service);

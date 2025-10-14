@@ -471,9 +471,21 @@ namespace Fake4Dataverse
 
             // Check if metadata is available for this entity
             var entityMetadata = GetEntityMetadataByName(e.LogicalName);
-            if (entityMetadata == null || entityMetadata.Attributes == null)
+            if (entityMetadata == null)
             {
-                // If no metadata is available, we can't validate attribute types
+                // Replicate Dataverse behavior - entity must exist in metadata
+                var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                {
+                    Message = $"Could not find entity '{e.LogicalName}' in metadata. Entity metadata must be initialized before validation can occur."
+                };
+                throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                    fault,
+                    new System.ServiceModel.FaultReason(fault.Message));
+            }
+
+            if (entityMetadata.Attributes == null)
+            {
+                // If no attributes defined, nothing to validate
                 return;
             }
 
