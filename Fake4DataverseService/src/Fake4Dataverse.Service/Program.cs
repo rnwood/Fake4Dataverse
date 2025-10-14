@@ -114,9 +114,13 @@ public class Program
         Console.WriteLine($"CDM file cache directory: {cdmCacheDir}");
         Console.WriteLine();
         
+        // When using port 0 (auto-assign), Kestrel requires using IP address instead of 'localhost'
+        // Reference: https://github.com/dotnet/aspnetcore/issues/29235
+        var bindHost = (port == 0 && host == "localhost") ? "127.0.0.1" : host;
+        
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
-            Args = new[] { $"--urls=http://{host}:{port}" }
+            Args = new[] { $"--urls=http://{bindHost}:{port}" }
         });
 
         // Create and register the Fake4Dataverse context
@@ -444,7 +448,30 @@ public class Program
         Console.WriteLine();
         Console.WriteLine("Press Ctrl+C to stop the service.");
 
-        await app.RunAsync();
+        // Start the application
+        await app.StartAsync();
+        
+        // After starting, get the actual listening URLs (important when port 0 is used for auto-assignment)
+        var actualUrls = app.Urls;
+        if (actualUrls.Count > 0)
+        {
+            var actualUrl = actualUrls.First();
+            Console.WriteLine();
+            Console.WriteLine($"ACTUAL_URL: {actualUrl}");
+            Console.WriteLine();
+        }
+        
+        // Keep the application running
+        var tcs = new TaskCompletionSource();
+        Console.CancelKeyPress += (s, e) =>
+        {
+            e.Cancel = true;
+            tcs.TrySetResult();
+        };
+        await tcs.Task;
+        
+        // Shutdown
+        await app.StopAsync();
     }
 }
 

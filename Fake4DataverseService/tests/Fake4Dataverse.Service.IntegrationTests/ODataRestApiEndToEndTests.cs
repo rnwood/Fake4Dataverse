@@ -31,7 +31,7 @@ public class ODataRestApiEndToEndTests : IDisposable
         // Create HTTP client for REST API calls (service is already running via fixture)
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri(ServiceFixture.BaseUrl)
+            BaseAddress = new Uri(fixture.BaseUrl)
         };
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
         _httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");

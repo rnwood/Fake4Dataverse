@@ -16,9 +16,8 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 public class ServiceClientAuthTests : IAsyncLifetime
 {
     private Process? _serviceProcess;
-    private const int ServicePort = 5560;
     private const string AccessToken = "test-access-token-12345";
-    private static readonly string ServiceUrl = $"http://localhost:{ServicePort}";
+    private string ServiceUrl { get; set; } = string.Empty;
 
     public async Task InitializeAsync()
     {
@@ -27,12 +26,13 @@ public class ServiceClientAuthTests : IAsyncLifetime
             Directory.GetCurrentDirectory(),
             "..", "..", "..", "..", "..", "src", "Fake4Dataverse.Service");
 
+        // Use port 0 for auto-assignment
         _serviceProcess = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --access-token {AccessToken} --no-cdm",
+                Arguments = $"run --no-build -- start --port 0 --host localhost --access-token {AccessToken} --no-cdm",
                 WorkingDirectory = serviceProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -43,11 +43,36 @@ public class ServiceClientAuthTests : IAsyncLifetime
 
         _serviceProcess.Start();
 
-        // Wait for the service to start
+        // Read output to find the actual assigned port
         var startTime = DateTime.UtcNow;
         var timeout = TimeSpan.FromSeconds(30);
-        var isServiceReady = false;
+        var actualUrl = string.Empty;
 
+        // Start reading output on a background task
+        var outputTask = Task.Run(() =>
+        {
+            while (!_serviceProcess.StandardOutput.EndOfStream)
+            {
+                var line = _serviceProcess.StandardOutput.ReadLine();
+                if (line != null && line.StartsWith("ACTUAL_URL:"))
+                {
+                    actualUrl = line.Substring("ACTUAL_URL:".Length).Trim();
+                    break;
+                }
+            }
+        });
+
+        // Wait for the ACTUAL_URL to be parsed or timeout
+        var waitResult = await Task.WhenAny(outputTask, Task.Delay(timeout));
+        if (waitResult != outputTask || string.IsNullOrEmpty(actualUrl))
+        {
+            throw new Exception("Failed to get actual URL from service startup");
+        }
+
+        ServiceUrl = actualUrl;
+
+        // Wait for the service to be ready
+        var isServiceReady = false;
         while (DateTime.UtcNow - startTime < timeout && !isServiceReady)
         {
             try

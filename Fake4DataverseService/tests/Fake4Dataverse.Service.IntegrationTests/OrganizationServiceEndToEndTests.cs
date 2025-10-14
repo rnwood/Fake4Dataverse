@@ -21,95 +21,16 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 /// The Organization Service uses SOAP 1.1/1.2 protocol via WCF bindings.
 /// </summary>
 [Collection("Service Integration Tests")]
-public class OrganizationServiceEndToEndTests : IAsyncLifetime
+public class OrganizationServiceEndToEndTests
 {
-    private Process? _serviceProcess;
-    private const int ServicePort = 5558;
-    private static readonly string ServiceUrl = $"http://localhost:{ServicePort}/XRMServices/2011/Organization.svc";
+    private readonly ServiceFixture _fixture;
     private IOrganizationService? _organizationService;
 
-    public async Task InitializeAsync()
+    public OrganizationServiceEndToEndTests(ServiceFixture fixture)
     {
-        // Start the Fake4DataverseService in the background
-        var serviceProjectPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "..", "..", "..", "..", "..", "src", "Fake4Dataverse.Service");
-
-        // Use local CDM files for faster, more reliable tests (no network download required)
-        var cdmFilesPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "..", "..", "..", "..", "..", "..", "cdm-schema-files");
-        var accountFile = Path.Combine(cdmFilesPath, "Account.cdm.json");
-        var contactFile = Path.Combine(cdmFilesPath, "Contact.cdm.json");
-        var opportunityFile = Path.Combine(cdmFilesPath, "Opportunity.cdm.json");
-
-        _serviceProcess = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-files {accountFile} --cdm-files {contactFile} --cdm-files {opportunityFile}",
-                WorkingDirectory = serviceProjectPath,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-        };
-
-        _serviceProcess.Start();
-
-        // Wait for the service to start
-        var startTime = DateTime.UtcNow;
-        var timeout = TimeSpan.FromSeconds(30);
-        var isServiceReady = false;
-
-        while (DateTime.UtcNow - startTime < timeout && !isServiceReady)
-        {
-            try
-            {
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(2);
-                // Use dedicated health endpoint to verify service is fully initialized
-                var response = await httpClient.GetAsync($"http://localhost:{ServicePort}/health");
-                if (response.IsSuccessStatusCode)
-                {
-                    isServiceReady = true;
-                }
-            }
-            catch
-            {
-                // Service not ready yet, wait and retry
-                await Task.Delay(500);
-            }
-        }
-
-        if (!isServiceReady)
-        {
-            throw new Exception("Failed to start Fake4DataverseService within timeout period");
-        }
-
-        // Give the service a moment to ensure all endpoints are ready
-        await Task.Delay(1000);
-
+        _fixture = fixture ?? throw new ArgumentNullException(nameof(fixture));
         // Create WCF client for IOrganizationService
         _organizationService = CreateOrganizationServiceClient();
-    }
-
-    public Task DisposeAsync()
-    {
-        if (_organizationService is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
-
-        if (_serviceProcess != null && !_serviceProcess.HasExited)
-        {
-            _serviceProcess.Kill(entireProcessTree: true);
-            _serviceProcess.WaitForExit();
-            _serviceProcess.Dispose();
-        }
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -128,7 +49,8 @@ public class OrganizationServiceEndToEndTests : IAsyncLifetime
             ReceiveTimeout = TimeSpan.FromMinutes(20)
         };
 
-        var endpoint = new EndpointAddress(ServiceUrl);
+        var serviceUrl = $"{_fixture.ServiceUrl}/XRMServices/2011/Organization.svc";
+        var endpoint = new EndpointAddress(serviceUrl);
         var factory = new ChannelFactory<IOrganizationService>(binding, endpoint);
 
         // Disable authentication for local testing
