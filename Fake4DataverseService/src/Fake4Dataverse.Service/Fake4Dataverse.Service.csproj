@@ -54,9 +54,9 @@
 
   <!-- Copy wwwroot directory to output for MDA static files -->
   <ItemGroup>
-    <Content Include="wwwroot\**\*.*">
+    <Content Include="wwwroot/**/*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Link>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
 
