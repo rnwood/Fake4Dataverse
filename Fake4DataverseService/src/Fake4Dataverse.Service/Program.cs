@@ -63,11 +63,11 @@ public class Program
             getDefaultValue: () => null);
         var cdmSchemasOption = new Option<string[]?>(
             name: "--cdm-schemas",
-            description: "Optional list of standard CDM schema groups to download and initialize (e.g., crmcommon, sales, service, portals, customerInsights). Downloads from Microsoft's CDM repository. Defaults to 'crmcommon' if no CDM options specified.",
+            description: "Optional list of standard CDM schema groups to download and initialize. Downloads from Microsoft's CDM repository. Defaults to 'crmcommon' if no CDM options specified. Available: crmcommon, sales, service, marketing, fieldservice, projectservice, portals, customerinsights, linkedinleadgen, socialengagement, gamification.",
             getDefaultValue: () => null);
         var cdmEntitiesOption = new Option<string[]?>(
             name: "--cdm-entities",
-            description: "Optional list of standard CDM entities to download and initialize (e.g., account, contact, lead). Downloads from Microsoft's CDM repository.",
+            description: "Optional list of standard CDM entities to download and initialize. Downloads from Microsoft's CDM repository. Available: account, contact, lead, systemuser, team, businessunit, organization, email, phonecall, appointment, task, opportunity, quote, order, invoice, incident, case, contract, campaign, workorder, and more.",
             getDefaultValue: () => null);
         var noCdmOption = new Option<bool>(
             name: "--no-cdm",

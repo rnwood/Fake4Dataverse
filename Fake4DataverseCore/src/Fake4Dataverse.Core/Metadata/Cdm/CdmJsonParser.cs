@@ -40,26 +40,80 @@ namespace Fake4Dataverse.Metadata.Cdm
         // Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon/foundationCommon/crmCommon
         private static readonly Dictionary<string, string> StandardSchemaPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "crmcommon", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/crmCommon.cdm.json" },
-            { "sales", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/sales.cdm.json" },
-            { "service", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/service.cdm.json" },
-            { "portals", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/portals/portals.cdm.json" },
-            { "customerinsights", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/customerInsights/customerInsights.cdm.json" },
+            // Core CRM schemas
+            { "crmcommon", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/crmCommon.manifest.cdm.json" },
+            
+            // Sales & Marketing
+            { "sales", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/sales.manifest.cdm.json" },
+            { "marketing", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/marketing/marketing.manifest.cdm.json" },
+            { "fieldservice", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/fieldService.manifest.cdm.json" },
+            
+            // Service & Support
+            { "service", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/service.manifest.cdm.json" },
+            { "projectservice", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/projectService/projectService.manifest.cdm.json" },
+            
+            // Portals & Web
+            { "portals", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/portals/portals.manifest.cdm.json" },
+            
+            // Analytics & Insights
+            { "customerinsights", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/customerInsights/customerInsights.manifest.cdm.json" },
+            
+            // Additional modules
+            { "linkedinleadgen", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/linkedInLeadGen/linkedInLeadGen.manifest.cdm.json" },
+            { "socialengagement", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/socialEngagement/socialEngagement.manifest.cdm.json" },
+            { "gamification", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/gamification/gamification.manifest.cdm.json" },
         };
         
         // Individual entity CDM paths (for loading specific entities)
         // Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
         private static readonly Dictionary<string, string> StandardEntityPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
+            // Core entities
             { "account", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Account.cdm.json" },
             { "contact", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Contact.cdm.json" },
             { "lead", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Lead.cdm.json" },
+            { "systemuser", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/SystemUser.cdm.json" },
+            { "team", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Team.cdm.json" },
+            { "businessunit", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/BusinessUnit.cdm.json" },
+            { "organization", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Organization.cdm.json" },
+            
+            // Activity entities
+            { "email", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Email.cdm.json" },
+            { "phonecall", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/PhoneCall.cdm.json" },
+            { "appointment", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Appointment.cdm.json" },
+            { "task", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Task.cdm.json" },
+            { "letter", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Letter.cdm.json" },
+            { "fax", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Fax.cdm.json" },
+            { "activityparty", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/ActivityParty.cdm.json" },
+            
+            // Sales entities
             { "opportunity", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Opportunity.cdm.json" },
             { "quote", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Quote.cdm.json" },
             { "order", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/SalesOrder.cdm.json" },
+            { "salesorder", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/SalesOrder.cdm.json" },
             { "invoice", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Invoice.cdm.json" },
+            { "competitor", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Competitor.cdm.json" },
+            { "product", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Product.cdm.json" },
+            { "pricelevel", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/PriceLevel.cdm.json" },
+            { "discount", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Discount.cdm.json" },
+            
+            // Service entities
             { "incident", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/Incident.cdm.json" },
             { "case", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/Incident.cdm.json" },
+            { "contract", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/Contract.cdm.json" },
+            { "entitlement", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/Entitlement.cdm.json" },
+            { "knowledgearticle", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/KnowledgeArticle.cdm.json" },
+            
+            // Marketing entities
+            { "campaign", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/marketing/Campaign.cdm.json" },
+            { "list", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/marketing/List.cdm.json" },
+            { "marketinglist", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/marketing/List.cdm.json" },
+            { "campaignresponse", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/marketing/CampaignResponse.cdm.json" },
+            
+            // Field Service entities
+            { "workorder", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/WorkOrder.cdm.json" },
+            { "bookableresource", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/BookableResource.cdm.json" },
+            { "bookableresourcebooking", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/BookableResourceBooking.cdm.json" },
         };
         
         /// <summary>
