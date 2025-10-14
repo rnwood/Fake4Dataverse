@@ -1,4 +1,5 @@
 using Fake4Dataverse.Extensions;
+using Fake4Dataverse.Metadata.Cdm;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -6,10 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Fake4Dataverse.Metadata
 {
-    internal class MetadataGenerator
+    public class MetadataGenerator
     {
         public static IEnumerable<EntityMetadata> FromEarlyBoundEntities(Assembly earlyBoundEntitiesAssembly)
         {
@@ -236,6 +238,75 @@ namespace Fake4Dataverse.Metadata
             relationshipMetadata.ReferencedAttribute = GetCustomAttribute<AttributeLogicalNameAttribute>(referencedAttribute).LogicalName;
 
             relationshipMetadatas.Add(relationshipMetadata);
+        }
+
+        /// <summary>
+        /// Creates entity metadata from CDM (Common Data Model) JSON file.
+        /// Reference: https://github.com/microsoft/CDM
+        /// 
+        /// CDM is Microsoft's standard schema definition format that provides a shared data language
+        /// across business applications and data sources. This method allows initializing entity metadata
+        /// from CDM JSON files.
+        /// </summary>
+        /// <param name="cdmJsonFilePath">Path to the CDM JSON file</param>
+        /// <returns>Collection of EntityMetadata parsed from the CDM file</returns>
+        public static IEnumerable<EntityMetadata> FromCdmJsonFile(string cdmJsonFilePath)
+        {
+            return CdmJsonParser.FromCdmJsonFile(cdmJsonFilePath);
+        }
+
+        /// <summary>
+        /// Creates entity metadata from multiple CDM JSON files.
+        /// </summary>
+        /// <param name="cdmJsonFilePaths">Collection of paths to CDM JSON files</param>
+        /// <returns>Collection of EntityMetadata parsed from all CDM files</returns>
+        public static IEnumerable<EntityMetadata> FromCdmJsonFiles(IEnumerable<string> cdmJsonFilePaths)
+        {
+            return CdmJsonParser.FromCdmJsonFiles(cdmJsonFilePaths);
+        }
+
+        /// <summary>
+        /// Creates entity metadata from standard CDM schema groups by downloading them from Microsoft's CDM repository.
+        /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+        /// 
+        /// This method downloads standard schema groups (crmcommon, sales, service, portals, customerInsights) directly from
+        /// Microsoft's official CDM repository on GitHub. It follows the imports in each schema file to recursively
+        /// load all dependent entity definitions.
+        /// 
+        /// Available standard schemas: crmcommon, sales, service, portals, customerInsights
+        /// </summary>
+        /// <param name="schemaNames">Names of standard schemas (e.g., "crmcommon", "sales", "service")</param>
+        /// <returns>Task that resolves to collection of EntityMetadata for all entities in the requested schemas</returns>
+        public static Task<IEnumerable<EntityMetadata>> FromStandardCdmSchemasAsync(IEnumerable<string> schemaNames)
+        {
+            return CdmJsonParser.FromStandardCdmSchemasAsync(schemaNames);
+        }
+        
+        /// <summary>
+        /// Creates entity metadata from standard CDM entities by downloading them from Microsoft's CDM repository.
+        /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+        /// 
+        /// This method downloads specific standard entities (account, contact, lead, etc.) directly from
+        /// Microsoft's official CDM repository on GitHub. Useful for tests or when only specific entities are needed.
+        /// 
+        /// Available standard entities: account, contact, lead, opportunity, quote, order, invoice, incident (case)
+        /// </summary>
+        /// <param name="entityNames">Names of standard entities (e.g., "account", "contact", "lead")</param>
+        /// <returns>Task that resolves to collection of EntityMetadata for the requested entities</returns>
+        public static Task<IEnumerable<EntityMetadata>> FromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        {
+            return CdmJsonParser.FromStandardCdmEntitiesAsync(entityNames);
+        }
+        
+        /// <summary>
+        /// Sets the directory to use for file-based caching of downloaded CDM files.
+        /// If set, downloaded CDM files will be cached to disk in addition to memory, significantly
+        /// improving performance for subsequent loads.
+        /// </summary>
+        /// <param name="cacheDirectory">Directory path for caching CDM files. Pass null to disable file caching.</param>
+        public static void SetCdmCacheDirectory(string cacheDirectory)
+        {
+            CdmJsonParser.SetCacheDirectory(cacheDirectory);
         }
     }
 }

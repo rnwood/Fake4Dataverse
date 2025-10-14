@@ -35,7 +35,7 @@ public class ODataRestApiEndToEndTests : IAsyncLifetime
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost",
+                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-entities account contact opportunity",
                 WorkingDirectory = serviceProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

@@ -106,6 +106,7 @@ We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releas
 - **[CRUD Operations](./docs/usage/crud-operations.md)** - Create, Read, Update, Delete operations
 - **[Querying Data](./docs/usage/querying-data.md)** - LINQ and FetchXML queries
 - **[Batch Operations](./docs/usage/batch-operations.md)** - ExecuteMultiple and Transactions
+- **[CDM Import](./docs/cdm-import.md)** - Import entity metadata from Common Data Model JSON ✅ **NEW**
 - **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
 
 ### Advanced Topics
