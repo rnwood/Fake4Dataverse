@@ -105,6 +105,13 @@ namespace Fake4Dataverse
             var reference = e.ToEntityReferenceWithKeyAttributes();
             e.Id = GetRecordUniqueId(reference);
 
+            // Validate attribute types if enabled
+            var integrityOptions = GetProperty<IIntegrityOptions>();
+            if (integrityOptions.ValidateAttributeTypes)
+            {
+                ValidateAttributeTypes(e);
+            }
+
             // Thread-safe update with per-entity-type locking for better concurrency
             var entityLock = _entityLocks.GetOrAdd(e.LogicalName, _ => new object());
             lock (entityLock)
@@ -161,8 +168,6 @@ namespace Fake4Dataverse
                         userId: CallerProperties.CallerId.Id,
                         organizationId: Guid.NewGuid());
                 }
-
-                var integrityOptions = GetProperty<IIntegrityOptions>();
 
                 // Capture old entity state for audit tracking
                 // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
@@ -452,6 +457,159 @@ namespace Fake4Dataverse
             }
         }
 
+        /// <summary>
+        /// Validates that attribute values match their metadata types and that lookup targets are valid.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
+        /// Dataverse validates attribute types at runtime and throws exceptions for type mismatches.
+        /// </summary>
+        protected void ValidateAttributeTypes(Entity e)
+        {
+            if (e == null || e.Attributes == null || e.Attributes.Count == 0)
+            {
+                return;
+            }
+
+            // Check if metadata is available for this entity
+            var entityMetadata = GetEntityMetadataByName(e.LogicalName);
+            if (entityMetadata == null)
+            {
+                // Replicate Dataverse behavior - entity must exist in metadata
+                var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                {
+                    Message = $"Could not find entity '{e.LogicalName}' in metadata. Entity metadata must be initialized before validation can occur."
+                };
+                throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                    fault,
+                    new System.ServiceModel.FaultReason(fault.Message));
+            }
+
+            if (entityMetadata.Attributes == null)
+            {
+                // If no attributes defined, nothing to validate
+                return;
+            }
+
+            // System attributes that are automatically added by the framework
+            var systemAttributes = new[] { "createdby", "createdon", "modifiedby", "modifiedon", "ownerid", 
+                                          "statecode", "statuscode", "createdonbehalfby", "modifiedonbehalfby",
+                                          $"{e.LogicalName}id" };  // Primary key attribute
+
+            foreach (var attributeName in e.Attributes.Keys.ToList())
+            {
+                var attributeValue = e[attributeName];
+                
+                // Skip null values - they are always valid
+                if (attributeValue == null)
+                {
+                    continue;
+                }
+
+                // Skip system attributes that may not be in metadata
+                if (systemAttributes.Contains(attributeName.ToLower()))
+                {
+                    continue;
+                }
+
+                // Find the attribute metadata
+                var attributeMetadata = entityMetadata.Attributes
+                    .FirstOrDefault(a => a.LogicalName == attributeName);
+
+                if (attributeMetadata == null)
+                {
+                    // Attribute doesn't exist in metadata
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        Message = $"The attribute '{attributeName}' does not exist on entity '{e.LogicalName}'."
+                    };
+                    throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                        fault,
+                        new System.ServiceModel.FaultReason(fault.Message));
+                }
+
+                if (attributeMetadata.AttributeType == null)
+                {
+                    // Can't validate without type information
+                    continue;
+                }
+
+                // Validate the type matches
+                var expectedType = this.FindAttributeTypeInInjectedMetadata(e.LogicalName, attributeName);
+                if (expectedType == null)
+                {
+                    continue;
+                }
+
+                var actualValue = e[attributeName];
+                var actualType = actualValue?.GetType();
+
+                if (actualType == null)
+                {
+                    continue;
+                }
+
+                // Handle special type validations
+                bool isValid = false;
+
+                // Allow AliasedValue to pass through - it's used in queries
+                if (actualType == typeof(Microsoft.Xrm.Sdk.AliasedValue))
+                {
+                    isValid = true;
+                }
+                // Check if actual type matches expected type or is assignable to it
+                else if (expectedType.IsAssignableFrom(actualType))
+                {
+                    isValid = true;
+                }
+                // Handle numeric type conversions (Int32 vs Int64, Decimal vs Double, etc.)
+                else if (IsNumericType(expectedType) && IsNumericType(actualType))
+                {
+                    isValid = true;
+                }
+                // Handle EntityReference types - check for valid lookup targets
+                else if (expectedType == typeof(EntityReference) && actualType == typeof(EntityReference))
+                {
+                    var lookupMetadata = attributeMetadata as Microsoft.Xrm.Sdk.Metadata.LookupAttributeMetadata;
+                    if (lookupMetadata != null && lookupMetadata.Targets != null && lookupMetadata.Targets.Length > 0)
+                    {
+                        var entityRef = (EntityReference)actualValue;
+                        if (!lookupMetadata.Targets.Contains(entityRef.LogicalName))
+                        {
+                            var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                            {
+                                Message = $"The lookup attribute '{attributeName}' on entity '{e.LogicalName}' cannot reference entity type '{entityRef.LogicalName}'. Valid targets are: {string.Join(", ", lookupMetadata.Targets)}."
+                            };
+                            throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                                fault,
+                                new System.ServiceModel.FaultReason(fault.Message));
+                        }
+                    }
+                    isValid = true;
+                }
+
+                if (!isValid)
+                {
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        Message = $"The attribute '{attributeName}' on entity '{e.LogicalName}' has an invalid type. Expected: {expectedType.Name}, but got: {actualType.Name}."
+                    };
+                    throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                        fault,
+                        new System.ServiceModel.FaultReason(fault.Message));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Checks if a type is a numeric type for validation purposes
+        /// </summary>
+        private static bool IsNumericType(Type type)
+        {
+            return type == typeof(int) || type == typeof(long) || type == typeof(decimal) || 
+                   type == typeof(double) || type == typeof(float) || type == typeof(short) ||
+                   type == typeof(byte) || type == typeof(uint) || type == typeof(ulong) ||
+                   type == typeof(ushort) || type == typeof(sbyte);
+        }
+
         public Guid CreateEntity(Entity e)
         {
             if (e == null)
@@ -526,7 +684,7 @@ namespace Fake4Dataverse
             return clone.Id;
         }
 
-        public void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false)
+        public void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false, bool skipValidation = false)
         {
             // Create the entity with defaults
             AddEntityDefaultAttributes(e);
@@ -576,7 +734,7 @@ namespace Fake4Dataverse
             }
 
             // Store (Main Operation)
-            AddEntity(clone ? e.Clone(e.GetType()) : e);
+            AddEntity(clone ? e.Clone(e.GetType()) : e, skipValidation);
 
             // Trigger rollup recalculation for related entities after creation
             // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields
@@ -606,7 +764,7 @@ namespace Fake4Dataverse
             RecordCreateAudit(e);
         }
 
-        public void AddEntity(Entity e)
+        public void AddEntity(Entity e, bool skipValidation = false)
         {
             //Automatically detect proxy types assembly if an early bound type was used.
             if (ProxyTypesAssemblies.Count() == 0 &&
@@ -618,6 +776,12 @@ namespace Fake4Dataverse
             ValidateEntity(e); //Entity must have a logical name and an Id
 
             var integrityOptions = GetProperty<IIntegrityOptions>();
+
+            // Validate attribute types if enabled and not skipping validation
+            if (!skipValidation && integrityOptions.ValidateAttributeTypes)
+            {
+                ValidateAttributeTypes(e);
+            }
 
             foreach (var sAttributeName in e.Attributes.Keys.ToList())
             {

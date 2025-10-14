@@ -241,7 +241,8 @@ namespace Fake4Dataverse
 
             foreach (var e in entities)
             {
-                AddEntityWithDefaults(e, true);
+                // Initialize validates like normal operations - metadata must be supplied or validation disabled
+                AddEntityWithDefaults(e, clone: true, usePluginPipeline: false, skipValidation: false);
             }
 
             Initialised = true;

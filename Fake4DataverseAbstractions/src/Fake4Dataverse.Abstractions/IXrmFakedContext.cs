@@ -101,8 +101,8 @@ namespace Fake4Dataverse.Abstractions
         /// </summary>
         ICloudFlowSimulator CloudFlowSimulator { get; set; }
 
-        void AddEntity(Entity e);
-        void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false);
+        void AddEntity(Entity e, bool skipValidation = false);
+        void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false, bool skipValidation = false);
         Guid CreateEntity(Entity e);
         void UpdateEntity(Entity e);
         void DeleteEntity(EntityReference er);

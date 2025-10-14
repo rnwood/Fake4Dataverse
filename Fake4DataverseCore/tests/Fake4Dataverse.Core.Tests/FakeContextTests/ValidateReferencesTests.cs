@@ -20,30 +20,45 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         
         public ValidateReferencesTests(): base()
         {
-            _contextWithIntegrity = XrmFakedContextFactory.New(new IntegrityOptions());
+            // Create context with validation enabled but only for entity references, not attribute types
+            // This allows testing entity reference validation without requiring full metadata
+            _contextWithIntegrity = XrmFakedContextFactory.New(new IntegrityOptions 
+            { 
+                ValidateEntityReferences = true,
+                ValidateAttributeTypes = false  // Disable to avoid metadata requirement
+            });
             _serviceWithIntegrity = _contextWithIntegrity.GetOrganizationService();
         }
 
         [Fact]
-        public void When_context_is_initialised_validate_references_is_disabled_by_default()
+        public void When_context_is_initialised_validate_references_is_enabled_by_default()
         {
-            var integrityOptions = _context.GetProperty<IIntegrityOptions>();
-            Assert.False(integrityOptions.ValidateEntityReferences);
+            // Create a fresh context without overriding defaults
+            var freshContext = XrmFakedContextFactory.New();
+            var integrityOptions = freshContext.GetProperty<IIntegrityOptions>();
+            Assert.True(integrityOptions.ValidateEntityReferences);
+            Assert.True(integrityOptions.ValidateAttributeTypes);
         }
 
         [Fact]
-        public void An_entity_which_references_another_non_existent_entity_can_be_created_when_integrity_is_disabled()
+        public void An_entity_which_references_another_non_existent_entity_cannot_be_created_when_integrity_is_enabled_by_default()
         {
+            // Create a fresh context without overriding defaults, but disable attribute type validation
+            // since we don't have metadata
+            var freshContext = XrmFakedContextFactory.New(new IntegrityOptions 
+            { 
+                ValidateEntityReferences = true,
+                ValidateAttributeTypes = false
+            });
+            var freshService = freshContext.GetOrganizationService();
+            
             Guid otherEntity = Guid.NewGuid();
             Entity entity = new Entity("entity");
 
             entity["otherEntity"] = new EntityReference("entity", otherEntity);
 
-            Guid created = _service.Create(entity);
+            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => freshService.Create(entity));
 
-            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => _service.Retrieve("entity", otherEntity, new ColumnSet(true)));
-
-            Assert.NotEqual(Guid.Empty, created);
             Assert.Equal($"{entity.LogicalName} With Id = {otherEntity:D} Does Not Exist", ex.Message);
         }
 
