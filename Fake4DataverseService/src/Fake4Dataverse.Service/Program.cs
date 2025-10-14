@@ -264,6 +264,7 @@ public class Program
         }
         
         // Add authentication middleware if token is provided
+        // This middleware runs BEFORE endpoint execution
         if (!string.IsNullOrEmpty(accessToken))
         {
             app.Use(async (context, next) =>
@@ -271,6 +272,15 @@ public class Program
                 // Skip authentication for health check and info endpoints
                 if (context.Request.Path.StartsWithSegments("/health") ||
                     context.Request.Path.StartsWithSegments("/info"))
+                {
+                    await next();
+                    return;
+                }
+
+                // Skip authentication for static files
+                if (context.Request.Path.StartsWithSegments("/_next") ||
+                    context.Request.Path.Value?.Contains('.') == true && 
+                    !context.Request.Path.StartsWithSegments("/api"))
                 {
                     await next();
                     return;
@@ -289,7 +299,7 @@ public class Program
                 
                 // Unauthorized
                 context.Response.StatusCode = 401;
-                context.Response.Headers.Add("WWW-Authenticate", "Bearer");
+                context.Response.Headers.Append("WWW-Authenticate", "Bearer");
                 await context.Response.WriteAsync("Unauthorized: Invalid or missing access token");
             });
         }
