@@ -54,8 +54,35 @@ public class ODataRestApiEndToEndTests : IAsyncLifetime
 
         _serviceProcess.Start();
 
-        // Wait for service to be ready
-        await Task.Delay(5000);
+        // Wait for the service to start with proper health check
+        var startTime = DateTime.UtcNow;
+        var timeout = TimeSpan.FromSeconds(30);
+        var isServiceReady = false;
+
+        while (DateTime.UtcNow - startTime < timeout && !isServiceReady)
+        {
+            try
+            {
+                using var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync($"http://localhost:{ServicePort}/");
+                if (response.IsSuccessStatusCode)
+                {
+                    isServiceReady = true;
+                }
+            }
+            catch
+            {
+                await Task.Delay(500);
+            }
+        }
+
+        if (!isServiceReady)
+        {
+            throw new Exception("Failed to start Fake4DataverseService within timeout period");
+        }
+
+        // Give the service a bit more time to fully initialize OData endpoints
+        await Task.Delay(2000);
 
         // Create HTTP client for REST API calls
         _httpClient = new HttpClient
