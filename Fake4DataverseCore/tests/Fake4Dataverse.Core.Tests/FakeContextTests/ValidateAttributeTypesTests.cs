@@ -23,19 +23,24 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         private readonly IXrmFakedContext _contextWithoutValidation;
         private readonly IOrganizationService _serviceWithoutValidation;
         
-        private readonly string _accountCdmPath;
-        private readonly string _contactCdmPath;
-        
         public ValidateAttributeTypesTests()
         {
-            // Find CDM files
-            var solutionDir = FindSolutionDirectory();
-            _accountCdmPath = Path.Combine(solutionDir, "cdm-schema-files", "Account.cdm.json");
-            _contactCdmPath = Path.Combine(solutionDir, "cdm-schema-files", "Contact.cdm.json");
-            
-            // Context with validation enabled (default behavior) and metadata loaded
+            // Context with validation enabled (default behavior) and metadata loaded from standard CDM entities
             _contextWithValidation = XrmFakedContextFactory.New();
-            _contextWithValidation.InitializeMetadataFromCdmFiles(new[] { _accountCdmPath, _contactCdmPath });
+            
+            // Load metadata for account and contact from standard CDM files (cached locally in cdm-schema-files)
+            // Reference: https://github.com/microsoft/CDM
+            _contextWithValidation.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "account", "contact" }).Wait();
+            
+            // Verify metadata was loaded
+            var accountMetadata = _contextWithValidation.GetEntityMetadataByName("account");
+            if (accountMetadata == null)
+                throw new Exception("Account metadata was not loaded from CDM");
+                
+            var contactMetadata = _contextWithValidation.GetEntityMetadataByName("contact");
+            if (contactMetadata == null)
+                throw new Exception("Contact metadata was not loaded from CDM");
+            
             _serviceWithValidation = _contextWithValidation.GetOrganizationService();
             
             // Context without validation (must explicitly disable)
@@ -45,25 +50,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 ValidateAttributeTypes = false 
             });
             _serviceWithoutValidation = _contextWithoutValidation.GetOrganizationService();
-        }
-        
-        private string FindSolutionDirectory()
-        {
-            var currentDir = Directory.GetCurrentDirectory();
-            
-            // When running tests, we're in bin/Debug/net8.0, so look for cdm-schema-files nearby
-            var cdmInBin = Path.Combine(currentDir, "cdm-schema-files");
-            if (Directory.Exists(cdmInBin))
-            {
-                return currentDir;
-            }
-            
-            // Otherwise search upward for solution directory
-            while (currentDir != null && !File.Exists(Path.Combine(currentDir, "Fake4DataverseFree.sln")))
-            {
-                currentDir = Directory.GetParent(currentDir)?.FullName;
-            }
-            return currentDir ?? throw new Exception("Could not find solution directory or cdm-schema-files");
         }
 
         [Fact]
