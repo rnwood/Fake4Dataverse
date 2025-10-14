@@ -20,6 +20,7 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/overview
 /// The Organization Service uses SOAP 1.1/1.2 protocol via WCF bindings.
 /// </summary>
+[Collection("Service Integration Tests")]
 public class OrganizationServiceEndToEndTests : IAsyncLifetime
 {
     private Process? _serviceProcess;
@@ -68,7 +69,9 @@ public class OrganizationServiceEndToEndTests : IAsyncLifetime
             try
             {
                 using var httpClient = new HttpClient();
-                var response = await httpClient.GetAsync($"http://localhost:{ServicePort}/");
+                httpClient.Timeout = TimeSpan.FromSeconds(2);
+                // Use dedicated health endpoint to verify service is fully initialized
+                var response = await httpClient.GetAsync($"http://localhost:{ServicePort}/health");
                 if (response.IsSuccessStatusCode)
                 {
                     isServiceReady = true;
@@ -76,6 +79,7 @@ public class OrganizationServiceEndToEndTests : IAsyncLifetime
             }
             catch
             {
+                // Service not ready yet, wait and retry
                 await Task.Delay(500);
             }
         }
@@ -85,8 +89,8 @@ public class OrganizationServiceEndToEndTests : IAsyncLifetime
             throw new Exception("Failed to start Fake4DataverseService within timeout period");
         }
 
-        // Give the service a bit more time to fully initialize
-        await Task.Delay(2000);
+        // Give the service a moment to ensure all endpoints are ready
+        await Task.Delay(1000);
 
         // Create WCF client for IOrganizationService
         _organizationService = CreateOrganizationServiceClient();

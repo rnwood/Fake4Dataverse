@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Xrm.Sdk;
 
@@ -39,6 +40,15 @@ namespace Fake4Dataverse.CloudFlows
         {
             if (value == null)
                 return null;
+
+            // Handle System.Text.Json.JsonElement (from ASP.NET Core JSON deserialization)
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement
+            if (value is JsonElement jsonElement)
+            {
+                value = ConvertJsonElement(jsonElement);
+                if (value == null)
+                    return null;
+            }
 
             // If it's already an SDK type, return as-is
             if (value is OptionSetValue || value is EntityReference || value is Money)
@@ -128,6 +138,49 @@ namespace Fake4Dataverse.CloudFlows
                 converted[attr.Key] = ConvertODataValue(attr.Key, attr.Value, entityLogicalName);
             }
             return converted;
+        }
+
+        /// <summary>
+        /// Converts a JsonElement to the appropriate .NET type.
+        /// Reference: https://learn.microsoft.com/en-us/dotnet/api/system.text.json.jsonelement
+        /// 
+        /// When ASP.NET Core deserializes JSON into Dictionary<string, object>, the objects
+        /// are JsonElement types that need to be converted to proper .NET types.
+        /// </summary>
+        private static object ConvertJsonElement(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => ConvertJsonNumber(element),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => null,
+                JsonValueKind.Undefined => null,
+                _ => null // Arrays and objects not yet supported in this context
+            };
+        }
+
+        /// <summary>
+        /// Converts a JSON number to the most appropriate .NET numeric type.
+        /// Tries int first, then long, then decimal for maximum precision.
+        /// </summary>
+        private static object ConvertJsonNumber(JsonElement element)
+        {
+            // Try integer first
+            if (element.TryGetInt32(out var intValue))
+                return intValue;
+            
+            // Try long for larger integers
+            if (element.TryGetInt64(out var longValue))
+                return longValue;
+            
+            // Default to decimal for floating point (preserves precision)
+            if (element.TryGetDecimal(out var decimalValue))
+                return decimalValue;
+            
+            // Fallback to double
+            return element.GetDouble();
         }
 
         /// <summary>

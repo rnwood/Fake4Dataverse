@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,96 +13,34 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/overview
 /// 
 /// These tests verify that the Dataverse Web API endpoints work correctly with HTTP clients.
-/// The service is started before tests run and uses the OData v4.0 protocol.
+/// The service is started once by the ServiceFixture and shared across all tests.
 /// </summary>
-public class ODataRestApiEndToEndTests : IAsyncLifetime
+[Collection("Service Integration Tests")]
+public class ODataRestApiEndToEndTests : IDisposable
 {
-    private Process? _serviceProcess;
-    private const int ServicePort = 5559;
-    private static readonly string BaseUrl = $"http://localhost:{ServicePort}/api/data/v9.2";
-    private HttpClient? _httpClient;
+    private readonly HttpClient _httpClient;
 
-    public async Task InitializeAsync()
+    public ODataRestApiEndToEndTests(ServiceFixture fixture)
     {
-        // Start the Fake4DataverseService in the background
-        var serviceProjectPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "..", "..", "..", "..", "..", "src", "Fake4Dataverse.Service");
-
-        // Use local CDM files for faster, more reliable tests (no network download required)
-        var cdmFilesPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "..", "..", "..", "..", "..", "..", "cdm-schema-files");
-        var accountFile = Path.Combine(cdmFilesPath, "Account.cdm.json");
-        var contactFile = Path.Combine(cdmFilesPath, "Contact.cdm.json");
-        var opportunityFile = Path.Combine(cdmFilesPath, "Opportunity.cdm.json");
-
-        _serviceProcess = new Process
+        // Ensure fixture is not null - if this fails, xUnit isn't injecting the fixture
+        if (fixture == null)
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "dotnet",
-                Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-files {accountFile} --cdm-files {contactFile} --cdm-files {opportunityFile}",
-                WorkingDirectory = serviceProjectPath,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
-        };
-
-        _serviceProcess.Start();
-
-        // Wait for the service to start with proper health check
-        var startTime = DateTime.UtcNow;
-        var timeout = TimeSpan.FromSeconds(30);
-        var isServiceReady = false;
-
-        while (DateTime.UtcNow - startTime < timeout && !isServiceReady)
-        {
-            try
-            {
-                using var httpClient = new HttpClient();
-                var response = await httpClient.GetAsync($"http://localhost:{ServicePort}/");
-                if (response.IsSuccessStatusCode)
-                {
-                    isServiceReady = true;
-                }
-            }
-            catch
-            {
-                await Task.Delay(500);
-            }
+            throw new ArgumentNullException(nameof(fixture), "ServiceFixture was not injected by xUnit");
         }
 
-        if (!isServiceReady)
-        {
-            throw new Exception("Failed to start Fake4DataverseService within timeout period");
-        }
-
-        // Give the service a bit more time to fully initialize OData endpoints
-        await Task.Delay(2000);
-
-        // Create HTTP client for REST API calls
+        // Create HTTP client for REST API calls (service is already running via fixture)
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri(BaseUrl)
+            BaseAddress = new Uri(ServiceFixture.BaseUrl)
         };
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
         _httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");
         _httpClient.DefaultRequestHeaders.Add("OData-Version", "4.0");
     }
 
-    public async Task DisposeAsync()
+    public void Dispose()
     {
         _httpClient?.Dispose();
-        
-        if (_serviceProcess != null && !_serviceProcess.HasExited)
-        {
-            _serviceProcess.Kill();
-            await _serviceProcess.WaitForExitAsync();
-            _serviceProcess.Dispose();
-        }
     }
 
     [Fact]

@@ -12,6 +12,7 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
 /// ServiceClient supports AuthType=OAuth with AccessToken parameter.
 /// </summary>
+[Collection("Service Integration Tests")]
 public class ServiceClientAuthTests : IAsyncLifetime
 {
     private Process? _serviceProcess;
@@ -52,15 +53,17 @@ public class ServiceClientAuthTests : IAsyncLifetime
             try
             {
                 using var httpClient = new HttpClient();
-                // Try to access without auth - should get 401
-                var response = await httpClient.GetAsync($"{ServiceUrl}/");
-                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                httpClient.Timeout = TimeSpan.FromSeconds(2);
+                // Use dedicated health endpoint (bypasses auth) to verify service is fully initialized
+                var response = await httpClient.GetAsync($"{ServiceUrl}/health");
+                if (response.IsSuccessStatusCode)
                 {
                     isServiceReady = true;
                 }
             }
             catch
             {
+                // Service not ready yet, wait and retry
                 await Task.Delay(500);
             }
         }
@@ -70,8 +73,8 @@ public class ServiceClientAuthTests : IAsyncLifetime
             throw new Exception("Failed to start Fake4DataverseService within timeout period");
         }
 
-        // Give the service a bit more time to fully initialize
-        await Task.Delay(2000);
+        // Give the service a moment to ensure all endpoints are ready
+        await Task.Delay(1000);
     }
 
     public Task DisposeAsync()
@@ -126,8 +129,10 @@ public class ServiceClientAuthTests : IAsyncLifetime
         // Act - Try to access endpoint with auth
         var response = await httpClient.GetAsync($"{ServiceUrl}/");
 
-        // Assert
-        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        // Assert - Should not return 401 Unauthorized (may redirect with 302 Found)
+        Assert.NotEqual(System.Net.HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.True(response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Found,
+            $"Expected success or redirect, but got {response.StatusCode}");
     }
 
     [Fact]

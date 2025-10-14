@@ -261,6 +261,14 @@ public class Program
         {
             app.Use(async (context, next) =>
             {
+                // Skip authentication for health check and info endpoints
+                if (context.Request.Path.StartsWithSegments("/health") ||
+                    context.Request.Path.StartsWithSegments("/info"))
+                {
+                    await next();
+                    return;
+                }
+
                 // Check for Authorization header
                 if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
                 {
@@ -351,6 +359,9 @@ public class Program
                 context.Response.Redirect("/main.aspx");
             }
         });
+
+        // Health check endpoint for testing - returns 200 OK when service is fully ready
+        app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
         app.MapGet("/info", () => Results.Text(
             "Fake4Dataverse Service is running.\n\n" +
