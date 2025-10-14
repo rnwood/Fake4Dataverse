@@ -281,5 +281,32 @@ namespace Fake4Dataverse.Metadata
         {
             return CdmJsonParser.FromStandardCdmSchemasAsync(schemaNames);
         }
+        
+        /// <summary>
+        /// Creates entity metadata from standard CDM entities by downloading them from Microsoft's CDM repository.
+        /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+        /// 
+        /// This method downloads specific standard entities (account, contact, lead, etc.) directly from
+        /// Microsoft's official CDM repository on GitHub. Useful for tests or when only specific entities are needed.
+        /// 
+        /// Available standard entities: account, contact, lead, opportunity, quote, order, invoice, incident (case)
+        /// </summary>
+        /// <param name="entityNames">Names of standard entities (e.g., "account", "contact", "lead")</param>
+        /// <returns>Task that resolves to collection of EntityMetadata for the requested entities</returns>
+        public static Task<IEnumerable<EntityMetadata>> FromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        {
+            return CdmJsonParser.FromStandardCdmEntitiesAsync(entityNames);
+        }
+        
+        /// <summary>
+        /// Sets the directory to use for file-based caching of downloaded CDM files.
+        /// If set, downloaded CDM files will be cached to disk in addition to memory, significantly
+        /// improving performance for subsequent loads.
+        /// </summary>
+        /// <param name="cacheDirectory">Directory path for caching CDM files. Pass null to disable file caching.</param>
+        public static void SetCdmCacheDirectory(string cacheDirectory)
+        {
+            CdmJsonParser.SetCacheDirectory(cacheDirectory);
+        }
     }
 }

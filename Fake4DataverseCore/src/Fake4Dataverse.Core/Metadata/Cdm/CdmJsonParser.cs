@@ -25,9 +25,12 @@ namespace Fake4Dataverse.Metadata.Cdm
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         
-        // Cache for downloaded CDM JSON content to avoid repeated network calls
-        private static readonly Dictionary<string, string> _cdmCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // In-memory cache for downloaded CDM JSON content
+        private static readonly Dictionary<string, string> _cdmMemoryCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static readonly object _cacheLock = new object();
+        
+        // File cache directory (optional, set via SetCacheDirectory)
+        private static string _fileCacheDirectory = null;
         
         // Base URL for Microsoft's CDM GitHub repository
         private const string CDM_GITHUB_BASE_URL = "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments";
@@ -43,6 +46,38 @@ namespace Fake4Dataverse.Metadata.Cdm
             { "portals", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/portals/portals.cdm.json" },
             { "customerinsights", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/customerInsights/customerInsights.cdm.json" },
         };
+        
+        // Individual entity CDM paths (for loading specific entities)
+        // Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+        private static readonly Dictionary<string, string> StandardEntityPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "account", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Account.cdm.json" },
+            { "contact", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Contact.cdm.json" },
+            { "lead", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/Lead.cdm.json" },
+            { "opportunity", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Opportunity.cdm.json" },
+            { "quote", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Quote.cdm.json" },
+            { "order", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/SalesOrder.cdm.json" },
+            { "invoice", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/sales/Invoice.cdm.json" },
+            { "incident", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/Incident.cdm.json" },
+            { "case", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/service/Incident.cdm.json" },
+        };
+        
+        /// <summary>
+        /// Sets the directory to use for file-based caching of downloaded CDM files.
+        /// If set, downloaded CDM files will be cached to disk in addition to memory.
+        /// </summary>
+        /// <param name="cacheDirectory">Directory path for caching CDM files. Pass null to disable file caching.</param>
+        public static void SetCacheDirectory(string cacheDirectory)
+        {
+            lock (_cacheLock)
+            {
+                _fileCacheDirectory = cacheDirectory;
+                if (!string.IsNullOrEmpty(_fileCacheDirectory) && !Directory.Exists(_fileCacheDirectory))
+                {
+                    Directory.CreateDirectory(_fileCacheDirectory);
+                }
+            }
+        }
         
         /// <summary>
         /// Parses CDM JSON from a file and converts it to EntityMetadata.
@@ -145,17 +180,42 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             processedUrls.Add(url);
             
-            // Check cache first
-            string json;
+            // Check memory cache first
+            string json = null;
             lock (_cacheLock)
             {
-                if (_cdmCache.TryGetValue(url, out string cachedJson))
+                if (_cdmMemoryCache.TryGetValue(url, out string cachedJson))
                 {
                     json = cachedJson;
                 }
-                else
+            }
+            
+            // Check file cache if memory cache miss and file caching is enabled
+            if (json == null && !string.IsNullOrEmpty(_fileCacheDirectory))
+            {
+                var fileName = GetCacheFileName(url);
+                var filePath = Path.Combine(_fileCacheDirectory, fileName);
+                
+                if (File.Exists(filePath))
                 {
-                    json = null;
+                    try
+                    {
+                        json = File.ReadAllText(filePath);
+                        
+                        // Store in memory cache for faster subsequent access
+                        lock (_cacheLock)
+                        {
+                            if (!_cdmMemoryCache.ContainsKey(url))
+                            {
+                                _cdmMemoryCache[url] = json;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // If file read fails, download from network
+                        json = null;
+                    }
                 }
             }
             
@@ -164,12 +224,27 @@ namespace Fake4Dataverse.Metadata.Cdm
             {
                 json = await _httpClient.GetStringAsync(url);
                 
-                // Store in cache
+                // Store in memory cache
                 lock (_cacheLock)
                 {
-                    if (!_cdmCache.ContainsKey(url))
+                    if (!_cdmMemoryCache.ContainsKey(url))
                     {
-                        _cdmCache[url] = json;
+                        _cdmMemoryCache[url] = json;
+                    }
+                }
+                
+                // Store in file cache if enabled
+                if (!string.IsNullOrEmpty(_fileCacheDirectory))
+                {
+                    try
+                    {
+                        var fileName = GetCacheFileName(url);
+                        var filePath = Path.Combine(_fileCacheDirectory, fileName);
+                        File.WriteAllText(filePath, json);
+                    }
+                    catch
+                    {
+                        // Ignore file cache write errors
                     }
                 }
             }
@@ -508,6 +583,57 @@ namespace Fake4Dataverse.Metadata.Cdm
             }
             
             return "string"; // Default to string if we can't determine the type
+        }
+        
+        /// <summary>
+        /// Downloads and parses standard CDM entities by name from Microsoft's CDM repository.
+        /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+        /// 
+        /// This method allows loading specific entities (e.g., "account", "contact") rather than
+        /// entire schema groups. Useful for tests or when only specific entities are needed.
+        /// </summary>
+        /// <param name="entityNames">Collection of entity names to download (e.g., "account", "contact", "lead")</param>
+        /// <returns>Collection of EntityMetadata objects</returns>
+        public static async Task<IEnumerable<EntityMetadata>> FromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        {
+            if (entityNames == null || !entityNames.Any())
+            {
+                return Enumerable.Empty<EntityMetadata>();
+            }
+            
+            var allMetadata = new List<EntityMetadata>();
+            var processedUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            
+            foreach (var entityName in entityNames)
+            {
+                if (!StandardEntityPaths.TryGetValue(entityName, out string url))
+                {
+                    throw new ArgumentException($"Unknown standard CDM entity: {entityName}. Available entities: {string.Join(", ", StandardEntityPaths.Keys)}");
+                }
+                
+                try
+                {
+                    var metadata = await DownloadAndParseWithImportsAsync(url, processedUrls);
+                    allMetadata.AddRange(metadata);
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw new InvalidOperationException($"Failed to download CDM entity {entityName} from {url}", ex);
+                }
+            }
+            
+            return allMetadata;
+        }
+        
+        /// <summary>
+        /// Generates a safe file name for caching a CDM file based on its URL.
+        /// </summary>
+        private static string GetCacheFileName(string url)
+        {
+            // Use URL hash to create unique but consistent file names
+            var hash = url.GetHashCode().ToString("X8");
+            var fileName = url.Split('/').Last();
+            return $"{hash}_{fileName}";
         }
     }
 }

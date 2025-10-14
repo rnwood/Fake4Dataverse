@@ -1,4 +1,5 @@
 using Fake4Dataverse.Abstractions;
+using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Services;
 using Microsoft.AspNetCore.Builder;
@@ -64,6 +65,10 @@ public class Program
             name: "--cdm-schemas",
             description: "Optional list of standard CDM schema groups to download and initialize (e.g., crmcommon, sales, service, portals, customerInsights). Downloads from Microsoft's CDM repository. Defaults to 'crmcommon' if no CDM options specified.",
             getDefaultValue: () => null);
+        var cdmEntitiesOption = new Option<string[]?>(
+            name: "--cdm-entities",
+            description: "Optional list of standard CDM entities to download and initialize (e.g., account, contact, lead). Downloads from Microsoft's CDM repository.",
+            getDefaultValue: () => null);
         var noCdmOption = new Option<bool>(
             name: "--no-cdm",
             description: "Skip loading default CDM schemas. Useful for testing or when metadata is not needed.",
@@ -74,19 +79,20 @@ public class Program
         startCommand.AddOption(accessTokenOption);
         startCommand.AddOption(cdmFilesOption);
         startCommand.AddOption(cdmSchemasOption);
+        startCommand.AddOption(cdmEntitiesOption);
         startCommand.AddOption(noCdmOption);
 
-        startCommand.SetHandler(async (int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas, bool noCdm) =>
+        startCommand.SetHandler(async (int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas, string[]? cdmEntities, bool noCdm) =>
         {
-            await StartService(port, host, accessToken, cdmFiles, cdmSchemas, noCdm);
-        }, portOption, hostOption, accessTokenOption, cdmFilesOption, cdmSchemasOption, noCdmOption);
+            await StartService(port, host, accessToken, cdmFiles, cdmSchemas, cdmEntities, noCdm);
+        }, portOption, hostOption, accessTokenOption, cdmFilesOption, cdmSchemasOption, cdmEntitiesOption, noCdmOption);
 
         rootCommand.AddCommand(startCommand);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    private static async Task StartService(int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas, bool noCdm)
+    private static async Task StartService(int port, string host, string? accessToken, string[]? cdmFiles, string[]? cdmSchemas, string[]? cdmEntities, bool noCdm)
     {
         Console.WriteLine($"Starting Fake4Dataverse Service on {host}:{port}...");
         Console.WriteLine("This service provides SOAP endpoints compatible with Microsoft Dynamics 365/Dataverse Organization Service");
@@ -99,6 +105,13 @@ public class Program
         {
             Console.WriteLine($"Authentication: DISABLED (Anonymous access allowed)");
         }
+        Console.WriteLine();
+        
+        // Set up file-based CDM caching in LocalAppData
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var cdmCacheDir = Path.Combine(localAppData, "Fake4Dataverse", "CdmCache");
+        MetadataGenerator.SetCdmCacheDirectory(cdmCacheDir);
+        Console.WriteLine($"CDM file cache directory: {cdmCacheDir}");
         Console.WriteLine();
         
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
@@ -132,7 +145,7 @@ public class Program
         }
         
         // Default to crmcommon if no CDM options were specified and --no-cdm not set
-        if (!noCdm && cdmSchemas == null && cdmFiles == null)
+        if (!noCdm && cdmSchemas == null && cdmEntities == null && cdmFiles == null)
         {
             cdmSchemas = new[] { "crmcommon" };
             Console.WriteLine("No CDM options specified. Defaulting to 'crmcommon' schema...");
@@ -154,6 +167,25 @@ public class Program
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading standard CDM schemas: {ex.Message}");
+                throw;
+            }
+        }
+        
+        if (cdmEntities != null && cdmEntities.Length > 0)
+        {
+            Console.WriteLine($"Downloading and loading {cdmEntities.Length} standard CDM entit(ies) from Microsoft's CDM repository...");
+            foreach (var entity in cdmEntities)
+            {
+                Console.WriteLine($"  - {entity}");
+            }
+            try
+            {
+                await context.InitializeMetadataFromStandardCdmEntitiesAsync(cdmEntities);
+                Console.WriteLine($"Successfully loaded standard CDM entities");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading standard CDM entities: {ex.Message}");
                 throw;
             }
         }

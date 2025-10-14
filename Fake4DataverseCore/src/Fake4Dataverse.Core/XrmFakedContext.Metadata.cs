@@ -113,6 +113,25 @@ namespace Fake4Dataverse
                 this.InitializeMetadata(entityMetadatas);
             }
         }
+        
+        /// <summary>
+        /// Initializes entity metadata from standard CDM entities by downloading them from Microsoft's CDM repository.
+        /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
+        /// 
+        /// This method downloads specific standard entities (account, contact, lead, etc.) directly from
+        /// Microsoft's official CDM repository on GitHub. Useful for tests or when only specific entities are needed.
+        /// 
+        /// Available standard entities: account, contact, lead, opportunity, quote, order, invoice, incident (case)
+        /// </summary>
+        /// <param name="entityNames">Names of standard entities to load (e.g., "account", "contact", "lead")</param>
+        public async Task InitializeMetadataFromStandardCdmEntitiesAsync(IEnumerable<string> entityNames)
+        {
+            IEnumerable<EntityMetadata> entityMetadatas = await MetadataGenerator.FromStandardCdmEntitiesAsync(entityNames);
+            if (entityMetadatas.Any())
+            {
+                this.InitializeMetadata(entityMetadatas);
+            }
+        }
 
         public IQueryable<EntityMetadata> CreateMetadataQuery()
         {
