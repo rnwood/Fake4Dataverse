@@ -36,6 +36,14 @@ namespace Fake4Dataverse.Middleware.Crud
                 crudMessageExecutors.Add(typeof(UpsertRequest), new UpsertRequestExecutor());
 
                 context.SetProperty(crudMessageExecutors);
+                
+                // Set default IntegrityOptions with validation disabled for backward compatibility
+                context.SetProperty<IIntegrityOptions>(new IntegrityOptions 
+                { 
+                    ValidateEntityReferences = false,
+                    ValidateAttributeTypes = false
+                });
+                
                 AddFakeCreate(context, service);
                 AddFakeRetrieve(context, service);
                 AddFakeRetrieveMultiple(context, service);
