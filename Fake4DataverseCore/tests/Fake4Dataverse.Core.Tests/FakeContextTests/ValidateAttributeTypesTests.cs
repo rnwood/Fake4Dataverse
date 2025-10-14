@@ -9,6 +9,7 @@ using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.ServiceModel;
 using Xunit;
 
@@ -22,10 +23,19 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         private readonly IXrmFakedContext _contextWithoutValidation;
         private readonly IOrganizationService _serviceWithoutValidation;
         
+        private readonly string _accountCdmPath;
+        private readonly string _contactCdmPath;
+        
         public ValidateAttributeTypesTests()
         {
-            // Context with validation enabled (default behavior)
+            // Find CDM files
+            var solutionDir = FindSolutionDirectory();
+            _accountCdmPath = Path.Combine(solutionDir, "cdm-schema-files", "Account.cdm.json");
+            _contactCdmPath = Path.Combine(solutionDir, "cdm-schema-files", "Contact.cdm.json");
+            
+            // Context with validation enabled (default behavior) and metadata loaded
             _contextWithValidation = XrmFakedContextFactory.New();
+            _contextWithValidation.InitializeMetadataFromCdmFiles(new[] { _accountCdmPath, _contactCdmPath });
             _serviceWithValidation = _contextWithValidation.GetOrganizationService();
             
             // Context without validation (must explicitly disable)
@@ -35,6 +45,25 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 ValidateAttributeTypes = false 
             });
             _serviceWithoutValidation = _contextWithoutValidation.GetOrganizationService();
+        }
+        
+        private string FindSolutionDirectory()
+        {
+            var currentDir = Directory.GetCurrentDirectory();
+            
+            // When running tests, we're in bin/Debug/net8.0, so look for cdm-schema-files nearby
+            var cdmInBin = Path.Combine(currentDir, "cdm-schema-files");
+            if (Directory.Exists(cdmInBin))
+            {
+                return currentDir;
+            }
+            
+            // Otherwise search upward for solution directory
+            while (currentDir != null && !File.Exists(Path.Combine(currentDir, "Fake4DataverseFree.sln")))
+            {
+                currentDir = Directory.GetParent(currentDir)?.FullName;
+            }
+            return currentDir ?? throw new Exception("Could not find solution directory or cdm-schema-files");
         }
 
         [Fact]
@@ -59,9 +88,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // String attributes should accept string values
-            
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
+            // Metadata already loaded from CDM in constructor
             
             var account = new Entity("account")
             {
@@ -77,9 +104,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Dataverse validates attribute types and rejects mismatches
-            
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
+            // Metadata already loaded from CDM in constructor
             
             var account = new Entity("account")
             {
@@ -99,9 +124,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Null values are always valid for nullable attributes
+            // Metadata already loaded from CDM in constructor
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -119,8 +143,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Dataverse rejects attributes that don't exist in metadata
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -141,8 +163,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Integer attributes should accept int values
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -160,8 +180,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Money attributes should accept Money values
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -179,8 +197,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Boolean attributes should accept bool values
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -197,14 +213,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // DateTime attributes should accept DateTime values
-            
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
+            // Using lastusedincampaign from CDM metadata
             
             var account = new Entity("account")
             {
                 ["name"] = "Test Account",
-                ["createdon"] = DateTime.UtcNow
+                ["lastusedincampaign"] = DateTime.UtcNow
             };
 
             var id = _serviceWithValidation.Create(account);
@@ -217,8 +231,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // OptionSet attributes should accept OptionSetValue values
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -235,10 +247,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Lookup attributes should accept EntityReferences with valid target entity types
-            
-            var accountMetadata = CreateAccountMetadata();
-            var contactMetadata = CreateContactMetadata();
-            _contextWithValidation.InitializeMetadata(new[] { accountMetadata, contactMetadata });
+            // Metadata for account and contact already loaded from CDM in constructor
             
             var contact = new Entity("contact")
             {
@@ -264,8 +273,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Dataverse validates that lookup targets match the defined relationship
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -286,8 +293,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Validation should also apply to update operations
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -335,8 +340,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // Numeric types should allow compatible conversions (int to long, etc.)
             
-            var accountMetadata = CreateAccountMetadata();
-            _contextWithValidation.InitializeMetadata(accountMetadata);
             
             var account = new Entity("account")
             {
@@ -346,71 +349,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var id = _serviceWithValidation.Create(account);
             Assert.NotEqual(Guid.Empty, id);
-        }
-
-        private EntityMetadata CreateAccountMetadata()
-        {
-            var entityMetadata = new EntityMetadata
-            {
-                LogicalName = "account"
-            };
-            
-            var nameAttr = new StringAttributeMetadata { LogicalName = "name" };
-            nameAttr.SetFieldValue("_attributeType", AttributeTypeCode.String);
-            
-            var empAttr = new IntegerAttributeMetadata { LogicalName = "numberofemployees" };
-            empAttr.SetFieldValue("_attributeType", AttributeTypeCode.Integer);
-            
-            var revAttr = new MoneyAttributeMetadata { LogicalName = "revenue" };
-            revAttr.SetFieldValue("_attributeType", AttributeTypeCode.Money);
-            
-            var emailAttr = new BooleanAttributeMetadata { LogicalName = "donotemail" };
-            emailAttr.SetFieldValue("_attributeType", AttributeTypeCode.Boolean);
-            
-            var dateAttr = new DateTimeAttributeMetadata { LogicalName = "createdon" };
-            dateAttr.SetFieldValue("_attributeType", AttributeTypeCode.DateTime);
-            
-            var picklistAttr = new PicklistAttributeMetadata { LogicalName = "customertypecode" };
-            picklistAttr.SetFieldValue("_attributeType", AttributeTypeCode.Picklist);
-            
-            var lookupAttr = new LookupAttributeMetadata { LogicalName = "primarycontactid" };
-            lookupAttr.SetFieldValue("_attributeType", AttributeTypeCode.Lookup);
-            lookupAttr.SetFieldValue("_targets", new[] { "contact" });
-            
-            entityMetadata.SetFieldValue("_attributes", new AttributeMetadata[]
-            {
-                nameAttr,
-                empAttr,
-                revAttr,
-                emailAttr,
-                dateAttr,
-                picklistAttr,
-                lookupAttr
-            });
-            
-            return entityMetadata;
-        }
-
-        private EntityMetadata CreateContactMetadata()
-        {
-            var entityMetadata = new EntityMetadata
-            {
-                LogicalName = "contact"
-            };
-            
-            var firstAttr = new StringAttributeMetadata { LogicalName = "firstname" };
-            firstAttr.SetFieldValue("_attributeType", AttributeTypeCode.String);
-            
-            var lastAttr = new StringAttributeMetadata { LogicalName = "lastname" };
-            lastAttr.SetFieldValue("_attributeType", AttributeTypeCode.String);
-            
-            entityMetadata.SetFieldValue("_attributes", new AttributeMetadata[]
-            {
-                firstAttr,
-                lastAttr
-            });
-            
-            return entityMetadata;
         }
     }
 }
