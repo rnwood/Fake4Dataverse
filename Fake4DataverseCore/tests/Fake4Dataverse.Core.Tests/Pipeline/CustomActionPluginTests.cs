@@ -13,13 +13,14 @@ namespace Fake4Dataverse.Tests.Pipeline
     /// Tests for plugin registration and execution with Custom Actions and Custom APIs
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
     /// </summary>
-    public class CustomActionPluginTests
+    public class CustomActionPluginTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_RegisterPlugin_ForCustomAction()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             
             // Act - Register a plugin for a custom action
             context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
@@ -40,7 +41,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ExecutePlugin_ForCustomAction_WhenUsePipelineSimulation()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Setup custom API metadata
@@ -65,7 +67,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(CustomActionTestPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act - Execute custom action
             var request = new OrganizationRequest("new_CustomAction");
@@ -82,7 +84,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ExecuteMultiplePlugins_ForCustomAction_InCorrectOrder()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Setup custom API metadata
@@ -124,7 +127,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(OrderTrackingPlugin3)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act - Execute custom action
             var request = new OrganizationRequest("new_CalculateScore");
@@ -143,7 +146,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ExecutePlugins_AtAllStages_ForCustomAction()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Setup custom API metadata
@@ -182,7 +186,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(StageTrackingPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act - Execute custom action
             var request = new OrganizationRequest("new_ProcessData");
@@ -199,7 +203,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_AutoDiscoverPlugins_WithCustomActionAttributes()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Setup custom API metadata
@@ -228,7 +233,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
             // Custom Actions can be executed through Custom API infrastructure
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Setup custom action metadata using Custom API entity
@@ -253,7 +259,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(CustomActionTestPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act - Execute custom action
             var request = new OrganizationRequest("new_CalculateDiscount");
@@ -273,7 +279,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
             // Custom Actions must be enabled before they can be executed
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
 
             // Setup custom action in disabled state
             var customAction = new Entity("customapi")
@@ -285,7 +292,7 @@ namespace Fake4Dataverse.Tests.Pipeline
             };
             context.Initialize(customAction);
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act & Assert
             var request = new OrganizationRequest("new_DisabledAction");
@@ -299,7 +306,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
             // Custom Actions can be bound to a specific entity
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Create test account
@@ -330,7 +338,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(CustomActionTestPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act - Execute entity-bound custom action
             var request = new OrganizationRequest("new_AccountCustomAction");
@@ -349,7 +357,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
             // Plugins can be registered on custom action messages at any stage
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Setup custom action
@@ -389,7 +398,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(StageTrackingPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act - Execute custom action
             var request = new OrganizationRequest("new_ProcessAction");

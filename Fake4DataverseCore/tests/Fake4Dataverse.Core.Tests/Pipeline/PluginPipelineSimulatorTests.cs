@@ -14,13 +14,14 @@ namespace Fake4Dataverse.Tests.Pipeline
     /// Tests for plugin pipeline simulation (Issues #16 and #17)
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
     /// </summary>
-    public class PluginPipelineSimulatorTests
+    public class PluginPipelineSimulatorTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_RegisterAndExecute_SinglePlugin()
         {
             // Arrange - Create context and register a plugin
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -58,7 +59,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Register multiple plugins with different execution orders
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/register-plug-in
             // Multiple plugins on the same message/entity/stage execute in order based on ExecutionOrder (rank)
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             TestExecutionOrderPlugin.ExecutionLog.Clear();
@@ -128,7 +130,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Register plugins in different pipeline stages
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
             // Pipeline stages: PreValidation (10), PreOperation (20), PostOperation (40)
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             TestExecutionOrderPlugin.ExecutionLog.Clear();
@@ -192,7 +195,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Register plugin with filtering attributes
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/register-plug-in#filtering-attributes
             // Filtering attributes ensure plugin only executes when specific attributes are modified
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             FilteredAttributePlugin.ExecutionCount = 0;
@@ -250,7 +254,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Configure maximum depth
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/best-practices/business-logic/avoid-recursive-loops
             // Depth tracking prevents infinite loops when plugins trigger other operations
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
             
             // Set a low max depth for testing
@@ -283,7 +288,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Register plugin with configuration
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/register-plug-in
             // Plugins can receive configuration data (secure and unsecure)
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -320,7 +326,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_UnregisterPluginStep()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -349,7 +356,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ClearAllPluginSteps()
         {
             // Arrange - Register multiple plugins
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration1 = new PluginStepRegistration
@@ -385,7 +393,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ThrowException_WhenPluginFails()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -421,7 +430,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_OnlyExecute_ForMatchingEntityAndMessage()
         {
             // Arrange - Register plugin for account/Create
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             FilteredAttributePlugin.ExecutionCount = 0;
@@ -456,7 +466,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_SetDepthProperty_InPluginContext()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -493,7 +504,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ReturnEmpty_WhenNoPluginsRegistered()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             // Act
@@ -507,7 +519,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_HandleNullModifiedAttributes_ForNonUpdateMessages()
         {
             // Arrange - Plugin with filtering attributes on non-Update message
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             FilteredAttributePlugin.ExecutionCount = 0;

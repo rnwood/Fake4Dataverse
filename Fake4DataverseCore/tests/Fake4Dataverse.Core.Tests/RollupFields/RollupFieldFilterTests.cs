@@ -14,7 +14,7 @@ namespace Fake4Dataverse.Tests.RollupFields
     /// 
     /// These tests verify state filters and custom filters.
     /// </summary>
-    public class RollupFieldFilterTests
+    public class RollupFieldFilterTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_Filter_Active_Records_Only()
@@ -23,7 +23,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "Use filters to specify whether to include only active records, only inactive records, or all records"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             var definition = new RollupFieldDefinition
@@ -76,7 +77,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "Use filters to specify whether to include only active records, only inactive records, or all records"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             var definition = new RollupFieldDefinition
@@ -129,7 +131,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "Use filters to specify whether to include only active records, only inactive records, or all records"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             var definition = new RollupFieldDefinition
@@ -182,7 +185,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "You can optionally specify filters to restrict which records are included"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field with custom filter: only opportunities > 100k
@@ -242,7 +246,8 @@ namespace Fake4Dataverse.Tests.RollupFields
         public void Should_Apply_Custom_Filter_And_Sum()
         {
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field with custom filter: sum only won opportunities
@@ -306,7 +311,8 @@ namespace Fake4Dataverse.Tests.RollupFields
         public void Should_Combine_StateFilter_And_CustomFilter()
         {
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field with both state and custom filter

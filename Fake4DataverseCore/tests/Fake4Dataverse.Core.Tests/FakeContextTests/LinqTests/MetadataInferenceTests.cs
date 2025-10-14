@@ -14,14 +14,17 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
 {
-    public class MetadataInferenceTests
+    public class MetadataInferenceTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
         public MetadataInferenceTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         [Fact]

@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 {
-    public class RetrieveMultipleTests
+    public class RetrieveMultipleTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _ctx;
         private readonly IOrganizationService _service;

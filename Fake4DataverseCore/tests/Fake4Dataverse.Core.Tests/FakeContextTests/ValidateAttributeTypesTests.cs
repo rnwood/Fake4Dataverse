@@ -15,7 +15,7 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests
 {
-    public class ValidateAttributeTypesTests
+    public class ValidateAttributeTypesTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _contextWithValidation;
         private readonly IOrganizationService _serviceWithValidation;
@@ -306,7 +306,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // When metadata is not initialized and validation is enabled, should throw error like Dataverse
             
             // Create a fresh context with validation enabled but no metadata
-            var freshContext = XrmFakedContextFactory.New();  // Validation enabled by default
+            // Use context from base class
+            var freshContext = _context;  // Validation enabled by default
             var freshService = freshContext.GetOrganizationService();
             
             // Don't initialize metadata - this should cause an error

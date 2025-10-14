@@ -15,7 +15,7 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests
 {
-    public class RetrieveRequestTests
+    public class RetrieveRequestTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _ctx;
         private readonly IOrganizationService _service;

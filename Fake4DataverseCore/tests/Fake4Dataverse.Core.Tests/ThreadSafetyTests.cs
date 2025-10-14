@@ -17,14 +17,15 @@ namespace Fake4Dataverse.Tests
     /// The Fake4Dataverse framework now provides database-like serialization of transactions
     /// to ensure thread-safe CRUD operations when multiple threads access the same context.
     /// </summary>
-    public class ThreadSafetyTests
+    public class ThreadSafetyTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_Handle_Concurrent_Creates_Without_Race_Conditions()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             
             var createCount = 100;
             var createdIds = new List<Guid>();
@@ -62,8 +63,9 @@ namespace Fake4Dataverse.Tests
         public void Should_Handle_Concurrent_Updates_Without_Data_Loss()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             
             // Create initial accounts
             var accountIds = new List<Guid>();
@@ -103,8 +105,9 @@ namespace Fake4Dataverse.Tests
         public void Should_Handle_Concurrent_Reads_Without_Exceptions()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             
             // Create test accounts
             var accountIds = new List<Guid>();
@@ -148,8 +151,9 @@ namespace Fake4Dataverse.Tests
         public void Should_Handle_Concurrent_Deletes_Without_Duplicate_Deletion_Errors()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             
             // Create test accounts
             var accountIds = new List<Guid>();
@@ -179,8 +183,9 @@ namespace Fake4Dataverse.Tests
         public void Should_Handle_Mixed_Concurrent_CRUD_Operations()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             
             var operationCount = 200;
             var exceptions = new List<Exception>();

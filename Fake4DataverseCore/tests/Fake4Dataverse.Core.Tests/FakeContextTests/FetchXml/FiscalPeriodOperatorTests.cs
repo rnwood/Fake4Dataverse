@@ -24,15 +24,18 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
     /// - Fiscal period template: Annually (1 period), Semi-Annually (2 periods), Quarterly (4 periods), 
     ///   Monthly (12 periods), or Four-Week (13 periods)
     /// </summary>
-    public class FiscalPeriodOperatorTests
+    public class FiscalPeriodOperatorTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
 
         public FiscalPeriodOperatorTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
         [Fact]
         public void FetchXml_Operator_InFiscalPeriod_Quarterly_Execution()

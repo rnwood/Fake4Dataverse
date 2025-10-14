@@ -12,15 +12,18 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.QueryTests
 {
-    public class EqualBusinessIdTests
+    public class EqualBusinessIdTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
 
         public EqualBusinessIdTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         [Fact]

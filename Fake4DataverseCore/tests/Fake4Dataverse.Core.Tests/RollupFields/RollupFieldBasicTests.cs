@@ -16,7 +16,7 @@ namespace Fake4Dataverse.Tests.RollupFields
     /// 
     /// These tests verify the core aggregate functions: SUM, COUNT, MIN, MAX, and AVG.
     /// </summary>
-    public class RollupFieldBasicTests
+    public class RollupFieldBasicTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_Count_Related_Records()
@@ -25,7 +25,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "COUNT: Counts all related records"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field: count of related contacts
@@ -83,7 +84,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "SUM: Totals the values of the attribute in the related records"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field: sum of revenue from opportunities
@@ -137,7 +139,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "SUM: Applicable to Currency (Money) fields"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field: sum of annual income from contacts
@@ -193,7 +196,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "AVG: Calculates the average value"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field: average deal size
@@ -252,7 +256,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "MIN: Returns the minimum value"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field: earliest close date
@@ -311,7 +316,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "MAX: Returns the maximum value"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define rollup field: largest deal value
@@ -367,7 +373,8 @@ namespace Fake4Dataverse.Tests.RollupFields
         public void Should_Return_Null_When_No_Related_Records()
         {
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             var definition = new RollupFieldDefinition
@@ -400,7 +407,8 @@ namespace Fake4Dataverse.Tests.RollupFields
         public void Should_Return_Zero_Count_When_No_Related_Records()
         {
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             var definition = new RollupFieldDefinition
@@ -435,7 +443,8 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "You can manually trigger an immediate calculation of rollup columns using the CalculateRollupField message"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             var definition = new RollupFieldDefinition
@@ -476,7 +485,8 @@ namespace Fake4Dataverse.Tests.RollupFields
         public void Should_Handle_Multiple_Rollup_Fields_On_Same_Entity()
         {
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.RollupFieldEvaluator;
 
             // Define multiple rollup fields

@@ -18,7 +18,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
     /// 2. Entity-level (IsAuditEnabled on EntityMetadata)
     /// 3. Attribute-level (IsAuditEnabled on AttributeMetadata)
     /// </summary>
-    public class AuditMetadataSettingsTests
+    public class AuditMetadataSettingsTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_NotAudit_When_EntityAuditingIsDisabled()
@@ -26,8 +26,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/configure
             // Entity-level auditing must be enabled for auditing to occur on that entity
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             
             // Enable organization-level auditing
@@ -53,8 +54,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         public void Should_Audit_When_EntityAuditingIsEnabled()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             
             // Enable organization-level auditing
@@ -83,8 +85,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/configure
             // Attribute-level auditing controls which fields are tracked in updates
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             
             // Enable organization-level auditing
@@ -147,8 +150,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         {
             // Arrange
             // When no metadata is defined (dynamic entities), all attributes should be audited
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             
             // Enable organization-level auditing
@@ -190,8 +194,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         {
             // Arrange
             // If entity metadata exists but specific attribute metadata doesn't, audit that attribute
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             
             // Enable organization-level auditing
@@ -245,8 +250,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         {
             // Arrange
             // If only non-audited attributes change, no audit record should be created
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             
             // Enable organization-level auditing
@@ -297,8 +303,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         {
             // Arrange
             // Different entities can have different audit settings
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             
             // Enable organization-level auditing

@@ -15,7 +15,7 @@ namespace Fake4Dataverse.Tests.RollupFields
     /// These tests verify that rollup fields are automatically recalculated when related child records
     /// are created, updated, or deleted.
     /// </summary>
-    public class RollupFieldAutoRefreshTests
+    public class RollupFieldAutoRefreshTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_Auto_Refresh_Rollup_When_Related_Record_Created()
@@ -24,8 +24,9 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
+            var service = _service;
             var evaluator = context.RollupFieldEvaluator;
 
             // Register rollup field: count of contacts
@@ -71,8 +72,9 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
+            var service = _service;
             var evaluator = context.RollupFieldEvaluator;
 
             // Register rollup field: sum of opportunity values
@@ -128,8 +130,9 @@ namespace Fake4Dataverse.Tests.RollupFields
             // "When you create, update, or delete a record, the rollup columns on related records are recalculated"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
+            var service = _service;
             var evaluator = context.RollupFieldEvaluator;
 
             // Register rollup field: count of contacts
@@ -184,8 +187,9 @@ namespace Fake4Dataverse.Tests.RollupFields
         public void Should_Auto_Refresh_Multiple_Rollup_Fields_On_Same_Entity()
         {
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
+            var service = _service;
             var evaluator = context.RollupFieldEvaluator;
 
             // Register multiple rollup fields
@@ -245,8 +249,9 @@ namespace Fake4Dataverse.Tests.RollupFields
             // should trigger rollup refresh on both accounts
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
+            var service = _service;
             var evaluator = context.RollupFieldEvaluator;
 
             // Register rollup field: sum of opportunity values
@@ -311,8 +316,9 @@ namespace Fake4Dataverse.Tests.RollupFields
             // Verify that auto-refresh doesn't break when the parent entity has no rollup fields defined
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
+            var service = _service;
             // Note: NOT registering any rollup fields
 
             var accountId = Guid.NewGuid();
@@ -341,8 +347,9 @@ namespace Fake4Dataverse.Tests.RollupFields
             // Verify that auto-refresh respects state filters
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
+            var service = _service;
             var evaluator = context.RollupFieldEvaluator;
 
             // Register rollup field: count only active contacts

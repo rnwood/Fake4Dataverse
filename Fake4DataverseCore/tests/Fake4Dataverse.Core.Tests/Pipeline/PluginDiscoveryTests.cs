@@ -13,7 +13,7 @@ namespace Fake4Dataverse.Tests.Pipeline
     /// <summary>
     /// Tests for plugin auto-discovery functionality
     /// </summary>
-    public class PluginDiscoveryTests
+    public class PluginDiscoveryTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_DiscoverPlugins_WithSPKLAttributes()
@@ -34,7 +34,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_RegisterDiscoveredPlugins_InPipelineSimulator()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var assemblies = new[] { Assembly.GetExecutingAssembly() };
 
             // Act
@@ -48,7 +49,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_UseCustomConverter_WhenProvided()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var assemblies = new[] { Assembly.GetExecutingAssembly() };
             
             Func<Type, IEnumerable<PluginStepRegistration>> customConverter = (pluginType) =>
@@ -83,7 +85,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_UseAttributeConverter_WhenProvided()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var assemblies = new[] { Assembly.GetExecutingAssembly() };
 
             Func<Type, Attribute, PluginStepRegistration> attributeConverter = (pluginType, attribute) =>
@@ -118,7 +121,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_AutoExecuteDiscoveredPlugins_WhenUsePipelineSimulation()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
             
             var assemblies = new[] { Assembly.GetExecutingAssembly() };
@@ -144,7 +148,7 @@ namespace Fake4Dataverse.Tests.Pipeline
             TestDiscoveredPlugin.WasExecuted = false;
             context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(assemblies, customConverter);
 
-            var service = context.GetOrganizationService();
+            var service = _service;
             var account = new Entity("account") { ["name"] = "Test" };
 
             // Act
@@ -232,7 +236,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_RegisterPluginWithImages_InPipelineSimulator()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var assemblies = new[] { Assembly.GetExecutingAssembly() };
 
             // Act

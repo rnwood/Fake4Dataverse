@@ -12,15 +12,18 @@ using Fake4Dataverse.Middleware;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.AddUserToRecordTeamRequestTests
 {
-    public class AddUserToRecordTeamRequestTests
+    public class AddUserToRecordTeamRequestTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
 
         public AddUserToRecordTeamRequestTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         [Fact]

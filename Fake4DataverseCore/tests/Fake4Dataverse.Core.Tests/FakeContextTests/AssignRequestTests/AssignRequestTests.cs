@@ -12,15 +12,18 @@ using Fake4Dataverse.Middleware;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.AssignRequestTests
 {
-    public class AssignRequestTests
+    public class AssignRequestTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
 
         public AssignRequestTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         [Fact]

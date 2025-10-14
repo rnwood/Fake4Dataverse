@@ -12,13 +12,14 @@ namespace Fake4Dataverse.Tests.Pipeline
     /// Tests for automatic plugin execution during CRUD operations (Issue #16 & #17 - Auto Registration)
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
     /// </summary>
-    public class PluginAutoRegistrationTests
+    public class PluginAutoRegistrationTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_AutoExecutePlugins_When_UsePipelineSimulationIsTrue_OnCreate()
         {
             // Arrange - Create context with pipeline simulation enabled
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
             
             // Register a plugin for Create message
@@ -30,7 +31,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(AccountNumberPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
             
             var account = new Entity("account")
             {
@@ -49,7 +50,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_AutoExecutePlugins_When_UsePipelineSimulationIsTrue_OnUpdate()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
             
             // Use a simple tracking plugin instead of one that causes recursion
@@ -64,7 +66,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(UpdateTrackingPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
             
             // Create initial entity
             var account = new Entity("account")
@@ -90,7 +92,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_AutoExecutePlugins_When_UsePipelineSimulationIsTrue_OnDelete()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
             
             // Track plugin execution using a static flag
@@ -105,7 +108,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(DeleteTrackingPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
             
             // Create initial entity
             var account = new Entity("account")
@@ -126,7 +129,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_NotAutoExecutePlugins_When_UsePipelineSimulationIsFalse()
         {
             // Arrange - Create context with pipeline simulation disabled (default)
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             Assert.False(context.UsePipelineSimulation); // Verify default is false
             
             // Register a plugin
@@ -138,7 +142,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 PluginType = typeof(AccountNumberPlugin)
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
             
             var account = new Entity("account")
             {
@@ -157,7 +161,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ExecuteMultiplePlugins_InOrder_OnCreate()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
             
             TestExecutionOrderPlugin.ExecutionLog.Clear();
@@ -185,7 +190,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 SecureConfiguration = "1"
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
             
             var account = new Entity("account")
             {

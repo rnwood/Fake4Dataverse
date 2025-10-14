@@ -16,7 +16,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
     /// Dataverse auditing tracks changes to records including Create, Update, Delete operations
     /// and captures old/new values for changed attributes.
     /// </summary>
-    public class AuditRepositoryTests
+    public class AuditRepositoryTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_Not_CreateAuditRecords_When_AuditingIsDisabled()
@@ -24,8 +24,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/configure
             // Auditing must be explicitly enabled in Dataverse. By default, it is disabled.
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
 
             // Act - Create an account without audit enabled
@@ -45,8 +46,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
             // When auditing is enabled, Create operations are tracked in the audit log
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -76,8 +78,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
             // Update operations track which attributes changed and their old/new values
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
 
             // Create account first
@@ -113,8 +116,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
             // Delete operations are tracked in the audit log
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
 
             // Create account first
@@ -149,8 +153,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.attributeauditdetail
             // AttributeAuditDetail contains old and new values for changed attributes
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -189,8 +194,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         public void Should_RetrieveAuditRecordsForEntity()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -214,8 +220,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         public void Should_RetrieveAuditRecordsForAttribute()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -248,8 +255,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.deleteauditdatarequest
             // DeleteAuditDataRequest allows clearing audit data for testing or maintenance
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -274,8 +282,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
             // Audit records track which user performed the operation
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 

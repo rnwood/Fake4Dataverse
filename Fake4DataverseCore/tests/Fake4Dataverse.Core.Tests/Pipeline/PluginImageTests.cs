@@ -20,7 +20,7 @@ namespace Fake4Dataverse.Tests.Pipeline
     /// 
     /// Images can be filtered to include only specific attributes for performance.
     /// </summary>
-    public class PluginImageTests
+    public class PluginImageTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_CreatePreImage_ForUpdateMessage_WithAllAttributes()
@@ -28,7 +28,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
             // Pre-images are available for Update messages and capture the entity state before the update
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Create an existing account
@@ -62,7 +63,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act - Update the account
             var accountUpdate = new Account
@@ -89,7 +90,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#filter-attributes
             // Images can be filtered to include only specific attributes for performance
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             var accountId = Guid.NewGuid();
@@ -123,7 +125,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var accountUpdate = new Account
@@ -152,7 +154,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
             // Post-images are available for Create and Update messages and capture the state after the operation
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             var accountId = Guid.NewGuid();
@@ -184,7 +187,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var accountUpdate = new Account
@@ -210,7 +213,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
             // Multiple images can be registered with different attribute filters
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             var accountId = Guid.NewGuid();
@@ -251,7 +255,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var accountUpdate = new Account
@@ -285,7 +289,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#when-to-use-pre-or-post-images
             // For Update messages, both pre and post images can be registered
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             var accountId = Guid.NewGuid();
@@ -327,7 +332,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var accountUpdate = new Account
@@ -357,7 +362,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#when-to-use-pre-or-post-images
             // Pre-images are NOT available for Create messages (entity doesn't exist before Create)
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Register plugin with pre-image (should be ignored for Create)
@@ -380,7 +386,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var newAccount = new Account
@@ -399,7 +405,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#when-to-use-pre-or-post-images
             // Post-images ARE available for Create messages
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             // Register plugin with post-image
@@ -422,7 +429,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var newAccount = new Account
@@ -445,7 +452,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#when-to-use-pre-or-post-images
             // Pre-images ARE available for Delete messages
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             var accountId = Guid.NewGuid();
@@ -477,7 +485,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             service.Delete("account", accountId);
@@ -495,7 +503,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities#when-to-use-pre-or-post-images
             // Post-images are NOT available for Delete messages (entity no longer exists after Delete)
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             var accountId = Guid.NewGuid();
@@ -526,7 +535,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             service.Delete("account", accountId);
@@ -541,7 +550,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
             // ImageType.Both registers both pre and post images with the same configuration
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             context.UsePipelineSimulation = true;
 
             var accountId = Guid.NewGuid();
@@ -572,7 +582,7 @@ namespace Fake4Dataverse.Tests.Pipeline
                 }
             });
 
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var accountUpdate = new Account
