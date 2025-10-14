@@ -63,11 +63,11 @@ public class Program
             getDefaultValue: () => null);
         var cdmSchemasOption = new Option<string[]?>(
             name: "--cdm-schemas",
-            description: "Optional list of standard CDM schema groups to download and initialize (e.g., crmcommon, sales, service, portals, customerInsights). Downloads from Microsoft's CDM repository. Defaults to 'crmcommon' if no CDM options specified.",
+            description: "Optional list of standard CDM schema groups to download and initialize. Downloads from Microsoft's CDM repository. Defaults to 'crmcommon' if no CDM options specified. Available: crmcommon, sales, service, marketing, fieldservice, projectservice, portals, customerinsights, linkedinleadgen, socialengagement, gamification.",
             getDefaultValue: () => null);
         var cdmEntitiesOption = new Option<string[]?>(
             name: "--cdm-entities",
-            description: "Optional list of standard CDM entities to download and initialize (e.g., account, contact, lead). Downloads from Microsoft's CDM repository.",
+            description: "Optional list of standard CDM entities to download and initialize. Downloads from Microsoft's CDM repository. Examples: account, contact, lead, systemuser, team, businessunit, organization, email, phonecall, appointment, task, opportunity, quote, order, invoice, incident, case, contract, campaign, workorder. For a full list of available entities, see: https://github.com/microsoft/CDM/blob/master/entity/reference.md",
             getDefaultValue: () => null);
         var noCdmOption = new Option<bool>(
             name: "--no-cdm",
@@ -398,6 +398,11 @@ public class Program
             "  - /api/data/v9.2/{entityPluralName} - Create entity (POST)\n" +
             "  - /api/data/v9.2/{entityPluralName}({id}) - Update entity (PATCH)\n" +
             "  - /api/data/v9.2/{entityPluralName}({id}) - Delete entity (DELETE)\n\n" +
+            "Metadata REST/OData endpoints:\n" +
+            "  - /api/data/v9.2/EntityDefinitions - List entity metadata (GET)\n" +
+            "  - /api/data/v9.2/EntityDefinitions({id}) - Get entity metadata by MetadataId (GET)\n" +
+            "  - /api/data/v9.2/EntityDefinitions(LogicalName='{name}') - Get entity metadata by name (GET)\n" +
+            "  - /api/data/v9.2/$metadata - OData service document (EDMX/CSDL)\n\n" +
             "OData Query Options: $select, $filter, $orderby, $top, $skip, $expand, $count\n\n" +
             "This service provides 100% compatibility with Microsoft Dynamics 365/Dataverse SDK.",
             "text/plain"));
@@ -419,6 +424,12 @@ public class Program
         Console.WriteLine("Available REST/OData v4.0 endpoints:");
         Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/{{entityPluralName}} (GET, POST)");
         Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/{{entityPluralName}}({{id}}) (GET, PATCH, DELETE)");
+        Console.WriteLine();
+        Console.WriteLine("Metadata REST/OData endpoints:");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions({{id}}) (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions(LogicalName='{{name}}') (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/$metadata (GET - EDMX/CSDL)");
         Console.WriteLine();
         Console.WriteLine("OData Query Options:");
         Console.WriteLine("  - $select: Choose specific columns");

@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -16,6 +18,9 @@ namespace Fake4Dataverse.Service.IntegrationTests
     public class ServiceFixture : IAsyncLifetime
     {
         private Process? _serviceProcess;
+        private readonly StringBuilder _serviceOutput = new StringBuilder();
+        private readonly StringBuilder _serviceError = new StringBuilder();
+        
         public string ServiceUrl { get; private set; } = string.Empty;
         public string BaseUrl { get; private set; } = string.Empty;
 
@@ -76,6 +81,12 @@ namespace Fake4Dataverse.Service.IntegrationTests
                     CreateNoWindow = true
                 }
             };
+            
+            // Set environment variables for verbose logging to aid in CI debugging
+            _serviceProcess.StartInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+            _serviceProcess.StartInfo.Environment["Logging__LogLevel__Default"] = "Information";
+            _serviceProcess.StartInfo.Environment["Logging__LogLevel__Microsoft.Hosting.Lifetime"] = "Information";
+            _serviceProcess.StartInfo.Environment["ASPNETCORE_LOGGING__CONSOLE__DISABLECOLORS"] = "true";
 
             _serviceProcess.Start();
 
@@ -84,16 +95,33 @@ namespace Fake4Dataverse.Service.IntegrationTests
             var timeout = TimeSpan.FromSeconds(30);
             var actualUrl = string.Empty;
 
-            // Start reading output on a background task
+            // Start reading output on a background task and capture it for debugging
             var outputTask = Task.Run(() =>
             {
                 while (!_serviceProcess.StandardOutput.EndOfStream)
                 {
                     var line = _serviceProcess.StandardOutput.ReadLine();
-                    if (line != null && line.StartsWith("ACTUAL_URL:"))
+                    if (line != null)
                     {
-                        actualUrl = line.Substring("ACTUAL_URL:".Length).Trim();
-                        break;
+                        _serviceOutput.AppendLine(line);
+                        if (line.StartsWith("ACTUAL_URL:"))
+                        {
+                            actualUrl = line.Substring("ACTUAL_URL:".Length).Trim();
+                            break;
+                        }
+                    }
+                }
+            });
+            
+            // Capture error output in background
+            var errorTask = Task.Run(() =>
+            {
+                while (!_serviceProcess.StandardError.EndOfStream)
+                {
+                    var line = _serviceProcess.StandardError.ReadLine();
+                    if (line != null)
+                    {
+                        _serviceError.AppendLine(line);
                     }
                 }
             });
@@ -102,7 +130,19 @@ namespace Fake4Dataverse.Service.IntegrationTests
             var waitResult = await Task.WhenAny(outputTask, Task.Delay(timeout));
             if (waitResult != outputTask || string.IsNullOrEmpty(actualUrl))
             {
-                throw new Exception("Failed to get actual URL from service startup");
+                // Collect all output before throwing exception
+                await Task.Delay(500); // Give a moment for more output to be captured
+                
+                var errorMessage = new StringBuilder();
+                errorMessage.AppendLine("Failed to get actual URL from service startup");
+                errorMessage.AppendLine();
+                errorMessage.AppendLine("=== Service Standard Output ===");
+                errorMessage.Append(_serviceOutput.ToString());
+                errorMessage.AppendLine();
+                errorMessage.AppendLine("=== Service Error Output ===");
+                errorMessage.Append(_serviceError.ToString());
+                
+                throw new Exception(errorMessage.ToString());
             }
 
             ServiceUrl = actualUrl;
@@ -133,7 +173,20 @@ namespace Fake4Dataverse.Service.IntegrationTests
 
             if (!isServiceReady)
             {
-                throw new Exception("Failed to start Fake4DataverseService within timeout period");
+                // Collect all output before throwing exception
+                await Task.Delay(500); // Give a moment for more output to be captured
+                
+                var errorMessage = new StringBuilder();
+                errorMessage.AppendLine("Failed to start Fake4DataverseService within timeout period");
+                errorMessage.AppendLine($"Service URL: {ServiceUrl}");
+                errorMessage.AppendLine();
+                errorMessage.AppendLine("=== Service Standard Output ===");
+                errorMessage.Append(_serviceOutput.ToString());
+                errorMessage.AppendLine();
+                errorMessage.AppendLine("=== Service Error Output ===");
+                errorMessage.Append(_serviceError.ToString());
+                
+                throw new Exception(errorMessage.ToString());
             }
 
             // Give the service a moment to ensure all endpoints are ready

@@ -174,6 +174,171 @@ curl -X DELETE http://localhost:5000/api/data/v9.2/accounts(12345678-...)
 
 **Response:** `204 No Content`
 
+## Metadata Endpoints
+
+The REST API provides metadata endpoints for querying entity and attribute definitions.
+
+**Reference:** [Query Metadata using Web API](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-metadata-web-api)
+
+### List Entity Definitions
+
+Get all entity metadata.
+
+**Endpoint:** `GET /api/data/v9.2/EntityDefinitions`
+
+**Query Options:**
+- `$select` - Choose specific properties (e.g., LogicalName, MetadataId)
+- `$filter` - Filter by entity properties (e.g., LogicalName eq 'account')
+- `$orderby` - Sort results
+- `$top` - Limit number of results
+- `$skip` - Skip records for pagination
+- `$count` - Include total count
+- `$expand` - Include related metadata (e.g., $expand=Attributes)
+
+**Example:**
+```bash
+# Get all entity definitions
+curl http://localhost:5000/api/data/v9.2/EntityDefinitions
+
+# Get specific properties
+curl "http://localhost:5000/api/data/v9.2/EntityDefinitions?\$select=LogicalName,SchemaName,DisplayName"
+
+# Filter by logical name
+curl "http://localhost:5000/api/data/v9.2/EntityDefinitions?\$filter=LogicalName eq 'account'"
+
+# Include attribute metadata
+curl "http://localhost:5000/api/data/v9.2/EntityDefinitions?\$expand=Attributes&\$top=1"
+```
+
+**Response:**
+```json
+{
+  "@odata.context": "$metadata#EntityDefinitions",
+  "value": [
+    {
+      "MetadataId": "guid-value",
+      "LogicalName": "account",
+      "SchemaName": "Account",
+      "EntitySetName": "accounts",
+      "DisplayName": {
+        "UserLocalizedLabel": {
+          "Label": "Account"
+        }
+      },
+      "PrimaryIdAttribute": "accountid",
+      "PrimaryNameAttribute": "name"
+    }
+  ]
+}
+```
+
+### Get Entity Definition by ID
+
+Get a single entity definition by MetadataId.
+
+**Endpoint:** `GET /api/data/v9.2/EntityDefinitions({metadataId})`
+
+**Example:**
+```bash
+curl http://localhost:5000/api/data/v9.2/EntityDefinitions(12345678-1234-1234-1234-123456789012)
+```
+
+### Get Entity Definition by Logical Name
+
+Get a single entity definition by logical name using alternate key syntax.
+
+**Endpoint:** `GET /api/data/v9.2/EntityDefinitions(LogicalName='{logicalName}')`
+
+**Example:**
+```bash
+# Get account entity metadata
+curl "http://localhost:5000/api/data/v9.2/EntityDefinitions(LogicalName='account')"
+
+# Include attributes
+curl "http://localhost:5000/api/data/v9.2/EntityDefinitions(LogicalName='account')?\$expand=Attributes"
+```
+
+**Response:**
+```json
+{
+  "@odata.context": "$metadata#EntityDefinitions/$entity",
+  "MetadataId": "guid-value",
+  "LogicalName": "account",
+  "SchemaName": "Account",
+  "EntitySetName": "accounts",
+  "DisplayName": {
+    "UserLocalizedLabel": {
+      "Label": "Account"
+    }
+  },
+  "PrimaryIdAttribute": "accountid",
+  "PrimaryNameAttribute": "name",
+  "Attributes": [
+    {
+      "MetadataId": "guid-value",
+      "LogicalName": "accountid",
+      "SchemaName": "AccountId",
+      "AttributeType": "Uniqueidentifier",
+      "DisplayName": {
+        "UserLocalizedLabel": {
+          "Label": "Account"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Get Service Metadata Document
+
+Get the OData service metadata document (EDMX/CSDL).
+
+**Endpoint:** `GET /api/data/v9.2/$metadata`
+
+**Reference:** [Web API Service Documents](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/web-api-service-documents)
+
+**Example:**
+```bash
+curl http://localhost:5000/api/data/v9.2/\$metadata
+```
+
+**Response:** XML document in EDMX/CSDL format
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+  <edmx:DataServices>
+    <Schema Namespace="Microsoft.Dynamics.CRM" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+      <EntityType Name="account">
+        <Key>
+          <PropertyRef Name="accountid" />
+        </Key>
+        <Property Name="accountid" Type="Edm.Guid" />
+        <Property Name="name" Type="Edm.String" MaxLength="160" />
+        <Property Name="revenue" Type="Edm.Decimal" />
+      </EntityType>
+      <EntityContainer Name="Container">
+        <EntitySet Name="accounts" EntityType="Microsoft.Dynamics.CRM.account" />
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
+```
+
+### Expand Attributes
+
+Use `$expand=Attributes` to include attribute metadata in entity definitions.
+
+**Reference:** [Retrieve metadata by name or MetadataId](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/retrieve-metadata-name-metadataid)
+
+**Example:**
+```bash
+# Get entity with all attributes
+curl "http://localhost:5000/api/data/v9.2/EntityDefinitions(LogicalName='account')?\$expand=Attributes"
+
+# Get entity with selected properties and attributes
+curl "http://localhost:5000/api/data/v9.2/EntityDefinitions(LogicalName='account')?\$select=LogicalName,SchemaName&\$expand=Attributes"
+```
+
 ## OData Filter Expressions
 
 The `$filter` query option supports the full OData v4.0 expression syntax via Microsoft.AspNetCore.OData.
@@ -356,14 +521,15 @@ Fake4Dataverse REST API aims for compatibility with the Microsoft Dataverse Web 
 - ✅ Complex filter expressions via Microsoft.AspNetCore.OData
 - ✅ Data type conversions
 - ✅ OData error responses
+- ✅ $metadata endpoint (EDMX/CSDL)
+- ✅ EntityDefinitions metadata queries
 
 **What's Not Yet Implemented:**
-- ❌ $metadata endpoint
 - ❌ $batch requests
 - ❌ Custom actions and functions
 - ❌ Delta queries
 - ❌ Optimistic concurrency (If-Match headers)
-- ❌ Entity set navigation properties
+- ❌ Entity set navigation properties (except Attributes)
 
 These features may be added in future versions.
 
