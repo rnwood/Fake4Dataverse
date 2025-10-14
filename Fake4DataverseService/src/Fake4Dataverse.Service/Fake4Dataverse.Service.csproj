@@ -17,6 +17,8 @@
     <RepositoryUrl>https://github.com/rnwood/fake-xrm-free</RepositoryUrl>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fake4dataverse</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>
