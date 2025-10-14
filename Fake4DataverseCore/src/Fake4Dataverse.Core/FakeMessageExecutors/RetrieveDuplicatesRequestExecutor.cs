@@ -68,7 +68,19 @@ namespace Fake4Dataverse.FakeMessageExecutors
                 };
             }
 
-            var applicableRules = context.Data["duplicaterule"].Values
+            if (!context.Data.TryGetValue("duplicaterule", out var duplicateRuleCollection))
+            {
+                // No duplicate rules defined
+                return new RetrieveDuplicatesResponse
+                {
+                    Results = new ParameterCollection
+                    {
+                        { "DuplicateCollection", duplicateCollection }
+                    }
+                };
+            }
+
+            var applicableRules = duplicateRuleCollection.Values
                 .Where(r => 
                     r.Contains("baseentityname") && 
                     r.GetAttributeValue<string>("baseentityname") == baseEntityName &&
@@ -95,7 +107,7 @@ namespace Fake4Dataverse.FakeMessageExecutors
             }
 
             // Check if matching entities exist in context
-            if (!context.Data.ContainsKey(matchingEntityName))
+            if (!context.Data.TryGetValue(matchingEntityName, out var matchingEntityCollection))
             {
                 return new RetrieveDuplicatesResponse
                 {
@@ -114,12 +126,12 @@ namespace Fake4Dataverse.FakeMessageExecutors
                 // Get conditions for this rule from duplicaterulecondition entity
                 // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/duplicaterule-entities
                 // duplicaterulecondition defines the comparison criteria between base and matching attributes
-                if (!context.Data.ContainsKey("duplicaterulecondition"))
+                if (!context.Data.TryGetValue("duplicaterulecondition", out var ruleConditionCollection))
                 {
                     continue;
                 }
 
-                var ruleConditions = context.Data["duplicaterulecondition"].Values
+                var ruleConditions = ruleConditionCollection.Values
                     .Where(c => 
                         c.Contains("duplicateruleid") &&
                         c.GetAttributeValue<EntityReference>("duplicateruleid")?.Id == ruleId
@@ -132,7 +144,7 @@ namespace Fake4Dataverse.FakeMessageExecutors
                 }
 
                 // Find matching records based on rule conditions
-                var matchingRecords = context.Data[matchingEntityName].Values
+                var matchingRecords = matchingEntityCollection.Values
                     .Where(candidate => 
                     {
                         // Exclude the same record if checking within the same entity

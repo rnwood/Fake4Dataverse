@@ -12,6 +12,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -61,7 +62,17 @@ namespace Fake4Dataverse
 
         protected internal bool Initialised { get; set; }
 
-        public Dictionary<string, Dictionary<Guid, Entity>> Data { get; set; }
+        /// <summary>
+        /// Thread-safe data store with per-entity-type locking for better concurrency.
+        /// Operations on different entity types can execute concurrently.
+        /// </summary>
+        public ConcurrentDictionary<string, Dictionary<Guid, Entity>> Data { get; set; }
+        
+        /// <summary>
+        /// Per-entity-type locks for thread-safe CRUD operations.
+        /// Allows concurrent operations on different entity types while maintaining consistency within each type.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, object> _entityLocks = new ConcurrentDictionary<string, object>();
 
         [Obsolete("Please use ProxyTypesAssemblies to retrieve assemblies and EnableProxyTypes to add new ones")]
         public Assembly ProxyTypesAssembly
@@ -128,7 +139,7 @@ namespace Fake4Dataverse
             MaxRetrieveCount = 5000;
 
             AttributeMetadataNames = new Dictionary<string, Dictionary<string, string>>();
-            Data = new Dictionary<string, Dictionary<Guid, Entity>>();
+            Data = new ConcurrentDictionary<string, Dictionary<Guid, Entity>>();
             ExecutionMocks = new Dictionary<Type, ServiceRequestExecution>();
 
             GenericFakeMessageExecutors = new Dictionary<string, IFakeMessageExecutor>();
