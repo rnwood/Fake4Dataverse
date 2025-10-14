@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import { makeStyles, tokens, Spinner } from '@fluentui/react-components';
 import Navigation from './components/Navigation';
 import EntityListView from './components/EntityListView';
+import EntityForm from './components/EntityForm';
 import { dataverseClient } from './lib/dataverse-client';
 import { parseSiteMapXml } from './lib/sitemap-utils';
 import type { SiteMapDefinition, AppModule, SiteMap } from './types/dataverse';
@@ -86,6 +87,7 @@ function parseUrlParameters() {
     pagetype: params.get('pagetype') || undefined,
     etn: params.get('etn') || undefined,  // Entity type name
     viewid: params.get('viewid') || undefined,
+    id: params.get('id') || undefined,  // Record ID for forms
   };
 }
 
@@ -97,9 +99,28 @@ export default function Home() {
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
   const [appModuleId, setAppModuleId] = useState<string | null>(null);
   const [selectedViewId, setSelectedViewId] = useState<string | undefined>(undefined);
+  const [pageType, setPageType] = useState<string | undefined>(undefined);
+  const [recordId, setRecordId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadSitemap();
+    
+    // Listen for URL changes triggered by navigation
+    const handleUrlChange = () => {
+      const params = parseUrlParameters();
+      setPageType(params.pagetype);
+      setSelectedEntity(params.etn || null);
+      setRecordId(params.id);
+      setSelectedViewId(params.viewid);
+    };
+    
+    window.addEventListener('urlchange', handleUrlChange);
+    window.addEventListener('popstate', handleUrlChange);
+    
+    return () => {
+      window.removeEventListener('urlchange', handleUrlChange);
+      window.removeEventListener('popstate', handleUrlChange);
+    };
   }, []);
 
   const loadSitemap = async () => {
@@ -139,6 +160,8 @@ export default function Home() {
             if (urlParams.etn) {
               setSelectedEntity(urlParams.etn);
               setSelectedViewId(urlParams.viewid);
+              setPageType(urlParams.pagetype);
+              setRecordId(urlParams.id);
             } else {
               // Auto-select first entity
               if (parsedSitemap.areas.length > 0) {
@@ -225,7 +248,40 @@ export default function Home() {
         onNavigate={handleNavigate}
       />
       <main className={styles.main}>
-        {selectedEntity ? (
+        {selectedEntity && pageType === 'entityrecord' ? (
+          <EntityForm
+            entityName={selectedEntity}
+            entityPluralName={ENTITY_PLURAL_NAMES[selectedEntity] || selectedEntity + 's'}
+            displayName={ENTITY_DISPLAY_NAMES[selectedEntity]}
+            recordId={recordId}
+            appModuleId={appModuleId || undefined}
+            onClose={() => {
+              // Navigate back to list view
+              if (typeof window !== 'undefined') {
+                const params = new URLSearchParams(window.location.search);
+                params.delete('pagetype');
+                params.delete('id');
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                window.history.pushState({}, '', newUrl);
+                setPageType(undefined);
+                setRecordId(undefined);
+              }
+            }}
+            onSave={(savedRecordId) => {
+              console.log('Record saved:', savedRecordId);
+              // Optionally navigate back to list view after save
+              if (typeof window !== 'undefined') {
+                const params = new URLSearchParams(window.location.search);
+                params.delete('pagetype');
+                params.delete('id');
+                const newUrl = `${window.location.pathname}?${params.toString()}`;
+                window.history.pushState({}, '', newUrl);
+                setPageType(undefined);
+                setRecordId(undefined);
+              }
+            }}
+          />
+        ) : selectedEntity ? (
           <EntityListView
             entityName={selectedEntity}
             entityPluralName={ENTITY_PLURAL_NAMES[selectedEntity] || selectedEntity + 's'}

@@ -50,6 +50,14 @@ public static class MdaInitializer
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/savedquery
         CreateSystemViews(service, appModuleId);
         
+        // Create system forms for entities
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
+        CreateSystemForms(service, appModuleId);
+        
+        // Create web resources (form scripts)
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+        CreateWebResources(service);
+        
         // Create some sample data for testing
         CreateSampleData(service);
         
@@ -331,8 +339,433 @@ public static class MdaInitializer
             Id = Guid.NewGuid(),
             ["appmoduleidunique"] = appModuleId,
             ["objectid"] = componentId,
-            ["componenttype"] = componentType // 26 = SavedQuery, 1 = Entity
+            ["componenttype"] = componentType // 26 = SavedQuery, 1 = Entity, 60 = SystemForm
         };
         service.Create(appModuleComponent);
+    }
+    
+    /// <summary>
+    /// Create system forms for entities
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
+    /// Form types: 2=Main, 4=Quick Create, 6=Quick View, 7=Quick View Form, 8=Dialog, 9=Task Flow Form
+    /// </summary>
+    private static void CreateSystemForms(IOrganizationService service, Guid appModuleId)
+    {
+        Console.WriteLine("  Creating system forms...");
+        
+        CreateAccountForm(service, appModuleId);
+        CreateContactForm(service, appModuleId);
+        CreateOpportunityForm(service, appModuleId);
+        
+        Console.WriteLine($"    Created system forms for Account, Contact, and Opportunity");
+    }
+    
+    private static void CreateAccountForm(IOrganizationService service, Guid appModuleId)
+    {
+        var formId = Guid.NewGuid();
+        var libraryId = Guid.NewGuid();
+        var formXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<form>
+  <formLibraries>
+    <Library name=""fake4dataverse_account_form_script.js"" libraryUniqueId=""" + libraryId + @""" />
+  </formLibraries>
+  <events>
+    <event name=""onload"" application=""true"" active=""true"">
+      <Handler functionName=""OnLoad"" libraryName=""fake4dataverse_account_form_script.js"" handlerUniqueId=""" + Guid.NewGuid() + @""" enabled=""true"" parameters="""" passExecutionContext=""true"" />
+    </event>
+    <event name=""onsave"" application=""true"" active=""true"">
+      <Handler functionName=""OnSave"" libraryName=""fake4dataverse_account_form_script.js"" handlerUniqueId=""" + Guid.NewGuid() + @""" enabled=""true"" parameters="""" passExecutionContext=""true"" />
+    </event>
+    <event name=""onchange"" application=""true"" active=""true"" attribute=""name"">
+      <Handler functionName=""ValidateAccountName"" libraryName=""fake4dataverse_account_form_script.js"" handlerUniqueId=""" + Guid.NewGuid() + @""" enabled=""true"" parameters="""" passExecutionContext=""true"" />
+    </event>
+  </events>
+  <tabs>
+    <tab id=""tab_general"" name=""general"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""General"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_account_info"" name=""account_information"" visible=""true"">
+              <labels>
+                <label description=""Account Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""accountname"">
+                    <labels>
+                      <label description=""Account Name"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""accountname"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""name"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""accountnumber"">
+                    <labels>
+                      <label description=""Account Number"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""accountnumber"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""accountnumber"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""revenue"">
+                    <labels>
+                      <label description=""Annual Revenue"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""revenue"" classid=""{533B9E00-756B-4312-95A0-DC888637AC78}"" datafieldname=""revenue"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""numberofemployees"">
+                    <labels>
+                      <label description=""Number of Employees"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""numberofemployees"" classid=""{C3EFE0C3-0EC6-42BE-8349-CBD9079DFD8E}"" datafieldname=""numberofemployees"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+    <tab id=""tab_details"" name=""details"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""Details"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_contact_info"" name=""contact_information"" visible=""true"">
+              <labels>
+                <label description=""Contact Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""telephone1"">
+                    <labels>
+                      <label description=""Main Phone"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""telephone1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""telephone1"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""emailaddress1"">
+                    <labels>
+                      <label description=""Email"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""emailaddress1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""emailaddress1"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+  </tabs>
+</form>";
+        
+        var accountForm = new Entity("systemform")
+        {
+            Id = formId,
+            ["name"] = "Account Main Form",
+            ["objecttypecode"] = "account",
+            ["type"] = 2, // Main form
+            ["formxml"] = formXml,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(accountForm);
+        CreateAppModuleComponent(service, appModuleId, formId, 60); // 60 = SystemForm
+    }
+    
+    private static void CreateContactForm(IOrganizationService service, Guid appModuleId)
+    {
+        var formId = Guid.NewGuid();
+        var formXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<form>
+  <tabs>
+    <tab id=""tab_general"" name=""general"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""General"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_contact_info"" name=""contact_information"" visible=""true"">
+              <labels>
+                <label description=""Contact Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""firstname"">
+                    <labels>
+                      <label description=""First Name"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""firstname"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""firstname"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""lastname"">
+                    <labels>
+                      <label description=""Last Name"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""lastname"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""lastname"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""emailaddress1"">
+                    <labels>
+                      <label description=""Email"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""emailaddress1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""emailaddress1"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""telephone1"">
+                    <labels>
+                      <label description=""Business Phone"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""telephone1"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""telephone1"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+  </tabs>
+</form>";
+        
+        var contactForm = new Entity("systemform")
+        {
+            Id = formId,
+            ["name"] = "Contact Main Form",
+            ["objecttypecode"] = "contact",
+            ["type"] = 2,
+            ["formxml"] = formXml,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(contactForm);
+        CreateAppModuleComponent(service, appModuleId, formId, 60);
+    }
+    
+    private static void CreateOpportunityForm(IOrganizationService service, Guid appModuleId)
+    {
+        var formId = Guid.NewGuid();
+        var formXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<form>
+  <tabs>
+    <tab id=""tab_general"" name=""general"" verticallayout=""true"" visible=""true"">
+      <labels>
+        <label description=""General"" languagecode=""1033"" />
+      </labels>
+      <columns>
+        <column width=""100%"">
+          <sections>
+            <section id=""section_opportunity_info"" name=""opportunity_information"" visible=""true"">
+              <labels>
+                <label description=""Opportunity Information"" languagecode=""1033"" />
+              </labels>
+              <rows>
+                <row>
+                  <cell id=""name"">
+                    <labels>
+                      <label description=""Topic"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""name"" classid=""{270BD3DB-D9AF-4782-9025-509E298DEC0A}"" datafieldname=""name"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""estimatedvalue"">
+                    <labels>
+                      <label description=""Est. Revenue"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""estimatedvalue"" classid=""{533B9E00-756B-4312-95A0-DC888637AC78}"" datafieldname=""estimatedvalue"" disabled=""false"" />
+                  </cell>
+                </row>
+                <row>
+                  <cell id=""estimatedclosedate"">
+                    <labels>
+                      <label description=""Est. Close Date"" languagecode=""1033"" />
+                    </labels>
+                    <control id=""estimatedclosedate"" classid=""{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}"" datafieldname=""estimatedclosedate"" disabled=""false"" />
+                  </cell>
+                </row>
+              </rows>
+            </section>
+          </sections>
+        </column>
+      </columns>
+    </tab>
+  </tabs>
+</form>";
+        
+        var opportunityForm = new Entity("systemform")
+        {
+            Id = formId,
+            ["name"] = "Opportunity Main Form",
+            ["objecttypecode"] = "opportunity",
+            ["type"] = 2,
+            ["formxml"] = formXml,
+            ["isdefault"] = true,
+            ["iscustomizable"] = true
+        };
+        service.Create(opportunityForm);
+        CreateAppModuleComponent(service, appModuleId, formId, 60);
+    }
+    
+    /// <summary>
+    /// Create example web resources (JavaScript files for form scripts)
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+    /// WebResourceType: 1=HTML, 2=CSS, 3=JavaScript, 4=XML, 5=PNG, 6=JPG, 7=GIF, 8=XAP, 9=XSL, 10=ICO
+    /// </summary>
+    private static void CreateWebResources(IOrganizationService service)
+    {
+        Console.WriteLine("  Creating web resources (form scripts)...");
+        
+        // Create a sample form script for Account
+        var accountScriptContent = @"
+// Sample Account Form Script
+// This script demonstrates the Xrm API usage
+
+function OnLoad(executionContext) {
+    console.log('Account form OnLoad event triggered');
+    
+    var formContext = executionContext.getFormContext();
+    
+    // Get the account name
+    var accountName = formContext.getAttribute('name');
+    if (accountName) {
+        console.log('Account Name:', accountName.getValue());
+        
+        // Add onChange handler
+        accountName.addOnChange(function() {
+            console.log('Account name changed to:', accountName.getValue());
+        });
+    }
+    
+    // Example: Disable account number field
+    var accountNumberControl = formContext.getControl('accountnumber');
+    if (accountNumberControl) {
+        accountNumberControl.setDisabled(false);
+    }
+    
+    // Example: Show a notification
+    formContext.ui.setFormNotification(
+        'Welcome to the Account form!', 
+        'INFO', 
+        'welcome_notification'
+    );
+    
+    // Clear notification after 3 seconds
+    setTimeout(function() {
+        formContext.ui.clearFormNotification('welcome_notification');
+    }, 3000);
+}
+
+function OnSave(executionContext) {
+    console.log('Account form OnSave event triggered');
+    
+    var formContext = executionContext.getFormContext();
+    
+    // Example: Validate account name is not empty
+    var accountName = formContext.getAttribute('name');
+    if (accountName && !accountName.getValue()) {
+        executionContext.getEventArgs().preventDefault();
+        Xrm.Navigation.openAlertDialog({
+            text: 'Account Name is required',
+            title: 'Validation Error'
+        });
+        return false;
+    }
+    
+    return true;
+}
+
+function ValidateAccountName(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var accountName = formContext.getAttribute('name');
+    
+    if (accountName) {
+        var value = accountName.getValue();
+        if (value && value.length < 3) {
+            formContext.ui.setFormNotification(
+                'Account name should be at least 3 characters', 
+                'WARNING', 
+                'name_validation'
+            );
+        } else {
+            formContext.ui.clearFormNotification('name_validation');
+        }
+    }
+}
+";
+        
+        // Encode script content to base64
+        var base64Content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(accountScriptContent));
+        
+        var webResourceId = Guid.NewGuid();
+        var webResource = new Entity("webresource")
+        {
+            Id = webResourceId,
+            ["name"] = "fake4dataverse_account_form_script.js",
+            ["displayname"] = "Account Form Script",
+            ["description"] = "Example form script for Account entity",
+            ["webresourcetype"] = 3, // JavaScript
+            ["content"] = base64Content,
+            ["languagecode"] = 1033
+        };
+        service.Create(webResource);
+        Console.WriteLine($"    Created WebResource: {webResourceId} (fake4dataverse_account_form_script.js)");
+        
+        // Create a sample utility script
+        var utilityScriptContent = @"
+// Sample Utility Functions
+// Common functions that can be used across forms
+
+var Fake4DataverseUtils = Fake4DataverseUtils || {};
+
+Fake4DataverseUtils.formatPhoneNumber = function(phoneNumber) {
+    // Simple phone number formatting
+    if (!phoneNumber) return '';
+    var cleaned = phoneNumber.replace(/\D/g, '');
+    if (cleaned.length === 10) {
+        return '(' + cleaned.substring(0, 3) + ') ' + 
+               cleaned.substring(3, 6) + '-' + 
+               cleaned.substring(6);
+    }
+    return phoneNumber;
+};
+
+Fake4DataverseUtils.validateEmail = function(email) {
+    if (!email) return false;
+    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+};
+
+console.log('Fake4Dataverse utility functions loaded');
+";
+        
+        var utilityBase64Content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(utilityScriptContent));
+        
+        var utilityResourceId = Guid.NewGuid();
+        var utilityResource = new Entity("webresource")
+        {
+            Id = utilityResourceId,
+            ["name"] = "fake4dataverse_utils.js",
+            ["displayname"] = "Fake4Dataverse Utilities",
+            ["description"] = "Common utility functions",
+            ["webresourcetype"] = 3, // JavaScript
+            ["content"] = utilityBase64Content,
+            ["languagecode"] = 1033
+        };
+        service.Create(utilityResource);
+        Console.WriteLine($"    Created WebResource: {utilityResourceId} (fake4dataverse_utils.js)");
     }
 }
