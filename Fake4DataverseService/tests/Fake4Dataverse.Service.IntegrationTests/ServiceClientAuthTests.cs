@@ -15,7 +15,7 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 public class ServiceClientAuthTests : IAsyncLifetime
 {
     private Process? _serviceProcess;
-    private const int ServicePort = 5559;
+    private const int ServicePort = 5560;
     private const string AccessToken = "test-access-token-12345";
     private static readonly string ServiceUrl = $"http://localhost:{ServicePort}";
 
