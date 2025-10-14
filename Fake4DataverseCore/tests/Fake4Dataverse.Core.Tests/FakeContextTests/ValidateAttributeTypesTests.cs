@@ -25,21 +25,21 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         
         public ValidateAttributeTypesTests()
         {
-            // Context with validation enabled (default behavior) and metadata loaded from standard CDM entities
+            // Context with validation enabled (default behavior) and metadata loaded from early-bound types
             _contextWithValidation = XrmFakedContextFactory.New();
             
-            // Load metadata for account and contact from standard CDM files (cached locally in cdm-schema-files)
-            // Reference: https://github.com/microsoft/CDM
-            _contextWithValidation.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "account", "contact" }).Wait();
+            // Use early-bound assembly to generate metadata for Account and Contact
+            // This provides real metadata structure matching Dataverse
+            _contextWithValidation.InitializeMetadata(typeof(Account).Assembly);
             
             // Verify metadata was loaded
             var accountMetadata = _contextWithValidation.GetEntityMetadataByName("account");
             if (accountMetadata == null)
-                throw new Exception("Account metadata was not loaded from CDM");
+                throw new Exception("Account metadata was not loaded from early-bound assembly");
                 
             var contactMetadata = _contextWithValidation.GetEntityMetadataByName("contact");
             if (contactMetadata == null)
-                throw new Exception("Contact metadata was not loaded from CDM");
+                throw new Exception("Contact metadata was not loaded from early-bound assembly");
             
             _serviceWithValidation = _contextWithValidation.GetOrganizationService();
             
@@ -305,7 +305,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
             // When metadata is not initialized and validation is enabled, should throw error like Dataverse
             
-            // Don't initialize metadata
+            // Create a fresh context with validation enabled but no metadata
+            var freshContext = XrmFakedContextFactory.New();  // Validation enabled by default
+            var freshService = freshContext.GetOrganizationService();
+            
+            // Don't initialize metadata - this should cause an error
             var account = new Entity("account")
             {
                 ["name"] = "Test Account",
@@ -313,7 +317,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             };
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => 
-                _serviceWithValidation.Create(account));
+                freshService.Create(account));
             
             Assert.Contains("Could not find entity", ex.Message);
             Assert.Contains("account", ex.Message);
