@@ -52,4 +52,12 @@
     </None>
   </ItemGroup>
 
+  <!-- Copy wwwroot directory to output for MDA static files -->
+  <ItemGroup>
+    <Content Include="wwwroot/**/*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
 </Project>

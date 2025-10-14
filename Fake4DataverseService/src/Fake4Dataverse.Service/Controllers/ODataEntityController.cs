@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.CloudFlows;
 using Fake4Dataverse.Service.Services;
@@ -171,13 +172,24 @@ namespace Fake4Dataverse.Service.Controllers
                 var odataEntity = ODataEntityConverter.ToODataEntity(entity);
                 return Ok(odataEntity);
             }
-            catch (Exception ex) when (ex.Message.Contains("does not exist"))
+            catch (FaultException<OrganizationServiceFault> ex)
             {
-                var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                // Check if it's an "entity does not exist" error
+                if (ex.Message.Contains("Does Not Exist", StringComparison.OrdinalIgnoreCase))
+                {
+                    var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                        "0x80040217",
+                        $"Entity with id {id} not found",
+                        ex);
+                    return NotFound(errorResponse);
+                }
+                
+                // Other fault exceptions
+                var generalErrorResponse = ODataEntityConverter.CreateErrorResponse(
                     "0x80040217",
-                    $"Entity with id {id} not found",
+                    $"Error retrieving entity: {ex.Message}",
                     ex);
-                return NotFound(errorResponse);
+                return StatusCode(StatusCodes.Status500InternalServerError, generalErrorResponse);
             }
             catch (Exception ex)
             {
@@ -274,13 +286,24 @@ namespace Fake4Dataverse.Service.Controllers
                 // Return 204 No Content (standard for OData update operations)
                 return NoContent();
             }
-            catch (Exception ex) when (ex.Message.Contains("does not exist"))
+            catch (FaultException<OrganizationServiceFault> ex)
             {
-                var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                // Check if it's an "entity does not exist" error
+                if (ex.Message.Contains("Does Not Exist", StringComparison.OrdinalIgnoreCase))
+                {
+                    var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                        "0x80040217",
+                        $"Entity with id {id} not found",
+                        ex);
+                    return NotFound(errorResponse);
+                }
+                
+                // Other fault exceptions
+                var generalErrorResponse = ODataEntityConverter.CreateErrorResponse(
                     "0x80040217",
-                    $"Entity with id {id} not found",
+                    $"Error updating entity: {ex.Message}",
                     ex);
-                return NotFound(errorResponse);
+                return StatusCode(StatusCodes.Status500InternalServerError, generalErrorResponse);
             }
             catch (Exception ex)
             {
@@ -311,16 +334,29 @@ namespace Fake4Dataverse.Service.Controllers
                 // Return 204 No Content (standard for OData delete operations)
                 return NoContent();
             }
-            catch (Exception ex) when (ex.Message.Contains("does not exist"))
+            catch (FaultException<OrganizationServiceFault> ex)
             {
-                var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                Console.WriteLine($"Caught FaultException<OrganizationServiceFault>: {ex.Message}");
+                // Check if it's an "entity does not exist" error
+                if (ex.Message.Contains("Does Not Exist", StringComparison.OrdinalIgnoreCase))
+                {
+                    var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                        "0x80040217",
+                        $"Entity with id {id} not found",
+                        ex);
+                    return NotFound(errorResponse);
+                }
+                
+                // Other fault exceptions
+                var generalErrorResponse = ODataEntityConverter.CreateErrorResponse(
                     "0x80040217",
-                    $"Entity with id {id} not found",
+                    $"Error deleting entity: {ex.Message}",
                     ex);
-                return NotFound(errorResponse);
+                return StatusCode(StatusCodes.Status500InternalServerError, generalErrorResponse);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Caught general Exception ({ex.GetType().Name}): {ex.Message}");
                 var errorResponse = ODataEntityConverter.CreateErrorResponse(
                     "0x80040217",
                     $"Error deleting entity: {ex.Message}",

@@ -101,7 +101,11 @@ jobs:
       run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --verbosity normal
 
     - name: Test net462
-      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build --verbosity normal
+      run: |
+        # Skip Service and CloudFlows tests on net462 since they only target net8.0
+        dotnet test Fake4DataverseAbstractions/tests/Fake4Dataverse.Abstractions.Tests/Fake4Dataverse.Abstractions.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
+        dotnet test Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/Fake4Dataverse.Core.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
+        dotnet test Fake4Dataverse/tests/Fake4Dataverse.Tests/Fake4Dataverse.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
 
     - name: Pack Fake4Dataverse.Abstractions
       shell: pwsh

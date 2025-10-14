@@ -11,13 +11,13 @@ namespace Fake4Dataverse.Service.IntegrationTests
     /// Fixture that starts a single Fake4DataverseService instance for all tests in the collection.
     /// This ensures the service starts once and is shared across all tests, avoiding port conflicts
     /// and reducing test execution time.
+    /// Uses port 0 for auto-assignment to enable concurrent test execution.
     /// </summary>
     public class ServiceFixture : IAsyncLifetime
     {
         private Process? _serviceProcess;
-        public const int ServicePort = 5559;
-        public static readonly string ServiceUrl = $"http://localhost:{ServicePort}";
-        public static readonly string BaseUrl = $"{ServiceUrl}/api/data/v9.2";
+        public string ServiceUrl { get; private set; } = string.Empty;
+        public string BaseUrl { get; private set; } = string.Empty;
 
         public async Task InitializeAsync()
         {
@@ -62,12 +62,13 @@ namespace Fake4Dataverse.Service.IntegrationTests
                 throw new FileNotFoundException($"Account CDM file not found: {accountFile}");
             }
 
+            // Use port 0 for auto-assignment to avoid port conflicts and enable concurrent tests
             _serviceProcess = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
-                    Arguments = $"run --no-build -- start --port {ServicePort} --host localhost --cdm-files \"{accountFile}\" --cdm-files \"{contactFile}\" --cdm-files \"{opportunityFile}\"",
+                    Arguments = $"run --no-build -- start --port 0 --host localhost --cdm-files \"{accountFile}\" --cdm-files \"{contactFile}\" --cdm-files \"{opportunityFile}\"",
                     WorkingDirectory = serviceProjectPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -78,11 +79,38 @@ namespace Fake4Dataverse.Service.IntegrationTests
 
             _serviceProcess.Start();
 
-            // Wait for the service to start with proper health check
+            // Read output to find the actual assigned port
             var startTime = DateTime.UtcNow;
             var timeout = TimeSpan.FromSeconds(30);
-            var isServiceReady = false;
+            var actualUrl = string.Empty;
 
+            // Start reading output on a background task
+            var outputTask = Task.Run(() =>
+            {
+                while (!_serviceProcess.StandardOutput.EndOfStream)
+                {
+                    var line = _serviceProcess.StandardOutput.ReadLine();
+                    if (line != null && line.StartsWith("ACTUAL_URL:"))
+                    {
+                        actualUrl = line.Substring("ACTUAL_URL:".Length).Trim();
+                        break;
+                    }
+                }
+            });
+
+            // Wait for the ACTUAL_URL to be parsed or timeout
+            var waitResult = await Task.WhenAny(outputTask, Task.Delay(timeout));
+            if (waitResult != outputTask || string.IsNullOrEmpty(actualUrl))
+            {
+                throw new Exception("Failed to get actual URL from service startup");
+            }
+
+            ServiceUrl = actualUrl;
+            // Note: BaseUrl must end with '/' for relative URIs to work correctly with HttpClient
+            BaseUrl = $"{actualUrl}/api/data/v9.2/";
+
+            // Wait for the service to be ready with proper health check
+            var isServiceReady = false;
             while (DateTime.UtcNow - startTime < timeout && !isServiceReady)
             {
                 try

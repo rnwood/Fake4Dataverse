@@ -114,9 +114,13 @@ public class Program
         Console.WriteLine($"CDM file cache directory: {cdmCacheDir}");
         Console.WriteLine();
         
+        // When using port 0 (auto-assign), Kestrel requires using IP address instead of 'localhost'
+        // Reference: https://github.com/dotnet/aspnetcore/issues/29235
+        var bindHost = (port == 0 && host == "localhost") ? "127.0.0.1" : host;
+        
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
-            Args = new[] { $"--urls=http://{host}:{port}" }
+            Args = new[] { $"--urls=http://{bindHost}:{port}" }
         });
 
         // Create and register the Fake4Dataverse context
@@ -239,24 +243,32 @@ public class Program
         
         // Enable static file serving for Model-Driven App
         // NOTE: Order matters - UseDefaultFiles must come before UseStaticFiles
-        var mdaPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "mda");
+        // Use AppContext.BaseDirectory to get the application's base directory (where the DLL is)
+        // This ensures the path works correctly whether running with 'dotnet run' or 'dotnet run --no-build'
+        var mdaPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "mda");
         
-        // Serve MDA at /main.aspx to match real Dynamics 365 MDA URLs
-        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
-        app.UseDefaultFiles(new DefaultFilesOptions
+        // Only configure static file serving if the MDA path exists
+        // This allows the service to run even without MDA files (for testing)
+        if (Directory.Exists(mdaPath))
         {
-            DefaultFileNames = new List<string> { "index.html" },
-            FileProvider = new PhysicalFileProvider(mdaPath),
-            RequestPath = ""  // Serve from root
-        });
-        
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = new PhysicalFileProvider(mdaPath),
-            RequestPath = ""  // Serve from root
-        });
+            // Serve MDA at /main.aspx to match real Dynamics 365 MDA URLs
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples
+            app.UseDefaultFiles(new DefaultFilesOptions
+            {
+                DefaultFileNames = new List<string> { "index.html" },
+                FileProvider = new PhysicalFileProvider(mdaPath),
+                RequestPath = ""  // Serve from root
+            });
+            
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(mdaPath),
+                RequestPath = ""  // Serve from root
+            });
+        }
         
         // Add authentication middleware if token is provided
+        // This middleware runs BEFORE endpoint execution
         if (!string.IsNullOrEmpty(accessToken))
         {
             app.Use(async (context, next) =>
@@ -264,6 +276,15 @@ public class Program
                 // Skip authentication for health check and info endpoints
                 if (context.Request.Path.StartsWithSegments("/health") ||
                     context.Request.Path.StartsWithSegments("/info"))
+                {
+                    await next();
+                    return;
+                }
+
+                // Skip authentication for static files
+                if (context.Request.Path.StartsWithSegments("/_next") ||
+                    context.Request.Path.Value?.Contains('.') == true && 
+                    !context.Request.Path.StartsWithSegments("/api"))
                 {
                     await next();
                     return;
@@ -282,7 +303,7 @@ public class Program
                 
                 // Unauthorized
                 context.Response.StatusCode = 401;
-                context.Response.Headers.Add("WWW-Authenticate", "Bearer");
+                context.Response.Headers.Append("WWW-Authenticate", "Bearer");
                 await context.Response.WriteAsync("Unauthorized: Invalid or missing access token");
             });
         }
@@ -427,7 +448,30 @@ public class Program
         Console.WriteLine();
         Console.WriteLine("Press Ctrl+C to stop the service.");
 
-        await app.RunAsync();
+        // Start the application
+        await app.StartAsync();
+        
+        // After starting, get the actual listening URLs (important when port 0 is used for auto-assignment)
+        var actualUrls = app.Urls;
+        if (actualUrls.Count > 0)
+        {
+            var actualUrl = actualUrls.First();
+            Console.WriteLine();
+            Console.WriteLine($"ACTUAL_URL: {actualUrl}");
+            Console.WriteLine();
+        }
+        
+        // Keep the application running
+        var tcs = new TaskCompletionSource();
+        Console.CancelKeyPress += (s, e) =>
+        {
+            e.Cancel = true;
+            tcs.TrySetResult();
+        };
+        await tcs.Task;
+        
+        // Shutdown
+        await app.StopAsync();
     }
 }
 
