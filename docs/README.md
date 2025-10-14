@@ -40,6 +40,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [REST/OData API Endpoints](./rest-api.md) - OData v4.0 endpoints with advanced query support ✅ **NEW**
 
 ### 🏗️ [Architecture & Planning](.)
+- [Testing Guide](./TESTING_GUIDE.md) - How to run all tests in the repository ✅ **NEW**
 - [Cloud Flow API Design](./API_DESIGN_CLOUD_FLOWS.md) - Technical design for Cloud Flow simulation
 - [Cloud Flow Architecture](./CLOUD_FLOW_ARCHITECTURE.md) - Architecture diagrams and patterns
 - [Cloud Flow JSON Import](./CLOUD_FLOW_JSON_IMPORT_SUMMARY.md) - JSON flow definition import

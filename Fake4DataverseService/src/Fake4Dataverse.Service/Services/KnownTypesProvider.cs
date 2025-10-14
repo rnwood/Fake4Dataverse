@@ -68,6 +68,17 @@ public static class KnownTypesProvider
                     // Assembly not available, continue without it
                 }
 
+                // Try to add Microsoft.Crm.Sdk.Proxy assembly (contains WhoAmIRequest, RetrieveVersionRequest, etc.)
+                try
+                {
+                    var crmSdkProxyAssembly = Assembly.Load("Microsoft.Crm.Sdk.Proxy");
+                    assembliesToScan.Add(crmSdkProxyAssembly);
+                }
+                catch
+                {
+                    // Assembly not available, continue without it
+                }
+
                 // Try to add Microsoft.PowerPlatform.Dataverse.Client assembly
                 try
                 {
