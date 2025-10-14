@@ -228,7 +228,13 @@ export default function EntityListView({
       
       // Use columns from view if available
       if (viewColumns.length > 0) {
-        queryParams.select = viewColumns;
+        // Always include the primary ID field for row click navigation
+        const primaryIdField = entityName + 'id';
+        if (!viewColumns.includes(primaryIdField)) {
+          queryParams.select = [primaryIdField, ...viewColumns];
+        } else {
+          queryParams.select = viewColumns;
+        }
       }
       
       // Apply filter from FetchXML

@@ -37,35 +37,30 @@ test.describe('MDA Forms', () => {
     // Wait for list to load
     await page.waitForTimeout(2000);
     
-    // Click first data row if records exist
-    const firstRow = page.locator('[role="row"]').nth(1); // Skip header row
-    const isRowVisible = await firstRow.isVisible();
+    // Get first data row (skip header)
+    const dataRows = page.locator('[role="row"]');
+    const rowCount = await dataRows.count();
     
-    // We should have at least one data row (sample data is initialized)
-    expect(isRowVisible).toBe(true);
-    
-    if (isRowVisible) {
-      await firstRow.click();
+    if (rowCount > 1) {
+      // Click on the first data row (index 1, after header)
+      const firstDataRow = dataRows.nth(1);
       
-      // Wait a bit for any navigation to occur
-      await page.waitForTimeout(2000);
+      // Get the current URL before clicking
+      const urlBefore = page.url();
       
-      // Check if URL changed (row click navigation might not be fully implemented yet)
-      const url = page.url();
+      // Click the row
+      await firstDataRow.click();
       
-      // This is a "soft" test - if navigation works, great, if not, that's acceptable
-      // since the main point is to verify the grid renders and rows are clickable
-      const hasNavigated = url.includes('pagetype=entityrecord') && url.includes('id=');
+      // Wait a moment for the click handler to execute
+      await page.waitForTimeout(500);
       
-      if (hasNavigated) {
-        // Navigation is working
-        expect(url).toContain('pagetype=entityrecord');
-        expect(url).toContain('id=');
-      } else {
-        // Navigation not yet implemented or not working in test - that's okay
-        // At minimum, verify the row was clickable and visible
-        expect(isRowVisible).toBe(true);
-      }
+      // Check if URL changed
+      const urlAfter = page.url();
+      
+      // Verify URL changed and contains expected parameters
+      expect(urlAfter).not.toEqual(urlBefore);
+      expect(urlAfter).toContain('pagetype=entityrecord');
+      expect(urlAfter).toContain('id=');
     }
   });
 
