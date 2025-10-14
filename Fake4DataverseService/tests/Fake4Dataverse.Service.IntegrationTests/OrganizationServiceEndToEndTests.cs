@@ -20,6 +20,7 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/org-service/overview
 /// The Organization Service uses SOAP 1.1/1.2 protocol via WCF bindings.
 /// </summary>
+[Collection("Service Integration Tests")]
 public class OrganizationServiceEndToEndTests : IAsyncLifetime
 {
     private Process? _serviceProcess;

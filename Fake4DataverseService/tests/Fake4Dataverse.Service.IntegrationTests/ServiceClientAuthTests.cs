@@ -12,6 +12,7 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/xrm-tooling/use-connection-strings-xrm-tooling-connect
 /// ServiceClient supports AuthType=OAuth with AccessToken parameter.
 /// </summary>
+[Collection("Service Integration Tests")]
 public class ServiceClientAuthTests : IAsyncLifetime
 {
     private Process? _serviceProcess;

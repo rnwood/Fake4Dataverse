@@ -16,6 +16,7 @@ namespace Fake4Dataverse.Service.IntegrationTests;
 /// These tests verify that the Dataverse Web API endpoints work correctly with HTTP clients.
 /// The service is started before tests run and uses the OData v4.0 protocol.
 /// </summary>
+[Collection("Service Integration Tests")]
 public class ODataRestApiEndToEndTests : IAsyncLifetime
 {
     private Process? _serviceProcess;
