@@ -477,12 +477,23 @@ namespace Fake4Dataverse
                 return;
             }
 
+            // System attributes that are automatically added by the framework
+            var systemAttributes = new[] { "createdby", "createdon", "modifiedby", "modifiedon", "ownerid", 
+                                          "statecode", "statuscode", "createdonbehalfby", "modifiedonbehalfby",
+                                          $"{e.LogicalName}id" };  // Primary key attribute
+
             foreach (var attributeName in e.Attributes.Keys.ToList())
             {
                 var attributeValue = e[attributeName];
                 
                 // Skip null values - they are always valid
                 if (attributeValue == null)
+                {
+                    continue;
+                }
+
+                // Skip system attributes that may not be in metadata
+                if (systemAttributes.Contains(attributeName.ToLower()))
                 {
                     continue;
                 }
@@ -494,11 +505,13 @@ namespace Fake4Dataverse
                 if (attributeMetadata == null)
                 {
                     // Attribute doesn't exist in metadata
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        Message = $"The attribute '{attributeName}' does not exist on entity '{e.LogicalName}'."
+                    };
                     throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
-                        new Microsoft.Xrm.Sdk.OrganizationServiceFault
-                        {
-                            Message = $"The attribute '{attributeName}' does not exist on entity '{e.LogicalName}'."
-                        });
+                        fault,
+                        new System.ServiceModel.FaultReason(fault.Message));
                 }
 
                 if (attributeMetadata.AttributeType == null)
@@ -549,11 +562,13 @@ namespace Fake4Dataverse
                         var entityRef = (EntityReference)actualValue;
                         if (!lookupMetadata.Targets.Contains(entityRef.LogicalName))
                         {
+                            var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                            {
+                                Message = $"The lookup attribute '{attributeName}' on entity '{e.LogicalName}' cannot reference entity type '{entityRef.LogicalName}'. Valid targets are: {string.Join(", ", lookupMetadata.Targets)}."
+                            };
                             throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
-                                new Microsoft.Xrm.Sdk.OrganizationServiceFault
-                                {
-                                    Message = $"The lookup attribute '{attributeName}' on entity '{e.LogicalName}' cannot reference entity type '{entityRef.LogicalName}'. Valid targets are: {string.Join(", ", lookupMetadata.Targets)}."
-                                });
+                                fault,
+                                new System.ServiceModel.FaultReason(fault.Message));
                         }
                     }
                     isValid = true;
@@ -561,11 +576,13 @@ namespace Fake4Dataverse
 
                 if (!isValid)
                 {
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        Message = $"The attribute '{attributeName}' on entity '{e.LogicalName}' has an invalid type. Expected: {expectedType.Name}, but got: {actualType.Name}."
+                    };
                     throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
-                        new Microsoft.Xrm.Sdk.OrganizationServiceFault
-                        {
-                            Message = $"The attribute '{attributeName}' on entity '{e.LogicalName}' has an invalid type. Expected: {expectedType.Name}, but got: {actualType.Name}."
-                        });
+                        fault,
+                        new System.ServiceModel.FaultReason(fault.Message));
                 }
             }
         }
@@ -655,7 +672,7 @@ namespace Fake4Dataverse
             return clone.Id;
         }
 
-        public void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false)
+        public void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false, bool skipValidation = false)
         {
             // Create the entity with defaults
             AddEntityDefaultAttributes(e);
@@ -705,7 +722,7 @@ namespace Fake4Dataverse
             }
 
             // Store (Main Operation)
-            AddEntity(clone ? e.Clone(e.GetType()) : e);
+            AddEntity(clone ? e.Clone(e.GetType()) : e, skipValidation);
 
             // Trigger rollup recalculation for related entities after creation
             // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields
@@ -735,7 +752,7 @@ namespace Fake4Dataverse
             RecordCreateAudit(e);
         }
 
-        public void AddEntity(Entity e)
+        public void AddEntity(Entity e, bool skipValidation = false)
         {
             //Automatically detect proxy types assembly if an early bound type was used.
             if (ProxyTypesAssemblies.Count() == 0 &&
@@ -748,8 +765,8 @@ namespace Fake4Dataverse
 
             var integrityOptions = GetProperty<IIntegrityOptions>();
 
-            // Validate attribute types if enabled
-            if (integrityOptions.ValidateAttributeTypes)
+            // Validate attribute types if enabled and not skipping validation
+            if (!skipValidation && integrityOptions.ValidateAttributeTypes)
             {
                 ValidateAttributeTypes(e);
             }

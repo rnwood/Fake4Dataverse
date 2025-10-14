@@ -241,7 +241,7 @@ namespace Fake4Dataverse
 
             foreach (var e in entities)
             {
-                AddEntityWithDefaults(e, true);
+                AddEntityWithDefaults(e, clone: true, usePluginPipeline: false, skipValidation: true);
             }
 
             Initialised = true;
