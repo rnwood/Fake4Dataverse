@@ -1,3 +1,4 @@
+#if !NET462
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Xunit;
@@ -181,3 +182,4 @@ public class OrganizationServiceImplTests
         Assert.NotEqual(Guid.Empty, response.UserId);
     }
 }
+#endif

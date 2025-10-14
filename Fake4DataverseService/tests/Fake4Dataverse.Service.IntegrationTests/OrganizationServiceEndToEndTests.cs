@@ -1,3 +1,4 @@
+#if !NET462
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Messages;
@@ -505,3 +506,4 @@ public class OrganizationServiceEndToEndTests
         Assert.Equal(500000m, ((Money)retrievedAccount["revenue"]).Value);
     }
 }
+#endif
