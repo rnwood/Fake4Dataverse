@@ -642,5 +642,113 @@ namespace Fake4Dataverse.Tests.FakeMessageExecutors
         }
 
         #endregion
+
+        #region ImportSolutions Tests
+
+        /// <summary>
+        /// Test: ImportSolutions successfully imports multiple solution files
+        /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.importsolutionrequest
+        /// </summary>
+        [Fact]
+        public void Should_Import_Multiple_Solutions_Successfully()
+        {
+            // Arrange
+            var solution1 = CreateTestSolution("TestSolution1", "1.0.0.0", false);
+            var solution2 = CreateTestSolution("TestSolution2", "2.0.0.0", false);
+
+            // Act
+            var xrmContext = _context as XrmFakedContext;
+            xrmContext.ImportSolutions(new byte[][] { solution1, solution2 });
+
+            // Assert
+            var query1 = new QueryExpression("solution")
+            {
+                ColumnSet = new ColumnSet("uniquename"),
+                Criteria = new FilterExpression
+                {
+                    Conditions = { new ConditionExpression("uniquename", ConditionOperator.Equal, "TestSolution1") }
+                }
+            };
+            var solutions1 = _service.RetrieveMultiple(query1);
+            Assert.Single(solutions1.Entities);
+
+            var query2 = new QueryExpression("solution")
+            {
+                ColumnSet = new ColumnSet("uniquename"),
+                Criteria = new FilterExpression
+                {
+                    Conditions = { new ConditionExpression("uniquename", ConditionOperator.Equal, "TestSolution2") }
+                }
+            };
+            var solutions2 = _service.RetrieveMultiple(query2);
+            Assert.Single(solutions2.Entities);
+        }
+
+        /// <summary>
+        /// Test: ImportSolutions throws exception when solution array is null
+        /// </summary>
+        [Fact]
+        public void Should_Throw_Exception_When_ImportSolutions_Array_Is_Null()
+        {
+            // Arrange
+            var xrmContext = _context as XrmFakedContext;
+
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentNullException>(() => xrmContext.ImportSolutions(null));
+            Assert.Contains("solutionFiles", exception.Message);
+        }
+
+        /// <summary>
+        /// Test: ImportSolutions throws exception when any solution file is invalid
+        /// </summary>
+        [Fact]
+        public void Should_Throw_Exception_When_ImportSolutions_Contains_Invalid_File()
+        {
+            // Arrange
+            var solution1 = CreateTestSolution("TestSolution1", "1.0.0.0", false);
+            var invalidSolution = new byte[] { 1, 2, 3, 4, 5 }; // Invalid ZIP
+
+            var xrmContext = _context as XrmFakedContext;
+
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() => 
+                xrmContext.ImportSolutions(new byte[][] { solution1, invalidSolution }));
+            Assert.Contains("Failed to import solution at index 1", exception.Message);
+        }
+
+        /// <summary>
+        /// Test: ImportSolutions stops on first error
+        /// </summary>
+        [Fact]
+        public void Should_Stop_ImportSolutions_On_First_Error()
+        {
+            // Arrange
+            var solution1 = CreateTestSolution("TestSolution1", "1.0.0.0", false);
+            var invalidSolution = new byte[] { 1, 2, 3, 4, 5 }; // Invalid ZIP
+            var solution3 = CreateTestSolution("TestSolution3", "3.0.0.0", false);
+
+            var xrmContext = _context as XrmFakedContext;
+
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() => 
+                xrmContext.ImportSolutions(new byte[][] { solution1, invalidSolution, solution3 }));
+            
+            Assert.Contains("Failed to import solution at index 1", exception.Message);
+            Assert.Contains("1 solution(s) not imported", exception.Message);
+
+            // Verify solution3 was not imported
+            var query = new QueryExpression("solution")
+            {
+                ColumnSet = new ColumnSet("uniquename"),
+                Criteria = new FilterExpression
+                {
+                    Conditions = { new ConditionExpression("uniquename", ConditionOperator.Equal, "TestSolution3") }
+                }
+            };
+            var solutions = _service.RetrieveMultiple(query);
+            Assert.Empty(solutions.Entities);
+        }
+
+        #endregion
     }
 }
