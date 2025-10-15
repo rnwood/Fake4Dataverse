@@ -801,7 +801,7 @@ namespace Fake4Dataverse.Metadata.Cdm
             {
                 return new PicklistAttributeMetadata();
             }
-            else if (normalizedType == "lookup" || normalizedType == "entityreference")
+            else if (normalizedType == "lookup" || normalizedType == "entityreference" || normalizedType == "entityid")
             {
                 return new LookupAttributeMetadata();
             }
