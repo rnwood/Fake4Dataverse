@@ -109,7 +109,7 @@ namespace Fake4Dataverse
             var integrityOptions = GetProperty<IIntegrityOptions>();
             if (integrityOptions.ValidateAttributeTypes)
             {
-                ValidateAttributeTypes(e);
+                ValidateAttributeTypes(e, "Update");
             }
 
             // Thread-safe update with per-entity-type locking for better concurrency
@@ -461,8 +461,11 @@ namespace Fake4Dataverse
         /// Validates that attribute values match their metadata types and that lookup targets are valid.
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
         /// Dataverse validates attribute types at runtime and throws exceptions for type mismatches.
+        /// Also validates IsValidForCreate, IsValidForUpdate, and IsValidForRead properties.
         /// </summary>
-        protected void ValidateAttributeTypes(Entity e)
+        /// <param name="e">The entity to validate</param>
+        /// <param name="operation">The operation being performed (Create, Update, or Read)</param>
+        protected void ValidateAttributeTypes(Entity e, string operation = "Create")
         {
             if (e == null || e.Attributes == null || e.Attributes.Count == 0)
             {
@@ -490,8 +493,9 @@ namespace Fake4Dataverse
             }
 
             // System attributes that are automatically added by the framework
+            // Note: statecode and statuscode are now validated through metadata (IsValidForCreate/Update)
             var systemAttributes = new[] { "createdby", "createdon", "modifiedby", "modifiedon", "ownerid", 
-                                          "statecode", "statuscode", "createdonbehalfby", "modifiedonbehalfby",
+                                          "createdonbehalfby", "modifiedonbehalfby",
                                           $"{e.LogicalName}id" };  // Primary key attribute
 
             foreach (var attributeName in e.Attributes.Keys.ToList())
@@ -520,6 +524,42 @@ namespace Fake4Dataverse
                     var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
                     {
                         Message = $"The attribute '{attributeName}' does not exist on entity '{e.LogicalName}'."
+                    };
+                    throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                        fault,
+                        new System.ServiceModel.FaultReason(fault.Message));
+                }
+
+                // Validate IsValidForCreate, IsValidForUpdate, IsValidForRead based on operation
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // IsValidForCreate: Gets whether the attribute can be set in a Create message. (default varies by attribute)
+                // IsValidForUpdate: Gets whether the attribute can be set in an Update message. (default true for most)
+                // IsValidForRead: Gets whether the attribute can be retrieved. (default true for most)
+                if (operation == "Create" && attributeMetadata.IsValidForCreate.HasValue && !attributeMetadata.IsValidForCreate.Value)
+                {
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        Message = $"The attribute '{attributeName}' on entity '{e.LogicalName}' is not valid for Create operations."
+                    };
+                    throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                        fault,
+                        new System.ServiceModel.FaultReason(fault.Message));
+                }
+                else if (operation == "Update" && attributeMetadata.IsValidForUpdate.HasValue && !attributeMetadata.IsValidForUpdate.Value)
+                {
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        Message = $"The attribute '{attributeName}' on entity '{e.LogicalName}' is not valid for Update operations."
+                    };
+                    throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
+                        fault,
+                        new System.ServiceModel.FaultReason(fault.Message));
+                }
+                else if (operation == "Read" && attributeMetadata.IsValidForRead.HasValue && !attributeMetadata.IsValidForRead.Value)
+                {
+                    var fault = new Microsoft.Xrm.Sdk.OrganizationServiceFault
+                    {
+                        Message = $"The attribute '{attributeName}' on entity '{e.LogicalName}' is not valid for Read operations."
                     };
                     throw new System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>(
                         fault,
@@ -633,6 +673,15 @@ namespace Fake4Dataverse
 
             ValidateEntity(clone);
 
+            // Validate attribute types and IsValidForCreate before adding defaults
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+            // This validates user-provided attributes before system defaults (like statecode) are added
+            var integrityOptions = GetProperty<IIntegrityOptions>();
+            if (integrityOptions.ValidateAttributeTypes)
+            {
+                ValidateAttributeTypes(clone, "Create");
+            }
+
             // Create specific validations
             if (clone.Id != Guid.Empty && 
                 Data.TryGetValue(clone.LogicalName, out var existingCollection) &&
@@ -641,13 +690,7 @@ namespace Fake4Dataverse
                 throw new InvalidOperationException($"There is already a record of entity {clone.LogicalName} with id {clone.Id}, can't create with this Id.");
             }
 
-            // Create specific validations
-            if (clone.Attributes.ContainsKey("statecode"))
-            {
-                throw new InvalidOperationException($"When creating an entity with logical name '{clone.LogicalName}', or any other entity, it is not possible to create records with the statecode property. Statecode must be set after creation.");
-            }
-
-            AddEntityWithDefaults(clone, false, this.UsePipelineSimulation);
+            AddEntityWithDefaults(clone, false, this.UsePipelineSimulation, skipValidation: true);
 
             if (e.RelatedEntities.Count > 0)
             {
@@ -778,9 +821,11 @@ namespace Fake4Dataverse
             var integrityOptions = GetProperty<IIntegrityOptions>();
 
             // Validate attribute types if enabled and not skipping validation
+            // For Create operations called via CreateEntity, validation is done before defaults are added
+            // This skipValidation parameter allows Initialize and other paths to bypass validation
             if (!skipValidation && integrityOptions.ValidateAttributeTypes)
             {
-                ValidateAttributeTypes(e);
+                ValidateAttributeTypes(e, "Create");
             }
 
             foreach (var sAttributeName in e.Attributes.Keys.ToList())
