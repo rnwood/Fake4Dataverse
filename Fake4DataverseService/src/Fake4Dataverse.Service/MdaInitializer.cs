@@ -781,34 +781,43 @@ console.log('Fake4Dataverse utility functions loaded');
     /// </summary>
     private static void CreateActiveSolution(IOrganizationService service)
     {
-        // Use the standard Microsoft Active solution GUID
-        // Reference: This is a well-known GUID used across all Dataverse environments
-        var activeSolutionId = new Guid("FD140AAF-4DF4-11DD-BD17-0019B9312238");
-        
-        // Check if Active solution already exists
         try
         {
-            var existingSolution = service.Retrieve("solution", activeSolutionId, new Microsoft.Xrm.Sdk.Query.ColumnSet("solutionid"));
-            Console.WriteLine($"  Active solution already exists: {activeSolutionId}");
-            return;
-        }
-        catch
-        {
-            // Solution doesn't exist, create it
-        }
+            // Use the standard Microsoft Active solution GUID
+            // Reference: This is a well-known GUID used across all Dataverse environments
+            var activeSolutionId = new Guid("FD140AAF-4DF4-11DD-BD17-0019B9312238");
+            
+            // Check if Active solution already exists
+            try
+            {
+                var existingSolution = service.Retrieve("solution", activeSolutionId, new Microsoft.Xrm.Sdk.Query.ColumnSet("solutionid"));
+                Console.WriteLine($"  Active solution already exists: {activeSolutionId}");
+                return;
+            }
+            catch
+            {
+                // Solution doesn't exist, create it
+            }
 
-        var activeSolution = new Entity("solution")
+            var activeSolution = new Entity("solution")
+            {
+                Id = activeSolutionId,
+                ["uniquename"] = "Active",
+                ["friendlyname"] = "Active",
+                ["version"] = "1.0.0.0",
+                ["ismanaged"] = false,
+                ["isvisible"] = true,
+                ["description"] = "Special solution containing all components in the system"
+            };
+            
+            service.Create(activeSolution);
+            Console.WriteLine($"  Created Active solution: {activeSolutionId}");
+        }
+        catch (Exception ex)
         {
-            Id = activeSolutionId,
-            ["uniquename"] = "Active",
-            ["friendlyname"] = "Active",
-            ["version"] = "1.0.0.0",
-            ["ismanaged"] = false,
-            ["isvisible"] = true,
-            ["description"] = "Special solution containing all components in the system"
-        };
-        
-        service.Create(activeSolution);
-        Console.WriteLine($"  Created Active solution: {activeSolutionId}");
+            // If solution entity doesn't exist in metadata, skip creation
+            // The solution entity will be available when loaded from CDM or defined manually
+            Console.WriteLine($"  Skipping Active solution creation (solution entity not available): {ex.Message}");
+        }
     }
 }
