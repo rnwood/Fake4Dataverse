@@ -126,57 +126,22 @@ public class Program
         });
 
         // Create and register the Fake4Dataverse context with validation enabled
-        // System entity metadata (solution, appmodule, etc.) is loaded from local CDM files
+        // System entity metadata is automatically loaded from embedded resources in Core
         var context = XrmFakedContextFactory.New();
         
-        // Load system entity metadata from local CDM files
+        // Load system entity metadata (solution, appmodule, sitemap, etc.) from embedded resources in Core
         // These system entities are required for Model-Driven App functionality
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/create-model-driven-app-using-code
-        var cdmSchemaPath = Path.Combine(AppContext.BaseDirectory, "cdm-schema-files");
-        
-        var systemEntityFiles = new[]
+        Console.WriteLine("Loading system entity metadata from embedded resources...");
+        try
         {
-            "Solution.cdm.json",
-            "AppModule.cdm.json", 
-            "SiteMap.cdm.json",
-            "SavedQuery.cdm.json",
-            "SystemForm.cdm.json",
-            "WebResource.cdm.json",
-            "AppModuleComponent.cdm.json"
-        };
-        
-        var systemEntityPaths = systemEntityFiles
-            .Select(f => Path.Combine(cdmSchemaPath, f))
-            .Where(File.Exists)
-            .ToArray();
-            
-        if (systemEntityPaths.Length > 0)
-        {
-            Console.WriteLine($"Loading {systemEntityPaths.Length} system entity metadata file(s) from local CDM files...");
-            foreach (var path in systemEntityPaths)
-            {
-                Console.WriteLine($"  - {Path.GetFileName(path)}");
-            }
-            try
-            {
-                context.InitializeMetadataFromCdmFiles(systemEntityPaths);
-                Console.WriteLine("Successfully loaded system entity metadata");
-                
-                // Verify critical entities are loaded
-                var solutionMeta = context.GetEntityMetadataByName("solution");
-                var appmoduleMeta = context.GetEntityMetadataByName("appmodule");
-                Console.WriteLine($"Verified entities loaded: solution={solutionMeta != null}, appmodule={appmoduleMeta != null}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Warning: Failed to load some system entity metadata: {ex.Message}");
-                // Continue - some functionality may not work but service can still start
-            }
+            context.InitializeSystemEntityMetadata();
+            Console.WriteLine("Successfully loaded system entity metadata");
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine($"Warning: System entity CDM files not found at {cdmSchemaPath}");
-            Console.WriteLine("Model-Driven App functionality may be limited.");
+            Console.WriteLine($"Warning: Failed to load system entity metadata: {ex.Message}");
+            // Continue - some functionality may not work but service can still start
         }
         Console.WriteLine();
         
