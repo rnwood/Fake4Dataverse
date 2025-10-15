@@ -60,19 +60,39 @@ namespace Fake4Dataverse.Metadata
                         if (attributeLogicalNameAttribute.LogicalName == "statecode")
                         {
                             attributeMetadata = new StateAttributeMetadata();
+                            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                            // statecode cannot be set during Create (IsValidForCreate=false), but can be updated via SetState
+                            attributeMetadata.SetSealedPropertyValue("IsValidForCreate", false);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForUpdate", true);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForRead", true);
                         }
                         else if (attributeLogicalNameAttribute.LogicalName == "statuscode")
                         {
                             attributeMetadata = new StatusAttributeMetadata();
+                            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                            // statuscode cannot be set during Create (IsValidForCreate=false), managed by statecode
+                            attributeMetadata.SetSealedPropertyValue("IsValidForCreate", false);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForUpdate", true);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForRead", true);
                         }
                         else if (attributeLogicalNameAttribute.LogicalName == metadata.PrimaryIdAttribute)
                         {
                             attributeMetadata = new AttributeMetadata();
                             attributeMetadata.SetSealedPropertyValue("AttributeType", AttributeTypeCode.Uniqueidentifier);
+                            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                            // Primary ID can be set during Create but cannot be changed in Update
+                            attributeMetadata.SetSealedPropertyValue("IsValidForCreate", true);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForUpdate", false);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForRead", true);
                         }
                         else
                         {
                             attributeMetadata = CreateAttributeMetadata(property.PropertyType);
+                            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                            // Most attributes are valid for Create, Update, and Read operations
+                            attributeMetadata.SetSealedPropertyValue("IsValidForCreate", true);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForUpdate", true);
+                            attributeMetadata.SetSealedPropertyValue("IsValidForRead", true);
                         }
 
                         attributeMetadata.SetFieldValue("_entityLogicalName", entityLogicalNameAttribute.LogicalName);

@@ -22,6 +22,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
+- [Metadata Validation](./usage/metadata-validation.md) - IsValidForCreate/Update/Read enforcement ✅ **NEW**
 - [CDM Import](./cdm-import.md) - Import entity metadata from Common Data Model JSON ✅ **NEW**
 - [CDM vs Early-Bound](./cdm-vs-early-bound.md) - Choosing between CDM files and early-bound assemblies ✅ **NEW**
 - [Thread Safety](./thread-safety.md) - Concurrent operations and thread safety ✅ **NEW**

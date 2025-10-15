@@ -97,7 +97,14 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_With_A_StateCode_Property_Exception_Is_Thrown()
         {
-            var service = _context.GetOrganizationService();
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+            // statecode has IsValidForCreate=false, so creating with statecode should fail when metadata validation is enabled
+            
+            // Create context with validation enabled and metadata initialized
+            var contextWithValidation = XrmFakedContextFactory.New();
+            contextWithValidation.InitializeMetadata(typeof(Account).Assembly);
+            var service = contextWithValidation.GetOrganizationService();
+            
             var accId = Guid.NewGuid();
 
             var account = new Account
@@ -107,7 +114,12 @@ namespace Fake4Dataverse.Tests
             };
             account["statecode"] = 2;
 
-            Assert.Throws<InvalidOperationException>(() => service.Create(account));
+            // Should throw FaultException because statecode is not valid for Create
+            var ex = Assert.Throws<System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>>(() => 
+                service.Create(account));
+            
+            Assert.Contains("statecode", ex.Message);
+            Assert.Contains("not valid for Create", ex.Message);
         }
 
         [Fact]

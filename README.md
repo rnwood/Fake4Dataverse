@@ -106,6 +106,7 @@ We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releas
 - **[CRUD Operations](./docs/usage/crud-operations.md)** - Create, Read, Update, Delete operations
 - **[Querying Data](./docs/usage/querying-data.md)** - LINQ and FetchXML queries
 - **[Batch Operations](./docs/usage/batch-operations.md)** - ExecuteMultiple and Transactions
+- **[Metadata Validation](./docs/usage/metadata-validation.md)** - IsValidForCreate/Update/Read enforcement ✅ **NEW**
 - **[CDM Import](./docs/cdm-import.md)** - Import entity metadata from Common Data Model JSON ✅ **NEW**
 - **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
 
@@ -283,6 +284,7 @@ The following table compares the features available across different versions of
 | **OptionSet Metadata** | ⚠️ Limited | ✅ Yes (Repository) | ✅ Full support |
 | **Status/State Metadata** | ⚠️ Limited | ✅ Yes (Repository) | ✅ Full support |
 | **Global OptionSets** | ❌ No | ⚠️ Partial | ✅ Yes |
+| **IsValidForCreate/Update/Read Validation** | ❌ No | ✅ Yes | ⚠️ Unknown¹ |
 | **Publisher Metadata** | ❌ No | ❌ No | ✅ Yes |
 | **Solution Metadata** | ❌ No | ❌ No | ✅ Yes |
 
@@ -392,6 +394,7 @@ Based on this analysis, Fake4Dataverse is missing several features compared to t
 18. **Publisher Metadata** - Not supported
 19. **Solution Metadata** - Not supported
 20. **Complete Metadata Operations** - Many RetrieveMetadata variants missing
+21. **Metadata Validation** - IsValidForCreate/Update/Read fully supported ✅ **IMPLEMENTED** (v4.0.0)
 
 #### Additional Missing Message Executors (estimated 50+ messages):
 21. Various business-specific messages (Marketing, Service, Field Service specific)

@@ -321,5 +321,117 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             var id = _serviceWithValidation.Create(account);
             Assert.NotEqual(Guid.Empty, id);
         }
+
+        [Fact]
+        public void Should_Reject_StateCode_During_Create_When_Validation_Enabled()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+            // IsValidForCreate: Gets whether the attribute can be set in a Create message.
+            // For statecode, IsValidForCreate is false - state must be set after creation using SetState
+            
+            var account = new Entity("account")
+            {
+                ["name"] = "Test Account",
+                ["statecode"] = new OptionSetValue(1)  // Trying to set statecode during create
+            };
+
+            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => 
+                _serviceWithValidation.Create(account));
+            
+            Assert.Contains("statecode", ex.Message);
+            Assert.Contains("not valid for Create", ex.Message);
+        }
+
+        [Fact]
+        public void Should_Reject_StatusCode_During_Create_When_Validation_Enabled()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+            // IsValidForCreate: Gets whether the attribute can be set in a Create message.
+            // For statuscode, IsValidForCreate is false - managed by statecode transitions
+            
+            var account = new Entity("account")
+            {
+                ["name"] = "Test Account",
+                ["statuscode"] = new OptionSetValue(2)  // Trying to set statuscode during create
+            };
+
+            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => 
+                _serviceWithValidation.Create(account));
+            
+            Assert.Contains("statuscode", ex.Message);
+            Assert.Contains("not valid for Create", ex.Message);
+        }
+
+        [Fact]
+        public void Should_Allow_StateCode_During_Update_When_Validation_Enabled()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforupdate
+            // IsValidForUpdate: Gets whether the attribute can be set in an Update message.
+            // For statecode, IsValidForUpdate is true - can be updated (typically via SetState)
+            
+            // First create an account
+            var account = new Entity("account")
+            {
+                ["name"] = "Test Account"
+            };
+            var id = _serviceWithValidation.Create(account);
+
+            // Now update with statecode - should work
+            var updateAccount = new Entity("account")
+            {
+                Id = id,
+                ["statecode"] = new OptionSetValue(1)
+            };
+
+            // Should not throw
+            _serviceWithValidation.Update(updateAccount);
+
+            // Verify it was updated
+            var retrieved = _serviceWithValidation.Retrieve("account", id, new Microsoft.Xrm.Sdk.Query.ColumnSet("statecode"));
+            Assert.Equal(1, ((OptionSetValue)retrieved["statecode"]).Value);
+        }
+
+        [Fact]
+        public void Should_Allow_Regular_Attributes_During_Create()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+            // IsValidForCreate: Most regular attributes have IsValidForCreate=true
+            
+            var account = new Entity("account")
+            {
+                ["name"] = "Test Account",
+                ["telephone1"] = "555-1234",
+                ["numberofemployees"] = 100,
+                ["revenue"] = new Money(1000000m)
+            };
+
+            var id = _serviceWithValidation.Create(account);
+            Assert.NotEqual(Guid.Empty, id);
+
+            // Verify attributes were set
+            var retrieved = _serviceWithValidation.Retrieve("account", id, 
+                new Microsoft.Xrm.Sdk.Query.ColumnSet("name", "telephone1", "numberofemployees", "revenue"));
+            Assert.Equal("Test Account", retrieved["name"]);
+            Assert.Equal("555-1234", retrieved["telephone1"]);
+            Assert.Equal(100, retrieved["numberofemployees"]);
+            Assert.Equal(1000000m, ((Money)retrieved["revenue"]).Value);
+        }
+
+        [Fact]
+        public void Should_Allow_StateCode_Create_When_Validation_Disabled()
+        {
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+            // When validation is disabled, any attribute should be allowed for backward compatibility
+            
+            var account = new Entity("account")
+            {
+                ["name"] = "Test Account",
+                ["statecode"] = new OptionSetValue(1)
+            };
+
+            // Should not throw when validation is disabled
+            var id = _serviceWithoutValidation.Create(account);
+            Assert.NotEqual(Guid.Empty, id);
+        }
     }
 }

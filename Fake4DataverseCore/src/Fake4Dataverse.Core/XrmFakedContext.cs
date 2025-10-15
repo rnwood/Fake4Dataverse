@@ -241,8 +241,10 @@ namespace Fake4Dataverse
 
             foreach (var e in entities)
             {
-                // Initialize validates like normal operations - metadata must be supplied or validation disabled
-                AddEntityWithDefaults(e, clone: true, usePluginPipeline: false, skipValidation: false);
+                // Initialize skips validation to allow test data setup with any state
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // Test initialization should allow statecode and other restricted attributes for flexibility
+                AddEntityWithDefaults(e, clone: true, usePluginPipeline: false, skipValidation: true);
             }
 
             Initialised = true;
