@@ -12,7 +12,7 @@ namespace Fake4Dataverse.Metadata
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata
     /// 
     /// In Dataverse, metadata is accessible through special virtual entities:
-    /// - EntityDefinition (entitydefinition) - Contains entity metadata
+    /// - EntityDefinition (entity) - Contains entity metadata (accessed via REST as EntityDefinition)
     /// - Attribute (attribute) - Contains attribute metadata
     /// 
     /// This class converts between EntityMetadata objects and entity records in these tables,
@@ -29,7 +29,7 @@ namespace Fake4Dataverse.Metadata
             if (metadata == null)
                 throw new ArgumentNullException(nameof(metadata));
             
-            var entity = new Entity("entitydefinition")
+            var entity = new Entity("entity")
             {
                 Id = metadata.MetadataId ?? Guid.NewGuid()
             };
@@ -193,8 +193,8 @@ namespace Fake4Dataverse.Metadata
             if (entity == null)
                 throw new ArgumentNullException(nameof(entity));
             
-            if (entity.LogicalName != "entitydefinition")
-                throw new ArgumentException("Entity must be of type entitydefinition", nameof(entity));
+            if (entity.LogicalName != "entity")
+                throw new ArgumentException("Entity must be of type entity", nameof(entity));
             
             var metadata = new EntityMetadata();
             

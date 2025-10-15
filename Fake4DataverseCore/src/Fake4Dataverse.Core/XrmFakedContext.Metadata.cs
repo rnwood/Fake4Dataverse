@@ -150,11 +150,12 @@ namespace Fake4Dataverse
         /// These system entities are required for Model-Driven App functionality, solution management, and metadata persistence in tests.
         /// 
         /// System entities included:
-        /// - Metadata virtual tables: entitydefinition, attribute, relationship, optionset, entitykey
+        /// - Metadata virtual tables: entity, attribute, relationship, optionset, entitykey
         /// - Solution entities: solution, solutioncomponent, componentdefinition
         /// - Solution-aware entities: appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
         /// 
         /// The metadata virtual tables enable querying metadata as data, matching real Dataverse behavior.
+        /// Note: The entity table is accessed via REST API as EntityDefinition.
         /// Solution-aware entities automatically get special columns (solutionid, overwritetime, componentstate, ismanaged).
         /// See metadata-persistence.md for details.
         /// </summary>
@@ -252,16 +253,16 @@ namespace Fake4Dataverse
                 return;
             
             // Don't try to persist the metadata tables themselves to avoid circular dependency
-            var metadataTables = new[] { "entitydefinition", "attribute", "relationship", "optionset", "entitykey" };
+            var metadataTables = new[] { "entity", "attribute", "relationship", "optionset", "entitykey" };
             if (metadataTables.Contains(metadata.LogicalName))
                 return;
             
             // Metadata tables should always be present (initialized in constructor)
             // If they're not, this is an error condition
-            if (!this.EntityMetadata.ContainsKey("entitydefinition"))
+            if (!this.EntityMetadata.ContainsKey("entity"))
             {
                 throw new InvalidOperationException(
-                    "EntityDefinition metadata table is not initialized. " +
+                    "EntityDefinition metadata table (entity) is not initialized. " +
                     "System entity metadata should be automatically loaded in the constructor.");
             }
             
@@ -276,8 +277,8 @@ namespace Fake4Dataverse
             var entityDefRecord = MetadataPersistenceManager.EntityMetadataToEntityDefinition(metadata);
             
             // Check if EntityDefinition record already exists
-            var existingEntityDef = this.Data.ContainsKey("entitydefinition") 
-                ? this.Data["entitydefinition"].Values.FirstOrDefault(e => 
+            var existingEntityDef = this.Data.ContainsKey("entity") 
+                ? this.Data["entity"].Values.FirstOrDefault(e => 
                     e.GetAttributeValue<string>("logicalname") == metadata.LogicalName)
                 : null;
             
@@ -285,15 +286,15 @@ namespace Fake4Dataverse
             {
                 // Update existing record
                 entityDefRecord.Id = existingEntityDef.Id;
-                this.Data["entitydefinition"][existingEntityDef.Id] = entityDefRecord;
+                this.Data["entity"][existingEntityDef.Id] = entityDefRecord;
             }
             else
             {
                 // Create new record
-                if (!this.Data.ContainsKey("entitydefinition"))
-                    this.Data["entitydefinition"] = new Dictionary<Guid, Entity>();
+                if (!this.Data.ContainsKey("entity"))
+                    this.Data["entity"] = new Dictionary<Guid, Entity>();
                 
-                this.Data["entitydefinition"][entityDefRecord.Id] = entityDefRecord;
+                this.Data["entity"][entityDefRecord.Id] = entityDefRecord;
             }
             
             // Persist attributes if they exist

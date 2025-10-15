@@ -177,7 +177,7 @@ namespace Fake4Dataverse
             GetOrganizationService();
 
             // Initialize system entity metadata automatically
-            // This ensures metadata tables (entitydefinition, attribute) are always available
+            // This ensures metadata tables (entity, attribute) are always available
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
             InitializeSystemEntityMetadata();
 
