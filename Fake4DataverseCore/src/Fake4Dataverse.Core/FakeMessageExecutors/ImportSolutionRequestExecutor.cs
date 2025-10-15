@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -7,6 +8,7 @@ using System.Xml.Linq;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
 using Fake4Dataverse.Abstractions.Exceptions;
+using Fake4Dataverse.FakeMessageExecutors.SolutionComponents;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 
@@ -26,6 +28,20 @@ namespace Fake4Dataverse.FakeMessageExecutors
     /// </summary>
     public class ImportSolutionRequestExecutor : IFakeMessageExecutor
     {
+        private readonly List<ISolutionComponentHandler> _componentHandlers;
+
+        public ImportSolutionRequestExecutor()
+        {
+            // Initialize component handlers for each supported component type
+            _componentHandlers = new List<ISolutionComponentHandler>
+            {
+                new EntityComponentHandler(),
+                new SavedQueryComponentHandler(),
+                new SystemFormComponentHandler(),
+                new WebResourceComponentHandler()
+            };
+        }
+
         public bool CanExecute(OrganizationRequest request)
         {
             return request is ImportSolutionRequest;
@@ -124,7 +140,7 @@ namespace Fake4Dataverse.FakeMessageExecutors
                     }
 
                     // Process solution components
-                    ProcessSolutionComponents(solutionXml, solution, ctx, service, importRequest);
+                    ProcessSolutionComponents(solutionXml, solution, ctx, service, importRequest, zipArchive);
                 }
 
                 // Return successful response with import job ID
@@ -246,7 +262,7 @@ namespace Fake4Dataverse.FakeMessageExecutors
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/solutioncomponent
         /// </summary>
         private void ProcessSolutionComponents(XDocument solutionXml, Entity solution, IXrmFakedContext ctx, 
-            IOrganizationService service, ImportSolutionRequest importRequest)
+            IOrganizationService service, ImportSolutionRequest importRequest, ZipArchive zipArchive)
         {
             var root = solutionXml.Root;
             var rootComponents = root?.Element("SolutionManifest")?.Element("RootComponents");
@@ -279,7 +295,7 @@ namespace Fake4Dataverse.FakeMessageExecutors
                         $"Please ensure the corresponding entity is marked as solution-aware in the componentdefinition table.");
                 }
 
-                // Create or update solution component record
+                // Create or update solution component record via CRUD
                 // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/solutioncomponent
                 // SolutionComponent entity tracks which components belong to which solutions
                 var existingComponents = service.RetrieveMultiple(new Microsoft.Xrm.Sdk.Query.QueryExpression("solutioncomponent")
@@ -314,6 +330,13 @@ namespace Fake4Dataverse.FakeMessageExecutors
 
                     service.Create(solutionComponent);
                 }
+            }
+            
+            // Process component data using component handlers
+            // Each handler processes its specific component type using CRUD operations
+            foreach (var handler in _componentHandlers)
+            {
+                handler.ImportComponent(zipArchive, solution, ctx, service);
             }
         }
 
