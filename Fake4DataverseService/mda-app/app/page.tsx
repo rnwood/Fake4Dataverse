@@ -101,6 +101,15 @@ export default function Home() {
   const [selectedViewId, setSelectedViewId] = useState<string | undefined>(undefined);
   const [pageType, setPageType] = useState<string | undefined>(undefined);
   const [recordId, setRecordId] = useState<string | undefined>(undefined);
+  
+  // Navigation stack for managing back/forward navigation
+  // Stack stores navigation states: { entity, viewId, pageType, recordId }
+  const [navigationStack, setNavigationStack] = useState<Array<{
+    entity: string;
+    viewId?: string;
+    pageType?: string;
+    recordId?: string;
+  }>>([]);
 
   useEffect(() => {
     loadSitemap();
@@ -108,10 +117,24 @@ export default function Home() {
     // Listen for URL changes triggered by navigation
     const handleUrlChange = () => {
       const params = parseUrlParameters();
-      setPageType(params.pagetype);
-      setSelectedEntity(params.etn || null);
-      setRecordId(params.id);
-      setSelectedViewId(params.viewid);
+      const newPageType = params.pagetype;
+      const newEntity = params.etn || null;
+      const newRecordId = params.id;
+      const newViewId = params.viewid;
+      
+      // If navigating to a record form, add current state to navigation stack
+      if (newPageType === 'entityrecord' && newRecordId && selectedEntity && pageType !== 'entityrecord') {
+        setNavigationStack(prev => [...prev, {
+          entity: selectedEntity,
+          viewId: selectedViewId,
+          pageType: pageType,
+        }]);
+      }
+      
+      setPageType(newPageType);
+      setSelectedEntity(newEntity);
+      setRecordId(newRecordId);
+      setSelectedViewId(newViewId);
     };
     
     window.addEventListener('urlchange', handleUrlChange);
@@ -194,10 +217,16 @@ export default function Home() {
 
   /**
    * Navigate to entity and update URL
+   * This is called from the navigation sidebar - should clear the navigation stack
    */
   const handleNavigate = (entityName: string) => {
+    // Clear navigation stack when navigating from navbar
+    setNavigationStack([]);
+    
     setSelectedEntity(entityName);
     setSelectedViewId(undefined); // Reset view when changing entity
+    setPageType(undefined); // Clear page type
+    setRecordId(undefined); // Clear record ID
     
     // Update URL with query parameters
     if (typeof window !== 'undefined' && appModuleId) {
@@ -208,6 +237,88 @@ export default function Home() {
       
       const newUrl = `${window.location.pathname}?${params.toString()}`;
       window.history.pushState({}, '', newUrl);
+    }
+  };
+
+  /**
+   * Navigate to a record form
+   * This adds to the navigation stack for back navigation
+   */
+  const handleNavigateToRecord = (entityName: string, recordId: string) => {
+    // Add current state to navigation stack
+    if (selectedEntity) {
+      setNavigationStack(prev => [...prev, {
+        entity: selectedEntity,
+        viewId: selectedViewId,
+        pageType: pageType,
+        recordId: recordId
+      }]);
+    }
+    
+    setSelectedEntity(entityName);
+    setRecordId(recordId);
+    setPageType('entityrecord');
+    
+    // Update URL
+    if (typeof window !== 'undefined' && appModuleId) {
+      const params = new URLSearchParams();
+      params.set('appid', appModuleId);
+      params.set('pagetype', 'entityrecord');
+      params.set('etn', entityName);
+      params.set('id', recordId);
+      
+      const newUrl = `${window.location.pathname}?${params.toString()}`;
+      window.history.pushState({}, '', newUrl);
+    }
+  };
+
+  /**
+   * Navigate back using the navigation stack
+   */
+  const handleNavigateBack = () => {
+    if (navigationStack.length > 0) {
+      // Pop the last state from stack
+      const previousState = navigationStack[navigationStack.length - 1];
+      setNavigationStack(prev => prev.slice(0, -1));
+      
+      // Restore previous state
+      setSelectedEntity(previousState.entity);
+      setSelectedViewId(previousState.viewId);
+      setPageType(previousState.pageType);
+      setRecordId(previousState.recordId);
+      
+      // Update URL
+      if (typeof window !== 'undefined' && appModuleId) {
+        const params = new URLSearchParams();
+        params.set('appid', appModuleId);
+        if (previousState.pageType) {
+          params.set('pagetype', previousState.pageType);
+        } else {
+          params.set('pagetype', 'entitylist');
+        }
+        params.set('etn', previousState.entity);
+        if (previousState.viewId) {
+          params.set('viewid', previousState.viewId);
+        }
+        if (previousState.recordId) {
+          params.set('id', previousState.recordId);
+        }
+        
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({}, '', newUrl);
+      }
+    } else {
+      // If no history, just clear the form/record view
+      setPageType(undefined);
+      setRecordId(undefined);
+      
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        params.delete('pagetype');
+        params.delete('id');
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.pushState({}, '', newUrl);
+      }
     }
   };
 
@@ -256,29 +367,13 @@ export default function Home() {
             recordId={recordId}
             appModuleId={appModuleId || undefined}
             onClose={() => {
-              // Navigate back to list view
-              if (typeof window !== 'undefined') {
-                const params = new URLSearchParams(window.location.search);
-                params.delete('pagetype');
-                params.delete('id');
-                const newUrl = `${window.location.pathname}?${params.toString()}`;
-                window.history.pushState({}, '', newUrl);
-                setPageType(undefined);
-                setRecordId(undefined);
-              }
+              // Use navigation stack to go back
+              handleNavigateBack();
             }}
             onSave={(savedRecordId) => {
               console.log('Record saved:', savedRecordId);
-              // Optionally navigate back to list view after save
-              if (typeof window !== 'undefined') {
-                const params = new URLSearchParams(window.location.search);
-                params.delete('pagetype');
-                params.delete('id');
-                const newUrl = `${window.location.pathname}?${params.toString()}`;
-                window.history.pushState({}, '', newUrl);
-                setPageType(undefined);
-                setRecordId(undefined);
-              }
+              // Navigate back to list view after save
+              handleNavigateBack();
             }}
           />
         ) : selectedEntity ? (
