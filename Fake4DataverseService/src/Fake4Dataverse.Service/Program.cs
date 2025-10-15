@@ -111,13 +111,6 @@ public class Program
         }
         Console.WriteLine();
         
-        // Set up file-based CDM caching in LocalAppData
-        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var cdmCacheDir = Path.Combine(localAppData, "Fake4Dataverse", "CdmCache");
-        MetadataGenerator.SetCdmCacheDirectory(cdmCacheDir);
-        Console.WriteLine($"CDM file cache directory: {cdmCacheDir}");
-        Console.WriteLine();
-        
         // When using port 0 (auto-assign), Kestrel requires using IP address instead of 'localhost'
         // Reference: https://github.com/dotnet/aspnetcore/issues/29235
         var bindHost = (port == 0 && host == "localhost") ? "127.0.0.1" : host;

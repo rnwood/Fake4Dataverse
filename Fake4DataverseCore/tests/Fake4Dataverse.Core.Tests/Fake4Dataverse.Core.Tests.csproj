@@ -42,15 +42,5 @@
     <ProjectReference Include="..\..\src\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj" />
     <ProjectReference Include="..\..\..\Fake4DataverseAbstractions\src\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj" />
   </ItemGroup>
-  
-  <!-- Copy CDM schema files to output directory for embedded file access -->
-  <ItemGroup>
-    <None Include="..\..\..\cdm-schema-files\*.json" Link="cdm-schema-files\%(Filename)%(Extension)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\..\cdm-schema-files\ATTRIBUTION.md" Link="cdm-schema-files\ATTRIBUTION.md">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 
 </Project>

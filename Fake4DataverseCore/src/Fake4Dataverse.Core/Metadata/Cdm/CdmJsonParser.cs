@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -26,13 +24,6 @@ namespace Fake4Dataverse.Metadata.Cdm
     internal class CdmJsonParser
     {
         private static readonly HttpClient _httpClient = new HttpClient();
-        
-        // In-memory cache for downloaded CDM JSON content
-        private static readonly Dictionary<string, string> _cdmMemoryCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private static readonly object _cacheLock = new object();
-        
-        // File cache directory (optional, set via SetCacheDirectory)
-        private static string _fileCacheDirectory = null;
         
         // Base URL for Microsoft's CDM GitHub repository
         private const string CDM_GITHUB_BASE_URL = "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments";
@@ -117,23 +108,6 @@ namespace Fake4Dataverse.Metadata.Cdm
             { "bookableresource", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/BookableResource.cdm.json" },
             { "bookableresourcebooking", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/BookableResourceBooking.cdm.json" },
         };
-        
-        /// <summary>
-        /// Sets the directory to use for file-based caching of downloaded CDM files.
-        /// If set, downloaded CDM files will be cached to disk in addition to memory.
-        /// </summary>
-        /// <param name="cacheDirectory">Directory path for caching CDM files. Pass null to disable file caching.</param>
-        public static void SetCacheDirectory(string cacheDirectory)
-        {
-            lock (_cacheLock)
-            {
-                _fileCacheDirectory = cacheDirectory;
-                if (!string.IsNullOrEmpty(_fileCacheDirectory) && !Directory.Exists(_fileCacheDirectory))
-                {
-                    Directory.CreateDirectory(_fileCacheDirectory);
-                }
-            }
-        }
         
         /// <summary>
         /// Parses CDM JSON from a file and converts it to EntityMetadata.
@@ -232,7 +206,6 @@ namespace Fake4Dataverse.Metadata.Cdm
         
         /// <summary>
         /// Recursively downloads and parses a CDM JSON file and all its imports.
-        /// Uses caching to avoid repeated downloads of the same file.
         /// </summary>
         /// <param name="url">URL of the CDM JSON file to download</param>
         /// <param name="processedUrls">Set of already processed URLs to avoid circular dependencies</param>
@@ -247,108 +220,8 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             processedUrls.Add(url);
             
-            // Check memory cache first
-            string json = null;
-            lock (_cacheLock)
-            {
-                if (_cdmMemoryCache.TryGetValue(url, out string cachedJson))
-                {
-                    json = cachedJson;
-                }
-            }
-            
-            // Check file cache if memory cache miss and file caching is enabled
-            if (json == null && !string.IsNullOrEmpty(_fileCacheDirectory))
-            {
-                var fileName = GetCacheFileName(url);
-                var filePath = Path.Combine(_fileCacheDirectory, fileName);
-                
-                if (File.Exists(filePath))
-                {
-                    try
-                    {
-                        json = File.ReadAllText(filePath);
-                        
-                        // Store in memory cache for faster subsequent access
-                        lock (_cacheLock)
-                        {
-                            if (!_cdmMemoryCache.ContainsKey(url))
-                            {
-                                _cdmMemoryCache[url] = json;
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // If file read fails, download from network
-                        json = null;
-                    }
-                }
-            }
-            
-            // Check embedded CDM files if still not found
-            if (json == null)
-            {
-                json = TryGetEmbeddedCdmFile(url);
-                
-                if (json != null)
-                {
-                    // Store in memory cache
-                    lock (_cacheLock)
-                    {
-                        if (!_cdmMemoryCache.ContainsKey(url))
-                        {
-                            _cdmMemoryCache[url] = json;
-                        }
-                    }
-                    
-                    // Optionally store in file cache for even faster subsequent access
-                    if (!string.IsNullOrEmpty(_fileCacheDirectory))
-                    {
-                        try
-                        {
-                            var fileName = GetCacheFileName(url);
-                            var filePath = Path.Combine(_fileCacheDirectory, fileName);
-                            Directory.CreateDirectory(_fileCacheDirectory);
-                            File.WriteAllText(filePath, json);
-                        }
-                        catch
-                        {
-                            // Ignore file cache write errors
-                        }
-                    }
-                }
-            }
-            
-            // Download if not cached
-            if (json == null)
-            {
-                json = await _httpClient.GetStringAsync(url);
-                
-                // Store in memory cache
-                lock (_cacheLock)
-                {
-                    if (!_cdmMemoryCache.ContainsKey(url))
-                    {
-                        _cdmMemoryCache[url] = json;
-                    }
-                }
-                
-                // Store in file cache if enabled
-                if (!string.IsNullOrEmpty(_fileCacheDirectory))
-                {
-                    try
-                    {
-                        var fileName = GetCacheFileName(url);
-                        var filePath = Path.Combine(_fileCacheDirectory, fileName);
-                        File.WriteAllText(filePath, json);
-                    }
-                    catch
-                    {
-                        // Ignore file cache write errors
-                    }
-                }
-            }
+            // Download the CDM JSON content
+            string json = await _httpClient.GetStringAsync(url);
             
             var allMetadata = new List<EntityMetadata>();
             
@@ -956,82 +829,6 @@ namespace Fake4Dataverse.Metadata.Cdm
             }
             
             return deduplicated;
-        }
-        
-        /// <summary>
-        /// Generates a safe file name for caching a CDM file based on its URL.
-        /// Uses a stable SHA-256 hash to ensure consistent file names across application runs.
-        /// </summary>
-        private static string GetCacheFileName(string url)
-        {
-            // Use SHA-256 hash for stable, consistent file names
-            using (var sha256 = SHA256.Create())
-            {
-                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(url));
-                var hash = BitConverter.ToString(bytes).Replace("-", "").Substring(0, 8).ToUpperInvariant();
-                var fileName = url.Split('/').Last();
-                return $"{hash}_{fileName}";
-            }
-        }
-
-        /// <summary>
-        /// Attempts to load CDM content from embedded schema files in the repository.
-        /// These files are included to prevent test timeouts and enable offline development.
-        /// 
-        /// Embedded files are located in cdm-schema-files/ directory at the repository root.
-        /// Source: https://github.com/microsoft/CDM (CC BY 4.0 license)
-        /// </summary>
-        private static string TryGetEmbeddedCdmFile(string url)
-        {
-            // Map of known URLs to embedded file names
-            // These are the most commonly used entities for testing
-            var embeddedFileMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments/core/applicationCommon/Account.cdm.json", "Account.cdm.json" },
-                { "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments/core/applicationCommon/Contact.cdm.json", "Contact.cdm.json" },
-                { "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments/core/applicationCommon/foundationCommon/crmCommon/sales/Opportunity.cdm.json", "Opportunity.cdm.json" },
-            };
-            
-            if (!embeddedFileMap.TryGetValue(url, out string embeddedFileName))
-            {
-                return null; // No embedded file for this URL
-            }
-            
-            // Try multiple possible locations for the embedded files
-            var possiblePaths = new[]
-            {
-                // Relative to the assembly location
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cdm-schema-files", embeddedFileName),
-                // Relative to current directory (for development)
-                Path.Combine(Directory.GetCurrentDirectory(), "cdm-schema-files", embeddedFileName),
-                // Up one level (common in test scenarios)
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "cdm-schema-files", embeddedFileName),
-                // Up two levels (for nested test projects)
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "cdm-schema-files", embeddedFileName),
-                // Up three levels (for deeply nested structures)
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "cdm-schema-files", embeddedFileName),
-                // Repository root from test projects
-                Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "..", "..", "cdm-schema-files", embeddedFileName),
-            };
-            
-            foreach (var path in possiblePaths)
-            {
-                try
-                {
-                    var fullPath = Path.GetFullPath(path);
-                    if (File.Exists(fullPath))
-                    {
-                        return File.ReadAllText(fullPath);
-                    }
-                }
-                catch
-                {
-                    // Ignore errors and try next path
-                    continue;
-                }
-            }
-            
-            return null; // Embedded file not found
         }
         
         /// <summary>
