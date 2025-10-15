@@ -151,9 +151,11 @@ namespace Fake4Dataverse
         /// 
         /// System entities included:
         /// - Metadata virtual tables: entitydefinition, attribute, relationship, optionset, entitykey
-        /// - Solution entities: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
+        /// - Solution entities: solution, solutioncomponent, componentdefinition
+        /// - Solution-aware entities: appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
         /// 
         /// The metadata virtual tables enable querying metadata as data, matching real Dataverse behavior.
+        /// Solution-aware entities automatically get special columns (solutionid, overwritetime, componentstate, ismanaged).
         /// See metadata-persistence.md for details.
         /// </summary>
         public void InitializeSystemEntityMetadata()
@@ -162,6 +164,22 @@ namespace Fake4Dataverse
             if (entityMetadatas.Any())
             {
                 this.InitializeMetadata(entityMetadatas);
+            }
+            
+            // Initialize componentdefinition with default solution-aware entities
+            // This marks system entities as solution-aware and adds the required columns
+            SolutionAwareManager.InitializeComponentDefinitions(this);
+            
+            // Update entity metadata to include solution-aware columns
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/work-with-solutions
+            foreach (var entityName in new[] { "systemform", "savedquery", "webresource", "sitemap", "appmodule", "appmodulecomponent" })
+            {
+                var entityMetadata = GetEntityMetadataByName(entityName);
+                if (entityMetadata != null)
+                {
+                    SolutionAwareManager.EnsureSolutionAwareColumns(entityMetadata, this);
+                    SetEntityMetadata(entityMetadata);
+                }
             }
         }
 

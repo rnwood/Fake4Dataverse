@@ -1049,8 +1049,11 @@ namespace Fake4Dataverse.Metadata.Cdm
                 "RelationshipDefinition.cdm.json",
                 "OptionSetDefinition.cdm.json",
                 "EntityKeyDefinition.cdm.json",
-                // Then load other system entities
+                // Then load solution management tables
                 "Solution.cdm.json",
+                "SolutionComponent.cdm.json",
+                "ComponentDefinition.cdm.json",
+                // Then load other system entities
                 "AppModule.cdm.json",
                 "SiteMap.cdm.json",
                 "SavedQuery.cdm.json",
