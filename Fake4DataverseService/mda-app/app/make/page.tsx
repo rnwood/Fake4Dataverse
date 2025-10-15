@@ -7,7 +7,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { makeStyles, tokens, Spinner } from '@fluentui/react-components';
+import { makeStyles, tokens, Spinner, Button } from '@fluentui/react-components';
+import { Home20Regular } from '@fluentui/react-icons';
 import MakeNavigation from './components/MakeNavigation';
 import TableBrowser from './components/TableBrowser';
 import TableDetailView from './components/TableDetailView';
@@ -25,6 +26,14 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
+  },
+  toolbar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '8px 16px',
+    borderBottom: `1px solid ${tokens.colorNeutralStroke1}`,
+    backgroundColor: tokens.colorNeutralBackground3,
   },
   loadingContainer: {
     display: 'flex',
@@ -115,6 +124,19 @@ export default function MakePage() {
         onTableSelect={handleTableSelect}
       />
       <main className={styles.main}>
+        <div className={styles.toolbar}>
+          <Button
+            appearance="subtle"
+            icon={<Home20Regular />}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.href = '/';
+              }
+            }}
+          >
+            Back to App
+          </Button>
+        </div>
         {viewMode === 'browser' && (
           <TableBrowser tables={tables} onTableSelect={handleTableSelect} />
         )}

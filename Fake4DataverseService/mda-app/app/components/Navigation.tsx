@@ -12,11 +12,13 @@ import {
   Tree,
   TreeItem,
   TreeItemLayout,
+  Divider,
 } from '@fluentui/react-components';
 import {
   Navigation20Regular,
   Home20Regular,
   ChevronRight20Regular,
+  Settings20Regular,
 } from '@fluentui/react-icons';
 import type { SiteMapArea, SiteMapGroup, SiteMapSubArea } from '../types/dataverse';
 
@@ -64,6 +66,14 @@ const useStyles = makeStyles({
   selectedSubArea: {
     backgroundColor: tokens.colorNeutralBackground1Selected,
   },
+  makeButton: {
+    width: '100%',
+    justifyContent: 'flex-start',
+    marginBottom: '8px',
+  },
+  divider: {
+    marginBottom: '8px',
+  },
 });
 
 interface NavigationProps {
@@ -87,6 +97,19 @@ export default function Navigation({ areas, selectedEntity, onNavigate }: Naviga
         <Navigation20Regular /> Model-Driven App
       </div>
       <div className={styles.scrollArea}>
+        <Button
+          appearance="subtle"
+          icon={<Settings20Regular />}
+          className={styles.makeButton}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/make';
+            }
+          }}
+        >
+          Solutions & Tables
+        </Button>
+        <Divider className={styles.divider} />
         {areas.map((area) => (
           <div key={area.id}>
             <div className={styles.areaTitle}>
