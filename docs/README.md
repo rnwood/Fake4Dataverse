@@ -127,6 +127,37 @@ public class MyPluginTests
 }
 ```
 
+## 🆕 What's New in v4.0
+
+### System Entity Metadata (Embedded in Core)
+
+**Key Difference from FakeXrmEasy v2+**: Fake4Dataverse includes system entity metadata as embedded resources in the Core library.
+
+```csharp
+// Load system entities (solution, appmodule, sitemap, etc.)
+var context = XrmFakedContextFactory.New();
+context.InitializeSystemEntityMetadata();
+
+// Work with system entities with validation enabled
+var solution = new Entity("solution")
+{
+    ["uniquename"] = "TestSolution",
+    ["friendlyname"] = "Test Solution"
+};
+var solutionId = service.Create(solution);
+```
+
+**Benefits:**
+- ✅ No external CDM files needed for system entities
+- ✅ Validation enabled by default
+- ✅ Perfect for MDA and ALM testing
+- ✅ Embedded in Core library
+
+**Available System Entities:**
+- solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
+
+**Learn more**: [CDM Import Guide](./cdm-import.md) | [CDM vs Early-Bound](./cdm-vs-early-bound.md)
+
 ## Getting Help
 
 - **Questions?** Check the [FAQ](./getting-started/faq.md)

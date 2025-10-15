@@ -4,13 +4,56 @@ This document explains how to use CDM (Common Data Model) entities as an alterna
 
 ## Background
 
-When metadata validation is enabled (default in v4.0.0+), tests need entity metadata to function properly. There are three main approaches:
+When metadata validation is enabled (default in v4.0.0+), tests need entity metadata to function properly. There are four main approaches:
 
-1. **Disable validation** (backward compatibility) - Inherit from `Fake4DataverseTests`
-2. **Early-bound assemblies** - Use `EnableProxyTypes()` or `InitializeMetadata(assembly)`
-3. **CDM files** (Recommended) - Use `InitializeMetadataFromCdmFile()` or CDM schema downloads
+1. **Use embedded system entities** (v4.0+) - Automatic for system entities only
+2. **Disable validation** (backward compatibility) - Inherit from `Fake4DataverseTests`
+3. **Early-bound assemblies** - Use `EnableProxyTypes()` or `InitializeMetadata(assembly)`
+4. **CDM files** (Recommended) - Use `InitializeMetadataFromCdmFile()` or CDM schema downloads
 
-## Approach 1: Disable Validation (Quick Fix)
+## Approach 1: Embedded System Entities (v4.0+)
+
+**🆕 Key Difference from FakeXrmEasy v2+**: System entity metadata is embedded in Fake4Dataverse Core.
+
+If you're working with system entities (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent), they're automatically available:
+
+```csharp
+public class MyTests
+{
+    [Fact]
+    public void My_Test()
+    {
+        var context = XrmFakedContextFactory.New();
+        
+        // Load system entity metadata from embedded resources
+        context.InitializeSystemEntityMetadata();
+        
+        var service = context.GetOrganizationService();
+        
+        // System entities are now available with validation enabled
+        var solution = new Entity("solution")
+        {
+            ["uniquename"] = "TestSolution",
+            ["friendlyname"] = "Test Solution"
+        };
+        var solutionId = service.Create(solution);
+        
+        // Test logic...
+    }
+}
+```
+
+**Pros:**
+- No external files needed
+- Validation enabled by default
+- Perfect for MDA and ALM testing
+- Embedded in Core library
+
+**Cons:**
+- Only covers system entities
+- Not available for custom or standard business entities
+
+## Approach 2: Disable Validation (Quick Fix)
 
 For tests that don't need validation, inherit from `Fake4DataverseTests`:
 
@@ -34,7 +77,7 @@ public class MyTests : Fake4DataverseTests
 }
 ```
 
-## Approach 2: Early-Bound Assemblies (Traditional)
+## Approach 3: Early-Bound Assemblies (Traditional)
 
 Use generated early-bound classes:
 
@@ -79,11 +122,11 @@ context.InitializeMetadata(typeof(Account).Assembly);
 - Needs regeneration when schema changes
 - Tight coupling to specific schema version
 
-## Approach 3: CDM Files (Recommended Alternative)
+## Approach 4: CDM Files (Recommended Alternative)
 
 Use CDM JSON files for metadata:
 
-### Option 3A: Local CDM Files
+### Option 4A: Local CDM Files
 
 ```csharp
 public class MyTests
@@ -108,7 +151,7 @@ public class MyTests
 }
 ```
 
-### Option 3B: Standard CDM Schemas (Download from Microsoft)
+### Option 4B: Standard CDM Schemas (Download from Microsoft)
 
 ```csharp
 public class MyTests
@@ -142,7 +185,7 @@ Available standard schemas:
 - `portals` - Power Pages/Portal entities
 - `customerinsights` - Customer Insights entities
 
-### Option 3C: Specific Standard Entities
+### Option 4C: Specific Standard Entities
 
 ```csharp
 // Load only specific entities
@@ -197,23 +240,26 @@ Create your own CDM files:
 
 ## Comparison Table
 
-| Feature | Disable Validation | Early-Bound | CDM Files |
-|---------|-------------------|-------------|-----------|
-| Type Safety | ❌ No | ✅ Yes | ❌ No |
-| IntelliSense | ❌ No | ✅ Yes | ❌ No |
-| Code Generation | ❌ Not needed | ⚠️ Required | ❌ Not needed |
-| Validation | ❌ Disabled | ✅ Enabled | ✅ Enabled |
-| File Size | ✅ Small | ❌ Large | ✅ Small |
-| Schema Changes | ✅ Easy | ⚠️ Regenerate | ✅ Easy |
-| Portability | ✅ High | ❌ Low | ✅ Very High |
-| Microsoft Standard | N/A | ⚠️ Proprietary | ✅ Yes (CDM) |
+| Feature | System Entities (v4.0+) | Disable Validation | Early-Bound | CDM Files |
+|---------|------------------------|-------------------|-------------|-----------|
+| Type Safety | ❌ No | ❌ No | ✅ Yes | ❌ No |
+| IntelliSense | ❌ No | ❌ No | ✅ Yes | ❌ No |
+| Code Generation | ❌ Not needed | ❌ Not needed | ⚠️ Required | ❌ Not needed |
+| Validation | ✅ Enabled | ❌ Disabled | ✅ Enabled | ✅ Enabled |
+| File Size | ✅ Embedded in Core | ✅ Small | ❌ Large | ✅ Small |
+| Schema Changes | ✅ Auto-updated | ✅ Easy | ⚠️ Regenerate | ✅ Easy |
+| Portability | ✅ Very High | ✅ High | ❌ Low | ✅ Very High |
+| Microsoft Standard | ✅ Yes (CDM) | N/A | ⚠️ Proprietary | ✅ Yes (CDM) |
+| Entity Coverage | ⚠️ System only | ✅ All | ✅ All | ✅ All |
+| Setup Required | ❌ No | ❌ No | ⚠️ Code generation | ⚠️ CDM files |
 
 ## Recommendations
 
-1. **For quick test fixes**: Inherit from `Fake4DataverseTests` (disables validation)
-2. **For new tests**: Use CDM files for better portability and maintainability
-3. **For existing early-bound tests**: Keep as-is unless refactoring
-4. **For production code**: Consider early-bound for type safety, CDM for flexibility
+1. **For system entities**: Use `InitializeSystemEntityMetadata()` (v4.0+ feature)
+2. **For quick test fixes**: Inherit from `Fake4DataverseTests` (disables validation)
+3. **For new tests**: Use CDM files for better portability and maintainability
+4. **For existing early-bound tests**: Keep as-is unless refactoring
+5. **For production code**: Consider early-bound for type safety, CDM for flexibility
 
 ## Migration Examples
 
