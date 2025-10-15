@@ -1,0 +1,161 @@
+{
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [],
+  "definitions": [
+    {
+      "$type": "LocalEntity",
+      "name": "Attribute",
+      "description": "Attribute metadata definition",
+      "sourceName": "attribute",
+      "displayName": "Attribute",
+      "primaryKey": "MetadataId",
+      "hasAttributes": [
+        {
+          "name": "MetadataId",
+          "dataType": "guid",
+          "sourceName": "metadataid",
+          "isPrimaryKey": true,
+          "description": "Unique identifier of the attribute metadata"
+        },
+        {
+          "name": "LogicalName",
+          "dataType": "string",
+          "sourceName": "logicalname",
+          "maximumLength": 128,
+          "description": "Logical name of the attribute"
+        },
+        {
+          "name": "SchemaName",
+          "dataType": "string",
+          "sourceName": "schemaname",
+          "maximumLength": 128,
+          "description": "Schema name of the attribute"
+        },
+        {
+          "name": "DisplayName",
+          "dataType": "string",
+          "sourceName": "displayname",
+          "maximumLength": 256,
+          "description": "Display name of the attribute"
+        },
+        {
+          "name": "Description",
+          "dataType": "string",
+          "sourceName": "description",
+          "maximumLength": 2000,
+          "description": "Description of the attribute"
+        },
+        {
+          "name": "AttributeType",
+          "dataType": "integer",
+          "sourceName": "attributetype",
+          "description": "Type of the attribute (0=Boolean, 1=Customer, 2=DateTime, etc.)"
+        },
+        {
+          "name": "AttributeTypeName",
+          "dataType": "string",
+          "sourceName": "attributetypename",
+          "maximumLength": 128,
+          "description": "Type name of the attribute"
+        },
+        {
+          "name": "EntityLogicalName",
+          "dataType": "string",
+          "sourceName": "entitylogicalname",
+          "maximumLength": 128,
+          "description": "Logical name of the parent entity"
+        },
+        {
+          "name": "IsCustomAttribute",
+          "dataType": "boolean",
+          "sourceName": "iscustomattribute",
+          "description": "Whether the attribute is custom"
+        },
+        {
+          "name": "IsManaged",
+          "dataType": "boolean",
+          "sourceName": "ismanaged",
+          "description": "Whether the attribute is managed"
+        },
+        {
+          "name": "IsCustomizable",
+          "dataType": "boolean",
+          "sourceName": "iscustomizable",
+          "description": "Whether the attribute is customizable"
+        },
+        {
+          "name": "IsPrimaryId",
+          "dataType": "boolean",
+          "sourceName": "isprimaryid",
+          "description": "Whether the attribute is the primary id"
+        },
+        {
+          "name": "IsPrimaryName",
+          "dataType": "boolean",
+          "sourceName": "isprimaryname",
+          "description": "Whether the attribute is the primary name"
+        },
+        {
+          "name": "IsValidForCreate",
+          "dataType": "boolean",
+          "sourceName": "isvalidforcreate",
+          "description": "Whether the attribute is valid for create"
+        },
+        {
+          "name": "IsValidForUpdate",
+          "dataType": "boolean",
+          "sourceName": "isvalidforupdate",
+          "description": "Whether the attribute is valid for update"
+        },
+        {
+          "name": "IsValidForRead",
+          "dataType": "boolean",
+          "sourceName": "isvalidforread",
+          "description": "Whether the attribute is valid for read"
+        },
+        {
+          "name": "RequiredLevel",
+          "dataType": "integer",
+          "sourceName": "requiredlevel",
+          "description": "Required level of the attribute (0=None, 1=SystemRequired, 2=ApplicationRequired, 3=Recommended)"
+        },
+        {
+          "name": "IsAuditEnabled",
+          "dataType": "boolean",
+          "sourceName": "isauditenabled",
+          "description": "Whether auditing is enabled for the attribute"
+        },
+        {
+          "name": "IsSecured",
+          "dataType": "boolean",
+          "sourceName": "issecured",
+          "description": "Whether field-level security is enabled"
+        },
+        {
+          "name": "MaxLength",
+          "dataType": "integer",
+          "sourceName": "maxlength",
+          "description": "Maximum length for string attributes"
+        },
+        {
+          "name": "Precision",
+          "dataType": "integer",
+          "sourceName": "precision",
+          "description": "Precision for decimal attributes"
+        },
+        {
+          "name": "MinValue",
+          "dataType": "decimal",
+          "sourceName": "minvalue",
+          "description": "Minimum value for numeric attributes"
+        },
+        {
+          "name": "MaxValue",
+          "dataType": "decimal",
+          "sourceName": "maxvalue",
+          "description": "Maximum value for numeric attributes"
+        }
+      ]
+    }
+  ]
+}

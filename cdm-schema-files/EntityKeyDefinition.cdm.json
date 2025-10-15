@@ -1,0 +1,70 @@
+{
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [],
+  "definitions": [
+    {
+      "$type": "LocalEntity",
+      "name": "EntityKey",
+      "description": "EntityKey metadata definition",
+      "sourceName": "entitykey",
+      "displayName": "Entity Key",
+      "primaryKey": "MetadataId",
+      "hasAttributes": [
+        {
+          "name": "MetadataId",
+          "dataType": "guid",
+          "sourceName": "metadataid",
+          "isPrimaryKey": true,
+          "description": "Unique identifier of the entity key metadata"
+        },
+        {
+          "name": "LogicalName",
+          "dataType": "string",
+          "sourceName": "logicalname",
+          "maximumLength": 128,
+          "description": "Logical name of the entity key"
+        },
+        {
+          "name": "SchemaName",
+          "dataType": "string",
+          "sourceName": "schemaname",
+          "maximumLength": 128,
+          "description": "Schema name of the entity key"
+        },
+        {
+          "name": "DisplayName",
+          "dataType": "string",
+          "sourceName": "displayname",
+          "maximumLength": 256,
+          "description": "Display name of the entity key"
+        },
+        {
+          "name": "EntityLogicalName",
+          "dataType": "string",
+          "sourceName": "entitylogicalname",
+          "maximumLength": 128,
+          "description": "Logical name of the parent entity"
+        },
+        {
+          "name": "KeyAttributes",
+          "dataType": "string",
+          "sourceName": "keyattributes",
+          "maximumLength": 2000,
+          "description": "Comma-separated list of attribute logical names in the key"
+        },
+        {
+          "name": "IsCustomEntityKey",
+          "dataType": "boolean",
+          "sourceName": "iscustomentitykey",
+          "description": "Whether the entity key is custom"
+        },
+        {
+          "name": "IsManaged",
+          "dataType": "boolean",
+          "sourceName": "ismanaged",
+          "description": "Whether the entity key is managed"
+        }
+      ]
+    }
+  ]
+}

@@ -42,9 +42,18 @@ namespace Fake4Dataverse
 
                 if (EntityMetadata.ContainsKey(eMetadata.LogicalName))
                 {
-                    throw new Exception("An entity metadata record with the same logical name was previously added. ");
+                    // Skip if entity is already present (e.g., system entities loaded in constructor)
+                    // Update existing metadata instead of throwing an error
+                    EntityMetadata[eMetadata.LogicalName] = eMetadata.Copy();
                 }
-                EntityMetadata.Add(eMetadata.LogicalName, eMetadata.Copy());
+                else
+                {
+                    EntityMetadata.Add(eMetadata.LogicalName, eMetadata.Copy());
+                }
+                
+                // Persist metadata to standard Dataverse tables
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata
+                PersistMetadataToTables(eMetadata);
             }
         }
 
@@ -137,11 +146,15 @@ namespace Fake4Dataverse
         /// Initialize system entity metadata from embedded CDM resources.
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
         /// 
-        /// This method loads system entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent)
-        /// from embedded CDM schema files in the Fake4Dataverse.Core assembly. These system entities are required for
-        /// Model-Driven App functionality and solution management in tests.
+        /// This method loads system entity metadata from embedded CDM schema files in the Fake4Dataverse.Core assembly. 
+        /// These system entities are required for Model-Driven App functionality, solution management, and metadata persistence in tests.
         /// 
-        /// System entities included: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
+        /// System entities included:
+        /// - Metadata virtual tables: entitydefinition, attribute, relationship, optionset, entitykey
+        /// - Solution entities: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
+        /// 
+        /// The metadata virtual tables enable querying metadata as data, matching real Dataverse behavior.
+        /// See metadata-persistence.md for details.
         /// </summary>
         public void InitializeSystemEntityMetadata()
         {
@@ -174,6 +187,10 @@ namespace Fake4Dataverse
                 this.EntityMetadata[em.LogicalName] = em.Copy();
             else
                 this.EntityMetadata.Add(em.LogicalName, em.Copy());
+            
+            // Persist metadata to standard Dataverse tables
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata
+            PersistMetadataToTables(em);
         }
 
         public AttributeMetadata GetAttributeMetadataFor(string sEntityName, string sAttributeName, Type attributeType)
@@ -195,6 +212,102 @@ namespace Fake4Dataverse
             }
             //Default
             return new StringAttributeMetadata(sAttributeName);
+        }
+        
+        /// <summary>
+        /// Persists entity metadata to standard Dataverse metadata tables (EntityDefinition and Attribute).
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata
+        /// 
+        /// In Dataverse, metadata is accessible through special virtual entities:
+        /// - EntityDefinition (entitydefinition) - Contains entity metadata
+        /// - Attribute (attribute) - Contains attribute metadata
+        /// - Relationship (relationship) - Contains relationship metadata
+        /// - OptionSet (optionset) - Contains optionset metadata
+        /// - EntityKey (entitykey) - Contains entity key metadata
+        /// 
+        /// This method stores metadata in these tables so it can be queried like regular entity data.
+        /// The metadata tables are always initialized in the constructor, so they should always be available.
+        /// </summary>
+        private void PersistMetadataToTables(EntityMetadata metadata)
+        {
+            if (metadata == null || string.IsNullOrWhiteSpace(metadata.LogicalName))
+                return;
+            
+            // Don't try to persist the metadata tables themselves to avoid circular dependency
+            var metadataTables = new[] { "entitydefinition", "attribute", "relationship", "optionset", "entitykey" };
+            if (metadataTables.Contains(metadata.LogicalName))
+                return;
+            
+            // Metadata tables should always be present (initialized in constructor)
+            // If they're not, this is an error condition
+            if (!this.EntityMetadata.ContainsKey("entitydefinition"))
+            {
+                throw new InvalidOperationException(
+                    "EntityDefinition metadata table is not initialized. " +
+                    "System entity metadata should be automatically loaded in the constructor.");
+            }
+            
+            if (!this.EntityMetadata.ContainsKey("attribute"))
+            {
+                throw new InvalidOperationException(
+                    "Attribute metadata table is not initialized. " +
+                    "System entity metadata should be automatically loaded in the constructor.");
+            }
+            
+            // Convert EntityMetadata to EntityDefinition record
+            var entityDefRecord = MetadataPersistenceManager.EntityMetadataToEntityDefinition(metadata);
+            
+            // Check if EntityDefinition record already exists
+            var existingEntityDef = this.Data.ContainsKey("entitydefinition") 
+                ? this.Data["entitydefinition"].Values.FirstOrDefault(e => 
+                    e.GetAttributeValue<string>("logicalname") == metadata.LogicalName)
+                : null;
+            
+            if (existingEntityDef != null)
+            {
+                // Update existing record
+                entityDefRecord.Id = existingEntityDef.Id;
+                this.Data["entitydefinition"][existingEntityDef.Id] = entityDefRecord;
+            }
+            else
+            {
+                // Create new record
+                if (!this.Data.ContainsKey("entitydefinition"))
+                    this.Data["entitydefinition"] = new Dictionary<Guid, Entity>();
+                
+                this.Data["entitydefinition"][entityDefRecord.Id] = entityDefRecord;
+            }
+            
+            // Persist attributes if they exist
+            if (metadata.Attributes != null && metadata.Attributes.Length > 0)
+            {
+                foreach (var attrMetadata in metadata.Attributes)
+                {
+                    var attrRecord = MetadataPersistenceManager.AttributeMetadataToAttribute(attrMetadata, metadata.LogicalName);
+                    
+                    // Check if Attribute record already exists
+                    var existingAttr = this.Data.ContainsKey("attribute")
+                        ? this.Data["attribute"].Values.FirstOrDefault(a =>
+                            a.GetAttributeValue<string>("entitylogicalname") == metadata.LogicalName &&
+                            a.GetAttributeValue<string>("logicalname") == attrMetadata.LogicalName)
+                        : null;
+                    
+                    if (existingAttr != null)
+                    {
+                        // Update existing record
+                        attrRecord.Id = existingAttr.Id;
+                        this.Data["attribute"][existingAttr.Id] = attrRecord;
+                    }
+                    else
+                    {
+                        // Create new record
+                        if (!this.Data.ContainsKey("attribute"))
+                            this.Data["attribute"] = new Dictionary<Guid, Entity>();
+                        
+                        this.Data["attribute"][attrRecord.Id] = attrRecord;
+                    }
+                }
+            }
         }
 
     }

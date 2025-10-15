@@ -25,6 +25,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Metadata Validation](./usage/metadata-validation.md) - IsValidForCreate/Update/Read enforcement ✅ **NEW**
 - [CDM Import](./cdm-import.md) - Import entity metadata from Common Data Model JSON ✅ **NEW**
 - [CDM vs Early-Bound](./cdm-vs-early-bound.md) - Choosing between CDM files and early-bound assemblies ✅ **NEW**
+- [Metadata Persistence](./metadata-persistence.md) - Query metadata from EntityDefinition and Attribute tables ✅ **NEW**
 - [Thread Safety](./thread-safety.md) - Concurrent operations and thread safety ✅ **NEW**
 - [Alternate Keys](./usage/alternate-keys.md) - Using alternate keys for record identification ✅ **NEW**
 - [Duplicate Detection](./usage/duplicate-detection.md) - Testing duplicate detection rules ✅ **NEW**
@@ -78,6 +79,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Test a plugin**: See [Testing Plugins](./usage/testing-plugins.md)
 - **Query test data**: Check [Querying Data](./usage/querying-data.md)
 - **Use standard entity schemas**: See [CDM Import](./cdm-import.md)
+- **Query metadata as data**: See [Metadata Persistence](./metadata-persistence.md)
 - **Test concurrent operations**: See [Thread Safety](./thread-safety.md)
 - **Use alternate keys**: See [Alternate Keys](./usage/alternate-keys.md)
 - **Test duplicate detection**: Check [Duplicate Detection](./usage/duplicate-detection.md)
