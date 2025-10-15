@@ -17,6 +17,10 @@ public static class MdaInitializer
     {
         Console.WriteLine("Initializing example Model-Driven App metadata...");
         
+        // Create Active solution (special Microsoft solution containing all components)
+        // Reference: https://learn.microsoft.com/en-us/power-platform/alm/solution-concepts-alm#active-solution
+        CreateActiveSolution(service);
+        
         // Create AppModule
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/appmodule
         var appModuleId = Guid.NewGuid();
@@ -767,5 +771,44 @@ console.log('Fake4Dataverse utility functions loaded');
         };
         service.Create(utilityResource);
         Console.WriteLine($"    Created WebResource: {utilityResourceId} (fake4dataverse_utils.js)");
+    }
+
+    /// <summary>
+    /// Create the Active solution - a special Microsoft solution that contains all components
+    /// Reference: https://learn.microsoft.com/en-us/power-platform/alm/solution-concepts-alm#active-solution
+    /// The Active solution uses Microsoft's standard GUID: FD140AAF-4DF4-11DD-BD17-0019B9312238
+    /// This solution is not modifiable by users and automatically contains all components
+    /// </summary>
+    private static void CreateActiveSolution(IOrganizationService service)
+    {
+        // Use the standard Microsoft Active solution GUID
+        // Reference: This is a well-known GUID used across all Dataverse environments
+        var activeSolutionId = new Guid("FD140AAF-4DF4-11DD-BD17-0019B9312238");
+        
+        // Check if Active solution already exists
+        try
+        {
+            var existingSolution = service.Retrieve("solution", activeSolutionId, new Microsoft.Xrm.Sdk.Query.ColumnSet("solutionid"));
+            Console.WriteLine($"  Active solution already exists: {activeSolutionId}");
+            return;
+        }
+        catch
+        {
+            // Solution doesn't exist, create it
+        }
+
+        var activeSolution = new Entity("solution")
+        {
+            Id = activeSolutionId,
+            ["uniquename"] = "Active",
+            ["friendlyname"] = "Active",
+            ["version"] = "1.0.0.0",
+            ["ismanaged"] = false,
+            ["isvisible"] = true,
+            ["description"] = "Special solution containing all components in the system"
+        };
+        
+        service.Create(activeSolution);
+        Console.WriteLine($"  Created Active solution: {activeSolutionId}");
     }
 }
