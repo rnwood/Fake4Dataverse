@@ -875,15 +875,17 @@ namespace Fake4Dataverse.Metadata.Cdm
         {
             var systemEntityFiles = new[]
             {
+                // Load metadata tables first to enable persistence of other system entities
+                "EntityDefinition.cdm.json",
+                "Attribute.cdm.json",
+                // Then load other system entities
                 "Solution.cdm.json",
                 "AppModule.cdm.json",
                 "SiteMap.cdm.json",
                 "SavedQuery.cdm.json",
                 "SystemForm.cdm.json",
                 "WebResource.cdm.json",
-                "AppModuleComponent.cdm.json",
-                "EntityDefinition.cdm.json",
-                "Attribute.cdm.json"
+                "AppModuleComponent.cdm.json"
             };
             
             var allMetadata = new List<EntityMetadata>();

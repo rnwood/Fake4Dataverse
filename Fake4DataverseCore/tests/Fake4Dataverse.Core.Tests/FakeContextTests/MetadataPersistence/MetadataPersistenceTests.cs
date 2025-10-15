@@ -21,14 +21,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
     /// 
     /// These tests verify that when entity metadata is initialized, it's also persisted
     /// to these standard tables so it can be queried like regular entity data.
+    /// 
+    /// Note: System entity metadata (including entitydefinition and attribute tables) is 
+    /// automatically initialized in the context constructor, so no explicit initialization is needed.
     /// </summary>
     public class MetadataPersistenceTests : Fake4DataverseTests
     {
-        public MetadataPersistenceTests()
-        {
-            // Initialize system entity metadata to include entitydefinition and attribute tables
-            _context.InitializeSystemEntityMetadata();
-        }
 
         [Fact]
         public void Should_Persist_EntityMetadata_To_EntityDefinition_Table_When_Metadata_Initialized()
@@ -167,9 +165,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
         }
 
         [Fact]
-        public void Should_Not_Fail_When_Metadata_Tables_Not_Initialized()
+        public void Should_Have_Metadata_Tables_Initialized_Automatically()
         {
-            // Arrange - Create new context without system entity metadata
+            // Arrange - Create new context
             var context = XrmFakedContextFactory.New(new IntegrityOptions
             {
                 ValidateEntityReferences = false,
@@ -177,22 +175,24 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
             });
             var service = context.GetOrganizationService();
 
-            var entityMetadata = new EntityMetadata()
+            // Assert - Metadata tables should be automatically initialized
+            var entityDefMetadata = context.GetEntityMetadataByName("entitydefinition");
+            Assert.NotNull(entityDefMetadata);
+            Assert.Equal("entitydefinition", entityDefMetadata.LogicalName);
+            
+            var attributeMetadata = context.GetEntityMetadataByName("attribute");
+            Assert.NotNull(attributeMetadata);
+            Assert.Equal("attribute", attributeMetadata.LogicalName);
+            
+            // Verify we can query the tables
+            var query = new QueryExpression("entitydefinition")
             {
-                LogicalName = "testentity",
-                SchemaName = "TestEntity"
+                ColumnSet = new ColumnSet("logicalname")
             };
-            entityMetadata.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
-
-            // Act & Assert - Should not throw exception even if tables don't exist
-            Action act = () => context.InitializeMetadata(entityMetadata);
-            var exception = Record.Exception(act);
-            Assert.Null(exception);
-
-            // Verify metadata is still in dictionary
-            var retrievedMetadata = context.GetEntityMetadataByName("testentity");
-            Assert.NotNull(retrievedMetadata);
-            Assert.Equal("testentity", retrievedMetadata.LogicalName);
+            
+            var results = service.RetrieveMultiple(query);
+            Assert.NotNull(results);
+            Assert.NotEmpty(results.Entities);
         }
 
         [Fact]

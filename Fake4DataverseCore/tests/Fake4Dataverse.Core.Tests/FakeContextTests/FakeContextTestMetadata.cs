@@ -1,3 +1,4 @@
+using Fake4Dataverse.Extensions;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -45,24 +46,44 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         }
 
         [Fact]
-        public void Should_throw_exception_if_entity_name_is_duplicated_during_initialisation()
+        public void Should_update_existing_entity_metadata_if_duplicated_during_initialisation()
         {
             var ctx = new XrmFakedContext();
-            var entityMetadata = new EntityMetadata()
+            var entityMetadata1 = new EntityMetadata()
             {
-                LogicalName = "account"
+                LogicalName = "account",
+                SchemaName = "Account1"
             };
-            Assert.Throws<Exception>(() =>
-                ctx.InitializeMetadata(new List<EntityMetadata>() {
-                    entityMetadata,
-                    entityMetadata
-                }));
+            entityMetadata1.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
+            
+            var entityMetadata2 = new EntityMetadata()
+            {
+                LogicalName = "account",
+                SchemaName = "Account2" // Different schema name
+            };
+            entityMetadata2.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
+            
+            // Should not throw - second one updates the first
+            ctx.InitializeMetadata(new List<EntityMetadata>() {
+                entityMetadata1,
+                entityMetadata2
+            });
+            
+            // Verify the second one was used (updated)
+            var accountMetadata = ctx.GetEntityMetadataByName("account");
+            Assert.NotNull(accountMetadata);
+            Assert.Equal("Account2", accountMetadata.SchemaName);
         }
 
         [Fact]
-        public void Should_contain_one_entity_metadata_after_initialisation()
+        public void Should_contain_system_entities_plus_initialized_entity()
         {
             var ctx = new XrmFakedContext();
+            
+            // System entities are automatically loaded (entitydefinition, attribute, solution, etc.)
+            var initialCount = ctx.CreateMetadataQuery().ToList().Count;
+            Assert.True(initialCount > 0, "System entities should be automatically loaded");
+            
             var entityMetadata = new EntityMetadata()
             {
                 LogicalName = "account"
@@ -70,8 +91,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             ctx.InitializeMetadata(new List<EntityMetadata>() { entityMetadata });
 
             var metadatas = ctx.CreateMetadataQuery().ToList();
-            Assert.True(metadatas.Count == 1);
-            Assert.Equal("account", metadatas[0].LogicalName);
+            Assert.True(metadatas.Count == initialCount + 1);
+            Assert.Contains(metadatas, m => m.LogicalName == "account");
         }
 
         [Fact]

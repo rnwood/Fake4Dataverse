@@ -42,9 +42,14 @@ namespace Fake4Dataverse
 
                 if (EntityMetadata.ContainsKey(eMetadata.LogicalName))
                 {
-                    throw new Exception("An entity metadata record with the same logical name was previously added. ");
+                    // Skip if entity is already present (e.g., system entities loaded in constructor)
+                    // Update existing metadata instead of throwing an error
+                    EntityMetadata[eMetadata.LogicalName] = eMetadata.Copy();
                 }
-                EntityMetadata.Add(eMetadata.LogicalName, eMetadata.Copy());
+                else
+                {
+                    EntityMetadata.Add(eMetadata.LogicalName, eMetadata.Copy());
+                }
                 
                 // Persist metadata to standard Dataverse tables
                 // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata
@@ -217,81 +222,86 @@ namespace Fake4Dataverse
         /// - Attribute (attribute) - Contains attribute metadata
         /// 
         /// This method stores metadata in these tables so it can be queried like regular entity data.
+        /// The metadata tables are always initialized in the constructor, so they should always be available.
         /// </summary>
         private void PersistMetadataToTables(EntityMetadata metadata)
         {
             if (metadata == null || string.IsNullOrWhiteSpace(metadata.LogicalName))
                 return;
             
-            try
+            // Don't try to persist the metadata tables themselves to avoid circular dependency
+            if (metadata.LogicalName == "entitydefinition" || metadata.LogicalName == "attribute")
+                return;
+            
+            // Metadata tables should always be present (initialized in constructor)
+            // If they're not, this is an error condition
+            if (!this.EntityMetadata.ContainsKey("entitydefinition"))
             {
-                // Check if entitydefinition and attribute tables are initialized
-                if (!this.EntityMetadata.ContainsKey("entitydefinition") || 
-                    !this.EntityMetadata.ContainsKey("attribute"))
-                {
-                    // Metadata tables not yet initialized, skip persistence
-                    return;
-                }
+                throw new InvalidOperationException(
+                    "EntityDefinition metadata table is not initialized. " +
+                    "System entity metadata should be automatically loaded in the constructor.");
+            }
+            
+            if (!this.EntityMetadata.ContainsKey("attribute"))
+            {
+                throw new InvalidOperationException(
+                    "Attribute metadata table is not initialized. " +
+                    "System entity metadata should be automatically loaded in the constructor.");
+            }
+            
+            // Convert EntityMetadata to EntityDefinition record
+            var entityDefRecord = MetadataPersistenceManager.EntityMetadataToEntityDefinition(metadata);
+            
+            // Check if EntityDefinition record already exists
+            var existingEntityDef = this.Data.ContainsKey("entitydefinition") 
+                ? this.Data["entitydefinition"].Values.FirstOrDefault(e => 
+                    e.GetAttributeValue<string>("logicalname") == metadata.LogicalName)
+                : null;
+            
+            if (existingEntityDef != null)
+            {
+                // Update existing record
+                entityDefRecord.Id = existingEntityDef.Id;
+                this.Data["entitydefinition"][existingEntityDef.Id] = entityDefRecord;
+            }
+            else
+            {
+                // Create new record
+                if (!this.Data.ContainsKey("entitydefinition"))
+                    this.Data["entitydefinition"] = new Dictionary<Guid, Entity>();
                 
-                // Convert EntityMetadata to EntityDefinition record
-                var entityDefRecord = MetadataPersistenceManager.EntityMetadataToEntityDefinition(metadata);
-                
-                // Check if EntityDefinition record already exists
-                var existingEntityDef = this.Data.ContainsKey("entitydefinition") 
-                    ? this.Data["entitydefinition"].Values.FirstOrDefault(e => 
-                        e.GetAttributeValue<string>("logicalname") == metadata.LogicalName)
-                    : null;
-                
-                if (existingEntityDef != null)
+                this.Data["entitydefinition"][entityDefRecord.Id] = entityDefRecord;
+            }
+            
+            // Persist attributes if they exist
+            if (metadata.Attributes != null && metadata.Attributes.Length > 0)
+            {
+                foreach (var attrMetadata in metadata.Attributes)
                 {
-                    // Update existing record
-                    entityDefRecord.Id = existingEntityDef.Id;
-                    this.Data["entitydefinition"][existingEntityDef.Id] = entityDefRecord;
-                }
-                else
-                {
-                    // Create new record
-                    if (!this.Data.ContainsKey("entitydefinition"))
-                        this.Data["entitydefinition"] = new Dictionary<Guid, Entity>();
+                    var attrRecord = MetadataPersistenceManager.AttributeMetadataToAttribute(attrMetadata, metadata.LogicalName);
                     
-                    this.Data["entitydefinition"][entityDefRecord.Id] = entityDefRecord;
-                }
-                
-                // Persist attributes if they exist
-                if (metadata.Attributes != null && metadata.Attributes.Length > 0)
-                {
-                    foreach (var attrMetadata in metadata.Attributes)
+                    // Check if Attribute record already exists
+                    var existingAttr = this.Data.ContainsKey("attribute")
+                        ? this.Data["attribute"].Values.FirstOrDefault(a =>
+                            a.GetAttributeValue<string>("entitylogicalname") == metadata.LogicalName &&
+                            a.GetAttributeValue<string>("logicalname") == attrMetadata.LogicalName)
+                        : null;
+                    
+                    if (existingAttr != null)
                     {
-                        var attrRecord = MetadataPersistenceManager.AttributeMetadataToAttribute(attrMetadata, metadata.LogicalName);
+                        // Update existing record
+                        attrRecord.Id = existingAttr.Id;
+                        this.Data["attribute"][existingAttr.Id] = attrRecord;
+                    }
+                    else
+                    {
+                        // Create new record
+                        if (!this.Data.ContainsKey("attribute"))
+                            this.Data["attribute"] = new Dictionary<Guid, Entity>();
                         
-                        // Check if Attribute record already exists
-                        var existingAttr = this.Data.ContainsKey("attribute")
-                            ? this.Data["attribute"].Values.FirstOrDefault(a =>
-                                a.GetAttributeValue<string>("entitylogicalname") == metadata.LogicalName &&
-                                a.GetAttributeValue<string>("logicalname") == attrMetadata.LogicalName)
-                            : null;
-                        
-                        if (existingAttr != null)
-                        {
-                            // Update existing record
-                            attrRecord.Id = existingAttr.Id;
-                            this.Data["attribute"][existingAttr.Id] = attrRecord;
-                        }
-                        else
-                        {
-                            // Create new record
-                            if (!this.Data.ContainsKey("attribute"))
-                                this.Data["attribute"] = new Dictionary<Guid, Entity>();
-                            
-                            this.Data["attribute"][attrRecord.Id] = attrRecord;
-                        }
+                        this.Data["attribute"][attrRecord.Id] = attrRecord;
                     }
                 }
-            }
-            catch
-            {
-                // Silently fail if persistence fails - metadata is still in memory
-                // This ensures backward compatibility with existing code
             }
         }
 
