@@ -6,6 +6,8 @@ using Fake4Dataverse.Service.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using XrmMoney = Microsoft.Xrm.Sdk.Money;
+using Fake4Dataverse.Abstractions.Integrity;
+using Fake4Dataverse.Integrity;
 
 namespace Fake4Dataverse.Service.Tests;
 
@@ -28,8 +30,12 @@ public class OrganizationServiceImplTests
 
     public OrganizationServiceImplTests()
     {
-        // Create a Fake4Dataverse context
-        var context = XrmFakedContextFactory.New();
+        // Create a Fake4Dataverse context with validation disabled for backward compatibility
+        var context = XrmFakedContextFactory.New(new IntegrityOptions 
+        { 
+            ValidateEntityReferences = false,
+            ValidateAttributeTypes = false 
+        });
         _organizationService = context.GetOrganizationService();
 
         // Create the WCF service implementation
@@ -96,7 +102,7 @@ public class OrganizationServiceImplTests
         Assert.Equal("Updated Name", updatedEntity["name"]);
     }
 
-    [Fact(Skip = "Delete verification behavior varies in Fake4Dataverse")]
+    [Fact]
     public void Should_Delete_Entity()
     {
         // Arrange - Create an entity first
@@ -108,8 +114,12 @@ public class OrganizationServiceImplTests
         // Act - Delete the entity
         _serviceImpl.Delete("account", accountId);
 
-        // Assert - Verify the delete operation completed without error
-        // Note: Verification of deletion behavior is complex in Fake4Dataverse
+        // Assert - Verify the entity no longer exists by attempting to retrieve it
+        // In Fake4Dataverse, deleted entities are removed from the in-memory store
+        Assert.Throws<CoreWCF.FaultException>(() =>
+        {
+            _serviceImpl.Retrieve("account", accountId, new ColumnSet("name"));
+        });
     }
 
     [Fact]
