@@ -10,26 +10,18 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests
 {
-    public class FakeContextMockTests
+    public class FakeContextMockTests : Fake4DataverseTests
     {
         private IXrmFakedContext _context;
         private IOrganizationService _service;
-        public FakeContextMockTests()
-        {
-        }
-
-        [Fact]
+                [Fact]
         public void Should_Execute_Mock_For_OrganizationRequests()
         {
             _context = MiddlewareBuilder
                         .New()
                         .AddExecutionMock<RetrieveEntityRequest>(RetrieveEntityMock)
                         .UseMessages()
-                        .Build();
-
-            _service = _context.GetOrganizationService();  
-
-             var e = new Entity("Contact") { Id = Guid.NewGuid() };          
+                        .Build();             var e = new Entity("Contact") { Id = Guid.NewGuid() };          
             _context.Initialize(new[] { e });
             
             var request = new RetrieveEntityRequest
@@ -61,11 +53,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                         .AddExecutionMock<RetrieveEntityRequest>(RetrieveEntityMock)
                         .AddExecutionMock<RetrieveEntityRequest>(AnotherRetrieveEntityMock)
                         .UseMessages()
-                        .Build();
-
-            _service = _context.GetOrganizationService();
-
-            var e = new Entity("Contact") { Id = Guid.NewGuid() };
+                        .Build();            var e = new Entity("Contact") { Id = Guid.NewGuid() };
             _context.Initialize(new[] { e });
 
             var request = new RetrieveEntityRequest
@@ -87,11 +75,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                         .AddFakeMessageExecutors()
                         .AddFakeMessageExecutor(new FakeRetrieveEntityRequestExecutor())
                         .UseMessages()
-                        .Build();
-
-            _service = _context.GetOrganizationService();
-
-            var e = new Entity("Contact") { Id = Guid.NewGuid() };
+                        .Build();            var e = new Entity("Contact") { Id = Guid.NewGuid() };
             _context.Initialize(new[] { e });
 
             var request = new RetrieveEntityRequest

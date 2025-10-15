@@ -15,17 +15,8 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests
 {
-    public class Fake4DataverseTestDelete
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public Fake4DataverseTestDelete()
-        {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
-        }
-
-        [Fact]
+    public class Fake4DataverseTestDelete : Fake4DataverseTests
+    {                [Fact]
         public void When_delete_is_invoked_with_an_empty_logical_name_an_exception_is_thrown()
         {
             var ex = Assert.Throws<InvalidOperationException>(() => _service.Delete(null, Guid.Empty));

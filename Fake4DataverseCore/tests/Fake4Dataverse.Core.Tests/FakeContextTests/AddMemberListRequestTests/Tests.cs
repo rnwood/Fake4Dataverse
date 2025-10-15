@@ -11,24 +11,15 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.AddMemberListRequestTests
 {
-    public class Tests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public enum ListCreatedFromCode
+    public class Tests : Fake4DataverseTests
+    {        public enum ListCreatedFromCode
         {
             Account = 1,
             Contact = 2,
             Lead = 4
         }
 
-        public Tests()
-        {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
-        }
-
-        [Fact]
+                [Fact]
         public void When_a_member_is_added_to_a_non_existing_list_exception_is_thrown()
         {
             
