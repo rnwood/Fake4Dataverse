@@ -129,4 +129,37 @@ describe('Navigation', () => {
     render(<Navigation areas={[]} />);
     expect(screen.getByText('Model-Driven App')).toBeInTheDocument();
   });
+
+  it('renders subareas with icons when icon metadata is provided', () => {
+    const areasWithIcons: SiteMapArea[] = [
+      {
+        id: 'area_sales',
+        title: 'Sales',
+        groups: [
+          {
+            id: 'group_customers',
+            title: 'Customers',
+            subareas: [
+              {
+                id: 'subarea_accounts',
+                title: 'Accounts',
+                entity: 'account',
+                icon: 'mdi-domain',
+              },
+              {
+                id: 'subarea_contacts',
+                title: 'Contacts',
+                entity: 'contact',
+                icon: 'mdi-account',
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    render(<Navigation areas={areasWithIcons} />);
+    expect(screen.getByText('Accounts')).toBeInTheDocument();
+    expect(screen.getByText('Contacts')).toBeInTheDocument();
+  });
 });
