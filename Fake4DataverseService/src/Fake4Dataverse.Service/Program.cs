@@ -161,6 +161,11 @@ public class Program
             {
                 context.InitializeMetadataFromCdmFiles(systemEntityPaths);
                 Console.WriteLine("Successfully loaded system entity metadata");
+                
+                // Verify critical entities are loaded
+                var solutionMeta = context.GetEntityMetadataByName("solution");
+                var appmoduleMeta = context.GetEntityMetadataByName("appmodule");
+                Console.WriteLine($"Verified entities loaded: solution={solutionMeta != null}, appmodule={appmoduleMeta != null}");
             }
             catch (Exception ex)
             {
