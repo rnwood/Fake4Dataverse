@@ -61,7 +61,7 @@
                         "name": "level",
                         "value": "systemrequired"
                       }
-                    }
+                    ]
                   }
                 ],
                 "sourceName": "solutioncomponentid",
@@ -80,7 +80,7 @@
                         "name": "level",
                         "value": "systemrequired"
                       }
-                    }
+                    ]
                   }
                 ],
                 "sourceName": "solutionid",
@@ -99,7 +99,7 @@
                         "name": "level",
                         "value": "systemrequired"
                       }
-                    }
+                    ]
                   }
                 ],
                 "sourceName": "objectid",
@@ -118,7 +118,7 @@
                         "name": "level",
                         "value": "systemrequired"
                       }
-                    }
+                    ]
                   }
                 ],
                 "sourceName": "componenttype",
