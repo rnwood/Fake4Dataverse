@@ -24,6 +24,7 @@
   <ItemGroup>
     <None Include="../../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
     <None Include="../../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
+	  <None Include="../../mda-app/**" Label="mda-app"/>
   </ItemGroup>
 
   <ItemGroup>

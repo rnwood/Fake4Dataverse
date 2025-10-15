@@ -16,6 +16,8 @@ using System.CommandLine;
 using System.IO;
 using CoreWCF;
 using CoreWCF.Configuration;
+using Microsoft.OData.Edm;
+using Microsoft.OData.ModelBuilder;
 
 namespace Fake4Dataverse.Service;
 
@@ -277,6 +279,9 @@ public class Program
                 
                 // Set timezone to UTC for consistency
                 options.TimeZone = System.TimeZoneInfo.Utc;
+
+                // Add EDM model for metadata endpoints
+                options.AddRouteComponents("api/data/v9.2", GetMetadataEdmModel());
             });
 
         var app = builder.Build();
@@ -298,6 +303,22 @@ public class Program
                 DefaultFileNames = new List<string> { "index.html" },
                 FileProvider = new PhysicalFileProvider(mdaPath),
                 RequestPath = ""  // Serve from root
+            });
+            
+            // Middleware to serve .html files for routes without extensions (for Next.js static export)
+            app.Use(async (context, next) =>
+            {
+                var path = context.Request.Path.Value;
+                if (!string.IsNullOrEmpty(path) && path != "/" && !Path.HasExtension(path))
+                {
+                    var htmlFile = path.TrimStart('/') + ".html";
+                    var htmlPath = Path.Combine(mdaPath, htmlFile);
+                    if (File.Exists(htmlPath))
+                    {
+                        context.Request.Path = "/" + htmlFile;
+                    }
+                }
+                await next();
             });
             
             app.UseStaticFiles(new StaticFileOptions
@@ -442,6 +463,16 @@ public class Program
             "  - /api/data/v9.2/EntityDefinitions - List entity metadata (GET)\n" +
             "  - /api/data/v9.2/EntityDefinitions({id}) - Get entity metadata by MetadataId (GET)\n" +
             "  - /api/data/v9.2/EntityDefinitions(LogicalName='{name}') - Get entity metadata by name (GET)\n" +
+            "  - /api/data/v9.2/AttributeDefinitions - List attribute metadata (GET)\n" +
+            "  - /api/data/v9.2/AttributeDefinitions({id}) - Get attribute metadata by MetadataId (GET)\n" +
+            "  - /api/data/v9.2/RelationshipDefinitions - List relationship metadata (GET)\n" +
+            "  - /api/data/v9.2/RelationshipDefinitions({id}) - Get relationship metadata by MetadataId (GET)\n" +
+            "  - /api/data/v9.2/OptionSetDefinitions - List local option set metadata (GET)\n" +
+            "  - /api/data/v9.2/OptionSetDefinitions({id}) - Get local option set metadata by MetadataId (GET)\n" +
+            "  - /api/data/v9.2/GlobalOptionSetDefinitions - List global option set metadata (GET)\n" +
+            "  - /api/data/v9.2/GlobalOptionSetDefinitions({id}) - Get global option set metadata by MetadataId (GET)\n" +
+            "  - /api/data/v9.2/EntityKeyDefinitions - List entity key metadata (GET)\n" +
+            "  - /api/data/v9.2/EntityKeyDefinitions({id}) - Get entity key metadata by MetadataId (GET)\n" +
             "  - /api/data/v9.2/$metadata - OData service document (EDMX/CSDL)\n\n" +
             "OData Query Options: $select, $filter, $orderby, $top, $skip, $expand, $count\n\n" +
             "This service provides 100% compatibility with Microsoft Dynamics 365/Dataverse SDK.",
@@ -469,7 +500,17 @@ public class Program
         Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions (GET)");
         Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions({{id}}) (GET)");
         Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityDefinitions(LogicalName='{{name}}') (GET)");
-        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/$metadata (GET - EDMX/CSDL)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/AttributeDefinitions (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/AttributeDefinitions({{id}}) (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/RelationshipDefinitions (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/RelationshipDefinitions({{id}}) (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/OptionSetDefinitions (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/OptionSetDefinitions({{id}}) (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/GlobalOptionSetDefinitions (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/GlobalOptionSetDefinitions({{id}}) (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityKeyDefinitions (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/EntityKeyDefinitions({{id}}) (GET)");
+        Console.WriteLine($"  - http://{host}:{port}/api/data/v9.2/$metadata - OData service document (EDMX/CSDL)");
         Console.WriteLine();
         Console.WriteLine("OData Query Options:");
         Console.WriteLine("  - $select: Choose specific columns");
@@ -523,6 +564,44 @@ public class Program
         
         // Shutdown
         await app.StopAsync();
+    }
+
+    private static IEdmModel GetMetadataEdmModel()
+    {
+        var builder = new ODataConventionModelBuilder();
+        
+        // EntityDefinitions - Entity metadata
+        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityMetadata>("EntityDefinitions");
+        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.EntityMetadata>()
+            .HasKey(e => e.MetadataId)
+            .HasMany(em => em.Attributes);
+        
+        // AttributeDefinitions - Attribute metadata
+        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.AttributeMetadata>("AttributeDefinitions");
+        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.AttributeMetadata>()
+            .HasKey(a => a.MetadataId);
+        
+        // RelationshipDefinitions - Relationship metadata
+        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase>("RelationshipDefinitions");
+        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase>()
+            .HasKey(r => r.MetadataId);
+        
+        // OptionSetDefinitions - Local option sets
+        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>("OptionSetDefinitions");
+        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>()
+            .HasKey(o => o.MetadataId);
+        
+        // GlobalOptionSetDefinitions - Global option sets
+        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>("GlobalOptionSetDefinitions");
+        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>()
+            .HasKey(o => o.MetadataId);
+        
+        // EntityKeyDefinitions - Alternate keys
+        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityKeyMetadata>("EntityKeyDefinitions");
+        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.EntityKeyMetadata>()
+            .HasKey(k => k.MetadataId);
+        
+        return builder.GetEdmModel();
     }
 }
 

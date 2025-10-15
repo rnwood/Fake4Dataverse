@@ -1,4 +1,5 @@
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 
 namespace Fake4Dataverse.Service;
@@ -16,11 +17,11 @@ public static class MdaInitializer
     public static void InitializeExampleMda(IOrganizationService service)
     {
         Console.WriteLine("Initializing example Model-Driven App metadata...");
-        
+
         // Create Active solution (special Microsoft solution containing all components)
         // Reference: https://learn.microsoft.com/en-us/power-platform/alm/solution-concepts-alm#active-solution
         CreateActiveSolution(service);
-        
+
         // Create AppModule
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/appmodule
         var appModuleId = Guid.NewGuid();
@@ -34,7 +35,7 @@ public static class MdaInitializer
         };
         service.Create(appModule);
         Console.WriteLine($"  Created AppModule: {appModuleId}");
-        
+
         // Create SiteMap with navigation structure
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/create-site-map-app
         var sitemapId = Guid.NewGuid();
@@ -44,31 +45,31 @@ public static class MdaInitializer
             Id = sitemapId,
             ["sitemapname"] = "Example Sitemap",
             ["sitemapnameunique"] = "fake4dataverse_example_sitemap",
-            ["appmoduleid"] = appModuleId.ToString(),
+            ["appmoduleid"] = appModule.ToEntityReference(),
             ["sitemapxml"] = sitemapXml
         };
         service.Create(sitemap);
         Console.WriteLine($"  Created SiteMap: {sitemapId}");
-        
+
         // Create saved queries (system views) for entities
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/savedquery
         CreateSystemViews(service, appModuleId);
-        
+
         // Create system forms for entities
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
         CreateSystemForms(service, appModuleId);
-        
+
         // Create web resources (form scripts)
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
         CreateWebResources(service);
-        
+
         // Note: Sample data creation commented out - requires entity metadata to be loaded
         // Create some sample data for testing
         // CreateSampleData(service);
-        
+
         Console.WriteLine("Model-Driven App metadata initialized successfully!");
     }
-    
+
     private static string CreateExampleSiteMapXml()
     {
         return @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -90,11 +91,11 @@ public static class MdaInitializer
   </Area>
 </SiteMap>";
     }
-    
+
     private static void CreateSampleData(IOrganizationService service)
     {
         Console.WriteLine("  Creating sample data...");
-        
+
         // Create sample accounts
         for (int i = 1; i <= 5; i++)
         {
@@ -109,7 +110,7 @@ public static class MdaInitializer
             service.Create(account);
         }
         Console.WriteLine($"    Created 5 sample accounts");
-        
+
         // Create sample contacts
         for (int i = 1; i <= 10; i++)
         {
@@ -124,7 +125,7 @@ public static class MdaInitializer
             service.Create(contact);
         }
         Console.WriteLine($"    Created 10 sample contacts");
-        
+
         // Create sample opportunities
         for (int i = 1; i <= 3; i++)
         {
@@ -139,7 +140,7 @@ public static class MdaInitializer
         }
         Console.WriteLine($"    Created 3 sample opportunities");
     }
-    
+
     /// <summary>
     /// Create system views (SavedQuery) for entities
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/savedquery
@@ -148,19 +149,19 @@ public static class MdaInitializer
     private static void CreateSystemViews(IOrganizationService service, Guid appModuleId)
     {
         Console.WriteLine("  Creating system views...");
-        
+
         // Account views
         CreateAccountViews(service, appModuleId);
-        
+
         // Contact views  
         CreateContactViews(service, appModuleId);
-        
+
         // Opportunity views
         CreateOpportunityViews(service, appModuleId);
-        
+
         Console.WriteLine($"    Created system views for Account, Contact, and Opportunity");
     }
-    
+
     private static void CreateAccountViews(IOrganizationService service, Guid appModuleId)
     {
         // Active Accounts view
@@ -197,8 +198,8 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(activeAccountsView);
-        CreateAppModuleComponent(service, appModuleId, activeAccountsView.Id, 26); // 26 = SavedQuery
-        
+        CreateAppModuleComponent(service, appModuleId, activeAccountsView.ToEntityReference(), 26); // 26 = SavedQuery
+
         // All Accounts view
         var allAccountsView = new Entity("savedquery")
         {
@@ -227,9 +228,9 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(allAccountsView);
-        CreateAppModuleComponent(service, appModuleId, allAccountsView.Id, 26);
+        CreateAppModuleComponent(service, appModuleId, allAccountsView.ToEntityReference(), 26);
     }
-    
+
     private static void CreateContactViews(IOrganizationService service, Guid appModuleId)
     {
         // Active Contacts view
@@ -264,8 +265,8 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(activeContactsView);
-        CreateAppModuleComponent(service, appModuleId, activeContactsView.Id, 26);
-        
+        CreateAppModuleComponent(service, appModuleId, activeContactsView.ToEntityReference(), 26);
+
         // All Contacts view
         var allContactsView = new Entity("savedquery")
         {
@@ -294,9 +295,9 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(allContactsView);
-        CreateAppModuleComponent(service, appModuleId, allContactsView.Id, 26);
+        CreateAppModuleComponent(service, appModuleId, allContactsView.ToEntityReference(), 26);
     }
-    
+
     private static void CreateOpportunityViews(IOrganizationService service, Guid appModuleId)
     {
         // Open Opportunities view
@@ -330,25 +331,25 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(openOpportunitiesView);
-        CreateAppModuleComponent(service, appModuleId, openOpportunitiesView.Id, 26);
+        CreateAppModuleComponent(service, appModuleId, openOpportunitiesView.ToEntityReference(), 26);
     }
-    
+
     /// <summary>
     /// Create AppModuleComponent to link a component (like SavedQuery) to an AppModule
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/appmodulecomponent
     /// </summary>
-    private static void CreateAppModuleComponent(IOrganizationService service, Guid appModuleId, Guid componentId, int componentType)
+    private static void CreateAppModuleComponent(IOrganizationService service, Guid appModuleId, EntityReference componentId, int componentType)
     {
         var appModuleComponent = new Entity("appmodulecomponent")
         {
             Id = Guid.NewGuid(),
             ["appmoduleidunique"] = new EntityReference("appmodule", appModuleId),
-            ["objectid"] = new EntityReference("savedquery", componentId), // Generic reference - type varies by componenttype
+            ["objectid"] = componentId, // Generic reference - type varies by componenttype
             ["componenttype"] = componentType // 26 = SavedQuery, 1 = Entity, 60 = SystemForm
         };
         service.Create(appModuleComponent);
     }
-    
+
     /// <summary>
     /// Create system forms for entities
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
@@ -357,14 +358,14 @@ public static class MdaInitializer
     private static void CreateSystemForms(IOrganizationService service, Guid appModuleId)
     {
         Console.WriteLine("  Creating system forms...");
-        
+
         CreateAccountForm(service, appModuleId);
         CreateContactForm(service, appModuleId);
         CreateOpportunityForm(service, appModuleId);
-        
+
         Console.WriteLine($"    Created system forms for Account, Contact, and Opportunity");
     }
-    
+
     private static void CreateAccountForm(IOrganizationService service, Guid appModuleId)
     {
         var formId = Guid.NewGuid();
@@ -472,7 +473,7 @@ public static class MdaInitializer
     </tab>
   </tabs>
 </form>";
-        
+
         var accountForm = new Entity("systemform")
         {
             Id = formId,
@@ -484,9 +485,9 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(accountForm);
-        CreateAppModuleComponent(service, appModuleId, formId, 60); // 60 = SystemForm
+        CreateAppModuleComponent(service, appModuleId, accountForm.ToEntityReference(), 60); // 60 = SystemForm
     }
-    
+
     private static void CreateContactForm(IOrganizationService service, Guid appModuleId)
     {
         var formId = Guid.NewGuid();
@@ -545,7 +546,7 @@ public static class MdaInitializer
     </tab>
   </tabs>
 </form>";
-        
+
         var contactForm = new Entity("systemform")
         {
             Id = formId,
@@ -557,9 +558,9 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(contactForm);
-        CreateAppModuleComponent(service, appModuleId, formId, 60);
+        CreateAppModuleComponent(service, appModuleId, contactForm.ToEntityReference(), 60);
     }
-    
+
     private static void CreateOpportunityForm(IOrganizationService service, Guid appModuleId)
     {
         var formId = Guid.NewGuid();
@@ -610,7 +611,7 @@ public static class MdaInitializer
     </tab>
   </tabs>
 </form>";
-        
+
         var opportunityForm = new Entity("systemform")
         {
             Id = formId,
@@ -622,9 +623,9 @@ public static class MdaInitializer
             ["iscustomizable"] = true
         };
         service.Create(opportunityForm);
-        CreateAppModuleComponent(service, appModuleId, formId, 60);
+        CreateAppModuleComponent(service, appModuleId, opportunityForm.ToEntityReference(), 60);
     }
-    
+
     /// <summary>
     /// Create example web resources (JavaScript files for form scripts)
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
@@ -633,7 +634,7 @@ public static class MdaInitializer
     private static void CreateWebResources(IOrganizationService service)
     {
         Console.WriteLine("  Creating web resources (form scripts)...");
-        
+
         // Create a sample form script for Account
         var accountScriptContent = @"
 // Sample Account Form Script
@@ -711,10 +712,10 @@ function ValidateAccountName(executionContext) {
     }
 }
 ";
-        
+
         // Encode script content to base64
         var base64Content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(accountScriptContent));
-        
+
         var webResourceId = Guid.NewGuid();
         var webResource = new Entity("webresource")
         {
@@ -728,7 +729,7 @@ function ValidateAccountName(executionContext) {
         };
         service.Create(webResource);
         Console.WriteLine($"    Created WebResource: {webResourceId} (fake4dataverse_account_form_script.js)");
-        
+
         // Create a sample utility script
         var utilityScriptContent = @"
 // Sample Utility Functions
@@ -756,9 +757,9 @@ Fake4DataverseUtils.validateEmail = function(email) {
 
 console.log('Fake4Dataverse utility functions loaded');
 ";
-        
+
         var utilityBase64Content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(utilityScriptContent));
-        
+
         var utilityResourceId = Guid.NewGuid();
         var utilityResource = new Entity("webresource")
         {
@@ -785,18 +786,17 @@ console.log('Fake4Dataverse utility functions loaded');
         // Use the standard Microsoft Active solution GUID
         // Reference: This is a well-known GUID used across all Dataverse environments
         var activeSolutionId = new Guid("FD140AAF-4DF4-11DD-BD17-0019B9312238");
-        
-        // Check if Active solution already exists
-        try
+
+        var query = new QueryByAttribute("solution");
+        query.AddAttributeValue("solutionid", activeSolutionId);
+
+        if (service.RetrieveMultiple(query).Entities.Any())
         {
-            var existingSolution = service.Retrieve("solution", activeSolutionId, new Microsoft.Xrm.Sdk.Query.ColumnSet("solutionid"));
+
             Console.WriteLine($"  Active solution already exists: {activeSolutionId}");
             return;
         }
-        catch
-        {
-            // Solution doesn't exist, create it
-        }
+
 
         var activeSolution = new Entity("solution")
         {
@@ -808,7 +808,7 @@ console.log('Fake4Dataverse utility functions loaded');
             ["isvisible"] = true,
             ["description"] = "Special solution containing all components in the system"
         };
-        
+
         service.Create(activeSolution);
         Console.WriteLine($"  Created Active solution: {activeSolutionId}");
     }

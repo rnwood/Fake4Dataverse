@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Fake4Dataverse.Service": {
+      "commandName": "Project",
+      "commandLineArgs": "start"
+    }
+  }
+}
