@@ -18,6 +18,10 @@ namespace Fake4Dataverse
         /// 
         /// Use this property to register business rules that should be executed during CRUD operations.
         /// Business rules are automatically executed during Create and Update operations when registered.
+        /// 
+        /// Uses hybrid storage approach:
+        /// - In-memory cache for fast access and backwards compatibility
+        /// - Workflow table persistence (when available) to mirror real Dataverse behavior
         /// </summary>
         public BusinessRuleExecutor BusinessRuleExecutor
         {
@@ -25,7 +29,7 @@ namespace Fake4Dataverse
             {
                 if (_businessRuleExecutor == null)
                 {
-                    _businessRuleExecutor = new BusinessRuleExecutor();
+                    _businessRuleExecutor = new BusinessRuleExecutor(this);
                 }
                 return _businessRuleExecutor;
             }
