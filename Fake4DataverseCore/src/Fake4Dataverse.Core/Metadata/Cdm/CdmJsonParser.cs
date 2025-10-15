@@ -881,7 +881,9 @@ namespace Fake4Dataverse.Metadata.Cdm
                 "SavedQuery.cdm.json",
                 "SystemForm.cdm.json",
                 "WebResource.cdm.json",
-                "AppModuleComponent.cdm.json"
+                "AppModuleComponent.cdm.json",
+                "EntityDefinition.cdm.json",
+                "Attribute.cdm.json"
             };
             
             var allMetadata = new List<EntityMetadata>();

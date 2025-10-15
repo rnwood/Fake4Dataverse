@@ -62,6 +62,8 @@
     <EmbeddedResource Include="..\..\cdm-schema-files\SystemForm.cdm.json" Link="Metadata\Cdm\SystemEntities\SystemForm.cdm.json" />
     <EmbeddedResource Include="..\..\cdm-schema-files\WebResource.cdm.json" Link="Metadata\Cdm\SystemEntities\WebResource.cdm.json" />
     <EmbeddedResource Include="..\..\cdm-schema-files\AppModuleComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModuleComponent.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\EntityDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityDefinition.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\Attribute.cdm.json" Link="Metadata\Cdm\SystemEntities\Attribute.cdm.json" />
   </ItemGroup>
 
 </Project>
