@@ -14,8 +14,10 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
     /// Handles import/export of SystemForm components (Component Type 60).
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/solutioncomponent#componenttype-choicesoptions
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customization-solutions-file-schema
     /// 
     /// SystemForms are stored in the "systemform" table.
+    /// In Power Platform solutions, systemform definitions are in the customizations.xml file under the systemforms element.
     /// This handler processes form definitions and uses CRUD operations to manage them.
     /// </summary>
     public class SystemFormComponentHandler : ISolutionComponentHandler
@@ -26,21 +28,33 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
 
         public void ImportComponent(ZipArchive zipArchive, Entity solution, IXrmFakedContext ctx, IOrganizationService service)
         {
-            // Extract SystemForms folder from ZIP
-            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/solution-file-reference
-            // SystemForm files are typically stored in SystemForms/ folder within the solution ZIP
-            var systemFormEntries = zipArchive.Entries
-                .Where(e => e.FullName.StartsWith("SystemForms/", StringComparison.OrdinalIgnoreCase) && 
-                           e.FullName.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            // Extract systemforms from customizations.xml
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customization-solutions-file-schema
+            // All component definitions are in customizations.xml, not separate folders
+            var customizationsEntry = zipArchive.Entries.FirstOrDefault(e => 
+                e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
 
-            foreach (var entry in systemFormEntries)
+            if (customizationsEntry == null)
             {
-                using (var stream = entry.Open())
-                {
-                    var systemFormXml = XDocument.Load(stream);
-                    ProcessSystemForm(systemFormXml, service, solution);
-                }
+                return;
+            }
+
+            XDocument customizationsXml;
+            using (var stream = customizationsEntry.Open())
+            {
+                customizationsXml = XDocument.Load(stream);
+            }
+
+            // SystemForms are under ImportExportXml/systemforms element
+            var systemForms = customizationsXml.Root?.Element("systemforms")?.Elements("systemform");
+            if (systemForms == null)
+            {
+                return;
+            }
+
+            foreach (var systemFormElement in systemForms)
+            {
+                ProcessSystemForm(systemFormElement, service, solution);
             }
         }
 
@@ -63,33 +77,77 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
 
             var systemForms = service.RetrieveMultiple(query);
 
-            foreach (var systemForm in systemForms.Entities)
-            {
-                var systemFormXml = GenerateSystemFormXml(systemForm);
-                var fileName = $"SystemForms/{systemForm.GetAttributeValue<Guid>("formid")}.xml";
-                
-                var entry = zipArchive.CreateEntry(fileName);
-                using (var entryStream = entry.Open())
-                using (var writer = new StreamWriter(entryStream, Encoding.UTF8))
-                {
-                    systemFormXml.Save(writer);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Processes a SystemForm XML and creates/updates the systemform record.
-        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
-        /// </summary>
-        private void ProcessSystemForm(XDocument systemFormXml, IOrganizationService service, Entity solution)
-        {
-            var root = systemFormXml.Root;
-            if (root == null || root.Name.LocalName != "systemform")
+            if (systemForms.Entities.Count == 0)
             {
                 return;
             }
 
-            var formId = Guid.Parse(root.Element("formid")?.Value ?? Guid.NewGuid().ToString());
+            // Find or create customizations.xml in the ZIP
+            var customizationsEntry = zipArchive.Entries.FirstOrDefault(e => 
+                e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+
+            XDocument customizationsXml;
+            if (customizationsEntry != null)
+            {
+                using (var stream = customizationsEntry.Open())
+                {
+                    customizationsXml = XDocument.Load(stream);
+                }
+            }
+            else
+            {
+                // Create new customizations.xml structure
+                customizationsXml = new XDocument(
+                    new XDeclaration("1.0", "utf-8", null),
+                    new XElement("ImportExportXml",
+                        new XAttribute("version", "9.0.0.0"),
+                        new XAttribute("SolutionPackageVersion", "9.0"),
+                        new XAttribute(XNamespace.Xmlns + "xsi", "http://www.w3.org/2001/XMLSchema-instance")
+                    )
+                );
+            }
+
+            // Add or update systemforms element
+            var systemFormsElement = customizationsXml.Root.Element("systemforms");
+            if (systemFormsElement == null)
+            {
+                systemFormsElement = new XElement("systemforms");
+                customizationsXml.Root.Add(systemFormsElement);
+            }
+
+            foreach (var systemForm in systemForms.Entities)
+            {
+                systemFormsElement.Add(GenerateSystemFormElement(systemForm));
+            }
+
+            // Write back to ZIP
+            if (customizationsEntry != null)
+            {
+                customizationsEntry.Delete();
+            }
+
+            var entry = zipArchive.CreateEntry("customizations.xml");
+            using (var entryStream = entry.Open())
+            using (var writer = new StreamWriter(entryStream, Encoding.UTF8))
+            {
+                customizationsXml.Save(writer);
+            }
+        }
+
+        /// <summary>
+        /// Processes a SystemForm element from customizations.xml and creates/updates the systemform record.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customization-solutions-file-schema
+        /// </summary>
+        private void ProcessSystemForm(XElement systemFormElement, IOrganizationService service, Entity solution)
+        {
+            var formIdStr = systemFormElement.Element("formid")?.Value;
+            if (string.IsNullOrEmpty(formIdStr))
+            {
+                return;
+            }
+
+            var formId = Guid.Parse(formIdStr);
             
             // Check if systemform already exists
             var query = new QueryExpression("systemform")
@@ -112,27 +170,27 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
             };
             systemForm["formid"] = formId;
             
-            // Extract standard SystemForm attributes from XML
+            // Extract standard SystemForm attributes from XML element
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/systemform
-            if (root.Element("name")?.Value != null)
-                systemForm["name"] = root.Element("name").Value;
+            if (systemFormElement.Element("name")?.Value != null)
+                systemForm["name"] = systemFormElement.Element("name").Value;
             
-            if (root.Element("objecttypecode")?.Value != null)
-                systemForm["objecttypecode"] = root.Element("objecttypecode").Value;
+            if (systemFormElement.Element("objecttypecode")?.Value != null)
+                systemForm["objecttypecode"] = systemFormElement.Element("objecttypecode").Value;
             
-            if (root.Element("formxml")?.Value != null)
-                systemForm["formxml"] = root.Element("formxml").Value;
+            if (systemFormElement.Element("formxml")?.Value != null)
+                systemForm["formxml"] = systemFormElement.Element("formxml").Value;
             
-            if (root.Element("type")?.Value != null && int.TryParse(root.Element("type").Value, out int formType))
+            if (systemFormElement.Element("type")?.Value != null && int.TryParse(systemFormElement.Element("type").Value, out int formType))
                 systemForm["type"] = formType;
             
-            if (root.Element("description")?.Value != null)
-                systemForm["description"] = root.Element("description").Value;
+            if (systemFormElement.Element("description")?.Value != null)
+                systemForm["description"] = systemFormElement.Element("description").Value;
             
-            if (root.Element("iscustomizable")?.Value != null && bool.TryParse(root.Element("iscustomizable").Value, out bool isCustomizable))
+            if (systemFormElement.Element("iscustomizable")?.Value != null && bool.TryParse(systemFormElement.Element("iscustomizable").Value, out bool isCustomizable))
                 systemForm["iscustomizable"] = isCustomizable;
             
-            if (root.Element("isdefault")?.Value != null && bool.TryParse(root.Element("isdefault").Value, out bool isDefault))
+            if (systemFormElement.Element("isdefault")?.Value != null && bool.TryParse(systemFormElement.Element("isdefault").Value, out bool isDefault))
                 systemForm["isdefault"] = isDefault;
 
             if (existing.Entities.Count > 0)
@@ -146,36 +204,36 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
         }
 
         /// <summary>
-        /// Generates SystemForm XML for export.
+        /// Generates SystemForm XML element for customizations.xml.
         /// </summary>
-        private XDocument GenerateSystemFormXml(Entity systemForm)
+        private XElement GenerateSystemFormElement(Entity systemForm)
         {
-            var root = new XElement("systemform");
+            var element = new XElement("systemform");
             
-            root.Add(new XElement("formid", systemForm.GetAttributeValue<Guid>("formid")));
+            element.Add(new XElement("formid", systemForm.GetAttributeValue<Guid>("formid")));
             
             if (systemForm.Contains("name"))
-                root.Add(new XElement("name", systemForm.GetAttributeValue<string>("name")));
+                element.Add(new XElement("name", systemForm.GetAttributeValue<string>("name")));
             
             if (systemForm.Contains("objecttypecode"))
-                root.Add(new XElement("objecttypecode", systemForm.GetAttributeValue<string>("objecttypecode")));
+                element.Add(new XElement("objecttypecode", systemForm.GetAttributeValue<string>("objecttypecode")));
             
             if (systemForm.Contains("formxml"))
-                root.Add(new XElement("formxml", systemForm.GetAttributeValue<string>("formxml")));
+                element.Add(new XElement("formxml", new XCData(systemForm.GetAttributeValue<string>("formxml"))));
             
             if (systemForm.Contains("type"))
-                root.Add(new XElement("type", systemForm.GetAttributeValue<int>("type")));
+                element.Add(new XElement("type", systemForm.GetAttributeValue<int>("type")));
             
             if (systemForm.Contains("description"))
-                root.Add(new XElement("description", systemForm.GetAttributeValue<string>("description")));
+                element.Add(new XElement("description", systemForm.GetAttributeValue<string>("description")));
             
             if (systemForm.Contains("iscustomizable"))
-                root.Add(new XElement("iscustomizable", systemForm.GetAttributeValue<bool>("iscustomizable")));
+                element.Add(new XElement("iscustomizable", systemForm.GetAttributeValue<bool>("iscustomizable")));
             
             if (systemForm.Contains("isdefault"))
-                root.Add(new XElement("isdefault", systemForm.GetAttributeValue<bool>("isdefault")));
+                element.Add(new XElement("isdefault", systemForm.GetAttributeValue<bool>("isdefault")));
 
-            return new XDocument(new XDeclaration("1.0", "utf-8", null), root);
+            return element;
         }
     }
 }

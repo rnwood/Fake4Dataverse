@@ -14,8 +14,11 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
     /// Handles import/export of WebResource components (Component Type 61).
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/solutioncomponent#componenttype-choicesoptions
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customization-solutions-file-schema
     /// 
     /// WebResources are stored in the "webresource" table.
+    /// In Power Platform solutions, webresource definitions are in the customizations.xml file under the WebResources element.
+    /// The actual file content is stored inline in the XML as base64-encoded content.
     /// This handler processes web resource files and uses CRUD operations to manage them.
     /// </summary>
     public class WebResourceComponentHandler : ISolutionComponentHandler
@@ -26,18 +29,33 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
 
         public void ImportComponent(ZipArchive zipArchive, Entity solution, IXrmFakedContext ctx, IOrganizationService service)
         {
-            // Extract WebResources folder from ZIP
-            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/solution-file-reference
-            // WebResource files are typically stored in WebResources/ folder within the solution ZIP
-            var webResourceEntries = zipArchive.Entries
-                .Where(e => e.FullName.StartsWith("WebResources/", StringComparison.OrdinalIgnoreCase))
-                .ToList();
+            // Extract webresources from customizations.xml
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customization-solutions-file-schema
+            // All component definitions are in customizations.xml, not separate folders
+            var customizationsEntry = zipArchive.Entries.FirstOrDefault(e => 
+                e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
 
-            foreach (var entry in webResourceEntries)
+            if (customizationsEntry == null)
             {
-                // WebResources can be various file types (JS, CSS, HTML, images, etc.)
-                // The file extension determines the webresource type
-                ProcessWebResource(entry, service, solution);
+                return;
+            }
+
+            XDocument customizationsXml;
+            using (var stream = customizationsEntry.Open())
+            {
+                customizationsXml = XDocument.Load(stream);
+            }
+
+            // WebResources are under ImportExportXml/WebResources element
+            var webResources = customizationsXml.Root?.Element("WebResources")?.Elements("WebResource");
+            if (webResources == null)
+            {
+                return;
+            }
+
+            foreach (var webResourceElement in webResources)
+            {
+                ProcessWebResource(webResourceElement, service, solution);
             }
         }
 
@@ -60,36 +78,79 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
 
             var webResources = service.RetrieveMultiple(query);
 
+            if (webResources.Entities.Count == 0)
+            {
+                return;
+            }
+
+            // Find or create customizations.xml in the ZIP
+            var customizationsEntry = zipArchive.Entries.FirstOrDefault(e => 
+                e.FullName.Equals("customizations.xml", StringComparison.OrdinalIgnoreCase));
+
+            XDocument customizationsXml;
+            if (customizationsEntry != null)
+            {
+                using (var stream = customizationsEntry.Open())
+                {
+                    customizationsXml = XDocument.Load(stream);
+                }
+            }
+            else
+            {
+                // Create new customizations.xml structure
+                customizationsXml = new XDocument(
+                    new XDeclaration("1.0", "utf-8", null),
+                    new XElement("ImportExportXml",
+                        new XAttribute("version", "9.0.0.0"),
+                        new XAttribute("SolutionPackageVersion", "9.0"),
+                        new XAttribute(XNamespace.Xmlns + "xsi", "http://www.w3.org/2001/XMLSchema-instance")
+                    )
+                );
+            }
+
+            // Add or update WebResources element
+            var webResourcesElement = customizationsXml.Root.Element("WebResources");
+            if (webResourcesElement == null)
+            {
+                webResourcesElement = new XElement("WebResources");
+                customizationsXml.Root.Add(webResourcesElement);
+            }
+
             foreach (var webResource in webResources.Entities)
             {
-                var fileName = GetWebResourceFileName(webResource);
-                var content = webResource.GetAttributeValue<string>("content");
-                
-                if (!string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(content))
-                {
-                    var entry = zipArchive.CreateEntry(fileName);
-                    using (var entryStream = entry.Open())
-                    {
-                        // Content is typically base64 encoded
-                        var bytes = Convert.FromBase64String(content);
-                        entryStream.Write(bytes, 0, bytes.Length);
-                    }
-                }
+                webResourcesElement.Add(GenerateWebResourceElement(webResource));
+            }
+
+            // Write back to ZIP
+            if (customizationsEntry != null)
+            {
+                customizationsEntry.Delete();
+            }
+
+            var entry = zipArchive.CreateEntry("customizations.xml");
+            using (var entryStream = entry.Open())
+            using (var writer = new StreamWriter(entryStream, Encoding.UTF8))
+            {
+                customizationsXml.Save(writer);
             }
         }
 
         /// <summary>
-        /// Processes a WebResource file and creates/updates the webresource record.
+        /// Processes a WebResource element from customizations.xml and creates/updates the webresource record.
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customization-solutions-file-schema
         /// </summary>
-        private void ProcessWebResource(ZipArchiveEntry entry, IOrganizationService service, Entity solution)
+        private void ProcessWebResource(XElement webResourceElement, IOrganizationService service, Entity solution)
         {
-            // Extract webresource ID from filename or generate new one
-            var fileName = entry.Name;
-            var webResourceId = Guid.NewGuid();
+            var webResourceIdStr = webResourceElement.Element("WebResourceId")?.Value;
+            if (string.IsNullOrEmpty(webResourceIdStr))
+            {
+                return;
+            }
+
+            var webResourceId = Guid.Parse(webResourceIdStr);
             
-            // Check if webresource already exists by name
-            var name = entry.FullName.Replace("WebResources/", "").Replace("/", "_");
+            // Check if webresource already exists
             var query = new QueryExpression("webresource")
             {
                 ColumnSet = new ColumnSet("webresourceid"),
@@ -97,41 +158,42 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
                 {
                     Conditions =
                     {
-                        new ConditionExpression("name", ConditionOperator.Equal, name)
+                        new ConditionExpression("webresourceid", ConditionOperator.Equal, webResourceId)
                     }
                 }
             };
 
             var existing = service.RetrieveMultiple(query);
-            if (existing.Entities.Count > 0)
-            {
-                webResourceId = existing.Entities[0].Id;
-            }
 
             var webResource = new Entity("webresource")
             {
                 Id = webResourceId
             };
             webResource["webresourceid"] = webResourceId;
-            webResource["name"] = name;
             
-            // Read content and encode as base64
-            using (var stream = entry.Open())
-            using (var memoryStream = new MemoryStream())
-            {
-                stream.CopyTo(memoryStream);
-                var bytes = memoryStream.ToArray();
-                webResource["content"] = Convert.ToBase64String(bytes);
-            }
+            // Extract standard WebResource attributes from XML element
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
+            if (webResourceElement.Element("Name")?.Value != null)
+                webResource["name"] = webResourceElement.Element("Name").Value;
             
-            // Determine webresource type from file extension
-            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource#webresourcetype-choicesoptions
-            var extension = Path.GetExtension(fileName).ToLower();
-            int webResourceType = GetWebResourceType(extension);
-            webResource["webresourcetype"] = webResourceType;
+            if (webResourceElement.Element("DisplayName")?.Value != null)
+                webResource["displayname"] = webResourceElement.Element("DisplayName").Value;
             
-            // Set display name
-            webResource["displayname"] = Path.GetFileNameWithoutExtension(fileName);
+            if (webResourceElement.Element("WebResourceType")?.Value != null && int.TryParse(webResourceElement.Element("WebResourceType").Value, out int webResourceType))
+                webResource["webresourcetype"] = webResourceType;
+            
+            if (webResourceElement.Element("Description")?.Value != null)
+                webResource["description"] = webResourceElement.Element("Description").Value;
+            
+            // Content is base64-encoded in the XML
+            if (webResourceElement.Element("Content")?.Value != null)
+                webResource["content"] = webResourceElement.Element("Content").Value;
+            
+            if (webResourceElement.Element("IsCustomizable")?.Value != null && bool.TryParse(webResourceElement.Element("IsCustomizable").Value, out bool isCustomizable))
+                webResource["iscustomizable"] = isCustomizable;
+            
+            if (webResourceElement.Element("IsHidden")?.Value != null && bool.TryParse(webResourceElement.Element("IsHidden").Value, out bool isHidden))
+                webResource["ishidden"] = isHidden;
 
             if (existing.Entities.Count > 0)
             {
@@ -141,6 +203,40 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
             {
                 service.Create(webResource);
             }
+        }
+
+        /// <summary>
+        /// Generates WebResource XML element for customizations.xml.
+        /// </summary>
+        private XElement GenerateWebResourceElement(Entity webResource)
+        {
+            var element = new XElement("WebResource");
+            
+            element.Add(new XElement("WebResourceId", webResource.GetAttributeValue<Guid>("webresourceid")));
+            
+            if (webResource.Contains("name"))
+                element.Add(new XElement("Name", webResource.GetAttributeValue<string>("name")));
+            
+            if (webResource.Contains("displayname"))
+                element.Add(new XElement("DisplayName", webResource.GetAttributeValue<string>("displayname")));
+            
+            if (webResource.Contains("webresourcetype"))
+                element.Add(new XElement("WebResourceType", webResource.GetAttributeValue<int>("webresourcetype")));
+            
+            if (webResource.Contains("description"))
+                element.Add(new XElement("Description", webResource.GetAttributeValue<string>("description")));
+            
+            // Content is stored as base64-encoded string
+            if (webResource.Contains("content"))
+                element.Add(new XElement("Content", webResource.GetAttributeValue<string>("content")));
+            
+            if (webResource.Contains("iscustomizable"))
+                element.Add(new XElement("IsCustomizable", webResource.GetAttributeValue<bool>("iscustomizable")));
+            
+            if (webResource.Contains("ishidden"))
+                element.Add(new XElement("IsHidden", webResource.GetAttributeValue<bool>("ishidden")));
+
+            return element;
         }
 
         /// <summary>
@@ -168,26 +264,6 @@ namespace Fake4Dataverse.FakeMessageExecutors.SolutionComponents
                 ".resx" => 12,
                 _ => 3 // Default to JavaScript
             };
-        }
-
-        /// <summary>
-        /// Gets the filename for a webresource for export.
-        /// </summary>
-        private string GetWebResourceFileName(Entity webResource)
-        {
-            var name = webResource.GetAttributeValue<string>("name");
-            var webResourceType = webResource.GetAttributeValue<int>("webresourcetype");
-            
-            if (string.IsNullOrEmpty(name))
-            {
-                return null;
-            }
-            
-            // Determine file extension from type
-            var extension = GetFileExtensionFromType(webResourceType);
-            
-            // Construct filename
-            return $"WebResources/{name}{extension}";
         }
 
         /// <summary>
