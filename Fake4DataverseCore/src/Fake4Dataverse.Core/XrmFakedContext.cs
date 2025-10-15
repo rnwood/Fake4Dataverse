@@ -177,7 +177,7 @@ namespace Fake4Dataverse
             GetOrganizationService();
 
             // Initialize system entity metadata automatically
-            // This ensures metadata tables (entitydefinition, attribute) are always available
+            // This ensures metadata tables (entity, attribute) are always available
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
             InitializeSystemEntityMetadata();
 
@@ -377,6 +377,64 @@ namespace Fake4Dataverse
             context._service = fakedService;
 
             return context._service;
+        }
+
+        /// <summary>
+        /// Imports multiple solution files into the faked context.
+        /// Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.importsolutionrequest
+        /// 
+        /// This helper method allows importing multiple solution files in sequence,
+        /// which is useful for setting up test environments with multiple solutions.
+        /// If any solution import fails, an exception is thrown and no further solutions are imported.
+        /// </summary>
+        /// <param name="solutionFiles">Array of solution ZIP files as byte arrays</param>
+        /// <param name="publishWorkflows">Whether to activate workflows after import (default: false)</param>
+        /// <param name="overwriteUnmanagedCustomizations">Whether to overwrite unmanaged customizations (default: false)</param>
+        /// <exception cref="System.ArgumentNullException">Thrown when solutionFiles is null</exception>
+        /// <exception cref="System.ServiceModel.FaultException">Thrown when any solution import fails</exception>
+        /// <example>
+        /// <code>
+        /// var solution1 = File.ReadAllBytes("Solution1.zip");
+        /// var solution2 = File.ReadAllBytes("Solution2.zip");
+        /// context.ImportSolutions(new[] { solution1, solution2 });
+        /// </code>
+        /// </example>
+        public void ImportSolutions(byte[][] solutionFiles, bool publishWorkflows = false, bool overwriteUnmanagedCustomizations = false)
+        {
+            if (solutionFiles == null)
+            {
+                throw new ArgumentNullException(nameof(solutionFiles), "Solution files array cannot be null");
+            }
+
+            var service = GetOrganizationService();
+            
+            for (int i = 0; i < solutionFiles.Length; i++)
+            {
+                var solutionFile = solutionFiles[i];
+                
+                if (solutionFile == null || solutionFile.Length == 0)
+                {
+                    throw new ArgumentException($"Solution file at index {i} is null or empty", nameof(solutionFiles));
+                }
+
+                try
+                {
+                    var request = new Microsoft.Crm.Sdk.Messages.ImportSolutionRequest
+                    {
+                        CustomizationFile = solutionFile,
+                        PublishWorkflows = publishWorkflows,
+                        OverwriteUnmanagedCustomizations = overwriteUnmanagedCustomizations
+                    };
+                    
+                    service.Execute(request);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to import solution at index {i}. {solutionFiles.Length - i - 1} solution(s) not imported.", 
+                        ex);
+                }
+            }
         }
 
         /// <summary>

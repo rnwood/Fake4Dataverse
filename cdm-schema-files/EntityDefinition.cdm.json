@@ -6,7 +6,7 @@
       "$type": "LocalEntity",
       "name": "EntityDefinition",
       "description": "Entity metadata definition",
-      "sourceName": "entitydefinition",
+      "sourceName": "entity",
       "displayName": "Entity Definition",
       "primaryKey": "MetadataId",
       "hasAttributes": [

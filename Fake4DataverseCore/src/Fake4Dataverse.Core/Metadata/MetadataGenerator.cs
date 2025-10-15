@@ -326,7 +326,7 @@ namespace Fake4Dataverse.Metadata
         /// These system entities are required for Model-Driven App functionality, solution management, and metadata persistence in tests.
         /// 
         /// System entities included:
-        /// - Metadata virtual tables: entitydefinition, attribute, relationship, optionset, entitykey
+        /// - Metadata virtual tables: entity, attribute, relationship, optionset, entitykey
         /// - Solution entities: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
         /// </summary>
         /// <returns>Collection of EntityMetadata for system entities</returns>
