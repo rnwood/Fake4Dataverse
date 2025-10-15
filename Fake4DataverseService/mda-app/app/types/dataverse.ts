@@ -192,3 +192,99 @@ export interface FormControl {
   label?: string;
   disabled?: boolean;
 }
+
+/**
+ * Solution entity - Represents a solution in Dataverse
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/solution
+ * A solution is a container for components (tables, forms, views, etc.)
+ */
+export interface Solution {
+  solutionid: string;
+  uniquename: string;
+  friendlyname?: string;
+  version?: string;
+  description?: string;
+  publisherid?: string;
+  ismanaged?: boolean;
+  isvisible?: boolean;
+}
+
+/**
+ * SolutionComponent entity - Links components to solutions
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/solutioncomponent
+ * Defines which components (tables, forms, etc.) are part of which solution
+ */
+export interface SolutionComponent {
+  solutioncomponentid: string;
+  solutionid: string;
+  objectid: string;
+  componenttype: number; // 1=Entity, 24=Attribute, 60=SystemForm, 26=SavedQuery, etc.
+  rootcomponentbehavior?: number;
+}
+
+/**
+ * EntityDefinition metadata - Table definition
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/reference/entitymetadata
+ * Provides comprehensive metadata about tables including properties, attributes, etc.
+ */
+export interface EntityDefinition {
+  MetadataId?: string;
+  LogicalName: string;
+  SchemaName?: string;
+  DisplayName?: {
+    UserLocalizedLabel?: {
+      Label: string;
+    };
+  };
+  DisplayCollectionName?: {
+    UserLocalizedLabel?: {
+      Label: string;
+    };
+  };
+  Description?: {
+    UserLocalizedLabel?: {
+      Label: string;
+    };
+  };
+  EntitySetName?: string;
+  PrimaryIdAttribute?: string;
+  PrimaryNameAttribute?: string;
+  ObjectTypeCode?: number;
+  IsCustomEntity?: boolean;
+  IsActivity?: boolean;
+  OwnershipType?: string;
+  Attributes?: AttributeMetadata[];
+  [key: string]: any;
+}
+
+/**
+ * AttributeMetadata - Column/field definition
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/reference/attributemetadata
+ * Provides metadata about table columns/attributes
+ */
+export interface AttributeMetadata {
+  MetadataId?: string;
+  LogicalName: string;
+  SchemaName?: string;
+  DisplayName?: {
+    UserLocalizedLabel?: {
+      Label: string;
+    };
+  };
+  Description?: {
+    UserLocalizedLabel?: {
+      Label: string;
+    };
+  };
+  AttributeType?: string;
+  AttributeTypeName?: {
+    Value: string;
+  };
+  IsCustomAttribute?: boolean;
+  IsPrimaryId?: boolean;
+  IsPrimaryName?: boolean;
+  RequiredLevel?: {
+    Value: string;
+  };
+  [key: string]: any;
+}

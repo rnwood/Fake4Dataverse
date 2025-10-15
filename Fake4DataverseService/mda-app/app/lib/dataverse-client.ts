@@ -179,6 +179,77 @@ export class DataverseApiClient {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);
     }
   }
+
+  /**
+   * Fetch entity metadata (table definitions)
+   * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/reference/entitymetadata
+   */
+  async fetchEntityDefinitions(
+    options?: {
+      select?: string[];
+      filter?: string;
+    }
+  ): Promise<any> {
+    const params = new URLSearchParams();
+    
+    if (options?.select?.length) {
+      params.append('$select', options.select.join(','));
+    }
+    if (options?.filter) {
+      params.append('$filter', options.filter);
+    }
+
+    const url = `${API_BASE_URL}/EntityDefinitions${params.toString() ? '?' + params.toString() : ''}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'OData-MaxVersion': '4.0',
+        'OData-Version': '4.0',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Fetch entity metadata by logical name
+   * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/reference/entitymetadata
+   */
+  async fetchEntityDefinition(
+    logicalName: string,
+    options?: {
+      expand?: string[];
+    }
+  ): Promise<any> {
+    const params = new URLSearchParams();
+    
+    if (options?.expand?.length) {
+      params.append('$expand', options.expand.join(','));
+    }
+
+    const url = `${API_BASE_URL}/EntityDefinitions(LogicalName='${logicalName}')${params.toString() ? '?' + params.toString() : ''}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'OData-MaxVersion': '4.0',
+        'OData-Version': '4.0',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
 }
 
 export const dataverseClient = new DataverseApiClient();

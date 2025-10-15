@@ -204,8 +204,15 @@ public class Program
         
         var organizationService = context.GetOrganizationService();
         
-        // Initialize example Model-Driven App metadata
-        MdaInitializer.InitializeExampleMda(organizationService);
+        // Initialize example Model-Driven App metadata (skip if entities don't exist)
+        try
+        {
+            MdaInitializer.InitializeExampleMda(organizationService);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Skipping MDA initialization (entities not available): {ex.Message}");
+        }
         
         builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);
