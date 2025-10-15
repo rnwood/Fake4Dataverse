@@ -16,14 +16,9 @@ using Xunit;
 namespace Fake4Dataverse.Tests.FakeContextTests
 {
     public class RetrieveRequestTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _ctx;
-        private readonly IOrganizationService _service;
-
-        public RetrieveRequestTests() 
+    {        public RetrieveRequestTests() 
         {
-            _ctx = XrmFakedContextFactory.New();
-            _service = _ctx.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         [Fact]
@@ -35,13 +30,13 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             var user = new Entity() { LogicalName = "systemuser", Id=Guid.NewGuid() };
             user["fullname"] = "Fake XrmEasy";
 
-            _ctx.InitializeMetadata(userMetadata);
-            _ctx.Initialize(user);
-            (_ctx as XrmFakedContext).CallerId = user.ToEntityReference();
+            _context.InitializeMetadata(userMetadata);
+            _context.Initialize(user);
+            (_context as XrmFakedContext).CallerId = user.ToEntityReference();
 
             var account = new Entity() { LogicalName = "account" };
 
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             var accountId = _service.Create(account);
 
@@ -71,7 +66,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 Name = "Account 3"
             };
 
-            _ctx.Initialize(new[] { account1, account2, account3 });
+            _context.Initialize(new[] { account1, account2, account3 });
 
             var request = new RetrieveRequest
             {
@@ -143,8 +138,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 FirstName = "Contact 5"
             };
 
-            _ctx.Initialize(new Entity[] { account1, account2, account3, contact1, contact2, contact3, contact4, contact5 });
-            (_ctx as XrmFakedContext).AddRelationship("contact_customer_accounts", new XrmFakedRelationship
+            _context.Initialize(new Entity[] { account1, account2, account3, contact1, contact2, contact3, contact4, contact5 });
+            (_context as XrmFakedContext).AddRelationship("contact_customer_accounts", new XrmFakedRelationship
             (
                 entity1LogicalName: Contact.EntityLogicalName,
                 entity1Attribute: "parentcustomerid",
@@ -246,7 +241,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var relationshipName = "accountleads_association";
 
-            (_ctx as XrmFakedContext).AddRelationship(relationshipName, new XrmFakedRelationship
+            (_context as XrmFakedContext).AddRelationship(relationshipName, new XrmFakedRelationship
             {
                 IntersectEntity = "accountleads",
                 Entity1LogicalName = Account.EntityLogicalName,
@@ -255,7 +250,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 Entity2Attribute = "leadid"
             });
 
-            _ctx.Initialize(new Entity[] { account1, account2, account3, lead1, lead2, lead3, lead4, lead5 });
+            _context.Initialize(new Entity[] { account1, account2, account3, lead1, lead2, lead3, lead4, lead5 });
             _service.Associate(Account.EntityLogicalName, account2.Id, new Relationship(relationshipName),
                 new EntityReferenceCollection()
                 {
@@ -367,7 +362,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var relationshipName = "accountleads_association";
 
-            (_ctx as XrmFakedContext).AddRelationship(relationshipName, new XrmFakedRelationship
+            (_context as XrmFakedContext).AddRelationship(relationshipName, new XrmFakedRelationship
             {
                 IntersectEntity = "accountleads",
                 Entity1LogicalName = Account.EntityLogicalName,
@@ -376,7 +371,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 Entity2Attribute = "leadid"
             });
 
-            (_ctx as XrmFakedContext).Initialize(new Entity[] { account1, account2, account3, lead1, lead2, lead3, lead4, lead5 });
+            (_context as XrmFakedContext).Initialize(new Entity[] { account1, account2, account3, lead1, lead2, lead3, lead4, lead5 });
             _service.Associate(Account.EntityLogicalName, account2.Id, new Relationship(relationshipName),
                 new EntityReferenceCollection()
                 {
@@ -490,7 +485,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             var accountLeadsRelationshipName = "accountleads_association";
 
             //account N:N leads
-            _ctx.AddRelationship(accountLeadsRelationshipName, new XrmFakedRelationship
+            _context.AddRelationship(accountLeadsRelationshipName, new XrmFakedRelationship
             {
                 IntersectEntity = "accountleads",
                 Entity1LogicalName = Account.EntityLogicalName,
@@ -500,7 +495,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             });
 
             //account 1:N contacts
-            _ctx.AddRelationship("contact_customer_accounts", new XrmFakedRelationship
+            _context.AddRelationship("contact_customer_accounts", new XrmFakedRelationship
             (
                 entity1LogicalName: Contact.EntityLogicalName,
                 entity1Attribute: "parentcustomerid",
@@ -508,7 +503,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 entity2Attribute: "accountid"
             ));
 
-            _ctx.Initialize(new Entity[] { account1, account2, lead1, lead2, lead3, contact1, contact2, contact3 });
+            _context.Initialize(new Entity[] { account1, account2, lead1, lead2, lead3, contact1, contact2, contact3 });
 
             //associate account N:N leads
             _service.Associate(Account.EntityLogicalName, account2.Id, new Relationship(accountLeadsRelationshipName),
@@ -627,8 +622,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                     { "firstname", "Contact 4"}
                 }
             };
-            _ctx.Initialize(new[] { account1, account2, contact1, contact2, contact3, contact4 });
-            _ctx.AddRelationship("contact_customer_accounts", new XrmFakedRelationship
+            _context.Initialize(new[] { account1, account2, contact1, contact2, contact3, contact4 });
+            _context.AddRelationship("contact_customer_accounts", new XrmFakedRelationship
             (
                 entity1LogicalName: "contact",
                 entity1Attribute: "parentcustomerid",
@@ -716,8 +711,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 ParentCustomerId = account2.ToEntityReference()
             };
 
-            _ctx.Initialize(new Entity[] { account1, account2, contact1, contact2, contact3 });
-            _ctx.AddRelationship("contact_customer_accounts", new XrmFakedRelationship
+            _context.Initialize(new Entity[] { account1, account2, contact1, contact2, contact3 });
+            _context.AddRelationship("contact_customer_accounts", new XrmFakedRelationship
             (
                 entity1LogicalName: Contact.EntityLogicalName,
                 entity1Attribute: "parentcustomerid",
@@ -803,7 +798,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var relationshipName = "accountleads_association";
 
-            _ctx.AddRelationship(relationshipName, new XrmFakedRelationship
+            _context.AddRelationship(relationshipName, new XrmFakedRelationship
             {
                 IntersectEntity = "accountleads",
                 Entity1LogicalName = Account.EntityLogicalName,
@@ -812,7 +807,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 Entity2Attribute = "leadid"
             });
 
-            _ctx.Initialize(new Entity[] { account1, account2, account3, lead1, lead2, lead3 });
+            _context.Initialize(new Entity[] { account1, account2, account3, lead1, lead2, lead3 });
             _service.Associate(Account.EntityLogicalName, account2.Id, new Relationship(relationshipName),
                 new EntityReferenceCollection()
                 {
@@ -891,7 +886,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             }
             var relationshipName = "accountleads_association";
 
-            _ctx.AddRelationship(relationshipName, new XrmFakedRelationship
+            _context.AddRelationship(relationshipName, new XrmFakedRelationship
             {
                 IntersectEntity = "accountleads",
                 Entity1LogicalName = Account.EntityLogicalName,
@@ -904,7 +899,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             initData.AddRange(new Entity[] { account1, account2 });
             initData.AddRange(leads);
 
-            _ctx.Initialize(initData);
+            _context.Initialize(initData);
             _service.Associate(Account.EntityLogicalName, account2.Id, new Relationship(relationshipName),
                 new EntityReferenceCollection(leads.Select(x => x.ToEntityReference()).ToList()));
 
@@ -956,7 +951,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             var account = new Entity(Account.EntityLogicalName);
             account.Id = Guid.NewGuid();
-            _ctx.Initialize(account);
+            _context.Initialize(account);
 
             var request = new RetrieveRequest
             {
@@ -977,7 +972,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             var account = new Entity(Account.EntityLogicalName);
             account.Id = Guid.NewGuid();
-            _ctx.Initialize(account);
+            _context.Initialize(account);
 
             var request = new RetrieveRequest
             {
@@ -1004,12 +999,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                  {
                  alternateKeyMetadata
                  });
-            _ctx.InitializeMetadata(accountMetadata);
+            _context.InitializeMetadata(accountMetadata);
             
             var account = new Entity(Account.EntityLogicalName);
             account.Id = Guid.NewGuid();
             account.Attributes.Add("alternateKey", "key");
-            _ctx.Initialize(account);
+            _context.Initialize(account);
 
             var request = new RetrieveRequest
             {
@@ -1028,7 +1023,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             var account = new Entity(Account.EntityLogicalName);
             account.Id = Guid.NewGuid();
             account.Attributes.Add("alternateKey", "key");
-            _ctx.Initialize(account);
+            _context.Initialize(account);
 
             var request = new RetrieveRequest
             {

@@ -9,14 +9,10 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.Issues
 {
-    public class Issue180
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public Issue180() 
+    public class Issue180 : Fake4DataverseTests
+    {        public Issue180() 
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         [Fact]
