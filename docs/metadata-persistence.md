@@ -1,9 +1,9 @@
 # Metadata Persistence
 
 **Implementation Date**: December 2025  
-**Issue Reference**: [Persist tables/columns and other metadata](https://github.com/rnwood/Fake4Dataverse/issues/XXX)
+**Issue Reference**: [Persist tables/columns and other metadata](https://github.com/rnwood/Fake4Dataverse/issues/89)
 
-Fake4Dataverse now persists entity and attribute metadata to standard Dataverse metadata tables, allowing metadata to be queried like regular entity data.
+Fake4Dataverse automatically persists entity and attribute metadata to standard Dataverse metadata tables, allowing metadata to be queried like regular entity data.
 
 ## Overview
 
@@ -11,49 +11,54 @@ In real Dataverse/Dynamics 365, metadata is accessible through special virtual e
 - **EntityDefinition** (`entitydefinition`) - Contains entity metadata
 - **Attribute** (`attribute`) - Contains attribute/field metadata
 
-Starting with v4.0+, Fake4Dataverse automatically persists metadata to these tables when you initialize or update entity metadata. This enables:
+Starting with v4.0+, Fake4Dataverse **automatically** initializes these metadata tables in the constructor and persists all entity and attribute metadata to them. This enables:
 - Querying metadata using standard CRUD operations
 - Building tools that work with metadata as data
 - Testing code that reads from metadata tables
-- More realistic test scenarios
+- More realistic test scenarios that match real Dataverse behavior
 
 **Reference**: [Dataverse Entity Metadata](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata)
 
 ## How It Works
 
-When you initialize entity metadata in Fake4Dataverse, the framework automatically:
+### Automatic Initialization
 
-1. **Creates EntityDefinition records** - One record per entity with properties like `logicalname`, `schemaname`, `primaryidattribute`, etc.
-2. **Creates Attribute records** - One record per attribute with properties like `logicalname`, `entitylogicalname`, `attributetype`, `maxlength`, etc.
-3. **Keeps both in sync** - Updates to metadata via `SetEntityMetadata()` are reflected in the tables
-
-This happens transparently - you don't need to change your existing test code. The metadata is stored in both the traditional in-memory dictionary AND in the metadata tables.
-
-## Basic Usage
-
-### Loading System Entity Metadata
-
-First, load the system entity metadata which includes the `entitydefinition` and `attribute` tables:
+The metadata tables are **automatically initialized** when you create a context - no explicit call needed:
 
 ```csharp
 var context = XrmFakedContextFactory.New();
-context.InitializeSystemEntityMetadata(); // Loads entitydefinition, attribute, and other system entities
-
-var service = context.GetOrganizationService();
+// EntityDefinition and Attribute tables are already loaded and ready to use!
 ```
 
-### Initialize Entity Metadata
+### Automatic Persistence
 
-When you initialize metadata, it's automatically persisted to the tables:
+When you initialize entity metadata, it's **automatically persisted** to both the metadata tables and the in-memory dictionary:
+
+1. **Creates EntityDefinition records** - One record per entity with properties like `logicalname`, `schemaname`, `primaryidattribute`, etc.
+2. **Creates Attribute records** - One record per attribute with properties like `logicalname`, `entitylogicalname`, `attributetype`, `maxlength`, etc.
+3. **Keeps both in sync** - Updates to metadata via `SetEntityMetadata()` are reflected in both places
+
+This happens automatically whenever you call:
+- `InitializeMetadata(entityMetadata)`
+- `InitializeMetadata(assembly)`  
+- `InitializeMetadataFromCdmFile()`
+- `SetEntityMetadata()`
+
+## Basic Usage
+
+### No Explicit Initialization Needed
 
 ```csharp
-// Create entity metadata
+// Create context - metadata tables are automatically initialized
+var context = XrmFakedContextFactory.New();
+var service = context.GetOrganizationService();
+
+// Initialize your entity metadata
 var accountMetadata = new EntityMetadata()
 {
     LogicalName = "account",
     SchemaName = "Account"
 };
-accountMetadata.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
 accountMetadata.SetSealedPropertyValue("PrimaryIdAttribute", "accountid");
 accountMetadata.SetSealedPropertyValue("PrimaryNameAttribute", "name");
 
@@ -68,7 +73,7 @@ nameAttribute.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
 
 accountMetadata.SetAttributeCollection(new[] { nameAttribute });
 
-// Initialize metadata - automatically persisted to tables
+// Initialize metadata - automatically persisted to entitydefinition and attribute tables
 context.InitializeMetadata(accountMetadata);
 ```
 
@@ -148,9 +153,8 @@ public List<string> GetPicklistAttributes(IOrganizationService service, string e
 [Fact]
 public void Should_Find_Picklist_Attributes()
 {
-    // Arrange
+    // Arrange - metadata tables are automatically initialized
     var context = XrmFakedContextFactory.New();
-    context.InitializeSystemEntityMetadata();
     
     // Create entity with a picklist attribute
     var entityMetadata = new EntityMetadata() { LogicalName = "testentity" };
@@ -199,9 +203,8 @@ public class MetadataDiscovery
 [Fact]
 public void Should_Count_Attributes_Per_Entity()
 {
-    // Arrange
+    // Arrange - metadata tables are automatically initialized
     var context = XrmFakedContextFactory.New();
-    context.InitializeSystemEntityMetadata();
     
     var entity1 = new EntityMetadata() { LogicalName = "entity1" };
     var attr1 = new StringAttributeMetadata() { LogicalName = "field1" };
@@ -254,9 +257,8 @@ public class MyPlugin : IPlugin
 [Fact]
 public void Plugin_Should_Query_Entity_Metadata()
 {
-    // Arrange
+    // Arrange - metadata tables are automatically initialized
     var context = XrmFakedContextFactory.New();
-    context.InitializeSystemEntityMetadata();
     
     var accountMetadata = new EntityMetadata() { LogicalName = "account" };
     accountMetadata.SetSealedPropertyValue("IsBusinessProcessEnabled", true);
@@ -324,29 +326,47 @@ public void Plugin_Should_Query_Entity_Metadata()
 
 ## Backward Compatibility
 
-The metadata persistence feature is **fully backward compatible**:
+The metadata persistence feature is **fully automatic and backward compatible**:
 
-- If you don't call `InitializeSystemEntityMetadata()`, metadata persistence is silently skipped
-- All existing tests continue to work without modification
+- Metadata tables are automatically initialized in the constructor
+- All existing tests continue to work without modification  
 - The traditional in-memory metadata dictionary is still used and maintained
 - Existing metadata queries via `GetEntityMetadataByName()` and `CreateMetadataQuery()` continue to work
+- If you re-initialize an entity that already exists, it updates the existing metadata instead of throwing an error
 
 ## Limitations
 
+### Currently Supported
+
+✅ **Entity metadata** - Full support via EntityDefinition table  
+✅ **Attribute metadata** - Full support via Attribute table  
+✅ **Automatic initialization** - No explicit calls needed  
+✅ **Automatic persistence** - Transparent persistence to tables
+
 ### Not Yet Implemented
 
-- **Relationship metadata** - Relationships are not yet persisted to tables
-- **OptionSet metadata** - Option sets have their own repository but aren't persisted to tables
-- **Reverse queries** - Reading from tables to populate the in-memory dictionary
-- **Create/Update via tables** - Creating entities by inserting EntityDefinition records
+The following metadata types are not yet persisted to tables (but may be added in future versions):
 
-These may be added in future versions based on community feedback.
+- **Relationship metadata** - Relationships (OneToMany, ManyToMany) are stored in the EntityMetadata object but not persisted to separate relationship tables
+- **OptionSet metadata** - Option sets have their own in-memory repository (`IOptionSetMetadataRepository`) but aren't persisted to optionset tables
+- **EntityKey metadata** - Alternate keys are not persisted to tables
+- **Reverse queries** - Reading from tables to populate the in-memory dictionary (tables are write-only for now)
+- **Create/Update via tables** - Creating entities by inserting EntityDefinition records directly
 
 ### Current Behavior
 
-- Metadata persistence only works when both `entitydefinition` and `attribute` tables exist in the context
+- Metadata tables (`entitydefinition` and `attribute`) are always present and initialized automatically
 - Changes made directly to entity definition or attribute records are NOT reflected back to the EntityMetadata objects
 - The source of truth remains the in-memory `EntityMetadata` dictionary
+- Persistence to tables is one-way: from EntityMetadata → tables
+
+### Relationships and OptionSets
+
+**Relationships** are stored in the `EntityMetadata.ManyToManyRelationships`, `EntityMetadata.OneToManyRelationships`, and `EntityMetadata.ManyToOneRelationships` properties and can be queried via the EntityMetadata objects. However, they are not yet persisted to separate relationship tables in the database.
+
+**OptionSets** are stored in the `IOptionSetMetadataRepository` which you can access via `context.GetProperty<IOptionSetMetadataRepository>()`. They can also be queried through the EntityMetadata AttributeMetadata properties. However, they are not yet persisted to separate optionset tables.
+
+If you need to test code that queries relationship or optionset tables directly, you'll need to manually create those records or contribute the persistence logic to the project.
 
 ## Related Documentation
 
