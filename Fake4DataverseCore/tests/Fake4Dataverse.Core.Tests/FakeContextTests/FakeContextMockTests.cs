@@ -16,11 +16,16 @@ namespace Fake4Dataverse.Tests.FakeContextTests
     {
         private IXrmFakedContext _context;
         private IOrganizationService _service;
-                [Fact(Skip = "Requires custom middleware - incompatible with base class validation-disabled context")]
+                [Fact]
         public void Should_Execute_Mock_For_OrganizationRequests()
         {
             var context = MiddlewareBuilder
                         .New()
+                        .Add(ctx => ctx.SetProperty<IIntegrityOptions>(new IntegrityOptions 
+                        { 
+                            ValidateEntityReferences = false,
+                            ValidateAttributeTypes = false 
+                        }))
                         .AddExecutionMock<RetrieveEntityRequest>(RetrieveEntityMock)
                         .UseMessages()
                         .Build();
@@ -48,11 +53,16 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             return new RetrieveEntityResponse { ResponseName = "Another" };
         }
 
-        [Fact(Skip = "Requires custom middleware - incompatible with base class validation-disabled context")]
+        [Fact]
         public void Should_Override_FakeMessageExecutor()
         {
             var context = MiddlewareBuilder
                         .New()
+                        .Add(ctx => ctx.SetProperty<IIntegrityOptions>(new IntegrityOptions 
+                        { 
+                            ValidateEntityReferences = false,
+                            ValidateAttributeTypes = false 
+                        }))
                         .AddExecutionMock<RetrieveEntityRequest>(RetrieveEntityMock)
                         .AddExecutionMock<RetrieveEntityRequest>(AnotherRetrieveEntityMock)
                         .UseMessages()
@@ -71,11 +81,16 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             Assert.Equal("Another", response.ResponseName);
         }
 
-        [Fact(Skip = "Requires custom middleware - incompatible with base class validation-disabled context")]
+        [Fact]
         public void Should_Override_Execution_Mock()
         {
             var context = MiddlewareBuilder
                         .New()
+                        .Add(ctx => ctx.SetProperty<IIntegrityOptions>(new IntegrityOptions 
+                        { 
+                            ValidateEntityReferences = false,
+                            ValidateAttributeTypes = false 
+                        }))
                         .AddFakeMessageExecutors()
                         .AddFakeMessageExecutor(new FakeRetrieveEntityRequestExecutor())
                         .UseMessages()

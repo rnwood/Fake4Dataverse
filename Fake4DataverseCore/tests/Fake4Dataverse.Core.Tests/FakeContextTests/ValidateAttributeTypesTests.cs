@@ -253,26 +253,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             Assert.NotEqual(Guid.Empty, id);
         }
 
-        [Fact(Skip = "Lookup target type validation is overridden by ValidateEntityReferences which checks entity existence first")]
-        public void Should_Reject_Lookup_To_Invalid_Target()
-        {
-            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
-            // Dataverse validates that lookup targets match the defined relationship
-            
-            
-            var account = new Entity("account")
-            {
-                ["name"] = "Test Account",
-                ["primarycontactid"] = new EntityReference("account", Guid.NewGuid())  // Should be contact
-            };
-
-            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => 
-                _serviceWithValidation.Create(account));
-            
-            Assert.Contains("primarycontactid", ex.Message);
-            Assert.Contains("cannot reference", ex.Message.ToLower());
-        }
-
         [Fact]
         public void Should_Validate_On_Update()
         {
