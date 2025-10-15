@@ -306,8 +306,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             // When metadata is not initialized and validation is enabled, should throw error like Dataverse
             
             // Create a fresh context with validation enabled but no metadata
-            // Use context from base class
-            var freshContext = _context;  // Validation enabled by default
+            // NOTE: Cannot use base class context as it has validation disabled for backward compatibility
+            var freshContext = XrmFakedContextFactory.New();  // Validation enabled by default
             var freshService = freshContext.GetOrganizationService();
             
             // Don't initialize metadata - this should cause an error

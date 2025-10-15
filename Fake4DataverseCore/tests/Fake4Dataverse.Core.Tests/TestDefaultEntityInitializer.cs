@@ -8,16 +8,8 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests
 {
-    public class TestDefaultEntityInitializer
+    public class TestDefaultEntityInitializer : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public TestDefaultEntityInitializer()
-        {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
-        }
-
         [Fact]
         public void TestWithUnpopulatedValues()
         {
