@@ -214,7 +214,18 @@ namespace Fake4Dataverse.Metadata.Cdm
                 }
             }
             
-            return allMetadata;
+            // Deduplicate by logical name - keep the first occurrence of each entity
+            var deduplicated = allMetadata
+                .GroupBy(e => e.LogicalName, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList();
+            
+            if (deduplicated.Count < allMetadata.Count)
+            {
+                Console.WriteLine($"Note: Deduplicated {allMetadata.Count - deduplicated.Count} duplicate entity definition(s)");
+            }
+            
+            return deduplicated;
         }
         
         /// <summary>
@@ -376,6 +387,23 @@ namespace Fake4Dataverse.Metadata.Cdm
                     {
                         importUrl = import.CorpusPath;
                     }
+                    else if (import.CorpusPath.StartsWith("/", StringComparison.Ordinal))
+                    {
+                        // Absolute path from repository root - need to resolve to base GitHub URL
+                        // Extract the base GitHub URL up to "/schemaDocuments"
+                        var schemaDocsIndex = url.IndexOf("/schemaDocuments/", StringComparison.OrdinalIgnoreCase);
+                        if (schemaDocsIndex > 0)
+                        {
+                            var githubBaseUrl = url.Substring(0, schemaDocsIndex + "/schemaDocuments".Length);
+                            importUrl = githubBaseUrl + import.CorpusPath;
+                        }
+                        else
+                        {
+                            // Fallback - treat as relative
+                            var relativePath = import.CorpusPath.TrimStart('/');
+                            importUrl = baseUrl + relativePath;
+                        }
+                    }
                     else
                     {
                         // Handle relative paths - remove leading "./" if present
@@ -396,13 +424,67 @@ namespace Fake4Dataverse.Metadata.Cdm
                 }
             }
             
+            // Process entity references in manifest files
+            // Manifest files use "entities" array to reference entity definition files
+            if (document?.Entities != null && document.Entities.Any())
+            {
+                var baseUrl = url.Substring(0, url.LastIndexOf('/') + 1);
+                
+                foreach (var entityRef in document.Entities)
+                {
+                    if (string.IsNullOrWhiteSpace(entityRef.EntityPath))
+                    {
+                        continue;
+                    }
+                    
+                    // Resolve entity path - extract just the file path (before the '/EntityName' suffix)
+                    // Format: "Account.cdm.json/Account" -> "Account.cdm.json"
+                    var entityFilePath = entityRef.EntityPath;
+                    var slashIndex = entityFilePath.IndexOf('/');
+                    if (slashIndex > 0)
+                    {
+                        entityFilePath = entityFilePath.Substring(0, slashIndex);
+                    }
+                    
+                    // Resolve relative entity paths
+                    string entityUrl;
+                    if (entityFilePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                        entityFilePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        entityUrl = entityFilePath;
+                    }
+                    else
+                    {
+                        // Handle relative paths - remove leading "./" if present
+                        var relativePath = entityFilePath.TrimStart('.', '/');
+                        entityUrl = baseUrl + relativePath;
+                    }
+                    
+                    try
+                    {
+                        var entityMetadata = await DownloadAndParseWithImportsAsync(entityUrl, processedUrls);
+                        allMetadata.AddRange(entityMetadata);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log but don't fail - some entity references might not be critical
+                        Console.WriteLine($"Warning: Failed to load entity {entityRef.EntityName} from {entityRef.EntityPath}: {ex.Message}");
+                    }
+                }
+            }
+            
             // Process entity definitions in this document
             if (document?.Definitions != null && document.Definitions.Any())
             {
                 foreach (var definition in document.Definitions)
                 {
-                    // Only process LocalEntity types (entity definitions)
-                    if (definition.Type != "LocalEntity" && definition.Type != "CdmEntityDefinition")
+                    // Process definitions that are entities (have entityName or name, and are LocalEntity type or no type specified)
+                    var hasEntityIdentifier = !string.IsNullOrEmpty(definition.EntityName) || !string.IsNullOrEmpty(definition.Name);
+                    var isEntityType = string.IsNullOrEmpty(definition.Type) || 
+                                      definition.Type == "LocalEntity" || 
+                                      definition.Type == "CdmEntityDefinition";
+                    
+                    if (!hasEntityIdentifier || !isEntityType)
                     {
                         continue;
                     }
@@ -780,7 +862,18 @@ namespace Fake4Dataverse.Metadata.Cdm
                 }
             }
             
-            return allMetadata;
+            // Deduplicate by logical name - keep the first occurrence of each entity
+            var deduplicated = allMetadata
+                .GroupBy(e => e.LogicalName, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList();
+            
+            if (deduplicated.Count < allMetadata.Count)
+            {
+                Console.WriteLine($"Note: Deduplicated {allMetadata.Count - deduplicated.Count} duplicate entity definition(s)");
+            }
+            
+            return deduplicated;
         }
         
         /// <summary>
