@@ -16,15 +16,18 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
     /// Tests for hierarchical query operators (Above, Under, ChildOf, etc.)
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/query-hierarchical-data
     /// </summary>
-    public class HierarchicalOperatorTests
+    public class HierarchicalOperatorTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
 
         public HierarchicalOperatorTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         /// <summary>

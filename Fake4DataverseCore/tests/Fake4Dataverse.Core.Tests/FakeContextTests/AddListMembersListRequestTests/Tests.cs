@@ -16,21 +16,16 @@ using Fake4Dataverse.Middleware;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.AddListMembersListRequestTests
 {
-    public class Tests
+    public class Tests : Fake4DataverseTests
     {
         public enum ListCreatedFromCode
         {
             Account = 1,
             Contact = 2,
             Lead = 4
-        }
-
-        private readonly IXrmFakedContext _ctx;
-        private readonly IOrganizationService _service;
-        public Tests()
+        }        public Tests()
         {
-            _ctx = XrmFakedContextFactory.New();
-            _service = _ctx.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         [Fact]
@@ -96,7 +91,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddListMembersListRequestTests
                 ListName = "Some list"
             };
 
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 list
             });
@@ -125,7 +120,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddListMembersListRequestTests
                 CreatedFromCode = new OptionSetValue((int)ListCreatedFromCode.Account)
             };
 
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 list
             });
@@ -164,7 +159,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddListMembersListRequestTests
                 Id = Guid.NewGuid()
             };
 
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 list,
                 account,
@@ -200,7 +195,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddListMembersListRequestTests
             {
                 Id = Guid.NewGuid()
             };
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 list,
                 account
@@ -247,7 +242,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddListMembersListRequestTests
             {
                 Id = Guid.NewGuid()
             };
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 list,
                 contact
@@ -292,7 +287,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddListMembersListRequestTests
             {
                 Id = Guid.NewGuid()
             };
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 list,
                 lead

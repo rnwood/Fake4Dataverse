@@ -10,15 +10,10 @@ using Fake4Dataverse.Middleware;
 
 namespace Fake4Dataverse.Tests.Issues
 {
-    public class Issue125
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public Issue125()
+    public class Issue125 : Fake4DataverseTests
+    {        public Issue125()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         [Fact]

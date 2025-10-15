@@ -13,20 +13,11 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests
 {
-    public class FakeContextTestCreate
-    {
-        private readonly IXrmFakedContext _ctx;
-        private readonly IOrganizationService _service;
-        public FakeContextTestCreate()
-        {
-            _ctx = XrmFakedContextFactory.New();
-            _service = _ctx.GetOrganizationService();
-        }
-
-        [Fact]
+    public class FakeContextTestCreate : Fake4DataverseTests
+    {                [Fact]
         public void When_a_null_entity_is_created_an_exception_is_thrown()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             var ex = Assert.Throws<InvalidOperationException>(() => service.Create(null));
             Assert.Equal(ex.Message, "The entity must not be null");
@@ -35,7 +26,7 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_an_entity_is_created_with_an_empty_logical_name_an_exception_is_thrown()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             var e = new Entity("") { Id = Guid.Empty };
 
@@ -46,19 +37,19 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_adding_an_entity_the_returned_guid_must_not_be_empty_and_the_context_should_have_it()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             var e = new Entity("account") { Id = Guid.Empty };
             var guid = service.Create(e);
 
             Assert.True(guid != Guid.Empty);
-            Assert.True(_ctx.CreateQuery("account").Count() == 1);
+            Assert.True(_context.CreateQuery("account").Count() == 1);
         }
 
         [Fact]
         public void When_Creating_Without_Id_It_should_Be_set_Automatically()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             var account = new Account
             {
@@ -73,7 +64,7 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_With_Id_It_should_Be_set()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
             var accId = Guid.NewGuid();
 
             var account = new Account
@@ -90,7 +81,7 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_With_Already_Existing_Id_Exception_Should_Be_Thrown()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
             var accId = Guid.NewGuid();
 
             var account = new Account
@@ -106,7 +97,7 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_With_A_StateCode_Property_Exception_Is_Thrown()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
             var accId = Guid.NewGuid();
 
             var account = new Account
@@ -122,11 +113,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_Using_Organization_Context_Record_Should_Be_Created()
         {
-            _ctx.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
+            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
 
             var account = new Account() { Id = Guid.NewGuid(), Name = "Super Great Customer", AccountNumber = "69" };
 
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             using (var ctx = new OrganizationServiceContext(service))
             {
@@ -140,11 +131,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_Using_Organization_Context_Without_Saving_Changes_Record_Should_Not_Be_Created()
         {
-            _ctx.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
+            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
 
             var account = new Account() { Id = Guid.NewGuid(), Name = "Super Great Customer", AccountNumber = "69" };
 
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             using (var ctx = new OrganizationServiceContext(service))
             {
@@ -160,11 +151,11 @@ namespace Fake4Dataverse.Tests
         {
             var c = new Contact();
 
-            IOrganizationService service = _ctx.GetOrganizationService();
+            IOrganizationService service = _context.GetOrganizationService();
             var id = service.Create(c);
 
             //Retrieve the record created
-            var contact = (from con in _ctx.CreateQuery<Contact>()
+            var contact = (from con in _context.CreateQuery<Contact>()
                            select con).FirstOrDefault();
 
             Assert.True(contact.Attributes.ContainsKey("contactid"));
@@ -176,11 +167,11 @@ namespace Fake4Dataverse.Tests
         {
             Entity e = new Entity("new_myentity");
 
-            IOrganizationService service = _ctx.GetOrganizationService();
+            IOrganizationService service = _context.GetOrganizationService();
             var id = service.Create(e);
 
             //Retrieve the record created
-            var record = (from r in _ctx.CreateQuery("new_myentity")
+            var record = (from r in _context.CreateQuery("new_myentity")
                           select r).FirstOrDefault();
 
             Assert.True(record.Attributes.ContainsKey("new_myentityid"));
@@ -190,16 +181,16 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_creating_a_record_using_early_bound_entities_and_proxytypes_primary_key_should_be_populated()
         {
-            _ctx.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
             var c = new Contact();
             c.Id = Guid.NewGuid();
 
-            IOrganizationService service = _ctx.GetOrganizationService();
+            IOrganizationService service = _context.GetOrganizationService();
 
-            _ctx.Initialize(new List<Entity>() { c });
+            _context.Initialize(new List<Entity>() { c });
 
             //Retrieve the record created
-            var contact = (from con in _ctx.CreateQuery<Contact>()
+            var contact = (from con in _context.CreateQuery<Contact>()
                            select con).FirstOrDefault();
 
             Assert.True(contact.Attributes.ContainsKey("contactid"));
@@ -238,7 +229,7 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_related_entities_and_relationship_are_used_child_entities_are_created()
         {
-            _ctx.AddRelationship("order_details",
+            _context.AddRelationship("order_details",
                 new XrmFakedRelationship()
                 {
                     Entity1LogicalName = SalesOrder.EntityLogicalName,  //Referenced
@@ -269,7 +260,7 @@ namespace Fake4Dataverse.Tests
             };
 
             var id = (_service.Execute(request) as CreateResponse).id;
-            var createdOrderDetails = _ctx.CreateQuery<SalesOrderDetail>().ToList();
+            var createdOrderDetails = _context.CreateQuery<SalesOrderDetail>().ToList();
 
             Assert.Equal(createdOrderDetails.Count, 2);
             Assert.Equal(createdOrderDetails[0].SalesOrderId.Id, id);
@@ -312,12 +303,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Shouldnt_modify_objects_passed_to_the_service()
         {
-            _ctx.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
             var account = new Account { Id = Guid.NewGuid(), Name = "Test account" };
 
-            IOrganizationService service = _ctx.GetOrganizationService();
+            IOrganizationService service = _context.GetOrganizationService();
 
-            _ctx.Initialize(new List<Entity>() { account });
+            _context.Initialize(new List<Entity>() { account });
 
             //Retrieve the record created
             Contact c = new Contact
@@ -331,7 +322,7 @@ namespace Fake4Dataverse.Tests
                 service.Create(c);
             }
 
-            var createdContacts = _ctx.CreateQuery<Contact>().ToList();
+            var createdContacts = _context.CreateQuery<Contact>().ToList();
 
             Assert.Equal(Guid.Empty, c.Id);
             Assert.Null(c.ContactId);
@@ -343,7 +334,7 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_Without_Default_Attributes_They_Should_Be_Set_By_Default()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             var account = new Account
             {
@@ -351,7 +342,7 @@ namespace Fake4Dataverse.Tests
             };
 
             service.Create(account);
-            var createdAccount = _ctx.CreateQuery<Account>().FirstOrDefault();
+            var createdAccount = _context.CreateQuery<Account>().FirstOrDefault();
 
             Assert.True(createdAccount.Attributes.ContainsKey("createdon"));
             Assert.True(createdAccount.Attributes.ContainsKey("createdby"));
@@ -363,8 +354,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_Creating_Without_Default_Attributes_They_Should_Be_Set_By_Default_With_Early_Bound()
         {
-            var service = _ctx.GetOrganizationService();
-            _ctx.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
+            var service = _context.GetOrganizationService();
+            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
 
             var account = new Account
             {
@@ -372,7 +363,7 @@ namespace Fake4Dataverse.Tests
             };
 
             service.Create(account);
-            var createdAccount = _ctx.CreateQuery<Account>().FirstOrDefault();
+            var createdAccount = _context.CreateQuery<Account>().FirstOrDefault();
 
             Assert.True(createdAccount.Attributes.ContainsKey("createdon"));
             Assert.True(createdAccount.Attributes.ContainsKey("createdby"));
@@ -384,7 +375,7 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void When_creating_a_record_overridencreatedon_should_override_created_on()
         {
-            var service = _ctx.GetOrganizationService();
+            var service = _context.GetOrganizationService();
 
             var now = DateTime.Now.Date;
 
@@ -396,7 +387,7 @@ namespace Fake4Dataverse.Tests
 
             service.Create(account);
 
-            var createdAccount = _ctx.CreateQuery<Account>().FirstOrDefault();
+            var createdAccount = _context.CreateQuery<Account>().FirstOrDefault();
             Assert.Equal(now, createdAccount.CreatedOn);
         }
     }

@@ -13,7 +13,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
     /// Tests for audit message executors
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/retrieve-audit-data
     /// </summary>
-    public class AuditMessageExecutorTests
+    public class AuditMessageExecutorTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_ExecuteRetrieveAuditDetailsRequest()
@@ -21,8 +21,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveauditdetailsrequest
             // RetrieveAuditDetailsRequest retrieves the audit details for a specific audit record
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -58,8 +59,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieverecordchangehistoryrequest
             // RetrieveRecordChangeHistoryRequest retrieves all audit changes for a record
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -88,8 +90,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveattributechangehistoryrequest
             // RetrieveAttributeChangeHistoryRequest retrieves audit history for a specific attribute
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
             var auditRepository = context.GetProperty<IAuditRepository>();
             auditRepository.IsAuditEnabled = true;
 
@@ -128,8 +131,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         public void Should_ThrowException_WhenRetrieveAuditDetailsRequest_HasInvalidAuditId()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
 
             // Act & Assert
             var request = new RetrieveAuditDetailsRequest
@@ -145,8 +149,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         public void Should_ThrowException_WhenRetrieveRecordChangeHistoryRequest_HasNullTarget()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
 
             // Act & Assert
             var request = new RetrieveRecordChangeHistoryRequest
@@ -162,8 +167,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AuditTests
         public void Should_ThrowException_WhenRetrieveAttributeChangeHistoryRequest_HasEmptyAttributeName()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
-            var service = context.GetOrganizationService();
+            // Use context from base class
+            var context = _context;
+            var service = _service;
 
             var accountId = Guid.NewGuid();
 

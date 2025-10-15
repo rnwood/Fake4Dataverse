@@ -11,18 +11,8 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.QueryLookupTests
 {
-    public class Tests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        
-        public Tests()
-        {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
-        }
-
-        [Fact]
+    public class Tests : Fake4DataverseTests
+    {                [Fact]
         public void When_a_query_on_lookup_is_executed_with_a_guid_right_result_is_returned()
         {
             var user = new SystemUser { Id = Guid.NewGuid(), ["fullname"] = "User" };

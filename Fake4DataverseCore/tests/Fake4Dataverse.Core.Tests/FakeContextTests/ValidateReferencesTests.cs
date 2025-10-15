@@ -34,6 +34,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         public void When_context_is_initialised_validate_references_is_enabled_by_default()
         {
             // Create a fresh context without overriding defaults
+            // NOTE: Cannot use base class context as it has validation disabled
             var freshContext = XrmFakedContextFactory.New();
             var integrityOptions = freshContext.GetProperty<IIntegrityOptions>();
             Assert.True(integrityOptions.ValidateEntityReferences);

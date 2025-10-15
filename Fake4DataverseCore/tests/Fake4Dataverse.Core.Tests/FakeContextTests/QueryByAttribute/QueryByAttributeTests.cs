@@ -12,14 +12,10 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.QueryByAttributeTests
 {
-    public class Tests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public Tests()
+    public class Tests : Fake4DataverseTests
+    {        public Tests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         [Fact]

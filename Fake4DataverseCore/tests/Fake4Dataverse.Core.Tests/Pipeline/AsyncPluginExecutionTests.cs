@@ -22,7 +22,7 @@ namespace Fake4Dataverse.Tests.Pipeline
     /// - Async jobs can be executed on-demand
     /// - Failed async jobs can be inspected
     /// </summary>
-    public class AsyncPluginExecutionTests
+    public class AsyncPluginExecutionTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_QueueAsyncPlugin_WhenRegisteredAsAsync()
@@ -30,7 +30,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Register an async plugin
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/asynchronous-service
             // Async plugins (Mode = 1) are queued as asyncoperation records and don't execute in the main transaction
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -67,7 +68,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ExecuteQueuedAsyncPlugin_WhenExecuteAllCalled()
         {
             // Arrange - Queue an async plugin
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -107,7 +109,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_TrackAsyncOperationStatus_ThroughoutExecution()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -163,7 +166,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_CapturePluginExecutionError_InAsyncOperation()
         {
             // Arrange - Register a plugin that throws an exception
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -207,7 +211,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_WaitForAllAsyncOperations_ToComplete()
         {
             // Arrange - Queue multiple async operations
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -252,7 +257,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_WaitForSpecificAsyncOperation_ToComplete()
         {
             // Arrange - Queue an async operation
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -292,7 +298,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public async Task Should_ExecuteAsyncOperations_Asynchronously()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -331,7 +338,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public async Task Should_WaitForAllAsyncOperations_Asynchronously()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             var registration = new PluginStepRegistration
@@ -374,7 +382,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_GetAllAsyncOperations_ByStatus()
         {
             // Arrange - Create a mix of successful and failed operations
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             // Register successful plugin
@@ -429,7 +438,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ClearCompletedAsyncOperations()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             simulator.RegisterPluginStep(new PluginStepRegistration
@@ -466,7 +476,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_AutoExecuteAsyncPlugin_WhenAutoExecuteEnabled()
         {
             // Arrange - Enable auto-execute mode
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
             simulator.AsyncJobQueue.AutoExecute = true; // Enable auto-execute
 
@@ -504,7 +515,8 @@ namespace Fake4Dataverse.Tests.Pipeline
         public void Should_ConvertAsyncOperation_ToEntity()
         {
             // Arrange
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             simulator.RegisterPluginStep(new PluginStepRegistration
@@ -550,7 +562,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Register a plugin that validates context properties
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/asynchronous-service
             // Async plugins receive a modified execution context with Mode = 1 (Asynchronous)
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             simulator.RegisterPluginStep(new PluginStepRegistration
@@ -588,7 +601,8 @@ namespace Fake4Dataverse.Tests.Pipeline
             // Arrange - Register both sync and async plugins
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
             // Sync plugins execute immediately in order, async plugins are queued for later
-            var context = XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = _context;
             var simulator = context.PluginPipelineSimulator;
 
             TestExecutionOrderPlugin.ExecutionLog.Clear();

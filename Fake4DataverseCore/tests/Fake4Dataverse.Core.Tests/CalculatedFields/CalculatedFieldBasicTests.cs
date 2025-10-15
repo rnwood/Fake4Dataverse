@@ -12,7 +12,7 @@ namespace Fake4Dataverse.Tests.CalculatedFields
     /// Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields
     /// "Define calculated columns - Create columns that automatically calculate their values based on other column values"
     /// </summary>
-    public class CalculatedFieldBasicTests
+    public class CalculatedFieldBasicTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_Evaluate_Simple_Arithmetic_Formula()
@@ -249,7 +249,8 @@ namespace Fake4Dataverse.Tests.CalculatedFields
             // Arrange
             // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields
             // "Calculated columns are calculated in real-time when they are retrieved"
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var evaluator = context.CalculatedFieldEvaluator;
 
             var definition = new CalculatedFieldDefinition
@@ -269,7 +270,7 @@ namespace Fake4Dataverse.Tests.CalculatedFields
             };
 
             context.Initialize(new[] { product });
-            var service = context.GetOrganizationService();
+            var service = _service;
 
             // Act
             var retrieved = service.Retrieve("product", product.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));

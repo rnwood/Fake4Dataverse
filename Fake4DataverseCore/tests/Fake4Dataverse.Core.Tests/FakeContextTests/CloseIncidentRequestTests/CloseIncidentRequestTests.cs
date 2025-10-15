@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
 {
-    public class CloseIncidentRequestTests
+    public class CloseIncidentRequestTests : Fake4DataverseTests
     {
         private const int StatusProblemSolved = 5;
 
@@ -20,8 +20,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
         
         public CloseIncidentRequestTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         [Fact]

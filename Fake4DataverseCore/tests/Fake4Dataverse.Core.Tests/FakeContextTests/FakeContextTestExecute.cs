@@ -9,14 +9,10 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests
 {
-    public class FakeContextTestExecute
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public FakeContextTestExecute()
+    public class FakeContextTestExecute : Fake4DataverseTests
+    {        public FakeContextTestExecute()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         [Fact]

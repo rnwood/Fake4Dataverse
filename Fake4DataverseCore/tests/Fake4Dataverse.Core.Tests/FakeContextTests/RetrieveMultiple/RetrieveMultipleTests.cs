@@ -12,14 +12,10 @@ using Xunit;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 {
-    public class RetrieveMultipleTests
-    {
-        private readonly IXrmFakedContext _ctx;
-        private readonly IOrganizationService _service;
-        public RetrieveMultipleTests()
+    public class RetrieveMultipleTests : Fake4DataverseTests
+    {        public RetrieveMultipleTests()
         {
-            _ctx = XrmFakedContextFactory.New();
-            _service = _ctx.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         /// <summary>
@@ -31,20 +27,20 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             List<Entity> initialEntities = new List<Entity>();
             int excessNumberOfRecords = 50;
 
-            (_ctx as XrmFakedContext).MaxRetrieveCount = 1000;
-            for (int i = 0; i < (_ctx as XrmFakedContext).MaxRetrieveCount + excessNumberOfRecords; i++)
+            (_context as XrmFakedContext).MaxRetrieveCount = 1000;
+            for (int i = 0; i < (_context as XrmFakedContext).MaxRetrieveCount + excessNumberOfRecords; i++)
             {
                 Entity e = new Entity("entity");
                 e.Id = Guid.NewGuid();
                 initialEntities.Add(e);
             }
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             List<Entity> allRecords = new List<Entity>();
             QueryExpression query = new QueryExpression("entity");
             EntityCollection result = _service.RetrieveMultiple(query);
             allRecords.AddRange(result.Entities);
-            Assert.Equal((_ctx as XrmFakedContext).MaxRetrieveCount, result.Entities.Count);
+            Assert.Equal((_context as XrmFakedContext).MaxRetrieveCount, result.Entities.Count);
             Assert.True(result.MoreRecords);
             Assert.NotNull(result.PagingCookie);
 
@@ -78,7 +74,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             e2.Id = Guid.NewGuid();
             e2["name"] = "Fake4Dataverse";
 
-            _ctx.Initialize(new Entity[] { e1, e2 });
+            _context.Initialize(new Entity[] { e1, e2 });
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true' returntotalrecordcount='true'>
                               <entity name='entity'>
@@ -105,7 +101,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
                 e.Id = Guid.NewGuid();
                 initialEntities.Add(e);
             }
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             query.TopCount = 5;
@@ -127,7 +123,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             e["retrieve"] = false;
             initialEntities.Add(e);
 
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             query.Criteria.AddCondition("retrieve", ConditionOperator.Equal, true);
@@ -145,8 +141,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             List<Entity> initialEntities = new List<Entity>();
             int excessNumberOfRecords = 50;
 
-            (_ctx as XrmFakedContext).MaxRetrieveCount = 1000;
-            for (int i = 0; i < (_ctx as XrmFakedContext).MaxRetrieveCount + excessNumberOfRecords; i++)
+            (_context as XrmFakedContext).MaxRetrieveCount = 1000;
+            for (int i = 0; i < (_context as XrmFakedContext).MaxRetrieveCount + excessNumberOfRecords; i++)
             {
                 Entity second = new Entity("second");
                 second.Id = Guid.NewGuid();
@@ -157,7 +153,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
                 first["secondid"] = second.ToEntityReference();
                 initialEntities.Add(first);
             }
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             LinkEntity link = new LinkEntity("entity", "second", "secondid", "secondid", JoinOperator.Inner);
@@ -165,7 +161,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             link.LinkCriteria.AddCondition("filter", ConditionOperator.Equal, true);
             query.LinkEntities.Add(link);
             EntityCollection result = _service.RetrieveMultiple(query);
-            Assert.Equal((_ctx as XrmFakedContext).MaxRetrieveCount, result.Entities.Count);
+            Assert.Equal((_context as XrmFakedContext).MaxRetrieveCount, result.Entities.Count);
             Assert.True(result.MoreRecords);
             Assert.NotNull(result.PagingCookie);
 
@@ -195,7 +191,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             first["secondid"] = second.ToEntityReference();
             initialEntities.Add(first);
 
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             LinkEntity link = new LinkEntity("entity", "second", "secondid", "secondid", JoinOperator.Inner);
@@ -221,7 +217,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             first.Id = Guid.NewGuid();
             initialEntities.Add(first);
 
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             query.PageInfo = new PagingInfo() { PageNumber = 2, Count = 20 };
@@ -253,7 +249,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             secondRelated["include"] = true;
             initialEntities.Add(secondRelated);
 
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             query.ColumnSet = new ColumnSet("field");
@@ -295,7 +291,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             secondRelated["linkfield"] = "other value";
             initialEntities.Add(secondRelated);
 
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             query.ColumnSet = new ColumnSet("field");
@@ -333,7 +329,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             e3["retrieve"] = false;
             initialEntities.Add(e3);
 
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             query.PageInfo.ReturnTotalRecordCount = true;
@@ -360,7 +356,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
                 initialEntities.Add(e);
             }
 
-            _ctx.Initialize(initialEntities);
+            _context.Initialize(initialEntities);
 
             QueryExpression query = new QueryExpression("entity");
             query.PageInfo.ReturnTotalRecordCount = true;
@@ -393,7 +389,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             contact["birthdate"] = null;
             contact["territorycode"] = null;
 
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 account,
                 contact
@@ -437,7 +433,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             contact.BirthDate = null;
             contact.TerritoryCode = null;
 
-            _ctx.Initialize(new List<Entity>
+            _context.Initialize(new List<Entity>
             {
                 account,
                 contact
@@ -479,9 +475,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             var user = new Entity() { LogicalName = "systemuser", Id = Guid.NewGuid() };
             user["fullname"] = "Fake XrmEasy";
 
-            _ctx.InitializeMetadata(userMetadata);
-            _ctx.Initialize(user);
-            (_ctx as XrmFakedContext).CallerId = user.ToEntityReference();
+            _context.InitializeMetadata(userMetadata);
+            _context.Initialize(user);
+            (_context as XrmFakedContext).CallerId = user.ToEntityReference();
 
             var account = new Entity() { LogicalName = "account" };
             var accountId = _service.Create(account);
@@ -511,7 +507,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
                 ["contactid"] = e.ToEntityReference()
             };
 
-            _ctx.Initialize(new Entity[] { e, e2 });
+            _context.Initialize(new Entity[] { e, e2 });
 
             QueryExpression query = new QueryExpression("account");
             query.Criteria.AddCondition("contact", "retrieve", ConditionOperator.Equal, true);
@@ -535,7 +531,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
                 ["contactid"] = e.ToEntityReference()
             };
 
-            _ctx.Initialize(new Entity[] { e, e2 });
+            _context.Initialize(new Entity[] { e, e2 });
 
             QueryExpression query = new QueryExpression("account");
             query.Criteria.AddCondition("mycontact", "retrieve", ConditionOperator.Equal, true);
@@ -555,7 +551,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             account["primarycontactid"] = contact.ToEntityReference();
             account["name"] = "Dynamics Value";
 
-            _ctx.Initialize(new Entity[] { contact, account });
+            _context.Initialize(new Entity[] { contact, account });
 
             QueryExpression query = new QueryExpression("account");
             query.ColumnSet = new ColumnSet("name");
@@ -576,7 +572,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             {
                 Id = Guid.NewGuid()
             };
-            _ctx.Initialize(contact);
+            _context.Initialize(contact);
 
             var Ids = new string[] { Guid.NewGuid().ToString(), contact.Id.ToString() };
 

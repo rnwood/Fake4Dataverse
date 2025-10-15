@@ -19,14 +19,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
     ///
     /// We'll leave FetchXml aggregations for a later version
     /// </summary>
-    public class FakeContextTestFetchXmlTranslation
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public FakeContextTestFetchXmlTranslation()
+    public class FakeContextTestFetchXmlTranslation : Fake4DataverseTests
+    {        public FakeContextTestFetchXmlTranslation()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context from base class (validation disabled)
         }
 
         [Fact]

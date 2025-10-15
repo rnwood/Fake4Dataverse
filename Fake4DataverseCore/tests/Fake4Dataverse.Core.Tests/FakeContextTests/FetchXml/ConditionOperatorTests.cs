@@ -119,14 +119,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
      
      */
     /// </summary>
-    public class ConditionOperatorTests
+    public class ConditionOperatorTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
         public ConditionOperatorTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         private DateTime GetFirstDayOfWeek(DateTime date)

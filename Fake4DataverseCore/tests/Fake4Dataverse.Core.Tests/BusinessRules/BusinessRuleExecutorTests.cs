@@ -16,7 +16,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
     /// 
     /// These tests verify that business rules execute correctly during CRUD operations.
     /// </summary>
-    public class BusinessRuleExecutorTests
+    public class BusinessRuleExecutorTests : Fake4DataverseTests
     {
         [Fact]
         public void Should_Execute_Set_Field_Value_Action_When_Condition_Is_Met()
@@ -25,8 +25,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Set Field Value: Set a column to a specific value, clear a column value, or set a column value based on another column"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
-            var executor = context.BusinessRuleExecutor;
+            var executor = ((XrmFakedContext)_context).BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
             {
@@ -68,7 +67,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             };
             
             // Act
-            var service = context.GetOrganizationService();
+            var service = _service;
             var createdId = service.Create(account);
             
             // Assert
@@ -84,7 +83,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Show Error Message: Display a custom error message and prevent the record from being saved"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -121,7 +121,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             };
             
             // Act & Assert
-            var service = context.GetOrganizationService();
+            var service = _service;
             var ex = Assert.Throws<System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault>>(() =>
             {
                 service.Create(account);
@@ -137,7 +137,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Add one or more actions that should be performed when the conditions are true"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -180,7 +181,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             };
             
             // Act
-            var service = context.GetOrganizationService();
+            var service = _service;
             var createdId = service.Create(contact);
             
             // Assert
@@ -196,7 +197,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "You can define actions to take when conditions are not met using the Else branch"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -244,7 +246,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             };
             
             // Act
-            var service = context.GetOrganizationService();
+            var service = _service;
             var createdId = service.Create(account);
             
             // Assert
@@ -259,7 +261,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "Business rules can be configured to run on specific events like Create, Update, or field changes"
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -297,7 +300,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
             };
             
             // Act - Create should not trigger the rule (it's OnUpdate only)
-            var service = context.GetOrganizationService();
+            var service = _service;
             var createdId = service.Create(account);
             
             // Update to trigger the rule
@@ -321,7 +324,8 @@ namespace Fake4Dataverse.Tests.BusinessRules
             // "By default, all conditions must be true (AND). You can change to OR logic where any condition being true is sufficient."
             
             // Arrange
-            var context = (XrmFakedContext)XrmFakedContextFactory.New();
+            // Use context from base class
+            var context = (XrmFakedContext)_context;
             var executor = context.BusinessRuleExecutor;
             
             var rule = new BusinessRuleDefinition
@@ -366,7 +370,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
                 ["creditlimit"] = new Money(1000m)
             };
             
-            var service = context.GetOrganizationService();
+            var service = _service;
             var id1 = service.Create(account1);
             var retrieved1 = service.Retrieve("account", id1, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
             Assert.True(retrieved1.Contains("description"));

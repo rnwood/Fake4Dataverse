@@ -14,16 +14,11 @@ using Fake4Dataverse.Middleware;
 
 namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveEntityRequestTests
 {
-    public class RetrieveEntityRequestTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public RetrieveEntityRequestTests()
+    public class RetrieveEntityRequestTests : Fake4DataverseTests
+    {        public RetrieveEntityRequestTests()
         {
-            _context = XrmFakedContextFactory.New();
+            // Use context from base class (validation disabled)
             _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
-            _service = _context.GetOrganizationService();
         }
 
         [Fact]

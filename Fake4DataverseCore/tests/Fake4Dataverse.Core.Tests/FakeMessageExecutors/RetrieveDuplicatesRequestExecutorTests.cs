@@ -17,15 +17,18 @@ namespace Fake4Dataverse.Tests.FakeMessageExecutors
     /// RetrieveDuplicatesRequest detects and retrieves duplicate records for a specified record.
     /// The request evaluates active and published duplicate detection rules to find matching records.
     /// </summary>
-    public class RetrieveDuplicatesRequestExecutorTests
+    public class RetrieveDuplicatesRequestExecutorTests : Fake4DataverseTests
     {
         private readonly IXrmFakedContext _context;
         private readonly IOrganizationService _service;
 
         public RetrieveDuplicatesRequestExecutorTests()
         {
-            _context = XrmFakedContextFactory.New();
-            _service = _context.GetOrganizationService();
+            // Use context and service from base class
+
+            _context = base._context;
+
+            _service = base._service;
         }
 
         /// <summary>
