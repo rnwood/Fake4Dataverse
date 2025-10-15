@@ -56,6 +56,8 @@
   <!-- Embed system entity CDM schema files as resources -->
   <ItemGroup>
     <EmbeddedResource Include="..\..\cdm-schema-files\Solution.cdm.json" Link="Metadata\Cdm\SystemEntities\Solution.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\SolutionComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\SolutionComponent.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\ComponentDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\ComponentDefinition.cdm.json" />
     <EmbeddedResource Include="..\..\cdm-schema-files\AppModule.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModule.cdm.json" />
     <EmbeddedResource Include="..\..\cdm-schema-files\SiteMap.cdm.json" Link="Metadata\Cdm\SystemEntities\SiteMap.cdm.json" />
     <EmbeddedResource Include="..\..\cdm-schema-files\SavedQuery.cdm.json" Link="Metadata\Cdm\SystemEntities\SavedQuery.cdm.json" />
