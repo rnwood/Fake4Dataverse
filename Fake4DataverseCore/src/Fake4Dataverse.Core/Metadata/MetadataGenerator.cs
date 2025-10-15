@@ -334,5 +334,16 @@ namespace Fake4Dataverse.Metadata
         {
             return CdmJsonParser.FromEmbeddedSystemEntities();
         }
+        
+        /// <summary>
+        /// Sets the directory to use for file-based caching of downloaded CDM files.
+        /// If set, downloaded CDM files will be cached to disk in addition to memory, significantly
+        /// improving performance for subsequent loads.
+        /// </summary>
+        /// <param name="cacheDirectory">Directory path for caching CDM files. Pass null to disable file caching.</param>
+        public static void SetCdmCacheDirectory(string cacheDirectory)
+        {
+            CdmJsonParser.SetCacheDirectory(cacheDirectory);
+        }
     }
 }

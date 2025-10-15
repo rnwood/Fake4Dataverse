@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -24,6 +26,10 @@ namespace Fake4Dataverse.Metadata.Cdm
     internal class CdmJsonParser
     {
         private static readonly HttpClient _httpClient = new HttpClient();
+        
+        // File cache directory (optional, set via SetCacheDirectory)
+        private static string _fileCacheDirectory = null;
+        private static readonly object _cacheLock = new object();
         
         // Base URL for Microsoft's CDM GitHub repository
         private const string CDM_GITHUB_BASE_URL = "https://raw.githubusercontent.com/microsoft/CDM/master/schemaDocuments";
@@ -108,6 +114,23 @@ namespace Fake4Dataverse.Metadata.Cdm
             { "bookableresource", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/BookableResource.cdm.json" },
             { "bookableresourcebooking", $"{CDM_GITHUB_BASE_URL}/{CDM_CRM_COMMON_PATH}/fieldService/BookableResourceBooking.cdm.json" },
         };
+        
+        /// <summary>
+        /// Sets the directory to use for file-based caching of downloaded CDM files.
+        /// If set, downloaded CDM files will be cached to disk in addition to memory.
+        /// </summary>
+        /// <param name="cacheDirectory">Directory path for caching CDM files. Pass null to disable file caching.</param>
+        public static void SetCacheDirectory(string cacheDirectory)
+        {
+            lock (_cacheLock)
+            {
+                _fileCacheDirectory = cacheDirectory;
+                if (!string.IsNullOrEmpty(_fileCacheDirectory) && !Directory.Exists(_fileCacheDirectory))
+                {
+                    Directory.CreateDirectory(_fileCacheDirectory);
+                }
+            }
+        }
         
         /// <summary>
         /// Parses CDM JSON from a file and converts it to EntityMetadata.
@@ -206,6 +229,7 @@ namespace Fake4Dataverse.Metadata.Cdm
         
         /// <summary>
         /// Recursively downloads and parses a CDM JSON file and all its imports.
+        /// Uses file-based caching to avoid repeated downloads of the same file.
         /// </summary>
         /// <param name="url">URL of the CDM JSON file to download</param>
         /// <param name="processedUrls">Set of already processed URLs to avoid circular dependencies</param>
@@ -220,8 +244,49 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             processedUrls.Add(url);
             
-            // Download the CDM JSON content
-            string json = await _httpClient.GetStringAsync(url);
+            string json = null;
+            
+            // Check file cache if file caching is enabled
+            if (!string.IsNullOrEmpty(_fileCacheDirectory))
+            {
+                var fileName = GetCacheFileName(url);
+                var filePath = Path.Combine(_fileCacheDirectory, fileName);
+                
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        json = File.ReadAllText(filePath);
+                    }
+                    catch
+                    {
+                        // If file read fails, download from network
+                        json = null;
+                    }
+                }
+            }
+            
+            // Download if not cached
+            if (json == null)
+            {
+                json = await _httpClient.GetStringAsync(url);
+                
+                // Store in file cache if enabled
+                if (!string.IsNullOrEmpty(_fileCacheDirectory))
+                {
+                    try
+                    {
+                        var fileName = GetCacheFileName(url);
+                        var filePath = Path.Combine(_fileCacheDirectory, fileName);
+                        Directory.CreateDirectory(_fileCacheDirectory);
+                        File.WriteAllText(filePath, json);
+                    }
+                    catch
+                    {
+                        // Ignore file cache write errors
+                    }
+                }
+            }
             
             var allMetadata = new List<EntityMetadata>();
             
@@ -830,6 +895,23 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             return deduplicated;
         }
+        
+        /// <summary>
+        /// Generates a safe file name for caching a CDM file based on its URL.
+        /// Uses a stable SHA-256 hash to ensure consistent file names across application runs.
+        /// </summary>
+        private static string GetCacheFileName(string url)
+        {
+            // Use SHA-256 hash for stable, consistent file names
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(url));
+                var hash = BitConverter.ToString(bytes).Replace("-", "").Substring(0, 8).ToUpperInvariant();
+                var fileName = url.Split('/').Last();
+                return $"{hash}_{fileName}";
+            }
+        }
+
         
         /// <summary>
         /// Loads system entity metadata from embedded CDM resources in the Fake4Dataverse.Core assembly.
