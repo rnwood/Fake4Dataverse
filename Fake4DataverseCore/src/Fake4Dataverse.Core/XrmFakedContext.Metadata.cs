@@ -141,11 +141,14 @@ namespace Fake4Dataverse
         /// Initialize system entity metadata from embedded CDM resources.
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
         /// 
-        /// This method loads system entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent)
-        /// from embedded CDM schema files in the Fake4Dataverse.Core assembly. These system entities are required for
-        /// Model-Driven App functionality and solution management in tests.
+        /// This method loads system entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, 
+        /// appmodulecomponent, entitydefinition, attribute) from embedded CDM schema files in the Fake4Dataverse.Core assembly. 
+        /// These system entities are required for Model-Driven App functionality, solution management, and metadata persistence in tests.
         /// 
-        /// System entities included: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
+        /// System entities included: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent,
+        /// entitydefinition (metadata virtual table), attribute (metadata virtual table)
+        /// 
+        /// The entitydefinition and attribute tables enable querying metadata as data. See metadata-persistence.md for details.
         /// </summary>
         public void InitializeSystemEntityMetadata()
         {

@@ -48,8 +48,12 @@ The following system entities are included as embedded CDM metadata in Core:
 - **systemform** - Entity forms entity
 - **webresource** - Web resources (JS, CSS, HTML) entity
 - **appmodulecomponent** - App component linking entity
+- **entitydefinition** - Entity metadata (virtual table) ✅ **NEW**
+- **attribute** - Attribute metadata (virtual table) ✅ **NEW**
 
 These entities are automatically loaded by Fake4DataverseService and can be manually loaded in tests using `InitializeSystemEntityMetadata()`.
+
+**Note**: The `entitydefinition` and `attribute` tables are virtual tables that allow querying metadata as data. See [Metadata Persistence](./metadata-persistence.md) for details.
 
 ## When to Use CDM Import
 
