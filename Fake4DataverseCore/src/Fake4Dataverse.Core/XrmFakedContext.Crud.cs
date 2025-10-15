@@ -458,6 +458,51 @@ namespace Fake4Dataverse
         }
 
         /// <summary>
+        /// Checks if an entity is a system entity that should bypass metadata validation during creation.
+        /// System entities include solution management tables and metadata virtual tables.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
+        /// System entities are created by the platform and may not have metadata loaded initially.
+        /// </summary>
+        /// <param name="logicalName">The logical name of the entity to check</param>
+        /// <returns>True if the entity is a system entity, false otherwise</returns>
+        private static bool IsSystemEntity(string logicalName)
+        {
+            if (string.IsNullOrWhiteSpace(logicalName))
+            {
+                return false;
+            }
+
+            // System entities that may be created before metadata is fully loaded
+            // These correspond to the embedded system entities in CdmJsonParser.FromEmbeddedSystemEntities()
+            var systemEntities = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Metadata virtual tables
+                "entitydefinition", "entity",
+                "attribute",
+                "relationshipdefinition", "relationship",
+                "optionsetdefinition", "optionset",
+                "entitykeydefinition", "entitykey",
+                // Solution management tables
+                "solution",
+                "solutioncomponent",
+                "componentdefinition",
+                // Model-Driven App entities
+                "appmodule",
+                "sitemap",
+                "savedquery",
+                "systemform",
+                "webresource",
+                "appmodulecomponent",
+                // Other common system entities
+                "systemuser",
+                "businessunit",
+                "team"
+            };
+
+            return systemEntities.Contains(logicalName);
+        }
+
+        /// <summary>
         /// Validates that attribute values match their metadata types and that lookup targets are valid.
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
         /// Dataverse validates attribute types at runtime and throws exceptions for type mismatches.
@@ -468,6 +513,13 @@ namespace Fake4Dataverse
         protected void ValidateAttributeTypes(Entity e, string operation = "Create")
         {
             if (e == null || e.Attributes == null || e.Attributes.Count == 0)
+            {
+                return;
+            }
+
+            // Skip validation for system entities during creation to avoid circular dependency
+            // System entities may be created before their metadata is loaded
+            if (IsSystemEntity(e.LogicalName))
             {
                 return;
             }

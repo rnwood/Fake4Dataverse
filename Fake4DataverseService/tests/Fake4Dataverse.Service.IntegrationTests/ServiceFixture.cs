@@ -73,7 +73,7 @@ namespace Fake4Dataverse.Service.IntegrationTests
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "dotnet",
-                    Arguments = $"run --no-build -- start --port 0 --host localhost --cdm-files \"{accountFile}\" --cdm-files \"{contactFile}\" --cdm-files \"{opportunityFile}\"",
+                    Arguments = $"run -- start --port 0 --host localhost --cdm-files \"{accountFile}\" --cdm-files \"{contactFile}\" --cdm-files \"{opportunityFile}\"",
                     WorkingDirectory = serviceProjectPath,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
