@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -646,6 +648,11 @@ namespace Fake4Dataverse.Metadata.Cdm
                 // Try to deserialize as attributeGroupReference
                 var jsonElement = (System.Text.Json.JsonElement)item;
                 
+                if (jsonElement.ValueKind == JsonValueKind.String)
+                {
+                    continue;
+                }
+
                 if (jsonElement.TryGetProperty("attributeGroupReference", out var groupRef))
                 {
                     // This is an attributeGroupReference - extract the members
@@ -953,15 +960,20 @@ namespace Fake4Dataverse.Metadata.Cdm
         
         /// <summary>
         /// Generates a safe file name for caching a CDM file based on its URL.
+        /// Uses a stable SHA-256 hash to ensure consistent file names across application runs.
         /// </summary>
         private static string GetCacheFileName(string url)
         {
-            // Use URL hash to create unique but consistent file names
-            var hash = url.GetHashCode().ToString("X8");
-            var fileName = url.Split('/').Last();
-            return $"{hash}_{fileName}";
+            // Use SHA-256 hash for stable, consistent file names
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(url));
+                var hash = BitConverter.ToString(bytes).Replace("-", "").Substring(0, 8).ToUpperInvariant();
+                var fileName = url.Split('/').Last();
+                return $"{hash}_{fileName}";
+            }
         }
-        
+
         /// <summary>
         /// Attempts to load CDM content from embedded schema files in the repository.
         /// These files are included to prevent test timeouts and enable offline development.

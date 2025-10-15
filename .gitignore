@@ -12,3 +12,4 @@ coverage/
 *.opencover.xml
 node_modules
 .next
+/.vs
