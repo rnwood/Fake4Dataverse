@@ -64,6 +64,9 @@
     <EmbeddedResource Include="..\..\cdm-schema-files\AppModuleComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModuleComponent.cdm.json" />
     <EmbeddedResource Include="..\..\cdm-schema-files\EntityDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityDefinition.cdm.json" />
     <EmbeddedResource Include="..\..\cdm-schema-files\Attribute.cdm.json" Link="Metadata\Cdm\SystemEntities\Attribute.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\RelationshipDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\RelationshipDefinition.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\OptionSetDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\OptionSetDefinition.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\EntityKeyDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityKeyDefinition.cdm.json" />
   </ItemGroup>
 
 </Project>

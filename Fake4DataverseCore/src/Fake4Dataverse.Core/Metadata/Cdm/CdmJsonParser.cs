@@ -878,6 +878,9 @@ namespace Fake4Dataverse.Metadata.Cdm
                 // Load metadata tables first to enable persistence of other system entities
                 "EntityDefinition.cdm.json",
                 "Attribute.cdm.json",
+                "RelationshipDefinition.cdm.json",
+                "OptionSetDefinition.cdm.json",
+                "EntityKeyDefinition.cdm.json",
                 // Then load other system entities
                 "Solution.cdm.json",
                 "AppModule.cdm.json",

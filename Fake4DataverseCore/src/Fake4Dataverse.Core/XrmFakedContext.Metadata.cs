@@ -146,14 +146,15 @@ namespace Fake4Dataverse
         /// Initialize system entity metadata from embedded CDM resources.
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
         /// 
-        /// This method loads system entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, 
-        /// appmodulecomponent, entitydefinition, attribute) from embedded CDM schema files in the Fake4Dataverse.Core assembly. 
+        /// This method loads system entity metadata from embedded CDM schema files in the Fake4Dataverse.Core assembly. 
         /// These system entities are required for Model-Driven App functionality, solution management, and metadata persistence in tests.
         /// 
-        /// System entities included: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent,
-        /// entitydefinition (metadata virtual table), attribute (metadata virtual table)
+        /// System entities included:
+        /// - Metadata virtual tables: entitydefinition, attribute, relationship, optionset, entitykey
+        /// - Solution entities: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
         /// 
-        /// The entitydefinition and attribute tables enable querying metadata as data. See metadata-persistence.md for details.
+        /// The metadata virtual tables enable querying metadata as data, matching real Dataverse behavior.
+        /// See metadata-persistence.md for details.
         /// </summary>
         public void InitializeSystemEntityMetadata()
         {
@@ -220,6 +221,9 @@ namespace Fake4Dataverse
         /// In Dataverse, metadata is accessible through special virtual entities:
         /// - EntityDefinition (entitydefinition) - Contains entity metadata
         /// - Attribute (attribute) - Contains attribute metadata
+        /// - Relationship (relationship) - Contains relationship metadata
+        /// - OptionSet (optionset) - Contains optionset metadata
+        /// - EntityKey (entitykey) - Contains entity key metadata
         /// 
         /// This method stores metadata in these tables so it can be queried like regular entity data.
         /// The metadata tables are always initialized in the constructor, so they should always be available.
@@ -230,7 +234,8 @@ namespace Fake4Dataverse
                 return;
             
             // Don't try to persist the metadata tables themselves to avoid circular dependency
-            if (metadata.LogicalName == "entitydefinition" || metadata.LogicalName == "attribute")
+            var metadataTables = new[] { "entitydefinition", "attribute", "relationship", "optionset", "entitykey" };
+            if (metadataTables.Contains(metadata.LogicalName))
                 return;
             
             // Metadata tables should always be present (initialized in constructor)
