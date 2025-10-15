@@ -214,7 +214,18 @@ namespace Fake4Dataverse.Metadata.Cdm
                 }
             }
             
-            return allMetadata;
+            // Deduplicate by logical name - keep the first occurrence of each entity
+            var deduplicated = allMetadata
+                .GroupBy(e => e.LogicalName, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList();
+            
+            if (deduplicated.Count < allMetadata.Count)
+            {
+                Console.WriteLine($"Note: Deduplicated {allMetadata.Count - deduplicated.Count} duplicate entity definition(s)");
+            }
+            
+            return deduplicated;
         }
         
         /// <summary>
@@ -376,6 +387,23 @@ namespace Fake4Dataverse.Metadata.Cdm
                     {
                         importUrl = import.CorpusPath;
                     }
+                    else if (import.CorpusPath.StartsWith("/", StringComparison.Ordinal))
+                    {
+                        // Absolute path from repository root - need to resolve to base GitHub URL
+                        // Extract the base GitHub URL up to "/schemaDocuments"
+                        var schemaDocsIndex = url.IndexOf("/schemaDocuments/", StringComparison.OrdinalIgnoreCase);
+                        if (schemaDocsIndex > 0)
+                        {
+                            var githubBaseUrl = url.Substring(0, schemaDocsIndex + "/schemaDocuments".Length);
+                            importUrl = githubBaseUrl + import.CorpusPath;
+                        }
+                        else
+                        {
+                            // Fallback - treat as relative
+                            var relativePath = import.CorpusPath.TrimStart('/');
+                            importUrl = baseUrl + relativePath;
+                        }
+                    }
                     else
                     {
                         // Handle relative paths - remove leading "./" if present
@@ -388,10 +416,64 @@ namespace Fake4Dataverse.Metadata.Cdm
                         var importedMetadata = await DownloadAndParseWithImportsAsync(importUrl, processedUrls);
                         allMetadata.AddRange(importedMetadata);
                     }
+                    catch (HttpRequestException ex) when (ex.Message.Contains("404"))
+                    {
+                        // Log but don't fail - some imports might not exist (404 is acceptable for optional imports)
+                        Console.WriteLine($"Warning: Import file not found: {import.CorpusPath} from {url}");
+                    }
                     catch (Exception ex)
                     {
-                        // Log but don't fail - some imports might not be critical
-                        Console.WriteLine($"Warning: Failed to load import {import.CorpusPath} from {url}: {ex.Message}");
+                        // All other errors are critical - throw them
+                        throw new InvalidOperationException($"Failed to load import {import.CorpusPath} from {url}. Import URL: {importUrl}", ex);
+                    }
+                }
+            }
+            
+            // Process entity references in manifest files
+            // Manifest files use "entities" array to reference entity definition files
+            if (document?.Entities != null && document.Entities.Any())
+            {
+                var baseUrl = url.Substring(0, url.LastIndexOf('/') + 1);
+                
+                foreach (var entityRef in document.Entities)
+                {
+                    if (string.IsNullOrWhiteSpace(entityRef.EntityPath))
+                    {
+                        continue;
+                    }
+                    
+                    // Resolve entity path - extract just the file path (before the '/EntityName' suffix)
+                    // Format: "Account.cdm.json/Account" -> "Account.cdm.json"
+                    var entityFilePath = entityRef.EntityPath;
+                    var slashIndex = entityFilePath.IndexOf('/');
+                    if (slashIndex > 0)
+                    {
+                        entityFilePath = entityFilePath.Substring(0, slashIndex);
+                    }
+                    
+                    // Resolve relative entity paths
+                    string entityUrl;
+                    if (entityFilePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                        entityFilePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    {
+                        entityUrl = entityFilePath;
+                    }
+                    else
+                    {
+                        // Handle relative paths - remove leading "./" if present
+                        var relativePath = entityFilePath.TrimStart('.', '/');
+                        entityUrl = baseUrl + relativePath;
+                    }
+                    
+                    try
+                    {
+                        var entityMetadata = await DownloadAndParseWithImportsAsync(entityUrl, processedUrls);
+                        allMetadata.AddRange(entityMetadata);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Entity references from manifests are critical - throw the error
+                        throw new InvalidOperationException($"Failed to load entity {entityRef.EntityName} from {entityRef.EntityPath}. URL: {entityUrl}", ex);
                     }
                 }
             }
@@ -401,8 +483,13 @@ namespace Fake4Dataverse.Metadata.Cdm
             {
                 foreach (var definition in document.Definitions)
                 {
-                    // Only process LocalEntity types (entity definitions)
-                    if (definition.Type != "LocalEntity" && definition.Type != "CdmEntityDefinition")
+                    // Process definitions that are entities (have entityName or name, and are LocalEntity type or no type specified)
+                    var hasEntityIdentifier = !string.IsNullOrEmpty(definition.EntityName) || !string.IsNullOrEmpty(definition.Name);
+                    var isEntityType = string.IsNullOrEmpty(definition.Type) || 
+                                      definition.Type == "LocalEntity" || 
+                                      definition.Type == "CdmEntityDefinition";
+                    
+                    if (!hasEntityIdentifier || !isEntityType)
                     {
                         continue;
                     }
@@ -518,8 +605,9 @@ namespace Fake4Dataverse.Metadata.Cdm
                         attributes.Add(attributeMetadata);
                         
                         // Identify primary key
+                        var purposeStr = GetPurposeString(cdmAttribute.Purpose);
                         if (cdmAttribute.IsPrimaryKey == true || 
-                            cdmAttribute.Purpose == "identifiedBy" ||
+                            purposeStr == "identifiedBy" ||
                             cdmAttribute.Name.Equals($"{logicalName}id", StringComparison.OrdinalIgnoreCase))
                         {
                             primaryIdAttribute = attributeMetadata.LogicalName;
@@ -563,16 +651,42 @@ namespace Fake4Dataverse.Metadata.Cdm
                     // This is an attributeGroupReference - extract the members
                     if (groupRef.TryGetProperty("members", out var members))
                     {
-                        var membersList = JsonSerializer.Deserialize<List<CdmAttributeDefinition>>(members.GetRawText(), new JsonSerializerOptions
+                        // Members can be attribute definitions or string references
+                        // We need to deserialize each member individually
+                        if (members.ValueKind == JsonValueKind.Array)
                         {
-                            PropertyNameCaseInsensitive = true,
-                            AllowTrailingCommas = true,
-                            ReadCommentHandling = JsonCommentHandling.Skip
-                        });
-                        
-                        if (membersList != null)
-                        {
-                            result.AddRange(membersList);
+                            foreach (var member in members.EnumerateArray())
+                            {
+                                // Skip string references (attribute references)
+                                if (member.ValueKind == JsonValueKind.String)
+                                {
+                                    continue;
+                                }
+                                
+                                // Only process object definitions
+                                if (member.ValueKind == JsonValueKind.Object)
+                                {
+                                    try
+                                    {
+                                        var attribute = JsonSerializer.Deserialize<CdmAttributeDefinition>(member.GetRawText(), new JsonSerializerOptions
+                                        {
+                                            PropertyNameCaseInsensitive = true,
+                                            AllowTrailingCommas = true,
+                                            ReadCommentHandling = JsonCommentHandling.Skip
+                                        });
+                                        
+                                        if (attribute != null)
+                                        {
+                                            result.Add(attribute);
+                                        }
+                                    }
+                                    catch (JsonException)
+                                    {
+                                        // Skip attributes that can't be deserialized (might be entity relationships or other complex types)
+                                        continue;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -638,6 +752,12 @@ namespace Fake4Dataverse.Metadata.Cdm
         {
             string normalizedType = dataType.ToLowerInvariant();
             
+            // Debug logging
+            if (normalizedType == "entityid")
+            {
+                // EntityId mapped to Lookup for foreign key attributes
+            }
+            
             if (normalizedType == "string" || normalizedType == "text")
             {
                 return new StringAttributeMetadata
@@ -687,7 +807,7 @@ namespace Fake4Dataverse.Metadata.Cdm
             {
                 return new PicklistAttributeMetadata();
             }
-            else if (normalizedType == "lookup" || normalizedType == "entityreference")
+            else if (normalizedType == "lookup" || normalizedType == "entityreference" || normalizedType == "entityid")
             {
                 return new LookupAttributeMetadata();
             }
@@ -744,6 +864,43 @@ namespace Fake4Dataverse.Metadata.Cdm
         }
         
         /// <summary>
+        /// Extracts the purpose string from a CDM purpose definition.
+        /// CDM purpose can be a simple string or a complex object with references.
+        /// </summary>
+        private static string GetPurposeString(object purpose)
+        {
+            if (purpose == null)
+            {
+                return null;
+            }
+            
+            // If it's a simple string
+            if (purpose is string stringPurpose)
+            {
+                return stringPurpose;
+            }
+            
+            // If it's a JsonElement (from deserialization)
+            if (purpose is JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == JsonValueKind.String)
+                {
+                    return jsonElement.GetString();
+                }
+                else if (jsonElement.ValueKind == JsonValueKind.Object)
+                {
+                    // Try to extract purposeReference property
+                    if (jsonElement.TryGetProperty("purposeReference", out var purposeRef))
+                    {
+                        return purposeRef.GetString();
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
         /// Downloads and parses standard CDM entities by name from Microsoft's CDM repository.
         /// Reference: https://github.com/microsoft/CDM/tree/master/schemaDocuments/core/applicationCommon
         /// 
@@ -780,7 +937,18 @@ namespace Fake4Dataverse.Metadata.Cdm
                 }
             }
             
-            return allMetadata;
+            // Deduplicate by logical name - keep the first occurrence of each entity
+            var deduplicated = allMetadata
+                .GroupBy(e => e.LogicalName, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .ToList();
+            
+            if (deduplicated.Count < allMetadata.Count)
+            {
+                Console.WriteLine($"Note: Deduplicated {allMetadata.Count - deduplicated.Count} duplicate entity definition(s)");
+            }
+            
+            return deduplicated;
         }
         
         /// <summary>

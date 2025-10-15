@@ -15,6 +15,7 @@ namespace Fake4Dataverse.Metadata.Cdm
     /// <summary>
     /// Root CDM document structure.
     /// CDM documents contain entity definitions, imports, and metadata.
+    /// Manifest files use "entities" to reference entity definitions.
     /// </summary>
     internal class CdmDocument
     {
@@ -26,6 +27,9 @@ namespace Fake4Dataverse.Metadata.Cdm
         
         [JsonPropertyName("definitions")]
         public List<CdmEntityDefinition> Definitions { get; set; }
+        
+        [JsonPropertyName("entities")]
+        public List<CdmEntityReference> Entities { get; set; }
     }
     
     /// <summary>
@@ -39,6 +43,22 @@ namespace Fake4Dataverse.Metadata.Cdm
         
         [JsonPropertyName("moniker")]
         public string Moniker { get; set; }
+    }
+    
+    /// <summary>
+    /// Represents an entity reference in a CDM manifest file.
+    /// Manifest files list entities with paths to their definition files.
+    /// </summary>
+    internal class CdmEntityReference
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+        
+        [JsonPropertyName("entityName")]
+        public string EntityName { get; set; }
+        
+        [JsonPropertyName("entityPath")]
+        public string EntityPath { get; set; }
     }
     
     /// <summary>
@@ -120,7 +140,7 @@ namespace Fake4Dataverse.Metadata.Cdm
         public bool? IsNullable { get; set; }
         
         [JsonPropertyName("purpose")]
-        public string Purpose { get; set; }
+        public object Purpose { get; set; }  // Can be string or complex object
         
         [JsonPropertyName("appliedTraits")]
         public List<object> AppliedTraits { get; set; }

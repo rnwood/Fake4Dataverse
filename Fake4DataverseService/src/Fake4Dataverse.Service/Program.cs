@@ -168,7 +168,7 @@ public class Program
         }
         
         // Default to crmcommon if no CDM options were specified and --no-cdm not set
-        if (!noCdm && cdmSchemas == null && cdmEntities == null && cdmFiles == null)
+        if (!noCdm && (cdmSchemas == null || cdmSchemas.Length == 0) && (cdmEntities == null || cdmEntities.Length == 0) && (cdmFiles == null || cdmFiles.Length == 0))
         {
             cdmSchemas = new[] { "crmcommon" };
             Console.WriteLine("No CDM options specified. Defaulting to 'crmcommon' schema...");
@@ -186,6 +186,25 @@ public class Program
             {
                 await context.InitializeMetadataFromStandardCdmSchemasAsync(cdmSchemas);
                 Console.WriteLine($"Successfully loaded standard CDM schemas");
+                
+                // Log loaded entities for verification
+                var metadata = context.CreateMetadataQuery();
+                var entityCount = metadata.Count();
+                Console.WriteLine($"Total entities loaded: {entityCount}");
+                
+                // Check for key entities
+                var accountLoaded = metadata.Any(e => e.LogicalName == "account");
+                var contactLoaded = metadata.Any(e => e.LogicalName == "contact");
+                var leadLoaded = metadata.Any(e => e.LogicalName == "lead");
+                
+                if (accountLoaded) Console.WriteLine("  ✓ account entity loaded");
+                if (contactLoaded) Console.WriteLine("  ✓ contact entity loaded");
+                if (leadLoaded) Console.WriteLine("  ✓ lead entity loaded");
+                
+                if (!accountLoaded || !contactLoaded)
+                {
+                    Console.WriteLine("  ⚠ Warning: Core entities (account, contact) were not loaded from crmcommon schema");
+                }
             }
             catch (Exception ex)
             {
