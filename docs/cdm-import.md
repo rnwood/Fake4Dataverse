@@ -8,6 +8,49 @@ The Common Data Model (CDM) is Microsoft's standard schema definition format tha
 
 **Reference**: https://github.com/microsoft/CDM
 
+## System Entity Metadata (v4.0+)
+
+**🆕 Key Difference from FakeXrmEasy v2+**: Fake4Dataverse includes built-in system entity metadata embedded in the Core library.
+
+Starting with v4.0.0, Fake4Dataverse includes system entity metadata (Solution, AppModule, SiteMap, SavedQuery, SystemForm, WebResource, AppModuleComponent) as **embedded resources in the Core library**. This means:
+
+- ✅ **No external files needed** - System entities are automatically available
+- ✅ **Validation enabled by default** - Tests can use system entities with validation
+- ✅ **Model-Driven App testing** - Full support for MDA metadata operations
+- ✅ **Solution management** - Test ALM scenarios with solution entities
+
+### Loading System Entities
+
+```csharp
+// Load system entity metadata from embedded resources
+var context = XrmFakedContextFactory.New();
+context.InitializeSystemEntityMetadata();
+
+// Now you can work with system entities
+var service = context.GetOrganizationService();
+var solution = new Entity("solution")
+{
+    ["uniquename"] = "TestSolution",
+    ["friendlyname"] = "Test Solution",
+    ["version"] = "1.0.0.0"
+};
+var solutionId = service.Create(solution);
+```
+
+### Available System Entities
+
+The following system entities are included as embedded CDM metadata in Core:
+
+- **solution** - Solution entity for ALM operations
+- **appmodule** - Model-Driven App entity
+- **sitemap** - Navigation structure entity
+- **savedquery** - System views entity
+- **systemform** - Entity forms entity
+- **webresource** - Web resources (JS, CSS, HTML) entity
+- **appmodulecomponent** - App component linking entity
+
+These entities are automatically loaded by Fake4DataverseService and can be manually loaded in tests using `InitializeSystemEntityMetadata()`.
+
 ## When to Use CDM Import
 
 Use CDM import when you want to:

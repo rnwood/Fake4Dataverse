@@ -287,6 +287,8 @@ The following table compares the features available across different versions of
 | **IsValidForCreate/Update/Read Validation** | ❌ No | ✅ Yes | ⚠️ Unknown¹ |
 | **Publisher Metadata** | ❌ No | ❌ No | ✅ Yes |
 | **Solution Metadata** | ❌ No | ❌ No | ✅ Yes |
+| **System Entity Metadata** | ❌ No | ✅ Yes (Embedded in Core) | ⚠️ Unknown¹ |
+| **CDM Import** | ❌ No | ✅ Yes | ⚠️ Unknown¹ |
 
 ### Early-Bound Support
 

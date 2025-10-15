@@ -120,6 +120,7 @@ namespace Fake4Dataverse.Abstractions
         void InitializeMetadataFromCdmFiles(IEnumerable<string> cdmJsonFilePaths);
         Task InitializeMetadataFromStandardCdmSchemasAsync(IEnumerable<string> schemaNames);
         Task InitializeMetadataFromStandardCdmEntitiesAsync(IEnumerable<string> entityNames);
+        void InitializeSystemEntityMetadata();
         IQueryable<EntityMetadata> CreateMetadataQuery();
         EntityMetadata GetEntityMetadataByName(string sLogicalName);
         void SetEntityMetadata(EntityMetadata em);

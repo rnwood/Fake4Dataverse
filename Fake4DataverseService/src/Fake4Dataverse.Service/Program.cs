@@ -125,14 +125,25 @@ public class Program
             Args = new[] { $"--urls=http://{bindHost}:{port}" }
         });
 
-        // Create and register the Fake4Dataverse context
-        // Disable validation for MDA metadata initialization since MDA entities (appmodule, sitemap, etc.) 
-        // don't have metadata loaded. Validation can be enabled later if needed.
-        var context = XrmFakedContextFactory.New(new IntegrityOptions
+        // Create and register the Fake4Dataverse context with validation enabled
+        // System entity metadata is automatically loaded from embedded resources in Core
+        var context = XrmFakedContextFactory.New();
+        
+        // Load system entity metadata (solution, appmodule, sitemap, etc.) from embedded resources in Core
+        // These system entities are required for Model-Driven App functionality
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/create-model-driven-app-using-code
+        Console.WriteLine("Loading system entity metadata from embedded resources...");
+        try
         {
-            ValidateEntityReferences = false,
-            ValidateAttributeTypes = false
-        });
+            context.InitializeSystemEntityMetadata();
+            Console.WriteLine("Successfully loaded system entity metadata");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Failed to load system entity metadata: {ex.Message}");
+            // Continue - some functionality may not work but service can still start
+        }
+        Console.WriteLine();
         
         // Initialize CDM metadata if requested
         // Reference: https://github.com/microsoft/CDM
@@ -204,15 +215,10 @@ public class Program
         
         var organizationService = context.GetOrganizationService();
         
-        // Initialize example Model-Driven App metadata (skip if entities don't exist)
-        try
-        {
-            MdaInitializer.InitializeExampleMda(organizationService);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Skipping MDA initialization (entities not available): {ex.Message}");
-        }
+        // Initialize example Model-Driven App metadata
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/create-model-driven-app-using-code
+        // System entity metadata must be loaded before this call
+        MdaInitializer.InitializeExampleMda(organizationService);
         
         builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);

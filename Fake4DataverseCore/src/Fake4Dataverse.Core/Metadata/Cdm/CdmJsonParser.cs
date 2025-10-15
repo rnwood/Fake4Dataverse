@@ -454,7 +454,16 @@ namespace Fake4Dataverse.Metadata.Cdm
             foreach (var definition in document.Definitions)
             {
                 // Only process LocalEntity types (entity definitions)
-                if (definition.Type != "LocalEntity" && definition.Type != "CdmEntityDefinition")
+                // If no Type is specified, assume it's an entity definition
+                if (!string.IsNullOrEmpty(definition.Type) && 
+                    definition.Type != "LocalEntity" && 
+                    definition.Type != "CdmEntityDefinition")
+                {
+                    continue;
+                }
+                
+                // Skip if no entityName or name is present (not a valid entity)
+                if (string.IsNullOrEmpty(definition.EntityName) && string.IsNullOrEmpty(definition.Name))
                 {
                     continue;
                 }
@@ -479,11 +488,16 @@ namespace Fake4Dataverse.Metadata.Cdm
         {
             var entityMetadata = new EntityMetadata();
             
+            // Get entity name - prefer entityName, then name
+            var entityName = !string.IsNullOrWhiteSpace(definition.EntityName) 
+                ? definition.EntityName 
+                : definition.Name;
+            
             // Use sourceName (Dataverse logical name) if available, otherwise use name (CDM name converted to lowercase)
             // In CDM, sourceName typically contains the actual Dataverse entity logical name
             string logicalName = !string.IsNullOrWhiteSpace(definition.SourceName) 
                 ? definition.SourceName 
-                : definition.Name.ToLowerInvariant();
+                : (entityName?.ToLowerInvariant() ?? "unknown");
             
             entityMetadata.LogicalName = logicalName;
             
@@ -493,7 +507,10 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             if (definition.HasAttributes != null)
             {
-                foreach (var cdmAttribute in definition.HasAttributes)
+                // Extract actual attribute definitions from the hasAttributes list
+                var attributeDefinitions = ExtractAttributeDefinitions(definition.HasAttributes);
+                
+                foreach (var cdmAttribute in attributeDefinitions)
                 {
                     var attributeMetadata = ConvertToAttributeMetadata(cdmAttribute, logicalName);
                     if (attributeMetadata != null)
@@ -524,6 +541,59 @@ namespace Fake4Dataverse.Metadata.Cdm
             }
             
             return entityMetadata;
+        }
+        
+        /// <summary>
+        /// Extracts attribute definitions from the hasAttributes list.
+        /// The list can contain either direct CdmAttributeDefinition objects or attributeGroupReference wrappers.
+        /// </summary>
+        private static List<CdmAttributeDefinition> ExtractAttributeDefinitions(List<object> hasAttributes)
+        {
+            var result = new List<CdmAttributeDefinition>();
+            
+            foreach (var item in hasAttributes)
+            {
+                if (item == null) continue;
+                
+                // Try to deserialize as attributeGroupReference
+                var jsonElement = (System.Text.Json.JsonElement)item;
+                
+                if (jsonElement.TryGetProperty("attributeGroupReference", out var groupRef))
+                {
+                    // This is an attributeGroupReference - extract the members
+                    if (groupRef.TryGetProperty("members", out var members))
+                    {
+                        var membersList = JsonSerializer.Deserialize<List<CdmAttributeDefinition>>(members.GetRawText(), new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true,
+                            AllowTrailingCommas = true,
+                            ReadCommentHandling = JsonCommentHandling.Skip
+                        });
+                        
+                        if (membersList != null)
+                        {
+                            result.AddRange(membersList);
+                        }
+                    }
+                }
+                else
+                {
+                    // This is a direct attribute definition
+                    var attribute = JsonSerializer.Deserialize<CdmAttributeDefinition>(jsonElement.GetRawText(), new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        AllowTrailingCommas = true,
+                        ReadCommentHandling = JsonCommentHandling.Skip
+                    });
+                    
+                    if (attribute != null)
+                    {
+                        result.Add(attribute);
+                    }
+                }
+            }
+            
+            return result;
         }
         
         /// <summary>
@@ -783,5 +853,61 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             return null; // Embedded file not found
         }
+        
+        /// <summary>
+        /// Loads system entity metadata from embedded CDM resources in the Fake4Dataverse.Core assembly.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
+        /// 
+        /// This method loads system entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent)
+        /// from embedded CDM schema files. These system entities are required for Model-Driven App functionality and solution management.
+        /// 
+        /// System entities included:
+        /// - solution: Solution entity for ALM operations
+        /// - appmodule: Model-Driven App entity
+        /// - sitemap: Navigation structure entity
+        /// - savedquery: System views entity
+        /// - systemform: Entity forms entity
+        /// - webresource: Web resources (JS, CSS, HTML) entity
+        /// - appmodulecomponent: App component linking entity
+        /// </summary>
+        /// <returns>Collection of EntityMetadata for system entities</returns>
+        public static IEnumerable<EntityMetadata> FromEmbeddedSystemEntities()
+        {
+            var systemEntityFiles = new[]
+            {
+                "Solution.cdm.json",
+                "AppModule.cdm.json",
+                "SiteMap.cdm.json",
+                "SavedQuery.cdm.json",
+                "SystemForm.cdm.json",
+                "WebResource.cdm.json",
+                "AppModuleComponent.cdm.json"
+            };
+            
+            var allMetadata = new List<EntityMetadata>();
+            var assembly = typeof(CdmJsonParser).Assembly;
+            
+            foreach (var fileName in systemEntityFiles)
+            {
+                // Try to load from embedded resource first
+                var resourceName = $"Fake4Dataverse.Core.Metadata.Cdm.SystemEntities.{fileName}";
+                
+                using (var stream = assembly.GetManifestResourceStream(resourceName))
+                {
+                    if (stream != null)
+                    {
+                        using (var reader = new System.IO.StreamReader(stream))
+                        {
+                            var json = reader.ReadToEnd();
+                            var metadata = FromCdmJson(json);
+                            allMetadata.AddRange(metadata);
+                        }
+                    }
+                }
+            }
+            
+            return allMetadata;
+        }
     }
 }
+

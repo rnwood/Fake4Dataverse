@@ -319,6 +319,22 @@ namespace Fake4Dataverse.Metadata
         }
         
         /// <summary>
+        /// Creates entity metadata from embedded system entity CDM resources.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
+        /// 
+        /// This method loads system entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent)
+        /// from embedded CDM schema files in the Fake4Dataverse.Core assembly. These system entities are required for
+        /// Model-Driven App functionality and solution management in tests.
+        /// 
+        /// System entities included: solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent
+        /// </summary>
+        /// <returns>Collection of EntityMetadata for system entities</returns>
+        public static IEnumerable<EntityMetadata> FromEmbeddedSystemEntities()
+        {
+            return CdmJsonParser.FromEmbeddedSystemEntities();
+        }
+        
+        /// <summary>
         /// Sets the directory to use for file-based caching of downloaded CDM files.
         /// If set, downloaded CDM files will be cached to disk in addition to memory, significantly
         /// improving performance for subsequent loads.

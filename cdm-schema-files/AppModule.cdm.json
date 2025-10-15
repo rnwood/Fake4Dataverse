@@ -1,0 +1,112 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "AppModule",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Model-driven App"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "A role-based, modular business app that provides task-based functionality for a particular area of work."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "appModuleId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "appmoduleid",
+                "displayName": "AppModule Identifier",
+                "description": "Unique identifier for entity instances"
+              },
+              {
+                "name": "name",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 100,
+                "sourceName": "name",
+                "displayName": "Name",
+                "description": "Name of App Module"
+              },
+              {
+                "name": "uniqueName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 100,
+                "sourceName": "uniquename",
+                "displayName": "Unique Name",
+                "description": "Unique Name of App Module"
+              },
+              {
+                "name": "description",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 2000,
+                "sourceName": "description",
+                "displayName": "Description",
+                "description": "Description for entity"
+              },
+              {
+                "name": "clientType",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "clienttype",
+                "displayName": "Client Type",
+                "description": "Client Type such as Web or UCI"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

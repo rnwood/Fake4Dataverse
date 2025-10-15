@@ -53,5 +53,15 @@
     <ProjectReference Include="..\..\..\Fake4DataverseAbstractions\src\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj" />
   </ItemGroup>
 
+  <!-- Embed system entity CDM schema files as resources -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\cdm-schema-files\Solution.cdm.json" Link="Metadata\Cdm\SystemEntities\Solution.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\AppModule.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModule.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\SiteMap.cdm.json" Link="Metadata\Cdm\SystemEntities\SiteMap.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\SavedQuery.cdm.json" Link="Metadata\Cdm\SystemEntities\SavedQuery.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\SystemForm.cdm.json" Link="Metadata\Cdm\SystemEntities\SystemForm.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\WebResource.cdm.json" Link="Metadata\Cdm\SystemEntities\WebResource.cdm.json" />
+    <EmbeddedResource Include="..\..\cdm-schema-files\AppModuleComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModuleComponent.cdm.json" />
+  </ItemGroup>
 
 </Project>

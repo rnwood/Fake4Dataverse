@@ -30,7 +30,8 @@ public class OrganizationServiceImplTests
 
     public OrganizationServiceImplTests()
     {
-        // Create a Fake4Dataverse context with validation disabled for backward compatibility
+        // Create a Fake4Dataverse context with validation disabled for now
+        // TODO: Load required metadata and enable validation
         var context = XrmFakedContextFactory.New(new IntegrityOptions 
         { 
             ValidateEntityReferences = false,

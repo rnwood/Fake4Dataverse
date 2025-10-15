@@ -135,6 +135,40 @@ var context = XrmFakedContextFactory.New();
 var context = XrmFakedContextFactory.New(); // Same API, different package
 ```
 
+### System Entity Metadata (Key Difference)
+
+**🆕 Unique to Fake4Dataverse v4.x**: System entity metadata is embedded in Core.
+
+**v3.x:**
+- System entity metadata must be loaded externally
+- Requires CDM files or early-bound assemblies for solution, appmodule, etc.
+
+**v4.x:**
+```csharp
+// System entities (solution, appmodule, sitemap, etc.) are embedded in Core
+var context = XrmFakedContextFactory.New();
+context.InitializeSystemEntityMetadata();
+
+// Now you can work with system entities with validation enabled
+var solution = new Entity("solution")
+{
+    ["uniquename"] = "MySolution",
+    ["friendlyname"] = "My Solution"
+};
+service.Create(solution);
+```
+
+**Available System Entities in v4.x:**
+- solution
+- appmodule
+- sitemap
+- savedquery
+- systemform
+- webresource
+- appmodulecomponent
+
+This feature enables Model-Driven App testing and ALM scenarios without external dependencies.
+
 ## Step-by-Step Migration
 
 ### Step 1: Backup Your Code

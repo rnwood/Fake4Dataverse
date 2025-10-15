@@ -50,6 +50,9 @@ namespace Fake4Dataverse.Metadata.Cdm
         [JsonPropertyName("$type")]
         public string Type { get; set; }
         
+        [JsonPropertyName("entityName")]
+        public string EntityName { get; set; }
+        
         [JsonPropertyName("name")]
         public string Name { get; set; }
         
@@ -60,10 +63,29 @@ namespace Fake4Dataverse.Metadata.Cdm
         public string DisplayName { get; set; }
         
         [JsonPropertyName("hasAttributes")]
-        public List<CdmAttributeDefinition> HasAttributes { get; set; }
+        public List<object> HasAttributes { get; set; }  // Can be CdmAttributeDefinition or AttributeGroupReference
         
         [JsonPropertyName("sourceName")]
         public string SourceName { get; set; }
+    }
+    
+    /// <summary>
+    /// Represents an attribute group reference that wraps attribute definitions.
+    /// Used in Microsoft's CDM schema files.
+    /// </summary>
+    internal class CdmAttributeGroupReference
+    {
+        [JsonPropertyName("attributeGroupReference")]
+        public CdmAttributeGroup AttributeGroupReference { get; set; }
+    }
+    
+    internal class CdmAttributeGroup
+    {
+        [JsonPropertyName("attributeGroupName")]
+        public string AttributeGroupName { get; set; }
+        
+        [JsonPropertyName("members")]
+        public List<CdmAttributeDefinition> Members { get; set; }
     }
     
     /// <summary>

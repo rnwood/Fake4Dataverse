@@ -189,6 +189,9 @@ This creates a `local-packages` folder with the built NuGet packages.
 - Provide unit tests for bug fixes and new features
 - **Always include documentation references in test comments** - Reference the official Microsoft documentation URL that describes the behavior being tested
 - For Dataverse/CRM behaviors, include comments like `// Reference: https://learn.microsoft.com/en-us/dotnet/api/...` to document the source of expected behavior
+- **ALWAYS use validation** - Starting in v4.0.0+, validation is enabled by default. Do NOT disable validation (`ValidateEntityReferences` or `ValidateAttributeTypes`) as a workaround for missing metadata
+- **Load required metadata** - If tests need metadata, explicitly load it using `InitializeMetadataFromCdmFiles()`, `InitializeMetadataFromStandardCdmSchemasAsync()`, or similar methods
+- **System entities are available** - System entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent) is available in `/cdm-schema-files/` and should be used when needed
 
 ### Exception Handling
 - Use `PullRequestException` for features not yet implemented to encourage community contributions

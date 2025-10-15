@@ -13,9 +13,24 @@ These files are from the Microsoft Common Data Model repository:
 
 The following CDM schema files are included for offline use and to prevent test timeouts:
 
+### Business Entities (from Microsoft CDM)
 - `Account.cdm.json` - Account entity schema from core/applicationCommon
 - `Contact.cdm.json` - Contact entity schema from core/applicationCommon
 - `Opportunity.cdm.json` - Opportunity entity schema from core/applicationCommon/foundationCommon/crmCommon/sales
+
+### System Entities (created for Fake4Dataverse)
+These system entity schemas are created specifically for Fake4Dataverse to support Model-Driven App testing. They are simplified versions based on Microsoft Dynamics 365 metadata documentation:
+
+- `Solution.cdm.json` - Solution entity for ALM operations
+- `AppModule.cdm.json` - Model-Driven App entity
+- `SiteMap.cdm.json` - Navigation structure entity
+- `SavedQuery.cdm.json` - System views entity
+- `SystemForm.cdm.json` - Entity forms entity
+- `WebResource.cdm.json` - Web resources (JS, CSS, HTML) entity
+- `AppModuleComponent.cdm.json` - App component linking entity
+
+**Reference**: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
+These system entity schemas include only the attributes required for basic MDA functionality and testing.
 
 ## Purpose
 

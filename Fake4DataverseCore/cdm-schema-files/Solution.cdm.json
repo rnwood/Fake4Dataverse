@@ -1,0 +1,140 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "Solution",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Solution"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "A solution which contains CRM customizations."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "solutionId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "solutionid",
+                "displayName": "Solution Identifier",
+                "description": "Unique identifier of the solution."
+              },
+              {
+                "name": "uniqueName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 65,
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "uniquename",
+                "displayName": "Name",
+                "description": "The unique name of this solution"
+              },
+              {
+                "name": "friendlyName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 256,
+                "sourceName": "friendlyname",
+                "displayName": "Display Name",
+                "description": "User display name for the solution."
+              },
+              {
+                "name": "version",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 256,
+                "sourceName": "version",
+                "displayName": "Version",
+                "description": "Solution version, used to identify a solution for upgrades and hotfixes."
+              },
+              {
+                "name": "isManaged",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "ismanaged",
+                "displayName": "Package Type",
+                "description": "Indicates whether the solution is managed or unmanaged."
+              },
+              {
+                "name": "isVisible",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "isvisible",
+                "displayName": "Is Visible Outside Platform",
+                "description": "Indicates whether the solution is visible outside the platform."
+              },
+              {
+                "name": "description",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 2000,
+                "sourceName": "description",
+                "displayName": "Description",
+                "description": "Description of the solution."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
