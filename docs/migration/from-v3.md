@@ -203,12 +203,14 @@ Search your codebase for v3-specific features (see [Feature Availability](#featu
 ✅ Early-bound entities
 ✅ Caller properties
 ✅ **Calculated Fields** (NEW in v4.0.0) - See [Calculated Fields Guide](../usage/calculated-fields.md)
+✅ **Metadata Validation** (NEW in v4.0.0) - IsValidForCreate/Update/Read enforcement - See [Metadata Validation Guide](../usage/metadata-validation.md)
 
 ### Features That May Differ
 
 ⚠️ Some advanced message executors may not be implemented
-⚠️ Metadata operations have limited support
+⚠️ Metadata operations have limited support (but validation is enhanced in v4.0.0)
 ⚠️ Some v3-specific APIs may not exist
+⚠️ **Metadata validation is stricter** in v4.0.0 than in v3.x (can be disabled for compatibility)
 
 ### If a Feature is Missing
 
@@ -309,6 +311,44 @@ var product = service.Retrieve("product", productId, new ColumnSet(true));
 - **Evaluation**: Automatic on retrieve and update operations
 
 See the [Calculated Fields Guide](../usage/calculated-fields.md) for complete documentation.
+
+### Metadata Validation (NEW in v4.0.0)
+
+**Fake4Dataverse v4.0.0+** enforces attribute metadata validation using IsValidForCreate, IsValidForUpdate, and IsValidForRead properties:
+
+```csharp
+using Fake4Dataverse.Middleware;
+using Fake4Dataverse.Abstractions.Integrity;
+using Fake4Dataverse.Integrity;
+
+// Validation is enabled by default
+var context = XrmFakedContextFactory.New();
+context.InitializeMetadata(typeof(Account).Assembly);
+var service = context.GetOrganizationService();
+
+// ❌ FAILS - statecode is not valid for Create
+var account = new Entity("account")
+{
+    ["name"] = "Test",
+    ["statecode"] = new OptionSetValue(1)
+};
+service.Create(account); // Throws FaultException
+
+// ✅ WORKS - Disable validation for backward compatibility
+var compatContext = XrmFakedContextFactory.New(new IntegrityOptions
+{
+    ValidateAttributeTypes = false
+});
+service.Create(account); // Success
+```
+
+**Key Differences from FakeXrmEasy v3.x:**
+- **Validation Enforcement**: v4.0.0 enforces IsValidForCreate/Update by default (v3.x behavior may vary)
+- **Metadata Requirement**: Validation requires metadata to be initialized
+- **statecode/statuscode**: Cannot be set during Create when validation is enabled
+- **Backward Compatibility**: Can be disabled via `IntegrityOptions.ValidateAttributeTypes = false`
+
+See the [Metadata Validation Guide](../usage/metadata-validation.md) for complete documentation.
 
 ## Migration Checklist
 
