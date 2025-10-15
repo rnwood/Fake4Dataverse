@@ -30,12 +30,8 @@ public class OrganizationServiceImplTests
 
     public OrganizationServiceImplTests()
     {
-        // Create a Fake4Dataverse context with validation disabled for backward compatibility
-        var context = XrmFakedContextFactory.New(new IntegrityOptions 
-        { 
-            ValidateEntityReferences = false,
-            ValidateAttributeTypes = false 
-        });
+        // Create a Fake4Dataverse context with validation enabled
+        var context = XrmFakedContextFactory.New();
         _organizationService = context.GetOrganizationService();
 
         // Create the WCF service implementation

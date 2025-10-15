@@ -1,0 +1,101 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "AppModuleComponent",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "App Module Component"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "A component available in a business app such as entity, dashboard, form, view, chart, and business process."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "appModuleComponentId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "appmodulecomponentid",
+                "displayName": "AppModule Component Identifier",
+                "description": "Unique identifier of the app module component."
+              },
+              {
+                "name": "appModuleIdUnique",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "sourceName": "appmoduleidunique",
+                "displayName": "AppModule Id",
+                "description": "The App Module Id Unique"
+              },
+              {
+                "name": "objectId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "sourceName": "objectid",
+                "displayName": "Object Id",
+                "description": "Object Id"
+              },
+              {
+                "name": "componentType",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "componenttype",
+                "displayName": "Component Type",
+                "description": "The object type code of the component."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

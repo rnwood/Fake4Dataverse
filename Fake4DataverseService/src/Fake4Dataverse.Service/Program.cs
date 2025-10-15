@@ -125,14 +125,55 @@ public class Program
             Args = new[] { $"--urls=http://{bindHost}:{port}" }
         });
 
-        // Create and register the Fake4Dataverse context
-        // Disable validation for MDA metadata initialization since MDA entities (appmodule, sitemap, etc.) 
-        // don't have metadata loaded. Validation can be enabled later if needed.
-        var context = XrmFakedContextFactory.New(new IntegrityOptions
+        // Create and register the Fake4Dataverse context with validation enabled
+        // System entity metadata (solution, appmodule, etc.) is loaded from local CDM files
+        var context = XrmFakedContextFactory.New();
+        
+        // Load system entity metadata from local CDM files
+        // These system entities are required for Model-Driven App functionality
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/create-model-driven-app-using-code
+        var cdmSchemaPath = Path.Combine(AppContext.BaseDirectory, "cdm-schema-files");
+        
+        var systemEntityFiles = new[]
         {
-            ValidateEntityReferences = false,
-            ValidateAttributeTypes = false
-        });
+            "Solution.cdm.json",
+            "AppModule.cdm.json", 
+            "SiteMap.cdm.json",
+            "SavedQuery.cdm.json",
+            "SystemForm.cdm.json",
+            "WebResource.cdm.json",
+            "AppModuleComponent.cdm.json"
+        };
+        
+        var systemEntityPaths = systemEntityFiles
+            .Select(f => Path.Combine(cdmSchemaPath, f))
+            .Where(File.Exists)
+            .ToArray();
+            
+        if (systemEntityPaths.Length > 0)
+        {
+            Console.WriteLine($"Loading {systemEntityPaths.Length} system entity metadata file(s) from local CDM files...");
+            foreach (var path in systemEntityPaths)
+            {
+                Console.WriteLine($"  - {Path.GetFileName(path)}");
+            }
+            try
+            {
+                context.InitializeMetadataFromCdmFiles(systemEntityPaths);
+                Console.WriteLine("Successfully loaded system entity metadata");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: Failed to load some system entity metadata: {ex.Message}");
+                // Continue - some functionality may not work but service can still start
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Warning: System entity CDM files not found at {cdmSchemaPath}");
+            Console.WriteLine("Model-Driven App functionality may be limited.");
+        }
+        Console.WriteLine();
         
         // Initialize CDM metadata if requested
         // Reference: https://github.com/microsoft/CDM
@@ -204,15 +245,10 @@ public class Program
         
         var organizationService = context.GetOrganizationService();
         
-        // Initialize example Model-Driven App metadata (skip if entities don't exist)
-        try
-        {
-            MdaInitializer.InitializeExampleMda(organizationService);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Skipping MDA initialization (entities not available): {ex.Message}");
-        }
+        // Initialize example Model-Driven App metadata
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/create-model-driven-app-using-code
+        // System entity metadata must be loaded before this call
+        MdaInitializer.InitializeExampleMda(organizationService);
         
         builder.Services.AddSingleton<IXrmFakedContext>(context);
         builder.Services.AddSingleton<IOrganizationService>(organizationService);

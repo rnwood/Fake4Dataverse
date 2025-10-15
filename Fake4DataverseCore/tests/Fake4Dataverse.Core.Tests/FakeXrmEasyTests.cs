@@ -13,13 +13,10 @@ namespace Fake4Dataverse.Tests
         
         protected Fake4DataverseTests()
         {
-            // For backward compatibility with existing tests, disable validation
-            // Tests that want validation should create their own context
-            _context = XrmFakedContextFactory.New(new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false
-            });
+            // Create context with validation enabled by default (as of v4.0.0+)
+            // Tests should load required metadata using InitializeMetadataFromCdmFiles or similar
+            // For tests that specifically need validation disabled, create a custom context
+            _context = XrmFakedContextFactory.New();
             _service = _context.GetOrganizationService();
         }
     }

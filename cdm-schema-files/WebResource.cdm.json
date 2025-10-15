@@ -1,0 +1,128 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "WebResource",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Web Resource"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Data equivalent to files used in Web development. Web resources provide client-side components that are used to provide custom user interface elements."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "webResourceId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "webresourceid",
+                "displayName": "Web Resource Identifier",
+                "description": "Unique identifier of the web resource."
+              },
+              {
+                "name": "name",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 256,
+                "sourceName": "name",
+                "displayName": "Name",
+                "description": "Name of the web resource."
+              },
+              {
+                "name": "displayName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 200,
+                "sourceName": "displayname",
+                "displayName": "Display Name",
+                "description": "Display name of the web resource."
+              },
+              {
+                "name": "description",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 2000,
+                "sourceName": "description",
+                "displayName": "Description",
+                "description": "Description of the web resource."
+              },
+              {
+                "name": "webResourceType",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "webresourcetype",
+                "displayName": "Type",
+                "description": "Type of the web resource."
+              },
+              {
+                "name": "content",
+                "purpose": "hasA",
+                "dataType": "string",
+                "sourceName": "content",
+                "displayName": "Content",
+                "description": "Content of the web resource (base64-encoded)."
+              },
+              {
+                "name": "languageCode",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "languagecode",
+                "displayName": "Language Code",
+                "description": "Language code for the web resource."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
