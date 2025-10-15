@@ -416,10 +416,15 @@ namespace Fake4Dataverse.Metadata.Cdm
                         var importedMetadata = await DownloadAndParseWithImportsAsync(importUrl, processedUrls);
                         allMetadata.AddRange(importedMetadata);
                     }
+                    catch (HttpRequestException ex) when (ex.Message.Contains("404"))
+                    {
+                        // Log but don't fail - some imports might not exist (404 is acceptable for optional imports)
+                        Console.WriteLine($"Warning: Import file not found: {import.CorpusPath} from {url}");
+                    }
                     catch (Exception ex)
                     {
-                        // Log but don't fail - some imports might not be critical
-                        Console.WriteLine($"Warning: Failed to load import {import.CorpusPath} from {url}: {ex.Message}");
+                        // All other errors are critical - throw them
+                        throw new InvalidOperationException($"Failed to load import {import.CorpusPath} from {url}. Import URL: {importUrl}", ex);
                     }
                 }
             }
@@ -467,8 +472,8 @@ namespace Fake4Dataverse.Metadata.Cdm
                     }
                     catch (Exception ex)
                     {
-                        // Log but don't fail - some entity references might not be critical
-                        Console.WriteLine($"Warning: Failed to load entity {entityRef.EntityName} from {entityRef.EntityPath}: {ex.Message}");
+                        // Entity references from manifests are critical - throw the error
+                        throw new InvalidOperationException($"Failed to load entity {entityRef.EntityName} from {entityRef.EntityPath}. URL: {entityUrl}", ex);
                     }
                 }
             }
@@ -600,8 +605,9 @@ namespace Fake4Dataverse.Metadata.Cdm
                         attributes.Add(attributeMetadata);
                         
                         // Identify primary key
+                        var purposeStr = GetPurposeString(cdmAttribute.Purpose);
                         if (cdmAttribute.IsPrimaryKey == true || 
-                            cdmAttribute.Purpose == "identifiedBy" ||
+                            purposeStr == "identifiedBy" ||
                             cdmAttribute.Name.Equals($"{logicalName}id", StringComparison.OrdinalIgnoreCase))
                         {
                             primaryIdAttribute = attributeMetadata.LogicalName;
@@ -645,16 +651,42 @@ namespace Fake4Dataverse.Metadata.Cdm
                     // This is an attributeGroupReference - extract the members
                     if (groupRef.TryGetProperty("members", out var members))
                     {
-                        var membersList = JsonSerializer.Deserialize<List<CdmAttributeDefinition>>(members.GetRawText(), new JsonSerializerOptions
+                        // Members can be attribute definitions or string references
+                        // We need to deserialize each member individually
+                        if (members.ValueKind == JsonValueKind.Array)
                         {
-                            PropertyNameCaseInsensitive = true,
-                            AllowTrailingCommas = true,
-                            ReadCommentHandling = JsonCommentHandling.Skip
-                        });
-                        
-                        if (membersList != null)
-                        {
-                            result.AddRange(membersList);
+                            foreach (var member in members.EnumerateArray())
+                            {
+                                // Skip string references (attribute references)
+                                if (member.ValueKind == JsonValueKind.String)
+                                {
+                                    continue;
+                                }
+                                
+                                // Only process object definitions
+                                if (member.ValueKind == JsonValueKind.Object)
+                                {
+                                    try
+                                    {
+                                        var attribute = JsonSerializer.Deserialize<CdmAttributeDefinition>(member.GetRawText(), new JsonSerializerOptions
+                                        {
+                                            PropertyNameCaseInsensitive = true,
+                                            AllowTrailingCommas = true,
+                                            ReadCommentHandling = JsonCommentHandling.Skip
+                                        });
+                                        
+                                        if (attribute != null)
+                                        {
+                                            result.Add(attribute);
+                                        }
+                                    }
+                                    catch (JsonException)
+                                    {
+                                        // Skip attributes that can't be deserialized (might be entity relationships or other complex types)
+                                        continue;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -823,6 +855,43 @@ namespace Fake4Dataverse.Metadata.Cdm
             }
             
             return "string"; // Default to string if we can't determine the type
+        }
+        
+        /// <summary>
+        /// Extracts the purpose string from a CDM purpose definition.
+        /// CDM purpose can be a simple string or a complex object with references.
+        /// </summary>
+        private static string GetPurposeString(object purpose)
+        {
+            if (purpose == null)
+            {
+                return null;
+            }
+            
+            // If it's a simple string
+            if (purpose is string stringPurpose)
+            {
+                return stringPurpose;
+            }
+            
+            // If it's a JsonElement (from deserialization)
+            if (purpose is JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == JsonValueKind.String)
+                {
+                    return jsonElement.GetString();
+                }
+                else if (jsonElement.ValueKind == JsonValueKind.Object)
+                {
+                    // Try to extract purposeReference property
+                    if (jsonElement.TryGetProperty("purposeReference", out var purposeRef))
+                    {
+                        return purposeRef.GetString();
+                    }
+                }
+            }
+            
+            return null;
         }
         
         /// <summary>

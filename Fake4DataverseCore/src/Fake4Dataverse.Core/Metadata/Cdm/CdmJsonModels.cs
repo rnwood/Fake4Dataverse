@@ -140,7 +140,7 @@ namespace Fake4Dataverse.Metadata.Cdm
         public bool? IsNullable { get; set; }
         
         [JsonPropertyName("purpose")]
-        public string Purpose { get; set; }
+        public object Purpose { get; set; }  // Can be string or complex object
         
         [JsonPropertyName("appliedTraits")]
         public List<object> AppliedTraits { get; set; }
