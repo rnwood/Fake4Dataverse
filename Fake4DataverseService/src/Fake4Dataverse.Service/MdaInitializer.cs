@@ -341,8 +341,8 @@ public static class MdaInitializer
         var appModuleComponent = new Entity("appmodulecomponent")
         {
             Id = Guid.NewGuid(),
-            ["appmoduleidunique"] = appModuleId,
-            ["objectid"] = componentId,
+            ["appmoduleidunique"] = new EntityReference("appmodule", appModuleId),
+            ["objectid"] = new EntityReference("savedquery", componentId), // Generic reference - type varies by componenttype
             ["componenttype"] = componentType // 26 = SavedQuery, 1 = Entity, 60 = SystemForm
         };
         service.Create(appModuleComponent);

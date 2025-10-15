@@ -752,6 +752,12 @@ namespace Fake4Dataverse.Metadata.Cdm
         {
             string normalizedType = dataType.ToLowerInvariant();
             
+            // Debug logging
+            if (normalizedType == "entityid")
+            {
+                // EntityId mapped to Lookup for foreign key attributes
+            }
+            
             if (normalizedType == "string" || normalizedType == "text")
             {
                 return new StringAttributeMetadata
