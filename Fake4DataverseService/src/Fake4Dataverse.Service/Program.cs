@@ -1,4 +1,6 @@
 using Fake4Dataverse.Abstractions;
+using Fake4Dataverse.Abstractions.Integrity;
+using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Services;
@@ -124,7 +126,13 @@ public class Program
         });
 
         // Create and register the Fake4Dataverse context
-        var context = XrmFakedContextFactory.New();
+        // Disable validation for MDA metadata initialization since MDA entities (appmodule, sitemap, etc.) 
+        // don't have metadata loaded. Validation can be enabled later if needed.
+        var context = XrmFakedContextFactory.New(new IntegrityOptions
+        {
+            ValidateEntityReferences = false,
+            ValidateAttributeTypes = false
+        });
         
         // Initialize CDM metadata if requested
         // Reference: https://github.com/microsoft/CDM
