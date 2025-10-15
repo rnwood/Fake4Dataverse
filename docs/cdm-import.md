@@ -50,10 +50,13 @@ The following system entities are included as embedded CDM metadata in Core:
 - **appmodulecomponent** - App component linking entity
 - **entitydefinition** - Entity metadata (virtual table) ✅ **NEW**
 - **attribute** - Attribute metadata (virtual table) ✅ **NEW**
+- **relationship** - Relationship metadata (virtual table) ✅ **NEW**
+- **optionset** - OptionSet metadata (virtual table) ✅ **NEW**
+- **entitykey** - Entity key metadata (virtual table) ✅ **NEW**
 
 These entities are automatically loaded by Fake4DataverseService and can be manually loaded in tests using `InitializeSystemEntityMetadata()`.
 
-**Note**: The `entitydefinition` and `attribute` tables are virtual tables that allow querying metadata as data. See [Metadata Persistence](./metadata-persistence.md) for details.
+**Note**: The metadata virtual tables (entitydefinition, attribute, relationship, optionset, entitykey) allow querying metadata as data, matching real Dataverse behavior. See [Metadata Persistence](./metadata-persistence.md) for details.
 
 ## When to Use CDM Import
 

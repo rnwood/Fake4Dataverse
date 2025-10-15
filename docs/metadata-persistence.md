@@ -10,8 +10,11 @@ Fake4Dataverse automatically persists entity and attribute metadata to standard 
 In real Dataverse/Dynamics 365, metadata is accessible through special virtual entities:
 - **EntityDefinition** (`entitydefinition`) - Contains entity metadata
 - **Attribute** (`attribute`) - Contains attribute/field metadata
+- **Relationship** (`relationship`) - Contains relationship metadata (1:N, N:N, N:1)
+- **OptionSet** (`optionset`) - Contains optionset/picklist metadata
+- **EntityKey** (`entitykey`) - Contains alternate key metadata
 
-Starting with v4.0+, Fake4Dataverse **automatically** initializes these metadata tables in the constructor and persists all entity and attribute metadata to them. This enables:
+Starting with v4.0+, Fake4Dataverse **automatically** initializes these metadata tables in the constructor. Currently, entity and attribute metadata are automatically persisted to their respective tables. This enables:
 - Querying metadata using standard CRUD operations
 - Building tools that work with metadata as data
 - Testing code that reads from metadata tables
@@ -27,7 +30,8 @@ The metadata tables are **automatically initialized** when you create a context 
 
 ```csharp
 var context = XrmFakedContextFactory.New();
-// EntityDefinition and Attribute tables are already loaded and ready to use!
+// All metadata tables are already loaded: entitydefinition, attribute, relationship, optionset, entitykey
+```
 ```
 
 ### Automatic Persistence
@@ -340,33 +344,39 @@ The metadata persistence feature is **fully automatic and backward compatible**:
 
 ✅ **Entity metadata** - Full support via EntityDefinition table  
 ✅ **Attribute metadata** - Full support via Attribute table  
-✅ **Automatic initialization** - No explicit calls needed  
-✅ **Automatic persistence** - Transparent persistence to tables
+✅ **Relationship metadata tables** - Relationship table available for querying ✅ **NEW**  
+✅ **OptionSet metadata tables** - OptionSet table available for querying ✅ **NEW**  
+✅ **EntityKey metadata tables** - EntityKey table available for querying ✅ **NEW**  
+✅ **Automatic initialization** - All metadata tables automatically loaded  
+✅ **Automatic persistence** - Entity and Attribute metadata transparently persisted
 
 ### Not Yet Implemented
 
-The following metadata types are not yet persisted to tables (but may be added in future versions):
+The following metadata types have tables available but persistence is not yet implemented:
 
-- **Relationship metadata** - Relationships (OneToMany, ManyToMany) are stored in the EntityMetadata object but not persisted to separate relationship tables
-- **OptionSet metadata** - Option sets have their own in-memory repository (`IOptionSetMetadataRepository`) but aren't persisted to optionset tables
-- **EntityKey metadata** - Alternate keys are not persisted to tables
-- **Reverse queries** - Reading from tables to populate the in-memory dictionary (tables are write-only for now)
+- **Relationship persistence** - The `relationship` table is available for querying, but relationships from EntityMetadata (OneToMany, ManyToMany) are not automatically persisted to it yet. They remain stored in EntityMetadata object properties.
+- **OptionSet persistence** - The `optionset` table is available for querying, but option sets from `IOptionSetMetadataRepository` are not automatically persisted to it yet.
+- **EntityKey persistence** - The `entitykey` table is available for querying, but alternate keys from EntityMetadata are not automatically persisted to it yet.
+- **Reverse queries** - Reading from tables to populate the in-memory dictionary (tables are currently write-only)
 - **Create/Update via tables** - Creating entities by inserting EntityDefinition records directly
 
 ### Current Behavior
 
-- Metadata tables (`entitydefinition` and `attribute`) are always present and initialized automatically
-- Changes made directly to entity definition or attribute records are NOT reflected back to the EntityMetadata objects
+- All metadata tables (`entitydefinition`, `attribute`, `relationship`, `optionset`, `entitykey`) are always present and initialized automatically
+- Only Entity and Attribute metadata is automatically persisted when calling `InitializeMetadata()` or `SetEntityMetadata()`
+- Changes made directly to metadata records are NOT reflected back to the EntityMetadata objects
 - The source of truth remains the in-memory `EntityMetadata` dictionary
 - Persistence to tables is one-way: from EntityMetadata → tables
 
-### Relationships and OptionSets
+### Relationships, OptionSets, and EntityKeys
 
-**Relationships** are stored in the `EntityMetadata.ManyToManyRelationships`, `EntityMetadata.OneToManyRelationships`, and `EntityMetadata.ManyToOneRelationships` properties and can be queried via the EntityMetadata objects. However, they are not yet persisted to separate relationship tables in the database.
+**Relationships** are stored in the `EntityMetadata.ManyToManyRelationships`, `EntityMetadata.OneToManyRelationships`, and `EntityMetadata.ManyToOneRelationships` properties and can be queried via the EntityMetadata objects. The `relationship` table is available and can be manually populated for testing code that queries relationship metadata directly.
 
-**OptionSets** are stored in the `IOptionSetMetadataRepository` which you can access via `context.GetProperty<IOptionSetMetadataRepository>()`. They can also be queried through the EntityMetadata AttributeMetadata properties. However, they are not yet persisted to separate optionset tables.
+**OptionSets** are stored in the `IOptionSetMetadataRepository` which you can access via `context.GetProperty<IOptionSetMetadataRepository>()`. They can also be queried through the EntityMetadata AttributeMetadata properties. The `optionset` table is available and can be manually populated for testing code that queries optionset metadata directly.
 
-If you need to test code that queries relationship or optionset tables directly, you'll need to manually create those records or contribute the persistence logic to the project.
+**EntityKeys** are stored in the `EntityMetadata.Keys` property and can be queried via the EntityMetadata objects. The `entitykey` table is available and can be manually populated for testing code that queries entity key metadata directly.
+
+If you need to test code that queries these tables directly, you can manually create records in them, or contribute automatic persistence logic to the project.
 
 ## Related Documentation
 
@@ -379,3 +389,6 @@ If you need to test code that queries relationship or optionset tables directly,
 - [Dataverse Entity Metadata](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata)
 - [EntityDefinition Table](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/entitydefinition)
 - [Attribute Table](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/attribute)
+- [Relationship Table](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/relationship)
+- [OptionSet Metadata](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata#picklist-options)
+- [EntityKey (Alternate Keys)](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/define-alternate-keys-entity)
