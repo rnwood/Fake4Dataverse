@@ -2,7 +2,8 @@
 
 /**
  * Navigation component for Model-Driven App
- * Uses Fluent UI components to replicate Power Apps navigation
+ * Uses Fluent UI Tree components to replicate Power Apps navigation
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/create-site-map-app
  */
 
 import {
@@ -16,11 +17,29 @@ import {
 } from '@fluentui/react-components';
 import {
   Navigation20Regular,
-  Home20Regular,
-  ChevronRight20Regular,
   Settings20Regular,
+  bundleIcon,
+  
+  // Default icons for common entities
+  BuildingRegular,
+  BuildingFilled,
+  PersonRegular,
+  PersonFilled,
+  MoneyRegular,
+  MoneyFilled,
+  StarRegular,
+  StarFilled,
+  DocumentRegular,
+  DocumentFilled,
 } from '@fluentui/react-icons';
 import type { SiteMapArea, SiteMapGroup, SiteMapSubArea } from '../types/dataverse';
+
+// Bundle icons for better UX
+const BuildingIcon = bundleIcon(BuildingFilled, BuildingRegular);
+const PersonIcon = bundleIcon(PersonFilled, PersonRegular);
+const MoneyIcon = bundleIcon(MoneyFilled, MoneyRegular);
+const StarIcon = bundleIcon(StarFilled, StarRegular);
+const DocumentIcon = bundleIcon(DocumentFilled, DocumentRegular);
 
 const useStyles = makeStyles({
   nav: {
@@ -82,6 +101,42 @@ interface NavigationProps {
   onNavigate?: (entity: string) => void;
 }
 
+/**
+ * Map icon names from sitemap to Fluent UI icons
+ * Icons in sitemap use Material Design Icons (mdi-*) naming
+ */
+function getIconForEntity(iconName?: string, entityName?: string): React.ReactElement | undefined {
+  // Try icon from sitemap first
+  if (iconName) {
+    const iconMap: Record<string, React.ReactElement> = {
+      'mdi-domain': <BuildingIcon />,
+      'mdi-account': <PersonIcon />,
+      'mdi-currency-usd': <MoneyIcon />,
+      'mdi-account-star': <StarIcon />,
+      'mdi-ticket': <DocumentIcon />,
+    };
+    
+    if (iconMap[iconName]) {
+      return iconMap[iconName];
+    }
+  }
+  
+  // Fallback to entity-based icons
+  if (entityName) {
+    const entityIconMap: Record<string, React.ReactElement> = {
+      'account': <BuildingIcon />,
+      'contact': <PersonIcon />,
+      'opportunity': <MoneyIcon />,
+      'lead': <StarIcon />,
+      'incident': <DocumentIcon />,
+    };
+    
+    return entityIconMap[entityName];
+  }
+  
+  return undefined;
+}
+
 export default function Navigation({ areas, selectedEntity, onNavigate }: NavigationProps) {
   const styles = useStyles();
 
@@ -133,6 +188,7 @@ export default function Navigation({ areas, selectedEntity, onNavigate }: Naviga
                       }
                     >
                       <TreeItemLayout
+                        iconBefore={getIconForEntity(subarea.icon, subarea.entity)}
                         onClick={() => handleSubAreaClick(subarea)}
                       >
                         {subarea.title}

@@ -44,7 +44,7 @@ public static class MdaInitializer
             Id = sitemapId,
             ["sitemapname"] = "Example Sitemap",
             ["sitemapnameunique"] = "fake4dataverse_example_sitemap",
-            ["appmoduleid"] = new EntityReference("appmodule", appModuleId),
+            ["appmoduleid"] = appModuleId.ToString(),
             ["sitemapxml"] = sitemapXml
         };
         service.Create(sitemap);
@@ -62,8 +62,9 @@ public static class MdaInitializer
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/webresource
         CreateWebResources(service);
         
+        // Note: Sample data creation commented out - requires entity metadata to be loaded
         // Create some sample data for testing
-        CreateSampleData(service);
+        // CreateSampleData(service);
         
         Console.WriteLine("Model-Driven App metadata initialized successfully!");
     }
