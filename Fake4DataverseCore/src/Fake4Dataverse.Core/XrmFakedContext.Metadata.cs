@@ -253,17 +253,16 @@ namespace Fake4Dataverse
                 return;
             
             // Don't try to persist the metadata tables themselves to avoid circular dependency
-            // Support both old names (entity, optionset, entitykey) and new names (entitydefinition, optionsetdefinition, entitykeydefinition)
-            var metadataTables = new[] { "entity", "entitydefinition", "attribute", "relationship", "optionset", "optionsetdefinition", "entitykey", "entitykeydefinition", "relationshipdefinition" };
+            var metadataTables = new[] { "entity", "attribute", "relationship", "optionset", "entitykey" };
             if (metadataTables.Contains(metadata.LogicalName))
                 return;
             
             // Metadata tables should always be present (initialized in constructor)
-            // Support both "entitydefinition" (new name) and "entity" (old alias) for backward compatibility
-            if (!this.EntityMetadata.ContainsKey("entitydefinition") && !this.EntityMetadata.ContainsKey("entity"))
+            // If they're not, this is an error condition
+            if (!this.EntityMetadata.ContainsKey("entity"))
             {
                 throw new InvalidOperationException(
-                    "EntityDefinition metadata table (entitydefinition or entity) is not initialized. " +
+                    "EntityDefinition metadata table (entity) is not initialized. " +
                     "System entity metadata should be automatically loaded in the constructor.");
             }
             
@@ -275,15 +274,11 @@ namespace Fake4Dataverse
             }
             
             // Convert EntityMetadata to EntityDefinition record
-            // Always store in "entitydefinition" table (prefer new name over old alias "entity")
-            var entityTableName = "entitydefinition";
             var entityDefRecord = MetadataPersistenceManager.EntityMetadataToEntityDefinition(metadata);
-            // Update the entity record's logical name to match the table it's being stored in
-            entityDefRecord.LogicalName = entityTableName;
             
             // Check if EntityDefinition record already exists
-            var existingEntityDef = this.Data.ContainsKey(entityTableName) 
-                ? this.Data[entityTableName].Values.FirstOrDefault(e => 
+            var existingEntityDef = this.Data.ContainsKey("entity") 
+                ? this.Data["entity"].Values.FirstOrDefault(e => 
                     e.GetAttributeValue<string>("logicalname") == metadata.LogicalName)
                 : null;
             
@@ -291,15 +286,15 @@ namespace Fake4Dataverse
             {
                 // Update existing record
                 entityDefRecord.Id = existingEntityDef.Id;
-                this.Data[entityTableName][existingEntityDef.Id] = entityDefRecord;
+                this.Data["entity"][existingEntityDef.Id] = entityDefRecord;
             }
             else
             {
                 // Create new record
-                if (!this.Data.ContainsKey(entityTableName))
-                    this.Data[entityTableName] = new Dictionary<Guid, Entity>();
+                if (!this.Data.ContainsKey("entity"))
+                    this.Data["entity"] = new Dictionary<Guid, Entity>();
                 
-                this.Data[entityTableName][entityDefRecord.Id] = entityDefRecord;
+                this.Data["entity"][entityDefRecord.Id] = entityDefRecord;
             }
             
             // Persist attributes if they exist

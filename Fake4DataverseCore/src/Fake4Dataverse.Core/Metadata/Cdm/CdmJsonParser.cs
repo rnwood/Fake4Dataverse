@@ -520,35 +520,12 @@ namespace Fake4Dataverse.Metadata.Cdm
                 ? definition.EntityName 
                 : definition.Name;
             
-            // Determine logical name based on available properties
-            // For metadata virtual tables (EntityDefinition, Attribute, etc.):
-            //   - name: The proper Dataverse logical name (e.g., "EntityDefinition")
-            //   - sourceName: Physical table name/alias (e.g., "entity")
-            // For regular entities:
-            //   - sourceName: The Dataverse logical name (e.g., "account")
-            //   - name or entityName: Display name (e.g., "Account")
-            // 
-            // Strategy: If 'name' exists and is different from sourceName, use name (it's the logical name).
-            // Otherwise, use sourceName if available, or fall back to entityName/name.
-            string logicalName;
-            if (!string.IsNullOrWhiteSpace(definition.Name) && 
-                !string.IsNullOrWhiteSpace(definition.SourceName) &&
-                !string.Equals(definition.Name, definition.SourceName, StringComparison.OrdinalIgnoreCase))
-            {
-                // Name and sourceName are different - use name as it's the logical name
-                // This handles metadata tables like EntityDefinition (name) vs entity (sourceName)
-                logicalName = definition.Name.ToLowerInvariant();
-            }
-            else if (!string.IsNullOrWhiteSpace(definition.SourceName))
-            {
-                // SourceName available - use it as the logical name
-                logicalName = definition.SourceName.ToLowerInvariant();
-            }
-            else
-            {
-                // Fall back to entityName or name, converted to lowercase
-                logicalName = entityName?.ToLowerInvariant() ?? "unknown";
-            }
+            // Use sourceName (Dataverse logical name) if available, otherwise use name (CDM name converted to lowercase)
+            // In CDM, sourceName typically contains the actual Dataverse entity logical name
+            // Always convert to lowercase to match Dataverse behavior where logical names are lowercase
+            string logicalName = !string.IsNullOrWhiteSpace(definition.SourceName) 
+                ? definition.SourceName.ToLowerInvariant() 
+                : (entityName?.ToLowerInvariant() ?? "unknown");
             
             entityMetadata.LogicalName = logicalName;
             

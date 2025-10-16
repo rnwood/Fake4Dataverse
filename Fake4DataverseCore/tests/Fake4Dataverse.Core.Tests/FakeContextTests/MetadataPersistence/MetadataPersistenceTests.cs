@@ -50,7 +50,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
             Assert.Equal("testentity", retrievedMetadata.LogicalName);
 
             // Assert - Verify metadata is persisted to entitydefinition table
-            var query = new QueryExpression("entitydefinition")
+            var query = new QueryExpression("entity")
             {
                 ColumnSet = new ColumnSet(true),
                 Criteria = new FilterExpression
@@ -145,7 +145,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
             _context.SetEntityMetadata(updatedMetadata);
 
             // Assert - Verify only one record exists and it's updated
-            var query = new QueryExpression("entitydefinition")
+            var query = new QueryExpression("entity")
             {
                 ColumnSet = new ColumnSet(true),
                 Criteria = new FilterExpression
@@ -176,16 +176,16 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
             var service = context.GetOrganizationService();
 
             // Assert - Metadata tables should be automatically initialized
-            var entityDefMetadata = context.GetEntityMetadataByName("entitydefinition");
+            var entityDefMetadata = context.GetEntityMetadataByName("entity");
             Assert.NotNull(entityDefMetadata);
-            Assert.Equal("entitydefinition", entityDefMetadata.LogicalName);
+            Assert.Equal("entity", entityDefMetadata.LogicalName);
             
             var attributeMetadata = context.GetEntityMetadataByName("attribute");
             Assert.NotNull(attributeMetadata);
             Assert.Equal("attribute", attributeMetadata.LogicalName);
             
             // Verify we can query the tables
-            var query = new QueryExpression("entitydefinition")
+            var query = new QueryExpression("entity")
             {
                 ColumnSet = new ColumnSet("logicalname")
             };
@@ -216,7 +216,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
             _context.InitializeMetadata(new[] { entity1, entity2 });
 
             // Act - Query all entity definitions
-            var query = new QueryExpression("entitydefinition")
+            var query = new QueryExpression("entity")
             {
                 ColumnSet = new ColumnSet("logicalname", "schemaname")
             };
