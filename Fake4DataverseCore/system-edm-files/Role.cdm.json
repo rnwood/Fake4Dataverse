@@ -1,0 +1,142 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "Role",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Security Role"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Grouping of security privileges. Users are assigned roles that authorize their access to the Microsoft CRM system."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "roleId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "roleid",
+                "displayName": "Role",
+                "description": "Unique identifier of the role."
+              },
+              {
+                "name": "name",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 100,
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "name",
+                "displayName": "Name",
+                "description": "Name of the role."
+              },
+              {
+                "name": "businessUnitId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "BusinessUnit",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "businessunitid",
+                "displayName": "Business Unit",
+                "description": "Unique identifier of the business unit with which the role is associated."
+              },
+              {
+                "name": "parentRoleId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "Role",
+                "sourceName": "parentroleid",
+                "displayName": "Parent Role",
+                "description": "Unique identifier of the parent role."
+              },
+              {
+                "name": "isManaged",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "ismanaged",
+                "displayName": "Is Managed",
+                "description": "Indicates whether the solution component is part of a managed solution."
+              },
+              {
+                "name": "isCustomizable",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "iscustomizable",
+                "displayName": "Customizable",
+                "description": "Information that specifies whether this component can be customized."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

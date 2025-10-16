@@ -1,0 +1,142 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "Team",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Team"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Collection of system users that routinely collaborate. Teams can be used to simplify record sharing and provide team members with common access to organization data when team members belong to different Business Units."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "teamId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "teamid",
+                "displayName": "Team",
+                "description": "Unique identifier for the team."
+              },
+              {
+                "name": "name",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 160,
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "name",
+                "displayName": "Team Name",
+                "description": "Name of the team."
+              },
+              {
+                "name": "businessUnitId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "BusinessUnit",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "businessunitid",
+                "displayName": "Business Unit",
+                "description": "Unique identifier of the business unit with which the team is associated."
+              },
+              {
+                "name": "teamType",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "teamtype",
+                "displayName": "Team Type",
+                "description": "Select the team type."
+              },
+              {
+                "name": "administratorId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "SystemUser",
+                "sourceName": "administratorid",
+                "displayName": "Administrator",
+                "description": "Unique identifier of the user primary responsible for the team."
+              },
+              {
+                "name": "isDefault",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "isdefault",
+                "displayName": "Is Default",
+                "description": "Information about whether the team is a default business unit team."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

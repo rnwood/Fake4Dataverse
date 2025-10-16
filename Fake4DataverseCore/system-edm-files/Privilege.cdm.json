@@ -1,0 +1,134 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "Privilege",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Privilege"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Permission to perform an action in Microsoft CRM. The platform checks for the privilege and rejects the attempt if the user does not hold the privilege."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "privilegeId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "privilegeid",
+                "displayName": "Privilege",
+                "description": "Unique identifier of the privilege."
+              },
+              {
+                "name": "name",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 100,
+                "sourceName": "name",
+                "displayName": "Name",
+                "description": "Name of the privilege."
+              },
+              {
+                "name": "accessRight",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "accessright",
+                "displayName": "Access Right",
+                "description": "Rights a user has to an instance of an entity."
+              },
+              {
+                "name": "canBeBasic",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "canbebasic",
+                "displayName": "Can Be Basic",
+                "description": "Information that specifies whether the privilege applies to the user, business unit, or organization."
+              },
+              {
+                "name": "canBeDeep",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "canbedeep",
+                "displayName": "Can Be Deep",
+                "description": "Information that specifies whether the privilege applies to child business units of the business unit associated with the user."
+              },
+              {
+                "name": "canBeGlobal",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "canbeglobal",
+                "displayName": "Can Be Global",
+                "description": "Information that specifies whether the privilege applies to the entire organization."
+              },
+              {
+                "name": "canBeLocal",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "canbelocal",
+                "displayName": "Can Be Local",
+                "description": "Information that specifies whether the privilege applies to the user's business unit."
+              },
+              {
+                "name": "privilegeType",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "privilegetype",
+                "displayName": "Privilege Type",
+                "description": "Type of the privilege."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

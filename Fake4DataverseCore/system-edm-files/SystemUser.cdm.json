@@ -1,0 +1,155 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "SystemUser",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "User"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Person with access to the Microsoft CRM system and who owns objects in the Microsoft CRM database."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "systemUserId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "systemuserid",
+                "displayName": "User",
+                "description": "Unique identifier for the user."
+              },
+              {
+                "name": "fullName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 200,
+                "sourceName": "fullname",
+                "displayName": "Full Name",
+                "description": "Full name of the user."
+              },
+              {
+                "name": "firstName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 64,
+                "sourceName": "firstname",
+                "displayName": "First Name",
+                "description": "First name of the user."
+              },
+              {
+                "name": "lastName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 64,
+                "sourceName": "lastname",
+                "displayName": "Last Name",
+                "description": "Last name of the user."
+              },
+              {
+                "name": "domainName",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 1024,
+                "sourceName": "domainname",
+                "displayName": "User Name",
+                "description": "Active Directory domain of which the user is a member."
+              },
+              {
+                "name": "internalEMailAddress",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 100,
+                "sourceName": "internalemailaddress",
+                "displayName": "Email",
+                "description": "Internal email address for the user."
+              },
+              {
+                "name": "businessUnitId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "BusinessUnit",
+                "sourceName": "businessunitid",
+                "displayName": "Business Unit",
+                "description": "Unique identifier of the business unit with which the user is associated."
+              },
+              {
+                "name": "isDisabled",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "isdisabled",
+                "displayName": "Status",
+                "description": "Information about whether the user is enabled."
+              },
+              {
+                "name": "accessMode",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "accessmode",
+                "displayName": "Access Mode",
+                "description": "Type of user."
+              },
+              {
+                "name": "calType",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "caltype",
+                "displayName": "License Type",
+                "description": "License type of user."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

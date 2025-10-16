@@ -1,0 +1,125 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "RolePrivileges",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Role Privileges"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Group of privileges used to categorize users to provide appropriate access to entities."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "rolePrivilegeId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "roleprivilegeid",
+                "displayName": "Role Privilege",
+                "description": "Unique identifier of the role privilege."
+              },
+              {
+                "name": "roleId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "Role",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "roleid",
+                "displayName": "Role",
+                "description": "Unique identifier of the role that is associated with the role privilege."
+              },
+              {
+                "name": "privilegeId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "Privilege",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "privilegeid",
+                "displayName": "Privilege",
+                "description": "Unique identifier of the privilege that is associated with the role privilege."
+              },
+              {
+                "name": "privilegeDepthMask",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "privilegedepthmask",
+                "displayName": "Privilege Depth Mask",
+                "description": "Depth of privilege."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

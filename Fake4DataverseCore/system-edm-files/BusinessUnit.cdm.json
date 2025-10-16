@@ -1,0 +1,123 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "BusinessUnit",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Business Unit"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Business, division, or department in the Microsoft Dynamics 365 database."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "businessUnitId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "businessunitid",
+                "displayName": "Business Unit",
+                "description": "Unique identifier of the business unit."
+              },
+              {
+                "name": "name",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 160,
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "name",
+                "displayName": "Name",
+                "description": "Name of the business unit."
+              },
+              {
+                "name": "parentBusinessUnitId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "BusinessUnit",
+                "sourceName": "parentbusinessunitid",
+                "displayName": "Parent Business Unit",
+                "description": "Unique identifier for the parent business unit."
+              },
+              {
+                "name": "organizationId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "Organization",
+                "sourceName": "organizationid",
+                "displayName": "Organization",
+                "description": "Unique identifier of the organization associated with the business unit."
+              },
+              {
+                "name": "isDisabled",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "isdisabled",
+                "displayName": "Is Disabled",
+                "description": "Information about whether the business unit is enabled or disabled."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
