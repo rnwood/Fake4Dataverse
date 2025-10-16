@@ -551,4 +551,4 @@ See the [Contributing Guide](../../README.md#contributing) for details.
 - [Middleware Architecture](../concepts/middleware.md) - Understanding the pipeline
 - [Message Executors Overview](../messages/README.md) - Built-in executors
 - [Custom API Usage](../usage/custom-api.md) - Using Custom APIs
-- [Source Code Examples](https://github.com/rnwood/Fake4Dataverse/tree/main/Fake4DataverseCore/src/Fake4Dataverse.Core/FakeMessageExecutors) - Review existing executors
+- [Source Code Examples](https://github.com/rnwood/Fake4Dataverse/tree/main/Fake4DataverseCore/Fake4Dataverse.Core/FakeMessageExecutors) - Review existing executors

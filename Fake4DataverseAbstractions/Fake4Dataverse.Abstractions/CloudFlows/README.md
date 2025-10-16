@@ -168,7 +168,7 @@ Official references:
 
 ## Implementation
 
-Implementation will be in `Fake4DataverseCore/src/Fake4Dataverse.Core/CloudFlows/`:
+Implementation will be in `Fake4DataverseCore/Fake4Dataverse.Core/CloudFlows/`:
 - `CloudFlowSimulator.cs` - Main simulator implementation
 - `DataverseActionHandler.cs` - Built-in Dataverse connector handler
 - `FlowExecutionResult.cs`, `FlowActionResult.cs` - Result POCOs

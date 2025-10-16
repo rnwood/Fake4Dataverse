@@ -571,8 +571,8 @@ var successCount = (int)response.Results["SuccessCount"];
 ## Implementation Details
 
 - **Files**: 
-  - `Fake4DataverseCore/src/Fake4Dataverse.Core/FakeMessageExecutors/CustomApiExecutor.cs`
-  - `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/FakeMessageExecutors/OrganizationRequestExecutors.cs`
-  - `Fake4DataverseCore/src/Fake4Dataverse.Core/Middleware/Messages/MiddlewareBuilderExtensions.Messages.cs`
+  - `Fake4DataverseCore/Fake4Dataverse.Core/FakeMessageExecutors/CustomApiExecutor.cs`
+  - `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/FakeMessageExecutors/OrganizationRequestExecutors.cs`
+  - `Fake4DataverseCore/Fake4Dataverse.Core/Middleware/Messages/MiddlewareBuilderExtensions.Messages.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/CustomApiTests/`
 - **Feature Parity**: Matches FakeXrmEasy v2+ behavior

@@ -54,7 +54,7 @@ fake4dataverse start --port 5000 --host localhost
 Or if building from source:
 
 ```bash
-cd Fake4DataverseService/src/Fake4Dataverse.Service
+cd Fake4DataverseService/Fake4Dataverse.Service
 dotnet run -- start --port 5000 --host localhost
 ```
 
@@ -344,7 +344,7 @@ public class MultiServiceIntegrationTests
 steps:
   - name: Start Fake4DataverseService
     run: |
-      cd Fake4DataverseService/src/Fake4Dataverse.Service
+      cd Fake4DataverseService/Fake4Dataverse.Service
       dotnet run -- start --port 5000 &
       sleep 5
     
