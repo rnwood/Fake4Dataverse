@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Fake4Dataverse.Abstractions;
+using Fake4Dataverse.Abstractions.Integrity;
 using Fake4Dataverse.Extensions;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -26,7 +27,13 @@ namespace Fake4Dataverse.Query
             context.EnsureEntityNameExistsInMetadata(le.LinkFromEntityName != linkFromAlias ? le.LinkFromEntityName : linkFromEntity);
             context.EnsureEntityNameExistsInMetadata(le.LinkToEntityName);
 
-            if (!context.AttributeExistsInMetadata(le.LinkToEntityName, le.LinkToAttributeName))
+            // For early bound entities (proxy types), validation is always enforced
+            // For dynamic entities, validation only happens when ValidateAttributeTypes is enabled
+            var integrityOptions = context.GetProperty<IIntegrityOptions>();
+            var hasProxyTypes = context.ProxyTypesAssemblies.Count() > 0;
+            var shouldValidate = hasProxyTypes || integrityOptions.ValidateAttributeTypes;
+            
+            if (shouldValidate && !context.AttributeExistsInMetadata(le.LinkToEntityName, le.LinkToAttributeName))
             {
                 throw FakeOrganizationServiceFaultFactory.New(ErrorCodes.QueryBuilderNoAttribute, string.Format("The attribute {0} does not exist on this entity.", le.LinkToAttributeName));
             }

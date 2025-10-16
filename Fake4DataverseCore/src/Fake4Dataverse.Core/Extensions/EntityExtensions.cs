@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fake4Dataverse.Abstractions;
+using Fake4Dataverse.Abstractions.Integrity;
 using Microsoft.Xrm.Sdk.Metadata;
 
 namespace Fake4Dataverse.Extensions
@@ -139,7 +140,13 @@ namespace Fake4Dataverse.Extensions
                 foreach (var attKey in qe.ColumnSet.Columns)
                 {
                     //Check if attribute really exists in metadata
-                    if (!context.AttributeExistsInMetadata(e.LogicalName, attKey))
+                    // For early bound entities (proxy types), validation is always enforced
+                    // For dynamic entities, validation only happens when ValidateAttributeTypes is enabled
+                    var integrityOptions = context.GetProperty<IIntegrityOptions>();
+                    var hasProxyTypes = context.ProxyTypesAssemblies.Count() > 0;
+                    var shouldValidate = hasProxyTypes || integrityOptions.ValidateAttributeTypes;
+                    
+                    if (shouldValidate && !context.AttributeExistsInMetadata(e.LogicalName, attKey))
                     {
                         throw FakeOrganizationServiceFaultFactory.New(ErrorCodes.QueryBuilderNoAttribute, string.Format("The attribute {0} does not exist on this entity.", attKey));
                     }
@@ -381,7 +388,11 @@ namespace Fake4Dataverse.Extensions
                 //Return selected list of attributes
                 foreach (var attKey in columnSet.Columns)
                 {
-                    if (!context.AttributeExistsInMetadata(otherEntity.LogicalName, attKey))
+                    var integrityOptions = context.GetProperty<IIntegrityOptions>();
+                    var hasProxyTypes = context.ProxyTypesAssemblies.Count() > 0;
+                    var shouldValidate = hasProxyTypes || integrityOptions.ValidateAttributeTypes;
+                    
+                    if (shouldValidate && !context.AttributeExistsInMetadata(otherEntity.LogicalName, attKey))
                     {
                         throw FakeOrganizationServiceFaultFactory.New(ErrorCodes.QueryBuilderNoAttribute, string.Format("The attribute {0} does not exist on this entity.", attKey));
                     }
@@ -427,7 +438,11 @@ namespace Fake4Dataverse.Extensions
                     //Return selected list of attributes
                     foreach (var attKey in columnSet.Columns)
                     {
-                        if (!context.AttributeExistsInMetadata(otherEntity.LogicalName, attKey))
+                        var integrityOptions = context.GetProperty<IIntegrityOptions>();
+                        var hasProxyTypes = context.ProxyTypesAssemblies.Count() > 0;
+                        var shouldValidate = hasProxyTypes || integrityOptions.ValidateAttributeTypes;
+                        
+                        if (shouldValidate && !context.AttributeExistsInMetadata(otherEntity.LogicalName, attKey))
                         {
                             throw FakeOrganizationServiceFaultFactory.New(ErrorCodes.QueryBuilderNoAttribute, string.Format("The attribute {0} does not exist on this entity.", attKey));
                         }
