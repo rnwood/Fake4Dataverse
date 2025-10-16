@@ -98,6 +98,36 @@ We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releas
 ### Quick Start
 - **[Installation Guide](./docs/getting-started/installation.md)** - Get Fake4Dataverse installed (v9+ only)
 - **[Quick Start](./docs/getting-started/quickstart.md)** - Your first test in 5 minutes
+
+### 🔒 Security Model (NEW)
+Fake4Dataverse now includes a **complete Dataverse security model** implementation for realistic security testing:
+
+- **✅ Privilege-Based Access Control** - Users need specific privileges granted through roles
+- **✅ Privilege Depth Enforcement** - Basic, Local, Deep, and Global access levels
+- **✅ Role Shadow Copies** - Automatic role copying across business units
+- **✅ Business Unit Hierarchy** - Traditional and modern BU security modes
+- **✅ System Administrator Role** - Auto-initialized with implicit privileges
+- **✅ Organization-Owned Entities** - Proper handling of system tables
+- **✅ System Tables Readable by Everyone** - Matches Dataverse behavior
+
+**[Learn more about Security Testing →](./docs/usage/security-model.md)**
+
+```csharp
+// Enable security with middleware
+var builder = MiddlewareBuilder.New()
+    .AddRoleLifecycle()  // Role lifecycle management
+    .AddSecurity()       // Security enforcement
+    .AddCrud();
+    
+var context = builder.Build();
+context.SecurityConfiguration.SecurityEnabled = true;
+
+// Set the calling user
+context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
+
+// Operations are now checked against user's privileges
+var service = context.GetOrganizationService();
+```
 - **[Basic Concepts](./docs/getting-started/basic-concepts.md)** - Understand the framework
 - **[FAQ](./docs/getting-started/faq.md)** - Common questions and troubleshooting
 
