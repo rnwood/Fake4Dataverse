@@ -15,8 +15,12 @@ namespace Fake4Dataverse.Abstractions.Plugins
     {
         /// <summary>
         /// Discovers all IPlugin types in the provided assemblies and creates plugin step registrations.
-        /// By default, looks for SPKL CrmPluginRegistrationAttribute(s) without requiring a reference to the SPKL package.
-        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl
+        /// By default, looks for SPKL CrmPluginRegistrationAttribute(s) or XrmTools.Meta StepAttribute(s) 
+        /// without requiring a reference to those packages.
+        /// 
+        /// Supported attribute frameworks:
+        /// - SPKL: https://github.com/scottdurow/SparkleXrm/wiki/spkl
+        /// - XrmTools.Meta: https://www.nuget.org/packages/XrmTools.Meta/
         /// </summary>
         /// <param name="assemblies">Assemblies to scan for plugins</param>
         /// <param name="customConverter">Optional custom function to convert plugin types to registrations</param>
@@ -122,9 +126,12 @@ namespace Fake4Dataverse.Abstractions.Plugins
         }
 
         /// <summary>
-        /// Converts SPKL CrmPluginRegistrationAttribute(s) to plugin step registrations using reflection.
-        /// This method uses duck typing to read attribute properties without requiring a reference to the SPKL package.
-        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl#plugin-registration
+        /// Converts SPKL CrmPluginRegistrationAttribute(s) or XrmTools.Meta StepAttribute(s) to plugin step registrations using reflection.
+        /// This method uses duck typing to read attribute properties without requiring a reference to the packages.
+        /// 
+        /// References:
+        /// - SPKL: https://github.com/scottdurow/SparkleXrm/wiki/spkl#plugin-registration
+        /// - XrmTools.Meta: https://www.nuget.org/packages/XrmTools.Meta/
         /// 
         /// SPKL CrmPluginRegistrationAttribute properties:
         /// - MessageName: The SDK message name (e.g., "Create", "Update")
@@ -136,20 +143,45 @@ namespace Fake4Dataverse.Abstractions.Plugins
         /// - Offline: Whether the plugin runs offline
         /// - DeleteAsyncOperation: Whether to delete async operation
         /// 
+        /// XrmTools.Meta StepAttribute constructor and properties:
+        /// - Constructor: StepAttribute(string entityName, string message, string filteringAttributes, Stages stage, ExecutionMode mode)
+        /// - PrimaryEntityName: Entity logical name (from constructor)
+        /// - MessageName: SDK message name (from constructor)
+        /// - FilteringAttributes: Comma-separated attributes (from constructor)
+        /// - Stage: Stages enum - PreValidation=10, PreOperation=20, PostOperation=40 (from constructor)
+        /// - Mode: ExecutionMode enum - Synchronous=0, Asynchronous=1 (from constructor)
+        /// - ExecutionOrder: Int32, execution order/rank
+        /// 
         /// SPKL CrmPluginRegistrationImage properties:
         /// - ImageType: PreImage, PostImage, or Both
         /// - Name: The name/key for accessing the image
         /// - EntityAlias: The entity alias (optional)
         /// - Attributes: Comma-separated list of attributes to include in the image
+        /// 
+        /// XrmTools.Meta ImageAttribute constructor and properties:
+        /// - Constructor: ImageAttribute(ImageTypes type, string messagePropertyName, string attributes = "")
+        /// - Type: ImageTypes enum - PreImage=0, PostImage=1, Both=2 (from constructor)
+        /// - MessagePropertyName: The property name in the plugin context (from constructor)
+        /// - Attributes: Comma-separated attributes (from constructor)
+        /// - Name: Optional name for the image
+        /// - EntityAlias: Optional entity alias
         /// </summary>
         private static IEnumerable<PluginStepRegistration> ConvertFromAttributes(Type pluginType)
         {
             var registrations = new List<PluginStepRegistration>();
 
-            // Look for CrmPluginRegistrationAttribute using reflection (without referencing the package)
-            var stepAttributes = pluginType.GetCustomAttributes(inherit: true)
+            // Look for SPKL CrmPluginRegistrationAttribute using reflection (without referencing the package)
+            var spklStepAttributes = pluginType.GetCustomAttributes(inherit: true)
                 .Where(a => a.GetType().Name == "CrmPluginRegistrationAttribute")
                 .ToList();
+
+            // Look for XrmTools.Meta StepAttribute using reflection (without referencing the package)
+            var xrmToolsStepAttributes = pluginType.GetCustomAttributes(inherit: true)
+                .Where(a => a.GetType().Name == "StepAttribute" && 
+                           a.GetType().Namespace == "XrmTools.Meta.Attributes")
+                .ToList();
+
+            var stepAttributes = spklStepAttributes.Concat(xrmToolsStepAttributes).ToList();
 
             if (!stepAttributes.Any())
             {
@@ -157,11 +189,19 @@ namespace Fake4Dataverse.Abstractions.Plugins
                 return registrations;
             }
 
-            // Look for CrmPluginRegistrationImage attributes
-            var imageAttributes = pluginType.GetCustomAttributes(inherit: true)
+            // Look for SPKL CrmPluginRegistrationImage attributes
+            var spklImageAttributes = pluginType.GetCustomAttributes(inherit: true)
                 .Where(a => a.GetType().Name == "CrmPluginRegistrationImageAttribute" || 
                            a.GetType().Name == "CrmPluginRegistrationImage")
                 .ToList();
+
+            // Look for XrmTools.Meta ImageAttribute using reflection
+            var xrmToolsImageAttributes = pluginType.GetCustomAttributes(inherit: true)
+                .Where(a => a.GetType().Name == "ImageAttribute" && 
+                           a.GetType().Namespace == "XrmTools.Meta.Attributes")
+                .ToList();
+
+            var imageAttributes = spklImageAttributes.Concat(xrmToolsImageAttributes).ToList();
 
             foreach (var attribute in stepAttributes)
             {
@@ -187,23 +227,28 @@ namespace Fake4Dataverse.Abstractions.Plugins
         }
 
         /// <summary>
-        /// Converts a single CrmPluginRegistrationAttribute instance to a PluginStepRegistration using reflection.
+        /// Converts a single CrmPluginRegistrationAttribute or StepAttribute instance to a PluginStepRegistration using reflection.
         /// Uses duck typing to read properties without requiring a package reference.
+        /// 
+        /// For SPKL, reads: MessageName, EntityLogicalName, Stage, ExecutionOrder, FilteringAttributes, ExecutionMode
+        /// For XrmTools.Meta, reads: MessageName, PrimaryEntityName, Stage, ExecutionOrder, FilteringAttributes, Mode
         /// </summary>
         private static PluginStepRegistration ConvertAttributeToRegistration(Type pluginType, object attribute)
         {
             var attributeType = attribute.GetType();
             
-            // Read properties using reflection
+            // Read properties using reflection - support both SPKL and XrmTools.Meta naming
             var messageName = GetPropertyValue<string>(attribute, "MessageName") ?? 
                              GetPropertyValue<string>(attribute, "Message");
             var entityLogicalName = GetPropertyValue<string>(attribute, "EntityLogicalName") ?? 
-                                   GetPropertyValue<string>(attribute, "EntityName");
+                                   GetPropertyValue<string>(attribute, "EntityName") ??
+                                   GetPropertyValue<string>(attribute, "PrimaryEntityName"); // XrmTools.Meta
             var stageValue = GetPropertyValue<object>(attribute, "Stage");
             var executionOrder = GetPropertyValue<int?>(attribute, "ExecutionOrder") ?? 
                                 GetPropertyValue<int?>(attribute, "Rank") ?? 1;
             var filteringAttributes = GetPropertyValue<string>(attribute, "FilteringAttributes");
-            var executionModeValue = GetPropertyValue<object>(attribute, "ExecutionMode");
+            var executionModeValue = GetPropertyValue<object>(attribute, "ExecutionMode") ?? 
+                                    GetPropertyValue<object>(attribute, "Mode"); // XrmTools.Meta
 
             // Validate required properties
             if (string.IsNullOrEmpty(messageName))
@@ -246,9 +291,12 @@ namespace Fake4Dataverse.Abstractions.Plugins
         }
 
         /// <summary>
-        /// Processes CrmPluginRegistrationImage attributes and adds them to the plugin step registration.
+        /// Processes CrmPluginRegistrationImage or ImageAttribute attributes and adds them to the plugin step registration.
         /// Links image attributes to their parent step based on message name and entity.
-        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+        /// 
+        /// References:
+        /// - SPKL: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+        /// - XrmTools.Meta: https://www.nuget.org/packages/XrmTools.Meta/
         /// </summary>
         private static void ProcessImageAttributes(
             PluginStepRegistration registration, 
@@ -264,7 +312,8 @@ namespace Fake4Dataverse.Abstractions.Plugins
             var stepMessageName = GetPropertyValue<string>(stepAttribute, "MessageName") ?? 
                                  GetPropertyValue<string>(stepAttribute, "Message");
             var stepEntityName = GetPropertyValue<string>(stepAttribute, "EntityLogicalName") ?? 
-                                GetPropertyValue<string>(stepAttribute, "EntityName");
+                                GetPropertyValue<string>(stepAttribute, "EntityName") ??
+                                GetPropertyValue<string>(stepAttribute, "PrimaryEntityName"); // XrmTools.Meta
 
             foreach (var imageAttr in imageAttributes)
             {
@@ -331,21 +380,33 @@ namespace Fake4Dataverse.Abstractions.Plugins
         }
 
         /// <summary>
-        /// Converts a CrmPluginRegistrationImage attribute to a PluginStepImageRegistration using reflection.
-        /// Reference: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+        /// Converts a CrmPluginRegistrationImage or ImageAttribute to a PluginStepImageRegistration using reflection.
+        /// 
+        /// References:
+        /// - SPKL: https://github.com/scottdurow/SparkleXrm/wiki/spkl#image-registration
+        /// - XrmTools.Meta: https://www.nuget.org/packages/XrmTools.Meta/
         /// 
         /// SPKL CrmPluginRegistrationImage properties:
         /// - ImageType: PreImage (0), PostImage (1), or Both (2)
         /// - Name: The name/key for accessing the image in plugin code
         /// - EntityAlias: The entity alias (optional, defaults to Name)
         /// - Attributes: Comma-separated list of attributes to include in the image
+        /// 
+        /// XrmTools.Meta ImageAttribute properties:
+        /// - Type: ImageTypes enum - PreImage (0), PostImage (1), or Both (2)
+        /// - MessagePropertyName: The property name in plugin context (used as Name)
+        /// - Name: Optional name for the image (if not provided, uses MessagePropertyName)
+        /// - EntityAlias: Optional entity alias (if not provided, defaults to Name)
+        /// - Attributes: Comma-separated list of attributes to include in the image
         /// </summary>
         private static PluginStepImageRegistration ConvertImageAttributeToRegistration(object imageAttribute)
         {
-            // Read image properties using reflection
-            var name = GetPropertyValue<string>(imageAttribute, "Name");
+            // Read image properties using reflection - support both SPKL and XrmTools.Meta
+            var name = GetPropertyValue<string>(imageAttribute, "Name") ?? 
+                      GetPropertyValue<string>(imageAttribute, "MessagePropertyName"); // XrmTools.Meta fallback
             var entityAlias = GetPropertyValue<string>(imageAttribute, "EntityAlias");
-            var imageTypeValue = GetPropertyValue<object>(imageAttribute, "ImageType");
+            var imageTypeValue = GetPropertyValue<object>(imageAttribute, "ImageType") ?? 
+                                GetPropertyValue<object>(imageAttribute, "Type"); // XrmTools.Meta
             var attributes = GetPropertyValue<string>(imageAttribute, "Attributes");
 
             // Name is required

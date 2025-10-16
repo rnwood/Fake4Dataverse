@@ -268,6 +268,8 @@ The following table compares the features available across different versions of
 | **Plugin Execution** | ✅ Yes | ✅ Yes (Basic) | ✅ Full support |
 | **Plugin Context Simulation** | ✅ Yes | ✅ Yes | ✅ Yes |
 | **Multiple Plugins per Message** | ❌ No | ✅ Yes | ✅ Yes |
+| **Plugin Auto-Discovery (SPKL)** | ❌ No | ✅ Yes | ✅ Yes |
+| **Plugin Auto-Discovery (XrmTools.Meta)** | ❌ No | ✅ Yes | ⚠️ Unknown |
 | **Pre/Post Images** | ⚠️ Basic | ⚠️ Basic | ✅ Full support |
 | **Pipeline Stages** | ⚠️ Basic | ✅ Full support | ✅ Full support |
 | **Workflow Activities** | ✅ Yes | ❌ Removed (SDK limitation) | ✅ Yes |
