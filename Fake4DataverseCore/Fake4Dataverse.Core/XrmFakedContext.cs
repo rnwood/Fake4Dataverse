@@ -194,6 +194,24 @@ namespace Fake4Dataverse
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/about-entity-reference
             InitializeSystemEntityMetadata();
 
+            // Initialize System Administrator role if security is enabled
+            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/database-security
+            InitializeSecurityRoles();
+
+        }
+
+        /// <summary>
+        /// Initializes the System Administrator role if security configuration requires it.
+        /// This ensures the well-known System Administrator role is always available.
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/database-security
+        /// </summary>
+        private void InitializeSecurityRoles()
+        {
+            if (SecurityConfiguration.AutoGrantSystemAdministratorPrivileges)
+            {
+                var securityManager = new Security.SecurityManager(this);
+                securityManager.InitializeSystemAdministratorRole();
+            }
         }
 
         public bool HasProperty<T>()
