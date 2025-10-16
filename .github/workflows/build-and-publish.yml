@@ -114,6 +114,11 @@ jobs:
         cache: 'npm'
         cache-dependency-path: Fake4DataverseService/Fake4Dataverse.Service/mda-app/package-lock.json
     
+    # MDA App Build and Test
+    # Note: MSBuild integration also available via `dotnet build -t:BuildSpa`
+    # or automatically during `dotnet publish`. Using direct npm commands here
+    # for explicit CI steps and better visibility.
+    
     - name: Install Node dependencies
       working-directory: Fake4DataverseService/Fake4Dataverse.Service/mda-app
       run: npm ci
