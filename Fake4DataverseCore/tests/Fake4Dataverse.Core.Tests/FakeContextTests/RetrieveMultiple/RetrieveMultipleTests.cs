@@ -30,14 +30,14 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             (_context as XrmFakedContext).MaxRetrieveCount = 1000;
             for (int i = 0; i < (_context as XrmFakedContext).MaxRetrieveCount + excessNumberOfRecords; i++)
             {
-                Entity e = new Entity("entity");
+                Entity e = new Entity("testentity");
                 e.Id = Guid.NewGuid();
                 initialEntities.Add(e);
             }
             _context.Initialize(initialEntities);
 
             List<Entity> allRecords = new List<Entity>();
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             EntityCollection result = _service.RetrieveMultiple(query);
             allRecords.AddRange(result.Entities);
             Assert.Equal((_context as XrmFakedContext).MaxRetrieveCount, result.Entities.Count);
@@ -66,18 +66,18 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
         [Fact]
         public void TestDistinct()
         {
-            Entity e1 = new Entity("entity");
+            Entity e1 = new Entity("testentity");
             e1.Id = Guid.NewGuid();
             e1["name"] = "Fake4Dataverse";
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["name"] = "Fake4Dataverse";
 
             _context.Initialize(new Entity[] { e1, e2 });
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='true' returntotalrecordcount='true'>
-                              <entity name='entity'>
+                              <entity name='testentity'>
                                     <attribute name='name' />                                    
                               </entity>
                             </fetch>";
@@ -97,13 +97,13 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             for (int i = 0; i < 10; i++)
             {
-                Entity e = new Entity("entity");
+                Entity e = new Entity("testentity");
                 e.Id = Guid.NewGuid();
                 initialEntities.Add(e);
             }
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.TopCount = 5;
             EntityCollection result = _service.RetrieveMultiple(query);
             Assert.Equal(query.TopCount, result.Entities.Count);
@@ -118,14 +118,14 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
         {
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["retrieve"] = false;
             initialEntities.Add(e);
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.Criteria.AddCondition("retrieve", ConditionOperator.Equal, true);
             EntityCollection result = _service.RetrieveMultiple(query);
             Assert.Equal(0, result.Entities.Count);
@@ -148,15 +148,15 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
                 second.Id = Guid.NewGuid();
                 second["filter"] = true;
                 initialEntities.Add(second);
-                Entity first = new Entity("entity");
+                Entity first = new Entity("testentity");
                 first.Id = Guid.NewGuid();
                 first["secondid"] = second.ToEntityReference();
                 initialEntities.Add(first);
             }
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
-            LinkEntity link = new LinkEntity("entity", "second", "secondid", "secondid", JoinOperator.Inner);
+            QueryExpression query = new QueryExpression("testentity");
+            LinkEntity link = new LinkEntity("testentity", "second", "secondid", "secondid", JoinOperator.Inner);
             link.EntityAlias = "second";
             link.LinkCriteria.AddCondition("filter", ConditionOperator.Equal, true);
             query.LinkEntities.Add(link);
@@ -186,15 +186,15 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             Entity second = new Entity("second");
             second.Id = Guid.NewGuid();
             second["filter"] = true;
-            Entity first = new Entity("entity");
+            Entity first = new Entity("testentity");
             first.Id = Guid.NewGuid();
             first["secondid"] = second.ToEntityReference();
             initialEntities.Add(first);
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
-            LinkEntity link = new LinkEntity("entity", "second", "secondid", "secondid", JoinOperator.Inner);
+            QueryExpression query = new QueryExpression("testentity");
+            LinkEntity link = new LinkEntity("testentity", "second", "secondid", "secondid", JoinOperator.Inner);
             link.EntityAlias = "second";
             link.LinkCriteria.AddCondition("filter", ConditionOperator.Equal, true);
             query.LinkEntities.Add(link);
@@ -213,13 +213,13 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
         {
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity first = new Entity("entity");
+            Entity first = new Entity("testentity");
             first.Id = Guid.NewGuid();
             initialEntities.Add(first);
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.PageInfo = new PagingInfo() { PageNumber = 2, Count = 20 };
             Assert.Equal(0, _service.RetrieveMultiple(query).Entities.Count);
         }
@@ -232,7 +232,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
         {
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity first = new Entity("entity");
+            Entity first = new Entity("testentity");
             first.Id = Guid.NewGuid();
             first["field"] = "value";
             initialEntities.Add(first);
@@ -251,11 +251,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.ColumnSet = new ColumnSet("field");
             query.Distinct = true;
 
-            LinkEntity link = new LinkEntity("entity", "related", "entityid", "entityid", JoinOperator.Inner);
+            LinkEntity link = new LinkEntity("testentity", "related", "entityid", "entityid", JoinOperator.Inner);
             link.LinkCriteria.AddCondition("include", ConditionOperator.Equal, true);
 
             query.LinkEntities.Add(link);
@@ -272,7 +272,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
         {
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity first = new Entity("entity");
+            Entity first = new Entity("testentity");
             first.Id = Guid.NewGuid();
             first["field"] = "value";
             initialEntities.Add(first);
@@ -293,11 +293,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.ColumnSet = new ColumnSet("field");
             query.Distinct = true;
 
-            LinkEntity link = new LinkEntity("entity", "related", "entityid", "entityid", JoinOperator.Inner);
+            LinkEntity link = new LinkEntity("testentity", "related", "entityid", "entityid", JoinOperator.Inner);
             link.LinkCriteria.AddCondition("include", ConditionOperator.Equal, true);
             link.Columns = new ColumnSet("linkfield");
 
@@ -314,24 +314,24 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
         {
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["retrieve"] = true;
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["retrieve"] = true;
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["retrieve"] = false;
             initialEntities.Add(e3);
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.PageInfo.ReturnTotalRecordCount = true;
             query.Criteria.AddCondition("retrieve", ConditionOperator.Equal, true);
 
@@ -351,14 +351,14 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             for (int i = 0; i < 100; i++)
             {
-                Entity e = new Entity("entity");
+                Entity e = new Entity("testentity");
                 e.Id = Guid.NewGuid();
                 initialEntities.Add(e);
             }
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.PageInfo.ReturnTotalRecordCount = true;
             query.PageInfo.PageNumber = 1;
             query.PageInfo.Count = 10;

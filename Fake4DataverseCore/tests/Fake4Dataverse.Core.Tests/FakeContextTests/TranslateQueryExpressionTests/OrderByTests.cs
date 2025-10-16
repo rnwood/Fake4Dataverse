@@ -613,7 +613,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.ColumnSet = new ColumnSet("text");
             query.AddOrder("int", OrderType.Ascending);
 
@@ -663,7 +663,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests
 
             _context.Initialize(initialEntities);
 
-            QueryExpression query = new QueryExpression("entity");
+            QueryExpression query = new QueryExpression("testentity");
             query.ColumnSet = new ColumnSet("text");
             query.AddOrder("lookup", OrderType.Ascending);
 
