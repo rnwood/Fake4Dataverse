@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <LangVersion>9.0</LangVersion>
     <PackageId>Fake4Dataverse.Core</PackageId>
     <VersionPrefix>4.0.0</VersionPrefix>
     <Authors>Rob Wood (Fake4Dataverse fork); Jordi Montaña (original FakeXrmEasy)</Authors>
@@ -41,6 +42,7 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.59" />
     <PackageReference Include="Microsoft.CrmSdk.XrmTooling.CoreAssembly" Version="9.1.1.65" />
+    <Reference Include="System.IO.Compression" />
   </ItemGroup>
 
   <ItemGroup>

@@ -526,8 +526,9 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             // Use sourceName (Dataverse logical name) if available, otherwise use name (CDM name converted to lowercase)
             // In CDM, sourceName typically contains the actual Dataverse entity logical name
+            // Always convert to lowercase to match Dataverse behavior where logical names are lowercase
             string logicalName = !string.IsNullOrWhiteSpace(definition.SourceName) 
-                ? definition.SourceName 
+                ? definition.SourceName.ToLowerInvariant() 
                 : (entityName?.ToLowerInvariant() ?? "unknown");
             
             entityMetadata.LogicalName = logicalName;
