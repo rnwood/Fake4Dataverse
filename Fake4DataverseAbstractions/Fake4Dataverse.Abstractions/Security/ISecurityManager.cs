@@ -57,5 +57,10 @@ namespace Fake4Dataverse.Abstractions.Security
         /// Gets the privilege manager for managing privileges and role assignments.
         /// </summary>
         IPrivilegeManager PrivilegeManager { get; }
+
+        /// <summary>
+        /// Gets the role lifecycle manager for managing role shadow copies and business unit lifecycle.
+        /// </summary>
+        IRoleLifecycleManager RoleLifecycleManager { get; }
     }
 }

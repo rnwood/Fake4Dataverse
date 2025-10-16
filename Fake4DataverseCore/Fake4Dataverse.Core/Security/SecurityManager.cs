@@ -21,17 +21,24 @@ namespace Fake4Dataverse.Security
         private Guid? _systemAdministratorRoleId;
         
         private PrivilegeManager _privilegeManager;
+        private RoleLifecycleManager _roleLifecycleManager;
 
         public SecurityManager(IXrmFakedContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _privilegeManager = new PrivilegeManager(context);
+            _roleLifecycleManager = new RoleLifecycleManager(context);
         }
 
         /// <summary>
         /// Gets the privilege manager for managing privileges and role assignments.
         /// </summary>
         public IPrivilegeManager PrivilegeManager => _privilegeManager;
+
+        /// <summary>
+        /// Gets the role lifecycle manager for managing role shadow copies and business unit lifecycle.
+        /// </summary>
+        public IRoleLifecycleManager RoleLifecycleManager => _roleLifecycleManager;
 
         /// <summary>
         /// Gets the root organization ID. Creates the organization if it doesn't exist.
