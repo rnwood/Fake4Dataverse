@@ -140,7 +140,22 @@ namespace Fake4Dataverse.Service.Controllers
                     return NotFound(errorResponse);
                 }
 
-                return Ok(entityMetadata);
+                // Wrap in OData response with context
+                var odataResponse = new Dictionary<string, object>
+                {
+                    ["@odata.context"] = $"$metadata#EntityDefinitions/$entity",
+                    ["LogicalName"] = entityMetadata.LogicalName,
+                    ["MetadataId"] = entityMetadata.MetadataId,
+                    ["SchemaName"] = entityMetadata.SchemaName,
+                    ["DisplayName"] = entityMetadata.DisplayName?.UserLocalizedLabel?.Label,
+                    ["PrimaryIdAttribute"] = entityMetadata.PrimaryIdAttribute,
+                    ["PrimaryNameAttribute"] = entityMetadata.PrimaryNameAttribute,
+                    ["EntitySetName"] = entityMetadata.EntitySetName,
+                    ["IsActivity"] = entityMetadata.IsActivity,
+                    ["IsCustomEntity"] = entityMetadata.IsCustomEntity
+                };
+
+                return Ok(odataResponse);
             }
             catch (Exception ex)
             {

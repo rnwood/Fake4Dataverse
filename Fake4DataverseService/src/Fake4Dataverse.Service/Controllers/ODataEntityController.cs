@@ -412,4 +412,93 @@ namespace Fake4Dataverse.Service.Controllers
             return pluralName;
         }
     }
+
+    /// <summary>
+    /// Helper class to convert SDK entities to OData format
+    /// </summary>
+    public static class ODataEntityConverter
+    {
+        /// <summary>
+        /// Converts an SDK Entity to OData JSON format
+        /// </summary>
+        public static Dictionary<string, object> ToODataEntity(Entity entity, bool includeODataMetadata = true)
+        {
+            var result = new Dictionary<string, object>();
+
+            if (includeODataMetadata)
+            {
+                result["@odata.context"] = $"$metadata#" + entity.LogicalName;
+                result["@odata.type"] = $"#{entity.LogicalName}";
+                result["@odata.id"] = $"{entity.LogicalName}({entity.Id})";
+            }
+
+            // Add the entity ID
+            result[entity.LogicalName + "id"] = entity.Id;
+
+            // Add all attributes
+            foreach (var attr in entity.Attributes)
+            {
+                if (attr.Key == entity.LogicalName + "id")
+                    continue; // Already added
+
+                var value = attr.Value;
+                
+                // Convert SDK types to JSON-friendly types
+                if (value is EntityReference entityRef)
+                {
+                    result[attr.Key] = new Dictionary<string, object>
+                    {
+                        ["@odata.type"] = "#Microsoft.Dynamics.CRM." + entityRef.LogicalName,
+                        ["id"] = entityRef.Id,
+                        ["name"] = entityRef.Name
+                    };
+                }
+                else if (value is OptionSetValue optionSet)
+                {
+                    result[attr.Key] = optionSet.Value;
+                }
+                else if (value is Money money)
+                {
+                    result[attr.Key] = money.Value;
+                }
+                else if (value is AliasedValue aliased)
+                {
+                    result[attr.Key] = aliased.Value;
+                }
+                else
+                {
+                    result[attr.Key] = value;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Creates an OData error response
+        /// </summary>
+        public static Dictionary<string, object> CreateErrorResponse(string code, string message, Exception exception = null)
+        {
+            var error = new Dictionary<string, object>
+            {
+                ["code"] = code,
+                ["message"] = message
+            };
+
+            if (exception != null)
+            {
+                error["innererror"] = new Dictionary<string, object>
+                {
+                    ["message"] = exception.Message,
+                    ["type"] = exception.GetType().FullName,
+                    ["stacktrace"] = exception.StackTrace
+                };
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["error"] = error
+            };
+        }
+    }
 }
