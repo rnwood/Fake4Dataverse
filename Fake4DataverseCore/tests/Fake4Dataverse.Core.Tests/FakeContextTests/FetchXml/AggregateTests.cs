@@ -403,7 +403,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             FetchExpression query = new FetchExpression($@"
                 <fetch aggregate='true' >
-                  <entity name='entity' >
+                  <entity name='testentity' >
                     <attribute name='value' alias='minvalue' aggregate='min' />
                   </entity>
                 </fetch>
@@ -440,7 +440,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             FetchExpression query = new FetchExpression($@"
                 <fetch aggregate='true' >
-                  <entity name='entity' >
+                  <entity name='testentity' >
                     <attribute name='value' alias='minvalue' aggregate='min' />
                   </entity>
                 </fetch>
@@ -477,7 +477,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             FetchExpression query = new FetchExpression($@"
                 <fetch aggregate='true' >
-                  <entity name='entity' >
+                  <entity name='testentity' >
                     <attribute name='value' alias='maxvalue' aggregate='max' />
                   </entity>
                 </fetch>
@@ -514,7 +514,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             FetchExpression query = new FetchExpression($@"
                 <fetch aggregate='true' >
-                  <entity name='entity' >
+                  <entity name='testentity' >
                     <attribute name='value' alias='maxvalue' aggregate='max' />
                   </entity>
                 </fetch>
@@ -588,7 +588,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             FetchExpression query = new FetchExpression($@"
                 <fetch aggregate='true' >
-                  <entity name='entity' >
+                  <entity name='testentity' >
                     <attribute name='value' alias='maxvalue' aggregate='max' />
                   </entity>
                 </fetch>
@@ -625,7 +625,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             FetchExpression query = new FetchExpression($@"
                 <fetch aggregate='true' >
-                  <entity name='entity' >
+                  <entity name='testentity' >
                     <attribute name='value' alias='avgvalue' aggregate='avg' />
                   </entity>
                 </fetch>

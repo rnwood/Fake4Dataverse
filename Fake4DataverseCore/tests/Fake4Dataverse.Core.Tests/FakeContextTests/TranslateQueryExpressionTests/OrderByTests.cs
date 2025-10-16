@@ -599,13 +599,13 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests
             IOrganizationService _service = _context.GetOrganizationService();
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity secondEntity = new Entity("entity");
+            Entity secondEntity = new Entity("testentity");
             secondEntity.Id = Guid.NewGuid();
             secondEntity["int"] = 2;
             secondEntity["text"] = "second";
             initialEntities.Add(secondEntity);
 
-            Entity firstEntity = new Entity("entity");
+            Entity firstEntity = new Entity("testentity");
             firstEntity.Id = Guid.NewGuid();
             firstEntity["int"] = 1;
             firstEntity["text"] = "first";
@@ -641,22 +641,22 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests
             var er2 = new EntityReference("account", Guid.NewGuid());
             er2.Name = "second";
 
-            Entity secondEntity = new Entity("entity");
+            Entity secondEntity = new Entity("testentity");
             secondEntity.Id = Guid.NewGuid();
             secondEntity["lookup"] = er2;
             initialEntities.Add(secondEntity);
 
-            Entity firstEntity = new Entity("entity");
+            Entity firstEntity = new Entity("testentity");
             firstEntity.Id = Guid.NewGuid();
             firstEntity["lookup"] = er1;
             initialEntities.Add(firstEntity);
 
-            Entity nullEntity = new Entity("entity");
+            Entity nullEntity = new Entity("testentity");
             nullEntity.Id = Guid.NewGuid();
             nullEntity["lookup"] = erNull;
             initialEntities.Add(nullEntity);
 
-            Entity anotherNullEntity = new Entity("entity");
+            Entity anotherNullEntity = new Entity("testentity");
             anotherNullEntity.Id = Guid.NewGuid();
             anotherNullEntity["lookup"] = erAnotherNull;
             initialEntities.Add(anotherNullEntity);
