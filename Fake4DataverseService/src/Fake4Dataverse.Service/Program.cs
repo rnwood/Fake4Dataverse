@@ -566,40 +566,55 @@ public class Program
         await app.StopAsync();
     }
 
+    /// <summary>
+    /// Builds the EDM model for OData metadata endpoints.
+    /// Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/edm-model-builder
+    /// 
+    /// The EDM (Entity Data Model) defines the structure of metadata exposed through OData.
+    /// This includes entity metadata types like EntityDefinitions, AttributeDefinitions, etc.
+    /// 
+    /// Note: This model is for METADATA queries only (EntityDefinitions, AttributeDefinitions, etc.).
+    /// Data entity queries (accounts, contacts, etc.) are handled separately by ODataEntityController
+    /// which doesn't use this EDM model.
+    /// 
+    /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/web-api-service-documents
+    /// The $metadata endpoint returns this model as EDMX/CSDL.
+    /// </summary>
     private static IEdmModel GetMetadataEdmModel()
     {
         var builder = new ODataConventionModelBuilder();
         
         // EntityDefinitions - Entity metadata
-        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityMetadata>("EntityDefinitions");
-        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.EntityMetadata>()
-            .HasKey(e => e.MetadataId)
-            .HasMany(em => em.Attributes);
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-metadata-web-api
+        // EntityDefinitions corresponds to EntityMetadata in the SDK and supports full OData querying
+        // via [EnableQuery] on MetadataController methods
+        var entityDefSet = builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityMetadata>("EntityDefinitions");
+        entityDefSet.EntityType.HasKey(e => e.MetadataId);
+        
+        // Configure navigation to Attributes collection
+        // This enables $expand=Attributes on EntityDefinitions queries
+        // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/navigation-property
+        entityDefSet.EntityType.HasMany(em => em.Attributes);
         
         // AttributeDefinitions - Attribute metadata
-        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.AttributeMetadata>("AttributeDefinitions");
-        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.AttributeMetadata>()
-            .HasKey(a => a.MetadataId);
+        var attrDefSet = builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.AttributeMetadata>("AttributeDefinitions");
+        attrDefSet.EntityType.HasKey(a => a.MetadataId);
         
         // RelationshipDefinitions - Relationship metadata
-        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase>("RelationshipDefinitions");
-        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase>()
-            .HasKey(r => r.MetadataId);
+        var relDefSet = builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.RelationshipMetadataBase>("RelationshipDefinitions");
+        relDefSet.EntityType.HasKey(r => r.MetadataId);
         
         // OptionSetDefinitions - Local option sets
-        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>("OptionSetDefinitions");
-        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>()
-            .HasKey(o => o.MetadataId);
+        var optSetDefSet = builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>("OptionSetDefinitions");
+        optSetDefSet.EntityType.HasKey(o => o.MetadataId);
         
         // GlobalOptionSetDefinitions - Global option sets
+        // Note: This reuses the same OptionSetMetadata type, so the key configuration is inherited
         builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>("GlobalOptionSetDefinitions");
-        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.OptionSetMetadata>()
-            .HasKey(o => o.MetadataId);
         
         // EntityKeyDefinitions - Alternate keys
-        builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityKeyMetadata>("EntityKeyDefinitions");
-        builder.EntityType<Microsoft.Xrm.Sdk.Metadata.EntityKeyMetadata>()
-            .HasKey(k => k.MetadataId);
+        var entityKeyDefSet = builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityKeyMetadata>("EntityKeyDefinitions");
+        entityKeyDefSet.EntityType.HasKey(k => k.MetadataId);
         
         return builder.GetEdmModel();
     }
