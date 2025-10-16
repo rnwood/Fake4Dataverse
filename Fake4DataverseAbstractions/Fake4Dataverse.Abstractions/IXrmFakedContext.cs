@@ -1,5 +1,6 @@
 using Fake4Dataverse.Abstractions.CloudFlows;
 using Fake4Dataverse.Abstractions.Plugins;
+using Fake4Dataverse.Abstractions.Security;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
@@ -16,6 +17,13 @@ namespace Fake4Dataverse.Abstractions
         /// Returns the caller properties, that is, the default user and business unit used to impersonate service calls
         /// </summary>
         ICallerProperties CallerProperties { get; set; }
+
+        /// <summary>
+        /// Gets the security configuration for this context.
+        /// Security is disabled by default for backward compatibility.
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security
+        /// </summary>
+        ISecurityConfiguration SecurityConfiguration { get; }
 
         /// <summary>
         /// Returns an instance of a tracing service

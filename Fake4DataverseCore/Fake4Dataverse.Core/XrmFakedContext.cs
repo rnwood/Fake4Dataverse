@@ -2,11 +2,15 @@ using FakeItEasy;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.CloudFlows;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
+using Fake4Dataverse.Abstractions.Integrity;
 using Fake4Dataverse.Abstractions.Metadata;
 using Fake4Dataverse.Abstractions.Permissions;
 using Fake4Dataverse.Abstractions.Plugins;
+using Fake4Dataverse.Abstractions.Security;
+using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Permissions;
+using Fake4Dataverse.Security;
 using Fake4Dataverse.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
@@ -125,6 +129,13 @@ namespace Fake4Dataverse
 
         public ICallerProperties CallerProperties { get; set; }
 
+        /// <summary>
+        /// Gets the security configuration for this context.
+        /// Security is disabled by default for backward compatibility.
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security
+        /// </summary>
+        public ISecurityConfiguration SecurityConfiguration { get; private set; }
+
         private readonly Dictionary<string, object> _properties;
         private readonly IXrmFakedTracingService _fakeTracingService;
 
@@ -135,6 +146,7 @@ namespace Fake4Dataverse
             _properties = new Dictionary<string, object>();
 
             CallerProperties = new CallerProperties();
+            SecurityConfiguration = new SecurityConfiguration();
             
             MaxRetrieveCount = 5000;
 
@@ -151,6 +163,7 @@ namespace Fake4Dataverse
             SetProperty<IAccessRightsRepository>(new AccessRightsRepository());
             SetProperty<IOptionSetMetadataRepository>(new OptionSetMetadataRepository());
             SetProperty<IStatusAttributeMetadataRepository>(new StatusAttributeMetadataRepository());
+            SetProperty<IIntegrityOptions>(new IntegrityOptions());
             
             // Initialize audit repository
             InitializeAuditRepository();
