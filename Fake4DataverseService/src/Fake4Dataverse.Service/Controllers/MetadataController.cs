@@ -121,7 +121,7 @@ namespace Fake4Dataverse.Service.Controllers
         /// The Web API supports alternate key syntax to retrieve entities by natural keys.
         /// For EntityMetadata, LogicalName is a commonly used alternate key.
         /// </summary>
-        [HttpGet("EntityDefinitions(LogicalName='{logicalName}')")]
+        [HttpGet("EntityDefinitions(LogicalName='{logicalName}')", Order = -1)]
         [EnableQuery]
         [Produces("application/json")]
         public IActionResult GetEntityDefinitionByLogicalName(string logicalName)
@@ -140,7 +140,22 @@ namespace Fake4Dataverse.Service.Controllers
                     return NotFound(errorResponse);
                 }
 
-                return Ok(entityMetadata);
+                // Wrap in OData response with context
+                var odataResponse = new Dictionary<string, object>
+                {
+                    ["@odata.context"] = $"$metadata#EntityDefinitions/$entity",
+                    ["LogicalName"] = entityMetadata.LogicalName,
+                    ["MetadataId"] = entityMetadata.MetadataId,
+                    ["SchemaName"] = entityMetadata.SchemaName,
+                    ["DisplayName"] = entityMetadata.DisplayName?.UserLocalizedLabel?.Label,
+                    ["PrimaryIdAttribute"] = entityMetadata.PrimaryIdAttribute,
+                    ["PrimaryNameAttribute"] = entityMetadata.PrimaryNameAttribute,
+                    ["EntitySetName"] = entityMetadata.EntitySetName,
+                    ["IsActivity"] = entityMetadata.IsActivity,
+                    ["IsCustomEntity"] = entityMetadata.IsCustomEntity
+                };
+
+                return Ok(odataResponse);
             }
             catch (Exception ex)
             {

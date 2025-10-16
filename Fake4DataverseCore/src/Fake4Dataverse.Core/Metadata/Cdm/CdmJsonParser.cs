@@ -561,6 +561,11 @@ namespace Fake4Dataverse.Metadata.Cdm
                 }
             }
             
+            // Add system owner attributes that are common to all user-owned entities
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-ownership
+            // These attributes are not typically in CDM files but exist on all user-owned entities
+            AddSystemOwnerAttributes(attributes, logicalName);
+            
             // Set attributes
             if (attributes.Any())
             {
@@ -683,10 +688,11 @@ namespace Fake4Dataverse.Metadata.Cdm
             
             // Determine data type
             string dataType = GetDataTypeString(cdmAttribute.DataType);
+            string purpose = GetPurposeString(cdmAttribute.Purpose);
             
             // Create appropriate AttributeMetadata based on data type
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributetypecode
-            AttributeMetadata attributeMetadata = CreateAttributeMetadataForType(dataType, cdmAttribute);
+            AttributeMetadata attributeMetadata = CreateAttributeMetadataForType(dataType, purpose, cdmAttribute);
             
             // Set common properties
             attributeMetadata.SetFieldValue("_logicalName", logicalName);
@@ -706,7 +712,7 @@ namespace Fake4Dataverse.Metadata.Cdm
         /// <summary>
         /// Creates the appropriate AttributeMetadata type based on the data type string.
         /// </summary>
-        private static AttributeMetadata CreateAttributeMetadataForType(string dataType, CdmAttributeDefinition cdmAttribute)
+        private static AttributeMetadata CreateAttributeMetadataForType(string dataType, string purpose, CdmAttributeDefinition cdmAttribute)
         {
             string normalizedType = dataType.ToLowerInvariant();
             
@@ -761,9 +767,25 @@ namespace Fake4Dataverse.Metadata.Cdm
             {
                 return new MoneyAttributeMetadata();
             }
-            else if (normalizedType == "picklist" || normalizedType == "optionset")
+            else if (normalizedType == "picklist" || normalizedType == "optionset" || normalizedType == "listlookup")
             {
+                // Check if this is a State or Status attribute based on purpose
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata#state-and-status-attributes
+                if (purpose != null)
+                {
+                    string normalizedPurpose = purpose.ToLowerInvariant();
+                    if (normalizedPurpose.Contains("representsstatewith") || normalizedPurpose == "representsstatewith")
+                    {
+                        return new StateAttributeMetadata();
+                    }
+                }
                 return new PicklistAttributeMetadata();
+            }
+            else if (normalizedType == "listlookupcorrelated")
+            {
+                // ListLookupCorrelated is used for Status attributes that correlate with State
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata#state-and-status-attributes
+                return new StatusAttributeMetadata();
             }
             else if (normalizedType == "lookup" || normalizedType == "entityreference" || normalizedType == "entityid")
             {
@@ -989,6 +1011,60 @@ namespace Fake4Dataverse.Metadata.Cdm
             }
             
             return allMetadata;
+        }
+        
+        /// <summary>
+        /// Adds system owner attributes that are common to all user-owned entities in Dataverse.
+        /// These attributes are typically not included in CDM schema files but exist on all user-owned entities.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-ownership
+        /// </summary>
+        private static void AddSystemOwnerAttributes(List<AttributeMetadata> attributes, string entityLogicalName)
+        {
+            // Check if owner attributes already exist (they might be in the CDM)
+            bool hasOwnerId = attributes.Any(a => a.LogicalName == "ownerid");
+            bool hasOwningUser = attributes.Any(a => a.LogicalName == "owninguser");
+            bool hasOwningTeam = attributes.Any(a => a.LogicalName == "owningteam");
+            bool hasOwningBusinessUnit = attributes.Any(a => a.LogicalName == "owningbusinessunit");
+            
+            // Add ownerid if not present
+            if (!hasOwnerId)
+            {
+                var ownerid = new LookupAttributeMetadata();
+                ownerid.SetFieldValue("_logicalName", "ownerid");
+                ownerid.SetFieldValue("_entityLogicalName", entityLogicalName);
+                ownerid.MetadataId = Guid.NewGuid();
+                attributes.Add(ownerid);
+            }
+            
+            // Add owninguser if not present
+            if (!hasOwningUser)
+            {
+                var owninguser = new LookupAttributeMetadata();
+                owninguser.SetFieldValue("_logicalName", "owninguser");
+                owninguser.SetFieldValue("_entityLogicalName", entityLogicalName);
+                owninguser.MetadataId = Guid.NewGuid();
+                attributes.Add(owninguser);
+            }
+            
+            // Add owningteam if not present
+            if (!hasOwningTeam)
+            {
+                var owningteam = new LookupAttributeMetadata();
+                owningteam.SetFieldValue("_logicalName", "owningteam");
+                owningteam.SetFieldValue("_entityLogicalName", entityLogicalName);
+                owningteam.MetadataId = Guid.NewGuid();
+                attributes.Add(owningteam);
+            }
+            
+            // Add owningbusinessunit if not present
+            if (!hasOwningBusinessUnit)
+            {
+                var owningbusinessunit = new LookupAttributeMetadata();
+                owningbusinessunit.SetFieldValue("_logicalName", "owningbusinessunit");
+                owningbusinessunit.SetFieldValue("_entityLogicalName", entityLogicalName);
+                owningbusinessunit.MetadataId = Guid.NewGuid();
+                attributes.Add(owningbusinessunit);
+            }
         }
     }
 }

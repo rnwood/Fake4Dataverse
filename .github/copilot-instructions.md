@@ -189,9 +189,12 @@ This creates a `local-packages` folder with the built NuGet packages.
 - Provide unit tests for bug fixes and new features
 - **Always include documentation references in test comments** - Reference the official Microsoft documentation URL that describes the behavior being tested
 - For Dataverse/CRM behaviors, include comments like `// Reference: https://learn.microsoft.com/en-us/dotnet/api/...` to document the source of expected behavior
-- **ALWAYS use validation** - Starting in v4.0.0+, validation is enabled by default. Do NOT disable validation (`ValidateEntityReferences` or `ValidateAttributeTypes`) as a workaround for missing metadata
+- **VALIDATION MUST BE ENABLED** - **CRITICAL**: ALL tests MUST have validation enabled (`ValidateEntityReferences` and `ValidateAttributeTypes`) except for the very few tests that explicitly test no-validation mode. Do NOT disable validation as a workaround for missing metadata or conflicting entity names. Instead:
+  - Use entity names that don't conflict with system entities (avoid "entity", use "testentity" or specific names like "account", "contact")
+  - Load required metadata using `InitializeMetadataFromCdmFiles()`, `InitializeMetadataFromStandardCdmSchemasAsync()`, or similar methods
+  - Ensure all attributes used in tests exist in the loaded metadata or use entities with pre-loaded metadata
 - **Load required metadata** - If tests need metadata, explicitly load it using `InitializeMetadataFromCdmFiles()`, `InitializeMetadataFromStandardCdmSchemasAsync()`, or similar methods
-- **System entities are available** - System entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent) is available in `/cdm-schema-files/` and should be used when needed
+- **System entities are available** - System entity metadata (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent, EntityDefinition, Attribute) is automatically loaded in the base context. Avoid using "entity" as a test entity name as it conflicts with EntityDefinition metadata.
 
 ### Exception Handling
 - Use `PullRequestException` for features not yet implemented to encourage community contributions

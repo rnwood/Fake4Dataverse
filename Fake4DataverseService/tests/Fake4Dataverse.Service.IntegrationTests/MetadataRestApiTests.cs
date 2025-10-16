@@ -149,6 +149,13 @@ public class MetadataRestApiTests : IDisposable
             return;
         }
         
+        // If not OK, log the error response for debugging
+        if (response.StatusCode != System.Net.HttpStatusCode.OK)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Assert.Fail($"Expected OK but got {response.StatusCode}. Response: {errorContent}");
+        }
+        
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         
         var content = await response.Content.ReadAsStringAsync();

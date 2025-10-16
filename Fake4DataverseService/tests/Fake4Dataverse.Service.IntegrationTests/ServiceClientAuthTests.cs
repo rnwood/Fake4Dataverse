@@ -32,7 +32,7 @@ public class ServiceClientAuthTests : IAsyncLifetime
             StartInfo = new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = $"run --no-build -- start --port 0 --host localhost --access-token {AccessToken} --no-cdm",
+                Arguments = $"run --no-build -- start --port 0 --host localhost --access-token {AccessToken}",
                 WorkingDirectory = serviceProjectPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

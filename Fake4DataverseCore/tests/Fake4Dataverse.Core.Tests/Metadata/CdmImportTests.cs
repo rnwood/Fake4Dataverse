@@ -66,7 +66,8 @@ namespace Fake4Dataverse.Core.Tests.Metadata
             Assert.Equal("account", entityMetadata.LogicalName);
             Assert.Equal("accountid", entityMetadata.PrimaryIdAttribute);
             Assert.NotNull(entityMetadata.Attributes);
-            Assert.Equal(2, entityMetadata.Attributes.Length);
+            // CDM parser adds 4 system owner attributes (ownerid, owninguser, owningteam, owningbusinessunit) to all entities
+            Assert.Equal(6, entityMetadata.Attributes.Length);
             
             var accountIdAttr = entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == "accountid");
             Assert.NotNull(accountIdAttr);
@@ -234,7 +235,8 @@ namespace Fake4Dataverse.Core.Tests.Metadata
 
             // Assert
             var entityMetadata = entityMetadataList.First();
-            Assert.Equal(8, entityMetadata.Attributes.Length);
+            // CDM parser adds 4 system owner attributes (ownerid, owninguser, owningteam, owningbusinessunit) to all entities
+            Assert.Equal(12, entityMetadata.Attributes.Length);
             
             Assert.IsType<StringAttributeMetadata>(entityMetadata.Attributes.First(a => a.LogicalName == "textfield"));
             Assert.IsType<IntegerAttributeMetadata>(entityMetadata.Attributes.First(a => a.LogicalName == "numberfield"));

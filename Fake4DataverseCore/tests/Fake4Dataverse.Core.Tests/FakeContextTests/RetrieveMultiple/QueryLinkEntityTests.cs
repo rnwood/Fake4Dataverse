@@ -513,11 +513,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             
             
-            var entity = new Entity("entity") { Id = Guid.NewGuid(), ["name"] = "test" };
+            var entity = new Entity("testentity") { Id = Guid.NewGuid(), ["name"] = "test" };
             _context.Initialize(entity);
-            var query = new QueryExpression("entity");
+            var query = new QueryExpression("testentity");
             query.ColumnSet = new ColumnSet(true);
-            query.AddLink("entity", "name", "name");
+            query.AddLink("testentity", "name", "name");
 
             var queryResult = _service.RetrieveMultiple(query);
 
