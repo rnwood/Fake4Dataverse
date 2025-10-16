@@ -19,6 +19,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>fake4dataverse</ToolCommandName>
+    <!-- MDA app configuration -->
+    <SpaRoot>mda-app</SpaRoot>
   </PropertyGroup>
 
   <ItemGroup>
@@ -62,5 +64,46 @@
       <Link>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
+
+  <!-- Ensure npm dependencies are installed before build (Debug only) -->
+  <Target Name="EnsureNodeModules" BeforeTargets="Build" Condition="'$(Configuration)' == 'Debug' and '$(SkipSpaInstall)' != 'true'">
+    <PropertyGroup>
+      <NodeModulesPath>$(SpaRoot)\node_modules</NodeModulesPath>
+    </PropertyGroup>
+    <Message Importance="high" Text="Checking MDA app npm dependencies..." />
+    <!-- Only run npm ci if node_modules doesn't exist -->
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm ci" Condition="!Exists('$(NodeModulesPath)')" />
+  </Target>
+
+  <!-- Build and bundle MDA app during publish -->
+  <Target Name="PublishSpa" AfterTargets="ComputeFilesToPublish">
+    <Message Importance="high" Text="=== Building MDA app for production ===" />
+    <Message Importance="high" Text="Installing npm dependencies..." />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm ci" />
+    <Message Importance="high" Text="Building Next.js app..." />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" EnvironmentVariables="NODE_ENV=production" />
+    <Message Importance="high" Text="MDA app built successfully. Output: $(MSBuildProjectDirectory)\wwwroot\mda\" />
+    
+    <!-- Include the built SPA files in the publish output -->
+    <ItemGroup>
+      <ResolvedFileToPublish Include="wwwroot\mda\**\*" RelativePath="wwwroot\mda\%(RecursiveDir)%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Target to run MDA app in dev mode (for documentation) -->
+  <Target Name="RunSpaDev">
+    <Message Importance="high" Text="Starting MDA app in development mode on http://localhost:3000" />
+    <Message Importance="high" Text="The app will proxy API requests to http://localhost:5000" />
+    <Message Importance="high" Text="Press Ctrl+C to stop" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run dev" />
+  </Target>
+
+  <!-- Target to build MDA app only -->
+  <Target Name="BuildSpa">
+    <Message Importance="high" Text="=== Building MDA app ===" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm ci" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" EnvironmentVariables="NODE_ENV=production" />
+    <Message Importance="high" Text="Build complete!" />
+  </Target>
 
 </Project>

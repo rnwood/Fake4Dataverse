@@ -2,7 +2,12 @@
   "profiles": {
     "Fake4Dataverse.Service": {
       "commandName": "Project",
-      "commandLineArgs": "start"
+      "commandLineArgs": "start",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5000"
     }
   }
 }
