@@ -253,6 +253,130 @@ namespace Fake4Dataverse.Tests.Pipeline
             Assert.NotNull(pluginWithImages);
             Assert.NotEmpty(pluginWithImages.PreImages);
         }
+
+        [Fact]
+        public void Should_DiscoverPlugins_WithXrmToolsMetaAttributes()
+        {
+            // Arrange
+            // Reference: https://www.nuget.org/packages/XrmTools.Meta/
+            // XrmTools.Meta StepAttribute defines plugin step registration
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should find plugins with XrmTools.Meta StepAttribute
+            Assert.NotEmpty(registrations);
+            var testPluginRegistrations = registrations
+                .Where(r => r.PluginType == typeof(TestPluginWithXrmToolsStepAttribute))
+                .ToList();
+            Assert.NotEmpty(testPluginRegistrations);
+            
+            var registration = testPluginRegistrations.First();
+            Assert.Equal("Create", registration.MessageName);
+            Assert.Equal("account", registration.PrimaryEntityName);
+            Assert.Equal(ProcessingStepStage.Preoperation, registration.Stage);
+            Assert.Equal(ProcessingStepMode.Synchronous, registration.Mode);
+        }
+
+        [Fact]
+        public void Should_DiscoverPreImage_FromXrmToolsMetaAttribute()
+        {
+            // Arrange
+            // Reference: https://www.nuget.org/packages/XrmTools.Meta/
+            // XrmTools.Meta ImageAttribute defines pre/post images for plugin steps
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should find plugin with pre-image
+            var pluginWithPreImage = registrations
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithXrmToolsPreImage));
+            
+            Assert.NotNull(pluginWithPreImage);
+            Assert.NotEmpty(pluginWithPreImage.PreImages);
+            
+            var preImage = pluginWithPreImage.PreImages.First();
+            Assert.Equal("PreImage", preImage.Name);
+            Assert.Equal(ProcessingStepImageType.PreImage, preImage.ImageType);
+            Assert.Contains("firstname", preImage.Attributes);
+            Assert.Contains("lastname", preImage.Attributes);
+            Assert.Contains("emailaddress", preImage.Attributes);
+            Assert.Equal(3, preImage.Attributes.Count);
+        }
+
+        [Fact]
+        public void Should_DiscoverPostImage_FromXrmToolsMetaAttribute()
+        {
+            // Arrange
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should find plugin with post-image
+            var pluginWithPostImage = registrations
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithXrmToolsPostImage));
+            
+            Assert.NotNull(pluginWithPostImage);
+            Assert.NotEmpty(pluginWithPostImage.PostImages);
+            
+            var postImage = pluginWithPostImage.PostImages.First();
+            Assert.Equal("PostImage", postImage.Name);
+            Assert.Equal(ProcessingStepImageType.PostImage, postImage.ImageType);
+            Assert.Empty(postImage.Attributes); // Empty attributes = all attributes
+        }
+
+        [Fact]
+        public void Should_DiscoverMultipleImages_FromXrmToolsMetaAttributes()
+        {
+            // Arrange
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should find plugin with both pre and post images
+            var pluginWithMultipleImages = registrations
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithXrmToolsMultipleImages));
+            
+            Assert.NotNull(pluginWithMultipleImages);
+            Assert.NotEmpty(pluginWithMultipleImages.PreImages);
+            Assert.NotEmpty(pluginWithMultipleImages.PostImages);
+            
+            var preImage = pluginWithMultipleImages.PreImages.First();
+            Assert.Equal("PreImage", preImage.Name);
+            Assert.Contains("subject", preImage.Attributes);
+            Assert.Contains("description", preImage.Attributes);
+            Assert.Contains("statuscode", preImage.Attributes);
+            
+            var postImage = pluginWithMultipleImages.PostImages.First();
+            Assert.Equal("PostImage", postImage.Name);
+            Assert.Contains("subject", postImage.Attributes);
+            Assert.Contains("description", postImage.Attributes);
+            Assert.Contains("statuscode", postImage.Attributes);
+        }
+
+        [Fact]
+        public void Should_DiscoverFilteringAttributes_FromXrmToolsMetaAttribute()
+        {
+            // Arrange
+            var assemblies = new[] { Assembly.GetExecutingAssembly() };
+
+            // Act
+            var registrations = PluginDiscoveryService.DiscoverPlugins(assemblies).ToList();
+
+            // Assert - Should parse filtering attributes from XrmTools.Meta StepAttribute
+            var pluginWithFiltering = registrations
+                .FirstOrDefault(r => r.PluginType == typeof(TestPluginWithXrmToolsPreImage));
+            
+            Assert.NotNull(pluginWithFiltering);
+            Assert.NotNull(pluginWithFiltering.FilteringAttributes);
+            Assert.Contains("firstname", pluginWithFiltering.FilteringAttributes);
+            Assert.Contains("lastname", pluginWithFiltering.FilteringAttributes);
+            Assert.Equal(2, pluginWithFiltering.FilteringAttributes.Count);
+        }
     }
 
     #region Test Plugins
@@ -413,6 +537,167 @@ namespace Fake4Dataverse.Tests.Pipeline
             Name = name;
             Attributes = attributes;
             EntityAlias = name; // Default to name
+        }
+    }
+
+    #endregion
+}
+
+// Simulated XrmTools.Meta enums for testing
+namespace Fake4Dataverse.Tests.Pipeline
+{
+    /// <summary>
+    /// XrmTools.Meta Stages enum (matches XrmTools.Meta.Model.Stages)
+    /// </summary>
+    public enum XrmToolsStages
+    {
+        PreValidation = 10,
+        PreOperation = 20,
+        MainOperation = 30,
+        PostOperation = 40,
+        DepecratedPostOperation = 50
+    }
+
+    /// <summary>
+    /// XrmTools.Meta ExecutionMode enum (matches XrmTools.Meta.Model.ExecutionMode)
+    /// </summary>
+    public enum XrmToolsExecutionMode
+    {
+        Synchronous = 0,
+        Asynchronous = 1
+    }
+
+    /// <summary>
+    /// XrmTools.Meta ImageTypes enum (matches XrmTools.Meta.Model.ImageTypes)
+    /// </summary>
+    public enum XrmToolsImageTypes
+    {
+        PreImage = 0,
+        PostImage = 1,
+        Both = 2
+    }
+}
+
+// Simulated XrmTools.Meta.Attributes namespace for testing
+namespace XrmTools.Meta.Attributes
+{
+    using System;
+    using Fake4Dataverse.Tests.Pipeline;
+
+    /// <summary>
+    /// Simulates XrmTools.Meta StepAttribute for testing
+    /// Reference: https://www.nuget.org/packages/XrmTools.Meta/
+    /// Constructor: StepAttribute(string entityName, string message, string filteringAttributes, Stages stage, ExecutionMode mode)
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class StepAttribute : Attribute
+    {
+        public string PrimaryEntityName { get; set; }
+        public string MessageName { get; set; }
+        public string FilteringAttributes { get; set; }
+        public XrmToolsStages Stage { get; set; }
+        public XrmToolsExecutionMode Mode { get; set; }
+        public int ExecutionOrder { get; set; }
+
+        public StepAttribute(
+            string entityName,
+            string message,
+            string filteringAttributes,
+            XrmToolsStages stage,
+            XrmToolsExecutionMode mode)
+        {
+            PrimaryEntityName = entityName;
+            MessageName = message;
+            FilteringAttributes = filteringAttributes;
+            Stage = stage;
+            Mode = mode;
+            ExecutionOrder = 1; // Default
+        }
+    }
+
+    /// <summary>
+    /// Simulates XrmTools.Meta ImageAttribute for testing
+    /// Reference: https://www.nuget.org/packages/XrmTools.Meta/
+    /// Constructor: ImageAttribute(ImageTypes type, string messagePropertyName, string attributes = "")
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class ImageAttribute : Attribute
+    {
+        public XrmToolsImageTypes Type { get; set; }
+        public string MessagePropertyName { get; set; }
+        public string Name { get; set; }
+        public string EntityAlias { get; set; }
+        public string Attributes { get; set; }
+
+        public ImageAttribute(
+            XrmToolsImageTypes type,
+            string messagePropertyName,
+            string attributes = "")
+        {
+            Type = type;
+            MessagePropertyName = messagePropertyName;
+            Attributes = attributes;
+            Name = messagePropertyName; // Default to message property name
+            EntityAlias = messagePropertyName; // Default
+        }
+    }
+}
+
+namespace Fake4Dataverse.Tests.Pipeline
+{
+    using XrmTools.Meta.Attributes;
+
+    #region Test Plugins with XrmTools.Meta Attributes
+
+    /// <summary>
+    /// Test plugin with XrmTools.Meta StepAttribute
+    /// </summary>
+    [Step("account", "Create", "", XrmToolsStages.PreOperation, XrmToolsExecutionMode.Synchronous)]
+    public class TestPluginWithXrmToolsStepAttribute : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Test implementation
+        }
+    }
+
+    /// <summary>
+    /// Test plugin with XrmTools.Meta attributes including pre-image
+    /// </summary>
+    [Step("contact", "Update", "firstname,lastname", XrmToolsStages.PreOperation, XrmToolsExecutionMode.Synchronous)]
+    [Image(XrmToolsImageTypes.PreImage, "PreImage", "firstname,lastname,emailaddress")]
+    public class TestPluginWithXrmToolsPreImage : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Test implementation
+        }
+    }
+
+    /// <summary>
+    /// Test plugin with XrmTools.Meta attributes including post-image
+    /// </summary>
+    [Step("opportunity", "Update", "", XrmToolsStages.PostOperation, XrmToolsExecutionMode.Synchronous)]
+    [Image(XrmToolsImageTypes.PostImage, "PostImage", "")]
+    public class TestPluginWithXrmToolsPostImage : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Test implementation
+        }
+    }
+
+    /// <summary>
+    /// Test plugin with XrmTools.Meta attributes including both pre and post images
+    /// </summary>
+    [Step("lead", "Update", "subject,description", XrmToolsStages.PreOperation, XrmToolsExecutionMode.Synchronous)]
+    [Image(XrmToolsImageTypes.PreImage, "PreImage", "subject,description,statuscode")]
+    [Image(XrmToolsImageTypes.PostImage, "PostImage", "subject,description,statuscode")]
+    public class TestPluginWithXrmToolsMultipleImages : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Test implementation
         }
     }
 

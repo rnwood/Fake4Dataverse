@@ -1584,7 +1584,9 @@ public void Should_UnregisterPlugin()
 
 ## Plugin Auto-Discovery from Assemblies
 
-**New in v4.x (2025-10-11)**: Automatically discover and register plugins from assemblies with support for SPKL image attributes.
+**New in v4.x (2025-10-11)**: Automatically discover and register plugins from assemblies with support for SPKL and XrmTools.Meta attributes.
+
+**Updated (2025-10-16)**: Added support for XrmTools.Meta attributes alongside existing SPKL support.
 
 ### Auto-Discovery with SPKL Attributes
 
@@ -1672,6 +1674,106 @@ public class AccountAuditPlugin : IPlugin
 - Scans assemblies for classes implementing `IPlugin`
 - Uses reflection to read `CrmPluginRegistrationAttribute` properties (duck typing - no package reference required)
 - Discovers `CrmPluginRegistrationImage` attributes and links them to parent plugin steps
+- Automatically creates `PluginStepRegistration` objects with pre-populated `PreImages` and `PostImages` collections
+- Registers all discovered steps in the pipeline simulator
+
+### Auto-Discovery with XrmTools.Meta Attributes
+
+**New in v4.x (2025-10-16)**: Support for XrmTools.Meta attributes for plugin registration.
+
+Fake4Dataverse also supports XrmTools.Meta `StepAttribute` and `ImageAttribute` (without requiring a reference to the package):
+
+```csharp
+[Fact]
+public void Should_AutoDiscover_PluginsWithXrmToolsMetaAttributes()
+{
+    // Arrange
+    var context = XrmFakedContextFactory.New();
+    context.UsePipelineSimulation = true;
+    
+    // Act - Discover and register all plugins from assembly
+    var count = context.PluginPipelineSimulator.DiscoverAndRegisterPlugins(
+        new[] { typeof(MyPlugin).Assembly });
+    
+    Console.WriteLine($"Discovered and registered {count} plugin steps");
+    
+    // Plugins automatically execute during CRUD operations
+    var service = context.GetOrganizationService();
+    var account = new Entity("account") { ["name"] = "Test" };
+    service.Create(account); // Registered plugins execute automatically
+}
+```
+
+**XrmTools.Meta StepAttribute Example:**
+```csharp
+using XrmTools.Meta.Attributes;
+using XrmTools.Meta.Model;
+
+[Step(
+    "account",                             // Entity name
+    "Create",                              // Message
+    "",                                    // FilteringAttributes (empty = all)
+    Stages.PreOperation,                   // Stage
+    ExecutionMode.Synchronous)]            // Mode
+public class AccountCreatePlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        // Plugin logic
+    }
+}
+```
+
+**XrmTools.Meta with ImageAttribute Example:**
+```csharp
+using XrmTools.Meta.Attributes;
+using XrmTools.Meta.Model;
+
+[Step(
+    "account",
+    "Update",
+    "name,revenue",                        // FilteringAttributes
+    Stages.PreOperation,
+    ExecutionMode.Synchronous)]
+[Image(
+    ImageTypes.PreImage,                   // PreImage, PostImage, or Both
+    "PreImage",                            // Message property name / Image name
+    "name,revenue,modifiedon")]            // Filtered attributes (comma-separated)
+[Image(
+    ImageTypes.PostImage,
+    "PostImage",
+    "")]                                   // Empty = all attributes
+public class AccountAuditPlugin : IPlugin
+{
+    public void Execute(IServiceProvider serviceProvider)
+    {
+        var context = (IPluginExecutionContext)serviceProvider
+            .GetService(typeof(IPluginExecutionContext));
+        
+        // Images are automatically populated
+        var preImage = context.PreEntityImages["PreImage"];
+        var postImage = context.PostEntityImages["PostImage"];
+    }
+}
+```
+
+**Key differences between SPKL and XrmTools.Meta:**
+
+| Feature | SPKL | XrmTools.Meta |
+|---------|------|---------------|
+| Attribute Name | `CrmPluginRegistrationAttribute` | `StepAttribute` |
+| Constructor | `CrmPluginRegistration(message, entity, stage, mode, ...)` | `Step(entity, message, filteringAttributes, stage, mode)` |
+| Entity Property | `EntityLogicalName` | `PrimaryEntityName` |
+| Mode Property | `ExecutionMode` | `Mode` |
+| Image Attribute | `CrmPluginRegistrationImageAttribute` | `ImageAttribute` |
+| Image Type Property | `ImageType` | `Type` |
+| Image Name | `Name` | `MessagePropertyName` or `Name` |
+| Package Reference | SparkleXrm.Tasks | XrmTools.Meta |
+
+**How it works:**
+- Scans assemblies for classes implementing `IPlugin`
+- Uses reflection to detect both SPKL and XrmTools.Meta attributes (duck typing - no package reference required)
+- Discovers image attributes and links them to parent plugin steps
 - Automatically creates `PluginStepRegistration` objects with pre-populated `PreImages` and `PostImages` collections
 - Registers all discovered steps in the pipeline simulator
 
