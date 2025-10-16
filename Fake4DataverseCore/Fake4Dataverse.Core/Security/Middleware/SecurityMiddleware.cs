@@ -272,80 +272,28 @@ namespace Fake4Dataverse.Security.Middleware
         /// <summary>
         /// Checks if user has privilege with appropriate depth based on record ownership and business unit.
         /// Organization-owned entities don't have owners and only check for Global privilege.
+        /// 
+        /// This method uses the business unit-aware privilege checking that considers:
+        /// - User's direct roles from multiple business units
+        /// - User's team roles from multiple business units  
+        /// - Role's business unit context when evaluating privilege depth
+        /// 
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges
         /// </summary>
         private static bool CheckPrivilegeWithDepth(IXrmFakedContext context, Guid userId, Entity record, string privilegeName, AccessRights requiredAccess)
         {
             var privilegeManager = context.SecurityManager.PrivilegeManager;
             
-            // Organization-owned entities don't have owners, only check for Global privilege
-            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security#organization-owned-entities
-            if (IsSystemTable(record.LogicalName))
-            {
-                return privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthGlobal);
-            }
-            
-            // If not enforcing privilege depth, just check basic privilege
+            // If not enforcing privilege depth, use simple privilege check (backward compatibility)
             if (!context.SecurityConfiguration.EnforcePrivilegeDepth)
             {
                 return privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthBasic);
             }
 
-            // Check if user owns the record (Basic depth)
-            if (record.Contains("ownerid"))
-            {
-                var ownerId = record.GetAttributeValue<EntityReference>("ownerid");
-                if (ownerId != null && ownerId.Id == userId)
-                {
-                    // User owns the record - Basic depth is sufficient
-                    if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthBasic))
-                    {
-                        return true;
-                    }
-                }
-            }
-
-            // Get user's business unit
-            var user = context.GetEntityById("systemuser", userId);
-            if (user != null && user.Contains("businessunitid"))
-            {
-                var userBU = user.GetAttributeValue<EntityReference>("businessunitid");
-                
-                // Check if record belongs to user's business unit (Local depth)
-                if (record.Contains("owningbusinessunit"))
-                {
-                    var recordBU = record.GetAttributeValue<EntityReference>("owningbusinessunit");
-                    if (recordBU != null && userBU != null && recordBU.Id == userBU.Id)
-                    {
-                        if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthLocal))
-                        {
-                            return true;
-                        }
-                    }
-                }
-
-                // Check Deep depth (business unit and child business units)
-                if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthDeep))
-                {
-                    // Check if record's business unit is in the user's business unit hierarchy
-                    // Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges#privilege-depth
-                    if (record.Contains("owningbusinessunit") && userBU != null)
-                    {
-                        var recordBU = record.GetAttributeValue<EntityReference>("owningbusinessunit");
-                        if (recordBU != null && IsInBusinessUnitHierarchy(context, recordBU.Id, userBU.Id))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            // Check Global depth (organization-wide)
-            if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthGlobal))
-            {
-                return true;
-            }
-
-            return false;
+            // Use business unit-aware privilege checking
+            // This considers all roles (direct and team-based) and their business unit contexts
+            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges
+            return privilegeManager.HasPrivilegeForRecord(userId, privilegeName, record, PrivilegeManager.PrivilegeDepthBasic);
         }
 
         /// <summary>
