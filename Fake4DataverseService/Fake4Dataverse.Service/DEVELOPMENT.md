@@ -2,9 +2,45 @@
 
 This guide explains how to develop and debug the Fake4Dataverse Service with its integrated Model-Driven App (MDA) frontend.
 
-## Quick Start
+## Quick Start - Press F5 to Debug!
 
-### Option 1: Automated Full-Stack Development (Recommended)
+### Visual Studio Code (Recommended)
+
+1. Open the repository root in VS Code
+2. Press **F5** or select **Debug > Start Debugging**
+3. Choose "Full Stack (Backend + Frontend)" from the dropdown
+4. Both backend and frontend will start automatically with hot reload!
+
+The debugger will:
+- Build the solution
+- Start the Next.js dev server (port 3000)
+- Start the ASP.NET Core backend (port 5000)
+- Open your browser to http://localhost:5000/main.aspx
+- Attach debuggers to both processes
+
+**Debugging:**
+- Set breakpoints in C# code - they'll hit automatically
+- Set breakpoints in TypeScript code - use VS Code's debugger
+- Hot reload works for both frontend and backend changes
+
+### Visual Studio 2022
+
+1. Open `Fake4Dataverse.sln` in Visual Studio
+2. **Important:** Before pressing F5, open a terminal and run:
+   ```bash
+   cd Fake4DataverseService/Fake4Dataverse.Service/mda-app
+   npm run dev
+   ```
+3. Press **F5** to start debugging the backend
+4. Your browser will open to http://localhost:5000/main.aspx
+5. Changes to C# code will hot reload automatically
+6. Changes to TypeScript/React code will hot reload in the browser
+
+**Why?** Visual Studio doesn't support compound launch configurations like VS Code. You need to manually start the frontend once, then it will keep running with hot reload while you debug the backend.
+
+## Alternative Methods
+
+### Option 1: Automated Script (For Non-IDE Usage)
 
 Use the provided scripts to run both backend and frontend together:
 
@@ -40,19 +76,7 @@ cd Fake4DataverseService/Fake4Dataverse.Service/mda-app
 npm run dev
 ```
 
-Then open http://localhost:3000 in your browser.
-
-### Option 3: Visual Studio / VS Code
-
-Open the solution in Visual Studio or VS Code and press F5. The launch settings are configured to:
-- Start the backend in Development mode on port 5000
-- Launch a browser automatically
-
-For full-stack development, also run the frontend separately:
-```bash
-cd mda-app
-npm run dev
-```
+Then open http://localhost:5000/main.aspx in your browser.
 
 ## Architecture
 
@@ -191,41 +215,70 @@ Integration tests automatically start the service with test data.
 
 ## Debugging
 
-### Debugging the Backend (C#)
+### Full-Stack Debugging with F5 (VS Code)
+
+**Easiest Method - Press F5:**
+
+1. Open the repository in VS Code
+2. Press **F5** or click "Run and Debug" in the sidebar
+3. Select "**Full Stack (Backend + Frontend)**" configuration
+4. Both services start automatically with debuggers attached!
+
+**What happens:**
+- Solution builds automatically
+- Next.js dev server starts on port 3000
+- ASP.NET Core backend starts on port 5000
+- Browser opens to http://localhost:5000/main.aspx
+- Breakpoints work in both C# and TypeScript
+
+**Setting Breakpoints:**
+- **C# Backend:** Click in the gutter next to line numbers in .cs files
+- **TypeScript Frontend:** Click in the gutter next to line numbers in .ts/.tsx files
+- Both debuggers run simultaneously!
+
+**Hot Reload:**
+- C# changes: Stop debugging, edit, press F5 again
+- TypeScript changes: Just save the file - instant hot reload!
+
+### Visual Studio 2022 Debugging
+
+**One-Time Setup (per session):**
+
+1. Open a terminal and run:
+   ```bash
+   cd Fake4DataverseService/Fake4Dataverse.Service/mda-app
+   npm run dev
+   ```
+2. Leave this terminal running
+
+**Then press F5** in Visual Studio to debug the backend. The frontend stays running with hot reload.
+
+### Debugging Backend Only (C#)
 
 **Visual Studio:**
-1. Set breakpoints in C# code
-2. Press F5 or select Debug > Start Debugging
-3. The service will start on port 5000
-
-**VS Code:**
-1. Install C# extension
+1. Ensure frontend is running (`npm run dev` in mda-app)
 2. Set breakpoints in C# code
-3. Press F5 or use Debug panel
-4. Select "Fake4Dataverse.Service" launch configuration
-
-### Debugging the Frontend (TypeScript/React)
-
-**Browser DevTools:**
-1. Start the frontend: `npm run dev` in `mda-app/`
-2. Open http://localhost:3000
-3. Use browser DevTools (F12)
-4. Source maps are enabled for debugging
+3. Press F5 or select Debug > Start Debugging
+4. The service starts on port 5000
 
 **VS Code:**
-1. Install "Debugger for Chrome" or "Debugger for Edge" extension
-2. Start the frontend: `npm run dev`
-3. Use VS Code's JavaScript debugging
-4. Set breakpoints in TypeScript files
+1. Ensure frontend is running (`npm run dev` in mda-app)
+2. Set breakpoints in C# code
+3. Press F5 and select ".NET Core Launch (Fake4Dataverse Service with MDA)"
 
-### Full-Stack Debugging
+### Debugging Frontend Only (TypeScript/React)
 
-To debug both frontend and backend simultaneously:
+**Browser DevTools (Easiest):**
+1. Start the frontend: `npm run dev` in `mda-app/`
+2. Open http://localhost:3000 in your browser
+3. Press F12 to open DevTools
+4. Source maps are enabled - set breakpoints in the Sources tab
 
-1. Start backend in debug mode (VS/VS Code)
-2. Start frontend in debug mode (`npm run dev`)
-3. Set breakpoints in both C# and TypeScript code
-4. Debug from http://localhost:3000
+**VS Code (Advanced):**
+1. Start frontend: `npm run dev`
+2. Use VS Code's "Attach to Next.js (Frontend)" configuration
+3. Set breakpoints in TypeScript files
+4. Debug panel shows variables and call stack
 
 ## Hot Reload
 
