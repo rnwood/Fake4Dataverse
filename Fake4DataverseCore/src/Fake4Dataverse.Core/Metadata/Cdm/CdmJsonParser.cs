@@ -515,6 +515,10 @@ namespace Fake4Dataverse.Metadata.Cdm
         {
             var entityMetadata = new EntityMetadata();
             
+            // Set MetadataId to ensure proper OData serialization
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.metadatabase.metadataid
+            entityMetadata.MetadataId = Guid.NewGuid();
+            
             // Get entity name - prefer entityName, then name
             var entityName = !string.IsNullOrWhiteSpace(definition.EntityName) 
                 ? definition.EntityName 
@@ -686,6 +690,14 @@ namespace Fake4Dataverse.Metadata.Cdm
             // Set common properties
             attributeMetadata.SetFieldValue("_logicalName", logicalName);
             attributeMetadata.SetFieldValue("_entityLogicalName", entityLogicalName);
+            
+            // Set MetadataId if not already set to ensure all attributes have valid IDs for OData serialization
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.metadatabase.metadataid
+            // MetadataId is a nullable Guid property that should be set for proper OData serialization
+            if (!attributeMetadata.MetadataId.HasValue || attributeMetadata.MetadataId.Value == Guid.Empty)
+            {
+                attributeMetadata.MetadataId = Guid.NewGuid();
+            }
             
             return attributeMetadata;
         }
