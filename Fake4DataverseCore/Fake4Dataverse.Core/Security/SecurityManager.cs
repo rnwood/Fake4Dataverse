@@ -1,5 +1,7 @@
 using Fake4Dataverse.Abstractions;
+using Fake4Dataverse.Abstractions.Security;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Linq;
 
@@ -9,9 +11,14 @@ namespace Fake4Dataverse.Security
     /// Manages the initialization and configuration of security-related entities in the context.
     /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/database-security
     /// </summary>
-    public class SecurityManager
+    public class SecurityManager : ISecurityManager
     {
         private readonly IXrmFakedContext _context;
+        
+        // Store IDs as instance variables for easy retrieval
+        private Guid? _rootOrganizationId;
+        private Guid? _rootBusinessUnitId;
+        private Guid? _systemAdministratorRoleId;
 
         public SecurityManager(IXrmFakedContext context)
         {
@@ -19,26 +26,84 @@ namespace Fake4Dataverse.Security
         }
 
         /// <summary>
+        /// Gets the root organization ID. Creates the organization if it doesn't exist.
+        /// </summary>
+        public Guid RootOrganizationId
+        {
+            get
+            {
+                if (_rootOrganizationId == null)
+                {
+                    _rootOrganizationId = EnsureRootOrganization();
+                }
+                return _rootOrganizationId.Value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the root business unit ID. Creates the business unit if it doesn't exist.
+        /// </summary>
+        public Guid RootBusinessUnitId
+        {
+            get
+            {
+                if (_rootBusinessUnitId == null)
+                {
+                    _rootBusinessUnitId = EnsureRootBusinessUnit();
+                }
+                return _rootBusinessUnitId.Value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the System Administrator role ID. Creates the role if it doesn't exist.
+        /// The ID varies per context but is easily retrievable through this property.
+        /// </summary>
+        public Guid SystemAdministratorRoleId
+        {
+            get
+            {
+                if (_systemAdministratorRoleId == null)
+                {
+                    InitializeSystemAdministratorRole();
+                }
+                return _systemAdministratorRoleId.Value;
+            }
+        }
+
+        /// <summary>
         /// Initializes the default System Administrator role with all privileges.
         /// This is a well-known role in Dataverse that grants full access to the system.
         /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/database-security
         /// 
-        /// The System Administrator role has the GUID: {C52D9CA4-3D13-43E7-9C23-D6C6F5FDD425}
-        /// This matches the standard Dataverse System Administrator role.
+        /// The System Administrator role ID varies per context instance to avoid hardcoding bugs.
+        /// Use SecurityManager.SystemAdministratorRoleId to retrieve it.
         /// </summary>
         public void InitializeSystemAdministratorRole()
         {
-            var service = _context.GetOrganizationService();
-            var roleId = SecurityConfiguration.DefaultSystemAdministratorRoleId;
-
-            // Check if role already exists
-            if (_context.ContainsEntity("role", roleId))
+            // Check if already initialized
+            if (_systemAdministratorRoleId != null)
             {
                 return;
             }
 
+            // Try to find existing System Administrator role
+            var existingRole = _context.CreateQuery("role")
+                .Where(r => r.GetAttributeValue<string>("name") == "System Administrator")
+                .FirstOrDefault();
+                
+            if (existingRole != null)
+            {
+                _systemAdministratorRoleId = existingRole.Id;
+                return;
+            }
+
+            // Generate a new ID for this instance
+            var roleId = Guid.NewGuid();
+            _systemAdministratorRoleId = roleId;
+
             // Create the root business unit if it doesn't exist
-            var rootBusinessUnitId = EnsureRootBusinessUnit();
+            var rootBusinessUnitId = RootBusinessUnitId;
 
             // Create the System Administrator role
             var systemAdminRole = new Entity("role")
@@ -47,10 +112,16 @@ namespace Fake4Dataverse.Security
                 ["name"] = "System Administrator",
                 ["businessunitid"] = new EntityReference("businessunit", rootBusinessUnitId),
                 ["iscustomizable"] = false,
-                ["ismanaged"] = true
+                ["ismanaged"] = true,
+                ["parentroleid"] = null, // This is the root/master role
+                ["parentrootroleid"] = null // Root roles don't have a parent root
             };
 
             _context.AddEntity(systemAdminRole);
+            
+            // Update the parentrootroleid to point to itself after creation
+            systemAdminRole["parentrootroleid"] = new EntityReference("role", roleId);
+            _context.UpdateEntity(systemAdminRole);
         }
 
         /// <summary>
@@ -59,20 +130,30 @@ namespace Fake4Dataverse.Security
         /// </summary>
         private Guid EnsureRootBusinessUnit()
         {
-            var service = _context.GetOrganizationService();
+            // Check if already cached
+            if (_rootBusinessUnitId != null)
+            {
+                return _rootBusinessUnitId.Value;
+            }
 
             // Check for existing root business unit
-            var existingBU = _context.CreateQuery("businessunit").FirstOrDefault();
+            var existingBU = _context.CreateQuery("businessunit")
+                .Where(bu => bu.GetAttributeValue<EntityReference>("parentbusinessunitid") == null)
+                .FirstOrDefault();
+                
             if (existingBU != null)
             {
+                _rootBusinessUnitId = existingBU.Id;
                 return existingBU.Id;
             }
 
             // Create root organization if it doesn't exist
-            var orgId = EnsureRootOrganization();
+            var orgId = RootOrganizationId;
 
             // Create root business unit
             var rootBUId = Guid.NewGuid();
+            _rootBusinessUnitId = rootBUId;
+            
             var rootBusinessUnit = new Entity("businessunit")
             {
                 Id = rootBUId,
@@ -92,15 +173,24 @@ namespace Fake4Dataverse.Security
         /// </summary>
         private Guid EnsureRootOrganization()
         {
+            // Check if already cached
+            if (_rootOrganizationId != null)
+            {
+                return _rootOrganizationId.Value;
+            }
+
             // Check for existing organization
             var existingOrg = _context.CreateQuery("organization").FirstOrDefault();
             if (existingOrg != null)
             {
+                _rootOrganizationId = existingOrg.Id;
                 return existingOrg.Id;
             }
 
             // Create root organization
             var orgId = Guid.NewGuid();
+            _rootOrganizationId = orgId;
+            
             var organization = new Entity("organization")
             {
                 Id = orgId,
@@ -125,36 +215,24 @@ namespace Fake4Dataverse.Security
                 return false;
             }
 
-            var roleId = _context.SecurityConfiguration.SystemAdministratorRoleId;
+            var roleId = SystemAdministratorRoleId;
 
             // Query for systemuserroles association
             // In Dataverse, this is stored as a many-to-many relationship
             try
             {
-                var roles = _context.CreateQuery("role")
-                    .Where(r => r.Id == roleId)
-                    .FirstOrDefault();
-
-                if (roles == null)
-                {
-                    return false;
-                }
-
                 // Check if user has this role through the systemuserroles_association relationship
-                // This would require relationship data to be set up
-                // For now, we'll check if the relationship exists in the context
                 var relationship = _context.GetRelationship("systemuserroles_association");
                 if (relationship == null)
                 {
                     return false;
                 }
 
-                // Get related entities for this user
-                var relatedRoles = _context.CreateQuery("role")
-                    .ToList()
-                    .Where(r => r.Id == roleId);
-
-                return relatedRoles.Any();
+                // Check if user is related to the System Administrator role
+                // For now, we'll use a simplified check
+                // TODO: Implement full N:N relationship checking
+                
+                return false;
             }
             catch
             {

@@ -136,6 +136,12 @@ namespace Fake4Dataverse
         /// </summary>
         public ISecurityConfiguration SecurityConfiguration { get; private set; }
 
+        /// <summary>
+        /// Gets the security manager for this context.
+        /// Provides access to security infrastructure like root BU and System Administrator role IDs.
+        /// </summary>
+        public ISecurityManager SecurityManager { get; private set; }
+
         private readonly Dictionary<string, object> _properties;
         private readonly IXrmFakedTracingService _fakeTracingService;
 
@@ -147,6 +153,7 @@ namespace Fake4Dataverse
 
             CallerProperties = new CallerProperties();
             SecurityConfiguration = new SecurityConfiguration();
+            SecurityManager = new Security.SecurityManager(this);
             
             MaxRetrieveCount = 5000;
 
@@ -209,8 +216,7 @@ namespace Fake4Dataverse
         {
             if (SecurityConfiguration.AutoGrantSystemAdministratorPrivileges)
             {
-                var securityManager = new Security.SecurityManager(this);
-                securityManager.InitializeSystemAdministratorRole();
+                SecurityManager.InitializeSystemAdministratorRole();
             }
         }
 

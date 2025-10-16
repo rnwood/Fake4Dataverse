@@ -26,6 +26,12 @@ namespace Fake4Dataverse.Abstractions
         ISecurityConfiguration SecurityConfiguration { get; }
 
         /// <summary>
+        /// Gets the security manager for this context.
+        /// Provides access to security infrastructure like root BU and System Administrator role IDs.
+        /// </summary>
+        ISecurityManager SecurityManager { get; }
+
+        /// <summary>
         /// Returns an instance of a tracing service
         /// </summary>
         /// <returns></returns>

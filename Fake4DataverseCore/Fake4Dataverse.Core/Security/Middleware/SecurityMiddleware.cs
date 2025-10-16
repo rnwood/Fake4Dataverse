@@ -37,12 +37,11 @@ namespace Fake4Dataverse.Security.Middleware
                 }
 
                 // Check if user is System Administrator - they bypass all security
-                var securityManager = new SecurityManager(context);
                 var callerId = context.CallerProperties.CallerId;
                 
                 if (callerId != null && callerId.LogicalName == "systemuser")
                 {
-                    if (securityManager.IsSystemAdministrator(callerId.Id))
+                    if (context.SecurityManager.IsSystemAdministrator(callerId.Id))
                     {
                         // System Administrators bypass all security checks
                         return next(context, request);
@@ -50,14 +49,14 @@ namespace Fake4Dataverse.Security.Middleware
                 }
 
                 // Enforce security based on request type
-                EnforceSecurityForRequest(context, request, securityManager);
+                EnforceSecurityForRequest(context, request);
 
                 // Continue to next middleware
                 return next(context, request);
             });
         }
 
-        private static void EnforceSecurityForRequest(IXrmFakedContext context, OrganizationRequest request, SecurityManager securityManager)
+        private static void EnforceSecurityForRequest(IXrmFakedContext context, OrganizationRequest request)
         {
             var callerId = context.CallerProperties.CallerId;
 

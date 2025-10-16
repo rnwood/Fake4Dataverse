@@ -24,9 +24,58 @@ namespace Fake4Dataverse.Core.Tests.Security
             var context = new XrmFakedContext();
             
             // Assert - System Administrator role should be auto-initialized
-            var sysAdminRole = context.GetEntityById("role", SecurityConfiguration.DefaultSystemAdministratorRoleId);
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
+            var sysAdminRole = context.GetEntityById("role", sysAdminRoleId);
             Assert.NotNull(sysAdminRole);
             Assert.Equal("System Administrator", sysAdminRole.GetAttributeValue<string>("name"));
+        }
+
+        [Fact]
+        public void Should_Use_Variable_IDs_For_System_Administrator_Role()
+        {
+            // Arrange & Act - create two contexts
+            var context1 = new XrmFakedContext();
+            var context2 = new XrmFakedContext();
+            
+            var roleId1 = context1.SecurityManager.SystemAdministratorRoleId;
+            var roleId2 = context2.SecurityManager.SystemAdministratorRoleId;
+            
+            // Assert - IDs should be different (avoiding hardcoded GUID bugs)
+            Assert.NotEqual(roleId1, roleId2);
+            
+            // Both should be valid
+            Assert.NotEqual(Guid.Empty, roleId1);
+            Assert.NotEqual(Guid.Empty, roleId2);
+        }
+
+        [Fact]
+        public void Should_Retrieve_Root_Business_Unit_ID_Easily()
+        {
+            // Arrange & Act
+            var context = new XrmFakedContext();
+            var rootBUId = context.SecurityManager.RootBusinessUnitId;
+            
+            // Assert
+            Assert.NotEqual(Guid.Empty, rootBUId);
+            
+            var rootBU = context.GetEntityById("businessunit", rootBUId);
+            Assert.NotNull(rootBU);
+            Assert.Equal("Default Business Unit", rootBU.GetAttributeValue<string>("name"));
+        }
+
+        [Fact]
+        public void Should_Retrieve_Root_Organization_ID_Easily()
+        {
+            // Arrange & Act
+            var context = new XrmFakedContext();
+            var rootOrgId = context.SecurityManager.RootOrganizationId;
+            
+            // Assert
+            Assert.NotEqual(Guid.Empty, rootOrgId);
+            
+            var rootOrg = context.GetEntityById("organization", rootOrgId);
+            Assert.NotNull(rootOrg);
+            Assert.Equal("Default Organization", rootOrg.GetAttributeValue<string>("name"));
         }
 
         [Fact]

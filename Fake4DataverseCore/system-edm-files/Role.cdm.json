@@ -118,6 +118,15 @@
                 "description": "Unique identifier of the parent role."
               },
               {
+                "name": "parentRootRoleId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "entity": "Role",
+                "sourceName": "parentrootroleid",
+                "displayName": "Parent Root Role",
+                "description": "Unique identifier of the root role in the hierarchy."
+              },
+              {
                 "name": "isManaged",
                 "purpose": "hasA",
                 "dataType": "boolean",
