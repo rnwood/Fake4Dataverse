@@ -384,17 +384,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             IOrganizationService service = _service;
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["value"] = new DateTime(2011, 01, 01);
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["value"] = new DateTime(2011, 01, 02);
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["value"] = new DateTime(2011, 01, 03);
             initialEntities.Add(e3);
@@ -421,17 +421,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             IOrganizationService service = _service;
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["value"] = new DateTime(2011, 01, 01);
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["value"] = null;
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["value"] = new DateTime(2011, 01, 03);
             initialEntities.Add(e3);
@@ -458,17 +458,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             IOrganizationService service = _service;
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["value"] = new DateTime(2011, 01, 01);
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["value"] = new DateTime(2011, 01, 02);
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["value"] = new DateTime(2011, 01, 03);
             initialEntities.Add(e3);
@@ -495,17 +495,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             IOrganizationService service = _service;
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["value"] = new DateTime(2011, 01, 01);
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["value"] = null;
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["value"] = new DateTime(2011, 01, 03);
             initialEntities.Add(e3);
@@ -532,17 +532,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             IOrganizationService service = _service;
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["value"] = 1;
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["value"] = 2;
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["value"] = null;
             initialEntities.Add(e3);
@@ -551,7 +551,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             FetchExpression query = new FetchExpression($@"
                 <fetch aggregate='true' >
-                  <entity name='entity' >
+                  <entity name='testentity' >
                     <attribute name='value' alias='minvalue' aggregate='min' />
                   </entity>
                 </fetch>
@@ -569,17 +569,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             IOrganizationService service = _service;
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["value"] = -0.5m;
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["value"] = -2m;
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["value"] = null;
             initialEntities.Add(e3);
@@ -606,17 +606,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             IOrganizationService service = _service;
             List<Entity> initialEntities = new List<Entity>();
 
-            Entity e = new Entity("entity");
+            Entity e = new Entity("testentity");
             e.Id = Guid.NewGuid();
             e["value"] = -1m;
             initialEntities.Add(e);
 
-            Entity e2 = new Entity("entity");
+            Entity e2 = new Entity("testentity");
             e2.Id = Guid.NewGuid();
             e2["value"] = -2m;
             initialEntities.Add(e2);
 
-            Entity e3 = new Entity("entity");
+            Entity e3 = new Entity("testentity");
             e3.Id = Guid.NewGuid();
             e3["value"] = null;
             initialEntities.Add(e3);
