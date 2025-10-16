@@ -280,8 +280,8 @@ public class Program
                 // Set timezone to UTC for consistency
                 options.TimeZone = System.TimeZoneInfo.Utc;
 
-                // Add EDM model for metadata endpoints - built dynamically from context
-                options.AddRouteComponents("api/data/v9.2", GetMetadataEdmModel(context));
+                // Add EDM model for metadata endpoints
+                options.AddRouteComponents("api/data/v9.2", GetMetadataEdmModel());
             });
 
         var app = builder.Build();
@@ -567,25 +567,27 @@ public class Program
     }
 
     /// <summary>
-    /// Dynamically builds the EDM model for OData endpoints including all entities from the context.
+    /// Builds the EDM model for OData metadata endpoints.
     /// Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/edm-model-builder
     /// 
-    /// The EDM (Entity Data Model) defines the structure of data exposed through OData.
-    /// This method builds the model by:
-    /// 1. Adding metadata entity sets (EntityDefinitions, AttributeDefinitions, etc.)
-    /// 2. Dynamically adding all Dataverse entities from the context
-    /// 3. Configuring navigation properties and relationships
+    /// The EDM (Entity Data Model) defines the structure of metadata exposed through OData.
+    /// This includes entity metadata types like EntityDefinitions, AttributeDefinitions, etc.
+    /// 
+    /// Note: This model is for METADATA queries only (EntityDefinitions, AttributeDefinitions, etc.).
+    /// Data entity queries (accounts, contacts, etc.) are handled separately by ODataEntityController
+    /// which doesn't use this EDM model.
     /// 
     /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/web-api-service-documents
     /// The $metadata endpoint returns this model as EDMX/CSDL.
     /// </summary>
-    private static IEdmModel GetMetadataEdmModel(IXrmFakedContext context)
+    private static IEdmModel GetMetadataEdmModel()
     {
         var builder = new ODataConventionModelBuilder();
         
         // EntityDefinitions - Entity metadata
         // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/query-metadata-web-api
-        // EntityDefinitions corresponds to EntityMetadata in the SDK and supports querying with OData options
+        // EntityDefinitions corresponds to EntityMetadata in the SDK and supports full OData querying
+        // via [EnableQuery] on MetadataController methods
         var entityDefSet = builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityMetadata>("EntityDefinitions");
         entityDefSet.EntityType.HasKey(e => e.MetadataId);
         
@@ -613,48 +615,6 @@ public class Program
         // EntityKeyDefinitions - Alternate keys
         var entityKeyDefSet = builder.EntitySet<Microsoft.Xrm.Sdk.Metadata.EntityKeyMetadata>("EntityKeyDefinitions");
         entityKeyDefSet.EntityType.HasKey(k => k.MetadataId);
-        
-        // Dynamically add all entities from the context
-        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/web-api-entitytypes
-        // Each entity in Dataverse becomes an EntitySet in the OData service
-        var entityMetadataList = context.CreateMetadataQuery().ToList();
-        
-        foreach (var entityMetadata in entityMetadataList)
-        {
-            try
-            {
-                // Use Entity as the CLR type for all dynamic entities
-                // The EntitySetName is used for routing (e.g., "accounts", "contacts")
-                var entitySetName = entityMetadata.EntitySetName ?? (entityMetadata.LogicalName + "s");
-                
-                // Create an EntitySet for this entity type
-                // Reference: https://learn.microsoft.com/en-us/odata/webapi-8/fundamentals/edm-model-builder#entity-set
-                var entitySet = builder.EntitySet<Entity>(entitySetName);
-                
-                // Configure the entity type with its logical name
-                var entityType = entitySet.EntityType;
-                entityType.Name = entityMetadata.SchemaName ?? entityMetadata.LogicalName;
-                
-                // Set the primary key attribute
-                if (!string.IsNullOrEmpty(entityMetadata.PrimaryIdAttribute))
-                {
-                    entityType.HasKey(e => e.Id);
-                }
-                
-                // Add properties dynamically based on attributes
-                // Note: With ODataConventionModelBuilder, properties are discovered automatically
-                // from the Entity class, but we can add explicit configurations for navigation
-                // properties and relationships if needed
-                
-                // TODO: Add navigation properties for lookups and relationships
-                // This would require analyzing OneToManyRelationshipMetadata and ManyToManyRelationshipMetadata
-            }
-            catch (Exception ex)
-            {
-                // Log warning but continue with other entities
-                Console.WriteLine($"Warning: Failed to add entity '{entityMetadata.LogicalName}' to EDM model: {ex.Message}");
-            }
-        }
         
         return builder.GetEdmModel();
     }
