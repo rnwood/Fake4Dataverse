@@ -17,13 +17,13 @@ Unit tests can be run for all projects in the solution:
 
 ```bash
 # From repository root
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName!~IntegrationTests"
 ```
 
 For .NET Framework 4.6.2 (Windows only):
 
 ```bash
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net462 --filter "FullyQualifiedName!~IntegrationTests"
 ```
 
 ### Running Tests for Individual Projects
@@ -53,7 +53,7 @@ Integration tests require the Fake4DataverseService to be running on `http://loc
 ### Step 1: Start the Service
 
 ```bash
-cd Fake4DataverseService/src/Fake4Dataverse.Service
+cd Fake4DataverseService/Fake4Dataverse.Service
 dotnet run --configuration Debug
 ```
 
@@ -73,7 +73,7 @@ dotnet test --configuration Debug --framework net8.0
 Or run all integration tests:
 
 ```bash
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName~IntegrationTests"
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName~IntegrationTests"
 ```
 
 ## Running MDA Tests
@@ -111,7 +111,7 @@ E2E tests require the Fake4DataverseService to be running with MDA metadata init
 #### Step 1: Start the Service
 
 ```bash
-cd Fake4DataverseService/src/Fake4Dataverse.Service
+cd Fake4DataverseService/Fake4Dataverse.Service
 dotnet run --configuration Debug
 ```
 

@@ -31,7 +31,7 @@ Main entry point for Cloud Flow simulation. Provides:
 - Connector handler registration (`RegisterConnectorActionHandler`)
 - Verification methods (`AssertFlowTriggered`, `GetFlowExecutionResults`)
 
-**Location:** `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/CloudFlows/ICloudFlowSimulator.cs`
+**Location:** `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/CloudFlows/ICloudFlowSimulator.cs`
 
 **Pattern Inspiration:** `IPluginPipelineSimulator` - Similar registration and execution model
 
@@ -43,13 +43,13 @@ Represents a complete flow definition with:
 - Enabled/disabled state
 - Metadata dictionary
 
-**Location:** `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/CloudFlows/ICloudFlowDefinition.cs`
+**Location:** `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/CloudFlows/ICloudFlowDefinition.cs`
 
 #### IFlowTrigger
 Base interface for flow triggers. Concrete implementations:
 - `DataverseTrigger` - Triggers on Dataverse Create/Update/Delete operations
 
-**Location:** `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/CloudFlows/IFlowTrigger.cs`
+**Location:** `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/CloudFlows/IFlowTrigger.cs`
 
 **Extensibility:** Future implementations could include:
 - `ScheduleTrigger` - Recurrence-based triggers
@@ -62,7 +62,7 @@ Base interface for flow actions. Concrete implementations:
 - `ComposeAction` - Data transformation and composition ✅ **IMPLEMENTED**
 - `ApplyToEachAction` - Loop over collections ✅ **IMPLEMENTED**
 
-**Location:** `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/CloudFlows/IFlowAction.cs`
+**Location:** `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/CloudFlows/IFlowAction.cs`
 
 **Extensibility:** Future implementations could include:
 - `ConditionAction` - If/then/else branching
@@ -75,7 +75,7 @@ Extensibility point for custom connector logic:
 - `CanHandle(IFlowAction)` - Check if handler supports action
 - `Execute(...)` - Execute the action and return outputs
 
-**Location:** `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/CloudFlows/IConnectorActionHandler.cs`
+**Location:** `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/CloudFlows/IConnectorActionHandler.cs`
 
 **Pattern Inspiration:** Strategy pattern, similar to message executors
 

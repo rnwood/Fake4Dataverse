@@ -36,7 +36,7 @@ Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi
 
 ```bash
 # Start the service
-cd Fake4DataverseService/src/Fake4Dataverse.Service
+cd Fake4DataverseService/Fake4Dataverse.Service
 dotnet run -- start --port 5000
 
 # Connect from any application using standard WCF
@@ -172,13 +172,13 @@ Build the entire solution and run unit tests:
 
 ```bash
 # Restore dependencies
-dotnet restore Fake4DataverseFree.sln
+dotnet restore Fake4Dataverse.sln
 
 # Build all projects
-dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
+dotnet build Fake4Dataverse.sln --configuration Debug --no-restore
 
 # Run unit tests (excluding integration tests which require the service to be running)
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net8.0 --no-build --filter "FullyQualifiedName!~IntegrationTests"
 ```
 
 ### Build the MDA App
@@ -351,8 +351,8 @@ This comparison is based on:
    - https://github.com/jordimontana82/fake-xrm-easy (v1.x branches, last MIT-licensed versions)
 
 2. **Fake4Dataverse Source Code**: Direct analysis of this repository
-   - Actual message executor count: 47 executors in `/Fake4DataverseCore/src/Fake4Dataverse.Core/FakeMessageExecutors/`
-   - Condition operator count: 60+ operators in `/Fake4DataverseCore/src/Fake4Dataverse.Core/Query/`
+   - Actual message executor count: 47 executors in `/Fake4DataverseCore/Fake4Dataverse.Core/FakeMessageExecutors/`
+   - Condition operator count: 60+ operators in `/Fake4DataverseCore/Fake4Dataverse.Core/Query/`
    - Architecture analysis from `MiddlewareBuilder.cs` and related files
 
 3. **FakeXrmEasy v2+ Commercial**: Based on commercial product website and documentation

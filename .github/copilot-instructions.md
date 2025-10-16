@@ -49,15 +49,21 @@ The project has comprehensive documentation in the `/docs/` directory:
 
 ## Repository Structure
 
-This is a monorepo containing three main projects:
+This is a monorepo containing multiple projects with a simplified flat structure (no `src/` or `tests/` subdirectories within each module):
 
 ### 1. Fake4DataverseAbstractions
 - **Location**: `/Fake4DataverseAbstractions/`
+- **Projects**:
+  - `Fake4Dataverse.Abstractions/` - Main library
+  - `Fake4Dataverse.Abstractions.Tests/` - Unit tests
 - **Purpose**: Contains abstractions, interfaces, POCOs, enums, and base types used across the framework
 - **Former Name**: FakeXrmEasy.Abstractions
 
 ### 2. Fake4DataverseCore
 - **Location**: `/Fake4DataverseCore/`
+- **Projects**:
+  - `Fake4Dataverse.Core/` - Main library
+  - `Fake4Dataverse.Core.Tests/` - Unit tests
 - **Purpose**: Core implementation of the framework including middleware, CRUD operations, query translation, and message executors
 - **Former Name**: FakeXrmEasy.Core
 - **Key Features**:
@@ -69,17 +75,37 @@ This is a monorepo containing three main projects:
 
 ### 3. Fake4Dataverse
 - **Location**: `/Fake4Dataverse/`
+- **Projects**:
+  - `Fake4Dataverse/` - Main library
+  - `Fake4Dataverse.Tests/` - Unit tests
 - **Purpose**: Legacy/compatibility package
 - **Former Name**: FakeXrmEasy
+
+### 4. Fake4DataverseService
+- **Location**: `/Fake4DataverseService/`
+- **Projects**:
+  - `Fake4Dataverse.Service/` - CLI service hosting IOrganizationService
+    - `mda-app/` - Model-Driven App front-end (Next.js)
+  - `Fake4Dataverse.Service.Tests/` - Unit tests
+  - `Fake4Dataverse.Service.IntegrationTests/` - Integration tests
+- **Purpose**: Service hosting and front-end application
+
+### 5. Fake4DataverseCloudFlows
+- **Location**: `/Fake4DataverseCloudFlows/`
+- **Projects**:
+  - `Fake4Dataverse.CloudFlows/` - Main library
+  - `Fake4Dataverse.CloudFlows.Tests/` - Unit tests
+- **Purpose**: Cloud Flow (Power Automate) simulation capabilities
 
 ## Technology Stack
 
 - **Language**: C#
 - **Framework**: .NET Core 8.0 / .NET Framework (multi-targeting)
-- **Build System**: PowerShell scripts with dotnet CLI
+- **Build System**: dotnet CLI (PowerShell scripts removed in favor of single solution file)
 - **Test Framework**: xUnit
 - **CI/CD**: GitHub Actions
 - **Code Quality**: SonarCloud
+- **Front-end**: Next.js with React (for MDA app)
 
 ## Build and Test Commands
 
@@ -89,41 +115,31 @@ The preferred method is to build the entire solution:
 
 ```bash
 # Restore dependencies
-dotnet restore Fake4DataverseFree.sln
+dotnet restore Fake4Dataverse.sln
 
 # Build all projects
-dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
+dotnet build Fake4Dataverse.sln --configuration Debug --no-restore
 
 # Run all tests including integration tests (self-contained, no external service needed)
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net8.0 --no-build
 
 # Run tests for .NET Framework 4.6.2 (Windows only)
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net462 --no-build
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net462 --no-build
 ```
 
 **Note**: Integration tests are self-contained and automatically start the Fake4DataverseService during test execution. They use local CDM schema files for fast, reliable testing without network downloads.
 
 ### Building Individual Projects
 
-Each project can also be built using PowerShell scripts:
+Individual projects can be built directly with dotnet CLI:
 
 ```bash
-# Build Fake4DataverseAbstractions
-cd Fake4DataverseAbstractions
-pwsh ./build.ps1
+# Build a specific project
+dotnet build Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/Fake4Dataverse.Abstractions.csproj --configuration Debug
 
-# Build Fake4DataverseCore
-cd Fake4DataverseCore
-pwsh ./build.ps1
-
-# Build Fake4Dataverse
-cd Fake4Dataverse
-pwsh ./build.ps1
+# Build a specific test project
+dotnet build Fake4DataverseCore/Fake4Dataverse.Core.Tests/Fake4Dataverse.Core.Tests.csproj --configuration Debug
 ```
-
-#### Build Script Parameters
-- `targetFramework`: Specify target framework (default: "net8.0", use "all" for all targets)
-- `configuration`: Build configuration (e.g., "FAKE_XRM_EASY_9")
 
 ### Running Tests
 
@@ -135,13 +151,13 @@ cd <project-directory>
 dotnet test --configuration Debug --verbosity normal
 
 # Run all tests (including self-contained integration tests)
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net8.0
 
 # Run only unit tests (exclude integration tests if needed)
-dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test Fake4Dataverse.sln --configuration Debug --framework net8.0 --filter "FullyQualifiedName!~IntegrationTests"
 
 # Run only integration tests
-dotnet test Fake4DataverseService/tests/Fake4Dataverse.Service.IntegrationTests --configuration Debug --framework net8.0
+dotnet test Fake4DataverseService/Fake4Dataverse.Service.IntegrationTests --configuration Debug --framework net8.0
 ```
 
 ### Building and Testing the MDA App
@@ -149,7 +165,7 @@ dotnet test Fake4DataverseService/tests/Fake4Dataverse.Service.IntegrationTests 
 The Model-Driven App (MDA) front-end has its own build and test steps:
 
 ```bash
-cd Fake4DataverseService/mda-app
+cd Fake4DataverseService/Fake4Dataverse.Service/mda-app
 
 # Install dependencies
 npm ci
@@ -168,10 +184,15 @@ npm run test:e2e
 ```
 
 ### Local Package Build
+
+Use the CI workflow pack steps to create NuGet packages locally, or build directly:
+
 ```bash
-pwsh ./build-push-local.ps1
+# Pack all projects
+dotnet pack Fake4Dataverse.sln --configuration Debug --no-build --output ./nupkgs
 ```
-This creates a `local-packages` folder with the built NuGet packages.
+
+This creates NuGet packages in the `nupkgs` folder.
 
 ## Coding Standards and Conventions
 

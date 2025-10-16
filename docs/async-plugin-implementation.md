@@ -18,17 +18,17 @@ This implementation adds comprehensive async plugin execution support to Fake4Da
 ### Core Components
 
 1. **AsyncOperation** - Model class mirroring Dataverse's asyncoperation entity
-   - Location: `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/AsyncOperation.cs`
+   - Location: `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/Plugins/AsyncOperation.cs`
    - Tracks: State, Status, Type, Message, Entity, Timing, Errors
    - Methods: `CreateForPlugin()`, `ToEntity()`
 
 2. **IAsyncJobQueue** - Interface for managing async operations
-   - Location: `Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Plugins/IAsyncJobQueue.cs`
+   - Location: `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/Plugins/IAsyncJobQueue.cs`
    - Methods: Enqueue, Execute, ExecuteAll, WaitFor, WaitForAll, Get operations
    - Properties: PendingCount, CompletedCount, FailedCount, AutoExecute
 
 3. **AsyncJobQueue** - Implementation of async job queue
-   - Location: `Fake4DataverseCore/src/Fake4Dataverse.Core/AsyncJobQueue.cs`
+   - Location: `Fake4DataverseCore/Fake4Dataverse.Core/AsyncJobQueue.cs`
    - Thread-safe operations with locking
    - Supports both sync and async/await patterns
 

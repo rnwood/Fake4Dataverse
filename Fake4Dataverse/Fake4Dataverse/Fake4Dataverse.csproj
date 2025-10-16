@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <PackageId>Fake4Dataverse</PackageId>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <Authors>Rob Wood (Fake4Dataverse fork); Jordi Montaña (original FakeXrmEasy)</Authors>
+    <Company>Rob Wood</Company>
+    <Title>Fake4Dataverse</Title>
+    <PackageDescription>Fake4Dataverse is the open source test automation framework for .net core and the Power Platform. Forked from FakeXrmEasy v2.0.1 (MIT License).</PackageDescription>
+    <Copyright>(c) 2014 Jordi Montaña (original FakeXrmEasy); (c) 2025 Rob Wood (Fake4Dataverse fork)</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageIcon>Fake4DataverseLogo_128x128.png</PackageIcon>
+    <PackageTags>dynamics;crm;365;unit testing;xrm;mock;mocking;fake;fakes;cds;common data service;power platform;dataverse</PackageTags>
+    <RepositoryUrl>https://github.com/rnwood/fake-xrm-free</RepositoryUrl>
+    <Configurations>Debug</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    <None Include="../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>DEBUG;TRACE;FAKE_XRM_EASY_9</DefineConstants>
+  </PropertyGroup>
+
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <DefineConstants>$(DefineConstants);NET8_0;FAKE_XRM_EASY_NETCORE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.59" />
+    <PackageReference Include="Microsoft.CrmSdk.XrmTooling.CoreAssembly" Version="9.1.1.65" />
+  </ItemGroup>
+  
+  <ItemGroup>
+      <PackageReference Include="FakeItEasy" Version="8.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Fake4DataverseAbstractions\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Fake4DataverseCore\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj" />
+  </ItemGroup>
+</Project>

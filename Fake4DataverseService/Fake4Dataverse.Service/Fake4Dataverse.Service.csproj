@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>Fake4DataverseService</PackageId>
+    <VersionPrefix>4.0.0</VersionPrefix>
+    <Authors>Rob Wood (Fake4Dataverse fork); Jordi Montaña (original FakeXrmEasy)</Authors>
+    <Company>Rob Wood</Company>
+    <Title>Fake4Dataverse CLI Service</Title>
+    <PackageDescription>A CLI service that hosts a fake IOrganizationService backed by Fake4Dataverse. This service provides 100% compatibility with Microsoft Dataverse SDK types for testing and development purposes.</PackageDescription>
+    <Copyright>(c) 2025 Rob Wood (Fake4Dataverse fork)</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageIcon>Fake4DataverseLogo_128x128.png</PackageIcon>
+    <PackageTags>dynamics;crm;365;unit testing;xrm;mock;mocking;fake;fakes;cds;common data service;power platform;Fake4Dataverse;dataverse;service;cli;soap;wcf</PackageTags>
+    <RepositoryUrl>https://github.com/rnwood/fake-xrm-free</RepositoryUrl>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fake4dataverse</ToolCommandName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    <None Include="../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
+    <None Include="mda-app/**" Label="mda-app" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.4.0" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="CoreWCF.Http" Version="1.7.0" />
+    <PackageReference Include="CoreWCF.Primitives" Version="1.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Fake4DataverseCore\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj" />
+    <ProjectReference Include="..\..\Fake4DataverseCloudFlows\Fake4Dataverse.CloudFlows\Fake4Dataverse.CloudFlows.csproj" />
+  </ItemGroup>
+  
+  <!-- Copy CDM schema files to output directory for embedded file access -->
+  <ItemGroup>
+    <None Include="..\..\cdm-schema-files\*.json" Link="cdm-schema-files\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\cdm-schema-files\ATTRIBUTION.md" Link="cdm-schema-files\ATTRIBUTION.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Copy wwwroot directory to output for MDA static files -->
+  <ItemGroup>
+    <Content Include="wwwroot/**/*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>wwwroot/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>

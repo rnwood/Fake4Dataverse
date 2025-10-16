@@ -444,7 +444,7 @@ var query = new QueryExpression("contact") // Contact doesn't have parentcontact
 ## Implementation Details
 
 - **Files**: 
-  - `Fake4DataverseCore/src/Fake4Dataverse.Core/Query/ConditionExpressionExtensions.Hierarchical.cs`
-  - `Fake4DataverseCore/src/Fake4Dataverse.Core/Extensions/XmlExtensionsForFetchXml.cs`
+  - `Fake4DataverseCore/Fake4Dataverse.Core/Query/ConditionExpressionExtensions.Hierarchical.cs`
+  - `Fake4DataverseCore/Fake4Dataverse.Core/Extensions/XmlExtensionsForFetchXml.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/HierarchicalQueryTests/`
 - **Feature Parity**: Matches FakeXrmEasy v2+ behavior

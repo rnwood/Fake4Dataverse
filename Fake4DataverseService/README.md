@@ -70,7 +70,7 @@ dotnet fake4dataverse start --port 5000 --host localhost
 ### Option 3: Build from Source
 
 ```bash
-cd Fake4DataverseService/src/Fake4Dataverse.Service
+cd Fake4DataverseService/Fake4Dataverse.Service
 dotnet build -c Release
 ```
 

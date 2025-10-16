@@ -7,7 +7,7 @@ This implementation adds support for ImportSolutionRequest and ExportSolutionReq
 ## What Was Implemented
 
 ### 1. ImportSolutionRequestExecutor
-**File**: `/Fake4DataverseCore/src/Fake4Dataverse.Core/FakeMessageExecutors/ImportSolutionRequestExecutor.cs`
+**File**: `/Fake4DataverseCore/Fake4Dataverse.Core/FakeMessageExecutors/ImportSolutionRequestExecutor.cs`
 
 **Features**:
 - Full ZIP file parsing with validation
@@ -29,7 +29,7 @@ This implementation adds support for ImportSolutionRequest and ExportSolutionReq
 - https://learn.microsoft.com/en-us/power-apps/developer/data-platform/componentdefinition-entity
 
 ### 2. ExportSolutionRequestExecutor
-**File**: `/Fake4DataverseCore/src/Fake4Dataverse.Core/FakeMessageExecutors/ExportSolutionRequestExecutor.cs`
+**File**: `/Fake4DataverseCore/Fake4Dataverse.Core/FakeMessageExecutors/ExportSolutionRequestExecutor.cs`
 
 **Features**:
 - Solution lookup by unique name
@@ -98,7 +98,7 @@ System.InvalidOperationException : Failed to parse CDM JSON. Ensure the file is 
 
 **Impact**: All tests that extend Fake4DataverseTests are currently failing, including the new solution import/export tests.
 
-**Location**: `/Fake4DataverseCore/src/Fake4Dataverse.Core/Metadata/Cdm/CdmJsonParser.cs:533`
+**Location**: `/Fake4DataverseCore/Fake4Dataverse.Core/Metadata/Cdm/CdmJsonParser.cs:533`
 
 **Next Steps**:
 1. Fix the CDM JSON parsing issue (separate issue/PR needed)
@@ -295,7 +295,7 @@ Expected results: All 13 tests should pass
 The implementation builds successfully:
 
 ```bash
-dotnet build Fake4DataverseCore/src/Fake4Dataverse.Core/Fake4Dataverse.Core.csproj \
+dotnet build Fake4DataverseCore/Fake4Dataverse.Core/Fake4Dataverse.Core.csproj \
   --configuration Debug \
   --framework net8.0 \
   --no-restore
