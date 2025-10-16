@@ -54,6 +54,13 @@ namespace Fake4Dataverse
                 // Persist metadata to standard Dataverse tables
                 // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-metadata
                 PersistMetadataToTables(eMetadata);
+                
+                // Auto-create standard privileges for the entity
+                // Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges
+                if (SecurityConfiguration.SecurityEnabled)
+                {
+                    SecurityManager.PrivilegeManager.CreateStandardPrivilegesForEntity(eMetadata.LogicalName);
+                }
             }
         }
 

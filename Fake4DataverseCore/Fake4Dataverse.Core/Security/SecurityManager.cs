@@ -19,11 +19,19 @@ namespace Fake4Dataverse.Security
         private Guid? _rootOrganizationId;
         private Guid? _rootBusinessUnitId;
         private Guid? _systemAdministratorRoleId;
+        
+        private PrivilegeManager _privilegeManager;
 
         public SecurityManager(IXrmFakedContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _privilegeManager = new PrivilegeManager(context);
         }
+
+        /// <summary>
+        /// Gets the privilege manager for managing privileges and role assignments.
+        /// </summary>
+        public IPrivilegeManager PrivilegeManager => _privilegeManager;
 
         /// <summary>
         /// Gets the root organization ID. Creates the organization if it doesn't exist.

@@ -52,5 +52,10 @@ namespace Fake4Dataverse.Abstractions.Security
         /// <param name="teamId">The team ID</param>
         /// <returns>Array of role IDs assigned to the team</returns>
         Guid[] GetTeamRoles(Guid teamId);
+
+        /// <summary>
+        /// Gets the privilege manager for managing privileges and role assignments.
+        /// </summary>
+        IPrivilegeManager PrivilegeManager { get; }
     }
 }

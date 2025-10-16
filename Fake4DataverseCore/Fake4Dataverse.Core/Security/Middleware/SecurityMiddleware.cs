@@ -196,13 +196,15 @@ namespace Fake4Dataverse.Security.Middleware
 
         /// <summary>
         /// Validates that the caller has the specified access rights to the record.
+        /// Uses privilege-based security matching Dataverse behavior.
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/security-sharing-assigning
         /// </summary>
         private static void ValidateRecordLevelAccess(IXrmFakedContext context, string entityName, Guid recordId, EntityReference callerId, AccessRights requiredAccess)
         {
-            // If recordId is empty, this is a create operation - allow based on privilege
+            // If recordId is empty, this is a create operation - check create privilege
             if (recordId == Guid.Empty)
             {
+                CheckPrivilege(context, callerId.Id, entityName, requiredAccess);
                 return;
             }
 
@@ -213,15 +215,14 @@ namespace Fake4Dataverse.Security.Middleware
                 throw new InvalidOperationException($"Record {entityName} with ID {recordId} not found.");
             }
 
-            // Check if user owns the record
-            if (record.Contains("ownerid"))
+            // Check if user has the required privilege
+            var privilegeName = GetPrivilegeNameForAccess(entityName, requiredAccess);
+            var privilegeManager = context.SecurityManager.PrivilegeManager;
+            
+            // Check privilege with appropriate depth
+            if (CheckPrivilegeWithDepth(context, callerId.Id, record, privilegeName, requiredAccess))
             {
-                var ownerId = record.GetAttributeValue<EntityReference>("ownerid");
-                if (ownerId != null && ownerId.Id == callerId.Id)
-                {
-                    // User owns the record - allow access
-                    return;
-                }
+                return; // Access granted through privilege
             }
 
             // Check shared access through PrincipalObjectAccess
@@ -247,16 +248,131 @@ namespace Fake4Dataverse.Security.Middleware
                 }
             }
 
-            // Check business unit hierarchy if EnforcePrivilegeDepth is enabled
-            if (context.SecurityConfiguration.EnforcePrivilegeDepth)
-            {
-                // TODO: Implement business unit hierarchy checking
-                // This would check if the user's business unit has access based on privilege depth
-            }
-
             // If we get here, access is denied
             throw new UnauthorizedAccessException(
                 $"User {callerId.Id} does not have {requiredAccess} access to {entityName} record {recordId}.");
+        }
+
+        /// <summary>
+        /// Checks if user has privilege with appropriate depth based on record ownership and business unit.
+        /// </summary>
+        private static bool CheckPrivilegeWithDepth(IXrmFakedContext context, Guid userId, Entity record, string privilegeName, AccessRights requiredAccess)
+        {
+            var privilegeManager = context.SecurityManager.PrivilegeManager;
+            
+            // If not enforcing privilege depth, just check basic privilege
+            if (!context.SecurityConfiguration.EnforcePrivilegeDepth)
+            {
+                return privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthBasic);
+            }
+
+            // Check if user owns the record (Basic depth)
+            if (record.Contains("ownerid"))
+            {
+                var ownerId = record.GetAttributeValue<EntityReference>("ownerid");
+                if (ownerId != null && ownerId.Id == userId)
+                {
+                    // User owns the record - Basic depth is sufficient
+                    if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthBasic))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            // Get user's business unit
+            var user = context.GetEntityById("systemuser", userId);
+            if (user != null && user.Contains("businessunitid"))
+            {
+                var userBU = user.GetAttributeValue<EntityReference>("businessunitid");
+                
+                // Check if record belongs to user's business unit (Local depth)
+                if (record.Contains("owningbusinessunit"))
+                {
+                    var recordBU = record.GetAttributeValue<EntityReference>("owningbusinessunit");
+                    if (recordBU != null && userBU != null && recordBU.Id == userBU.Id)
+                    {
+                        if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthLocal))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                // Check Deep depth (business unit and child business units)
+                if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthDeep))
+                {
+                    // TODO: Implement business unit hierarchy checking
+                    // For now, treat Deep same as Local
+                    return true;
+                }
+            }
+
+            // Check Global depth (organization-wide)
+            if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthGlobal))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if user has the required privilege for an operation.
+        /// </summary>
+        private static void CheckPrivilege(IXrmFakedContext context, Guid userId, string entityName, AccessRights requiredAccess)
+        {
+            var privilegeName = GetPrivilegeNameForAccess(entityName, requiredAccess);
+            var privilegeManager = context.SecurityManager.PrivilegeManager;
+            
+            if (!privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthBasic))
+            {
+                throw new UnauthorizedAccessException(
+                    $"User {userId} does not have the required privilege '{privilegeName}' for {requiredAccess} access to {entityName}.");
+            }
+        }
+
+        /// <summary>
+        /// Gets the privilege name for a given access right and entity.
+        /// </summary>
+        private static string GetPrivilegeNameForAccess(string entityName, AccessRights accessRight)
+        {
+            var entityPascal = ToPascalCase(entityName);
+            
+            return accessRight switch
+            {
+                AccessRights.CreateAccess => $"prvCreate{entityPascal}",
+                AccessRights.ReadAccess => $"prvRead{entityPascal}",
+                AccessRights.WriteAccess => $"prvWrite{entityPascal}",
+                AccessRights.DeleteAccess => $"prvDelete{entityPascal}",
+                AccessRights.AppendAccess => $"prvAppend{entityPascal}",
+                AccessRights.AppendToAccess => $"prvAppendTo{entityPascal}",
+                AccessRights.AssignAccess => $"prvAssign{entityPascal}",
+                AccessRights.ShareAccess => $"prvShare{entityPascal}",
+                _ => $"prv{accessRight}{entityPascal}"
+            };
+        }
+
+        /// <summary>
+        /// Converts a logical name to PascalCase for privilege naming.
+        /// </summary>
+        private static string ToPascalCase(string logicalName)
+        {
+            if (string.IsNullOrWhiteSpace(logicalName))
+            {
+                return logicalName;
+            }
+
+            var parts = logicalName.Split('_');
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (parts[i].Length > 0)
+                {
+                    parts[i] = char.ToUpperInvariant(parts[i][0]) + parts[i].Substring(1);
+                }
+            }
+
+            return string.Join("", parts);
         }
 
         /// <summary>
