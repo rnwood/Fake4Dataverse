@@ -413,12 +413,19 @@ public class OrganizationServiceEndToEndTests
     [Fact]
     public void Should_Execute_Assign_Request_Via_WCF()
     {
-        // Arrange - Create an account
-        var account = new Entity("account") { ["name"] = "Assign Test Account" };
-        var accountId = _organizationService!.Create(account);
-
-        // Act - Assign to a new owner (using a fake user ID)
+        // Arrange - Create a systemuser and an account
         var newOwnerId = Guid.NewGuid();
+        var systemUser = new Entity("systemuser") 
+        { 
+            Id = newOwnerId,
+            ["fullname"] = "Test User"
+        };
+        _organizationService!.Create(systemUser);
+        
+        var account = new Entity("account") { ["name"] = "Assign Test Account" };
+        var accountId = _organizationService.Create(account);
+
+        // Act - Assign to the new owner
         var assignRequest = new AssignRequest
         {
             Target = new EntityReference("account", accountId),
