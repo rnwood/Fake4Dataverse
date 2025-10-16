@@ -7,6 +7,9 @@ packages/
 bin/
 obj/
 
+# MDA app build output
+Fake4DataverseService/Fake4Dataverse.Service/wwwroot/mda/
+
 # Test coverage
 coverage/
 *.opencover.xml
