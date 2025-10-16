@@ -164,6 +164,11 @@ public class ODataRestApiEndToEndTests : IDisposable
 
         // Assert - Should be NotFound since entity doesn't exist
         // In real scenario with valid ID, this would be 204 No Content
+        if (response.StatusCode != System.Net.HttpStatusCode.NotFound)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Assert.Fail($"Expected NotFound but got {response.StatusCode}. Response: {errorContent}");
+        }
         Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
     }
 

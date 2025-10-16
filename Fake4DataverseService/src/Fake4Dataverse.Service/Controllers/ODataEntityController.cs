@@ -346,11 +346,21 @@ namespace Fake4Dataverse.Service.Controllers
                 // Return 204 No Content (standard for OData delete operations)
                 return NoContent();
             }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("is not valid", StringComparison.OrdinalIgnoreCase))
+            {
+                // Entity type doesn't exist or entity doesn't exist
+                var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                    "0x80040217",
+                    $"Entity with id {id} not found or entity type does not exist",
+                    ex);
+                return NotFound(errorResponse);
+            }
             catch (FaultException<OrganizationServiceFault> ex)
             {
                 Console.WriteLine($"Caught FaultException<OrganizationServiceFault>: {ex.Message}");
                 // Check if it's an "entity does not exist" error
-                if (ex.Message.Contains("Does Not Exist", StringComparison.OrdinalIgnoreCase))
+                if (ex.Message.Contains("Does Not Exist", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
                 {
                     var errorResponse = ODataEntityConverter.CreateErrorResponse(
                         "0x80040217",
@@ -360,6 +370,26 @@ namespace Fake4Dataverse.Service.Controllers
                 }
                 
                 // Other fault exceptions
+                var generalErrorResponse = ODataEntityConverter.CreateErrorResponse(
+                    "0x80040217",
+                    $"Error deleting entity: {ex.Message}",
+                    ex);
+                return StatusCode(StatusCodes.Status500InternalServerError, generalErrorResponse);
+            }
+            catch (FaultException ex)
+            {
+                Console.WriteLine($"Caught FaultException: {ex.Message}");
+                // Check if it's an "entity does not exist" error  
+                if (ex.Message.Contains("Does Not Exist", StringComparison.OrdinalIgnoreCase) ||
+                    ex.Message.Contains("does not exist", StringComparison.OrdinalIgnoreCase))
+                {
+                    var errorResponse = ODataEntityConverter.CreateErrorResponse(
+                        "0x80040217",
+                        $"Entity with id {id} not found",
+                        ex);
+                    return NotFound(errorResponse);
+                }
+                
                 var generalErrorResponse = ODataEntityConverter.CreateErrorResponse(
                     "0x80040217",
                     $"Error deleting entity: {ex.Message}",
