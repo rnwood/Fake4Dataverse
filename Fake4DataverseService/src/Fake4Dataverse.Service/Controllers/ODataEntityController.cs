@@ -72,6 +72,12 @@ namespace Fake4Dataverse.Service.Controllers
         [Produces("application/json")]
         public IActionResult ListEntities(string entityPluralName)
         {
+            // EntityDefinitions should be handled by MetadataController, not here
+            if (entityPluralName.Equals("EntityDefinitions", StringComparison.OrdinalIgnoreCase))
+            {
+                return NotFound(new { error = new { code = "0x80040217", message = "EntityDefinitions should use metadata endpoints" } });
+            }
+            
             try
             {
                 // Get OData query parameters from request
@@ -164,6 +170,12 @@ namespace Fake4Dataverse.Service.Controllers
         [Produces("application/json")]
         public IActionResult GetEntity(string entityPluralName, Guid id)
         {
+            // EntityDefinitions should be handled by MetadataController, not here
+            if (entityPluralName.Equals("EntityDefinitions", StringComparison.OrdinalIgnoreCase))
+            {
+                return NotFound(new { error = new { code = "0x80040217", message = "EntityDefinitions should use metadata endpoints" } });
+            }
+            
             try
             {
                 var entityLogicalName = ConvertPluralToSingular(entityPluralName);

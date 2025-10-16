@@ -121,7 +121,7 @@ namespace Fake4Dataverse.Service.Controllers
         /// The Web API supports alternate key syntax to retrieve entities by natural keys.
         /// For EntityMetadata, LogicalName is a commonly used alternate key.
         /// </summary>
-        [HttpGet("EntityDefinitions(LogicalName='{logicalName}')")]
+        [HttpGet("EntityDefinitions(LogicalName='{logicalName}')", Order = -1)]
         [EnableQuery]
         [Produces("application/json")]
         public IActionResult GetEntityDefinitionByLogicalName(string logicalName)
