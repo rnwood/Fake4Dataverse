@@ -43,8 +43,11 @@ namespace Fake4Dataverse.Security
         /// - prvDelete{EntityName} - Delete privilege
         /// - prvAppend{EntityName} - Append privilege
         /// - prvAppendTo{EntityName} - AppendTo privilege
-        /// - prvAssign{EntityName} - Assign privilege
-        /// - prvShare{EntityName} - Share privilege
+        /// - prvAssign{EntityName} - Assign privilege (not for organization-owned entities)
+        /// - prvShare{EntityName} - Share privilege (not for organization-owned entities)
+        /// 
+        /// Organization-owned entities (like system tables) have no owner and support only Organization scope.
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security#organization-owned-entities
         /// </summary>
         public void CreateStandardPrivilegesForEntity(string entityLogicalName)
         {
@@ -61,30 +64,73 @@ namespace Fake4Dataverse.Security
 
             var entityName = entityMetadata.LogicalName;
             var privilegePrefix = "prv";
+            
+            // Determine if entity is organization-owned
+            // Organization-owned entities don't have ownerid/owninguser attributes
+            // Common examples: systemuser, businessunit, role, privilege, organization
+            bool isOrganizationOwned = IsOrganizationOwnedEntity(entityName);
 
             // Define standard privileges
             var standardPrivileges = new[]
             {
-                new { Name = $"{privilegePrefix}Create{ToPascalCase(entityName)}", AccessRight = AccessRights.CreateAccess },
-                new { Name = $"{privilegePrefix}Read{ToPascalCase(entityName)}", AccessRight = AccessRights.ReadAccess },
-                new { Name = $"{privilegePrefix}Write{ToPascalCase(entityName)}", AccessRight = AccessRights.WriteAccess },
-                new { Name = $"{privilegePrefix}Delete{ToPascalCase(entityName)}", AccessRight = AccessRights.DeleteAccess },
-                new { Name = $"{privilegePrefix}Append{ToPascalCase(entityName)}", AccessRight = AccessRights.AppendAccess },
-                new { Name = $"{privilegePrefix}AppendTo{ToPascalCase(entityName)}", AccessRight = AccessRights.AppendToAccess },
-                new { Name = $"{privilegePrefix}Assign{ToPascalCase(entityName)}", AccessRight = AccessRights.AssignAccess },
-                new { Name = $"{privilegePrefix}Share{ToPascalCase(entityName)}", AccessRight = AccessRights.ShareAccess }
+                new { Name = $"{privilegePrefix}Create{ToPascalCase(entityName)}", AccessRight = AccessRights.CreateAccess, SkipForOrgOwned = false },
+                new { Name = $"{privilegePrefix}Read{ToPascalCase(entityName)}", AccessRight = AccessRights.ReadAccess, SkipForOrgOwned = false },
+                new { Name = $"{privilegePrefix}Write{ToPascalCase(entityName)}", AccessRight = AccessRights.WriteAccess, SkipForOrgOwned = false },
+                new { Name = $"{privilegePrefix}Delete{ToPascalCase(entityName)}", AccessRight = AccessRights.DeleteAccess, SkipForOrgOwned = false },
+                new { Name = $"{privilegePrefix}Append{ToPascalCase(entityName)}", AccessRight = AccessRights.AppendAccess, SkipForOrgOwned = true },
+                new { Name = $"{privilegePrefix}AppendTo{ToPascalCase(entityName)}", AccessRight = AccessRights.AppendToAccess, SkipForOrgOwned = true },
+                new { Name = $"{privilegePrefix}Assign{ToPascalCase(entityName)}", AccessRight = AccessRights.AssignAccess, SkipForOrgOwned = true },
+                new { Name = $"{privilegePrefix}Share{ToPascalCase(entityName)}", AccessRight = AccessRights.ShareAccess, SkipForOrgOwned = true }
             };
 
             foreach (var priv in standardPrivileges)
             {
-                CreatePrivilegeIfNotExists(priv.Name, entityName, (int)priv.AccessRight);
+                // Skip Assign/Share/Append/AppendTo privileges for organization-owned entities
+                if (isOrganizationOwned && priv.SkipForOrgOwned)
+                {
+                    continue;
+                }
+                
+                CreatePrivilegeIfNotExists(priv.Name, entityName, (int)priv.AccessRight, isOrganizationOwned);
             }
         }
 
         /// <summary>
-        /// Creates a privilege if it doesn't already exist.
+        /// Determines if an entity is organization-owned (has no owner).
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security#organization-owned-entities
         /// </summary>
-        private void CreatePrivilegeIfNotExists(string privilegeName, string entityName, int accessRight)
+        private bool IsOrganizationOwnedEntity(string entityName)
+        {
+            // System tables are organization-owned
+            var organizationOwnedEntities = new[]
+            {
+                "organization",
+                "businessunit", 
+                "systemuser",
+                "team",
+                "role",
+                "privilege",
+                "roleprivileges",
+                "entitydefinition",
+                "attribute",
+                "solution",
+                "publisher",
+                "webresource",
+                "sitemap",
+                "appmodule",
+                "appmodulecomponent",
+                "savedquery",
+                "systemform"
+            };
+
+            return organizationOwnedEntities.Contains(entityName.ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// Creates a privilege if it doesn't already exist.
+        /// Organization-owned entities support only Organization scope.
+        /// </summary>
+        private void CreatePrivilegeIfNotExists(string privilegeName, string entityName, int accessRight, bool isOrganizationOwned = false)
         {
             // Check if privilege already exists
             var existingPrivilege = _context.CreateQuery("privilege")
@@ -97,16 +143,18 @@ namespace Fake4Dataverse.Security
             }
 
             // Create the privilege
+            // Organization-owned entities support only Organization (Global) scope
+            // User-owned entities support Basic, Local, Deep, and Global scopes
             var privilege = new Entity("privilege")
             {
                 Id = Guid.NewGuid(),
                 ["name"] = privilegeName,
                 ["accessright"] = accessRight,
-                ["canbebasic"] = true,
-                ["canbelocal"] = true,
-                ["canbedeep"] = true,
-                ["canbeglobal"] = true,
-                ["canbeprivate"] = true
+                ["canbebasic"] = !isOrganizationOwned,
+                ["canbelocal"] = !isOrganizationOwned,
+                ["canbedeep"] = !isOrganizationOwned,
+                ["canbeglobal"] = true,  // All entities support global/organization scope
+                ["canbeprivate"] = !isOrganizationOwned
             };
 
             _context.AddEntity(privilege);
@@ -115,9 +163,18 @@ namespace Fake4Dataverse.Security
         /// <summary>
         /// Checks if a user has a specific privilege through their assigned roles.
         /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges
+        /// 
+        /// System Administrator role grants all privileges implicitly (not materialized).
         /// </summary>
         public bool HasPrivilege(Guid userId, string privilegeName, int requiredDepth = PrivilegeDepthBasic)
         {
+            // System Administrator has all privileges implicitly (not materialized in database)
+            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/database-security#system-administrator-role
+            if (_context.SecurityManager.IsSystemAdministrator(userId))
+            {
+                return true;
+            }
+
             // Get user's roles
             var userRoles = _context.SecurityManager.GetUserRoles(userId);
             if (userRoles == null || userRoles.Length == 0)

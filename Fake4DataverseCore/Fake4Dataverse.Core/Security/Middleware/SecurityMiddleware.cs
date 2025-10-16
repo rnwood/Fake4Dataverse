@@ -150,6 +150,13 @@ namespace Fake4Dataverse.Security.Middleware
                 throw new UnauthorizedAccessException("No caller specified. Cannot retrieve records without a user context.");
             }
 
+            // System tables are readable by everyone
+            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security#system-tables
+            if (IsSystemTable(target.LogicalName))
+            {
+                return; // Allow read access to system tables for all users
+            }
+
             if (context.SecurityConfiguration.EnforceRecordLevelSecurity)
             {
                 ValidateRecordLevelAccess(context, target.LogicalName, target.Id, callerId, AccessRights.ReadAccess);
@@ -163,6 +170,7 @@ namespace Fake4Dataverse.Security.Middleware
                 throw new UnauthorizedAccessException("No caller specified. Cannot retrieve records without a user context.");
             }
 
+            // System tables are readable by everyone - no filtering needed
             // For RetrieveMultiple, we would filter results based on record-level security
             // This is a complex operation that requires filtering the result set
             // For now, we'll allow the query to proceed and filter results in the CRUD layer
@@ -255,10 +263,18 @@ namespace Fake4Dataverse.Security.Middleware
 
         /// <summary>
         /// Checks if user has privilege with appropriate depth based on record ownership and business unit.
+        /// Organization-owned entities don't have owners and only check for Global privilege.
         /// </summary>
         private static bool CheckPrivilegeWithDepth(IXrmFakedContext context, Guid userId, Entity record, string privilegeName, AccessRights requiredAccess)
         {
             var privilegeManager = context.SecurityManager.PrivilegeManager;
+            
+            // Organization-owned entities don't have owners, only check for Global privilege
+            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security#organization-owned-entities
+            if (IsSystemTable(record.LogicalName))
+            {
+                return privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthGlobal);
+            }
             
             // If not enforcing privilege depth, just check basic privilege
             if (!context.SecurityConfiguration.EnforcePrivilegeDepth)
@@ -403,6 +419,37 @@ namespace Fake4Dataverse.Security.Middleware
                 // For now, we'll allow all field updates if the attribute exists
                 // TODO: Implement full field-level security checking
             }
+        }
+
+        /// <summary>
+        /// Determines if an entity is a system table.
+        /// System tables are readable by everyone.
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security#system-tables
+        /// </summary>
+        private static bool IsSystemTable(string entityName)
+        {
+            var systemTables = new[]
+            {
+                "organization",
+                "businessunit",
+                "systemuser",
+                "team",
+                "role",
+                "privilege",
+                "roleprivileges",
+                "entitydefinition",
+                "attribute",
+                "solution",
+                "publisher",
+                "webresource",
+                "sitemap",
+                "appmodule",
+                "appmodulecomponent",
+                "savedquery",
+                "systemform"
+            };
+
+            return systemTables.Contains(entityName.ToLowerInvariant());
         }
     }
 }
