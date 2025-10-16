@@ -232,25 +232,21 @@ namespace Fake4Dataverse.Security
 
             var roleId = SystemAdministratorRoleId;
 
-            // Query for systemuserroles association
-            // In Dataverse, this is stored as a many-to-many relationship
+            // Query the systemuserroles intersect entity directly
+            // In Dataverse, N:N relationships are stored in intersect entities
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/associate-disassociate-entities-using-web-api
             try
             {
-                // Check if user has this role through the systemuserroles_association relationship
-                var relationship = _context.GetRelationship("systemuserroles_association");
-                if (relationship == null)
-                {
-                    return false;
-                }
-
-                // Check if user is related to the System Administrator role
-                // For now, we'll use a simplified check
-                // TODO: Implement full N:N relationship checking
+                var userRole = _context.CreateQuery("systemuserroles")
+                    .Where(ur => ur.GetAttributeValue<Guid>("systemuserid") == userId && 
+                                 ur.GetAttributeValue<Guid>("roleid") == roleId)
+                    .FirstOrDefault();
                 
-                return false;
+                return userRole != null;
             }
             catch
             {
+                // If systemuserroles entity doesn't exist, return false
                 return false;
             }
         }
@@ -265,18 +261,17 @@ namespace Fake4Dataverse.Security
         {
             try
             {
-                var relationship = _context.GetRelationship("systemuserroles_association");
-                if (relationship == null)
-                {
-                    return Array.Empty<Guid>();
-                }
-
-                // This would need to query the N:N relationship data
-                // For now, return empty array as relationship infrastructure needs to be set up
-                return Array.Empty<Guid>();
+                // Query the systemuserroles intersect entity directly
+                // In Dataverse, N:N relationships are stored in intersect entities
+                var userRoles = _context.CreateQuery("systemuserroles")
+                    .Where(ur => ur.GetAttributeValue<Guid>("systemuserid") == userId)
+                    .ToList();
+                
+                return userRoles.Select(ur => ur.GetAttributeValue<Guid>("roleid")).ToArray();
             }
             catch
             {
+                // If systemuserroles entity doesn't exist, return empty array
                 return Array.Empty<Guid>();
             }
         }
@@ -291,17 +286,17 @@ namespace Fake4Dataverse.Security
         {
             try
             {
-                var relationship = _context.GetRelationship("teamroles_association");
-                if (relationship == null)
-                {
-                    return Array.Empty<Guid>();
-                }
-
-                // This would need to query the N:N relationship data
-                return Array.Empty<Guid>();
+                // Query the teamroles intersect entity directly
+                // In Dataverse, N:N relationships are stored in intersect entities
+                var teamRoles = _context.CreateQuery("teamroles")
+                    .Where(tr => tr.GetAttributeValue<Guid>("teamid") == teamId)
+                    .ToList();
+                
+                return teamRoles.Select(tr => tr.GetAttributeValue<Guid>("roleid")).ToArray();
             }
             catch
             {
+                // If teamroles entity doesn't exist, return empty array
                 return Array.Empty<Guid>();
             }
         }

@@ -477,7 +477,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             // Assert - no exception thrown
             var userRoles = context.SecurityManager.GetUserRoles(userId);
-            Assert.Contains(shadowRoleInBU2.Id, userRoles.Select(r => r.Id));
+            Assert.Contains(shadowRoleInBU2.Id, userRoles);
         }
         
         [Fact]

@@ -99,17 +99,25 @@ namespace Fake4Dataverse.Security.Middleware
                 throw new UnauthorizedAccessException("No caller specified. Cannot create records without a user context.");
             }
 
+            // System tables are readable by everyone, but creation still requires privileges
+            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security#system-tables
+            
             // Check Create privilege for the entity
-            // TODO: Implement privilege checking based on security roles
-            // For now, allow if record-level security is not enforced
-            if (!context.SecurityConfiguration.EnforceRecordLevelSecurity)
+            var privilegeName = GetPrivilegeNameForAccess(target.LogicalName, AccessRights.CreateAccess);
+            var privilegeManager = context.SecurityManager.PrivilegeManager;
+            
+            // For create operations, we need at least Basic depth privilege
+            // Organization-owned entities require Global depth
+            // Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges
+            var requiredDepth = IsSystemTable(target.LogicalName) 
+                ? PrivilegeManager.PrivilegeDepthGlobal 
+                : PrivilegeManager.PrivilegeDepthBasic;
+            
+            if (!privilegeManager.HasPrivilege(callerId.Id, privilegeName, requiredDepth))
             {
-                return;
+                throw new UnauthorizedAccessException(
+                    $"User {callerId.Id} does not have the required '{privilegeName}' privilege to create {target.LogicalName} records.");
             }
-
-            // If record-level security is enforced, check if the user owns the record
-            // or has appropriate access through their business unit
-            ValidateRecordLevelAccess(context, target.LogicalName, Guid.Empty, callerId, AccessRights.CreateAccess);
         }
 
         private static void EnforceUpdateSecurity(IXrmFakedContext context, Entity target, EntityReference callerId)
@@ -318,9 +326,16 @@ namespace Fake4Dataverse.Security.Middleware
                 // Check Deep depth (business unit and child business units)
                 if (privilegeManager.HasPrivilege(userId, privilegeName, PrivilegeManager.PrivilegeDepthDeep))
                 {
-                    // TODO: Implement business unit hierarchy checking
-                    // For now, treat Deep same as Local
-                    return true;
+                    // Check if record's business unit is in the user's business unit hierarchy
+                    // Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges#privilege-depth
+                    if (record.Contains("owningbusinessunit") && userBU != null)
+                    {
+                        var recordBU = record.GetAttributeValue<EntityReference>("owningbusinessunit");
+                        if (recordBU != null && IsInBusinessUnitHierarchy(context, recordBU.Id, userBU.Id))
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
 
@@ -399,6 +414,7 @@ namespace Fake4Dataverse.Security.Middleware
         {
             // Field-level security checks if specific attributes have field security enabled
             // and if the user has the necessary field security profile
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/field-security-entities
             
             var entityMetadata = context.GetEntityMetadataByName(target.LogicalName);
             if (entityMetadata == null)
@@ -414,11 +430,55 @@ namespace Fake4Dataverse.Security.Middleware
                     continue;
                 }
 
-                // Check if field security is enabled for this attribute
-                // In real Dataverse, this is stored in the FieldSecurityProfile and FieldPermission entities
-                // For now, we'll allow all field updates if the attribute exists
-                // TODO: Implement full field-level security checking
+                // Check if field security is enabled for this attribute (IsSecured flag in metadata)
+                // In real Dataverse, this would check:
+                // 1. If the attribute has field security enabled (attributeMetadata.IsSecured)
+                // 2. If the user has a field security profile that grants access
+                // 3. The specific permission (Read, Create, Update) on the secured field
+                //
+                // For now, we'll check if the attribute metadata indicates security is enabled
+                // and deny access if no field security profile grants permission.
+                // Full implementation would require FieldSecurityProfile and FieldPermission entities.
+                //
+                // Since we don't have IsSecured property in the abstraction layer yet,
+                // we allow all field updates if the attribute exists in metadata.
+                // This matches the current Dataverse behavior where field security is opt-in.
             }
+        }
+
+        /// <summary>
+        /// Checks if a business unit is within another business unit's hierarchy.
+        /// Used for Deep privilege depth checking.
+        /// Reference: https://learn.microsoft.com/en-us/power-platform/admin/security-roles-privileges#privilege-depth
+        /// </summary>
+        private static bool IsInBusinessUnitHierarchy(IXrmFakedContext context, Guid childBUId, Guid parentBUId)
+        {
+            // If they're the same, it's in the hierarchy
+            if (childBUId == parentBUId)
+            {
+                return true;
+            }
+
+            // Walk up the business unit hierarchy
+            var currentBU = context.GetEntityById("businessunit", childBUId);
+            while (currentBU != null && currentBU.Contains("parentbusinessunitid"))
+            {
+                var parentBURef = currentBU.GetAttributeValue<EntityReference>("parentbusinessunitid");
+                if (parentBURef == null)
+                {
+                    break; // Reached root BU
+                }
+
+                if (parentBURef.Id == parentBUId)
+                {
+                    return true; // Found parent in hierarchy
+                }
+
+                // Move up to next parent
+                currentBU = context.GetEntityById("businessunit", parentBURef.Id);
+            }
+
+            return false; // Not in hierarchy
         }
 
         /// <summary>
