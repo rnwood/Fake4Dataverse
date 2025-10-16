@@ -127,6 +127,14 @@
                 "description": "Unique identifier of the root role in the hierarchy."
               },
               {
+                "name": "roleTemplateId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "sourceName": "roletemplateid",
+                "displayName": "Role Template",
+                "description": "Unique identifier of the role template that is associated with the role."
+              },
+              {
                 "name": "isManaged",
                 "purpose": "hasA",
                 "dataType": "boolean",

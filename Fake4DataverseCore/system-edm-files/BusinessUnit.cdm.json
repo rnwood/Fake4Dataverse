@@ -107,6 +107,22 @@
                 "description": "Unique identifier of the organization associated with the business unit."
               },
               {
+                "name": "calendarId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "sourceName": "calendarid",
+                "displayName": "Calendar",
+                "description": "Fiscal calendar associated with the business unit."
+              },
+              {
+                "name": "transactionCurrencyId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "sourceName": "transactioncurrencyid",
+                "displayName": "Currency",
+                "description": "Unique identifier of the currency associated with the business unit."
+              },
+              {
                 "name": "isDisabled",
                 "purpose": "hasA",
                 "dataType": "boolean",
