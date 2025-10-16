@@ -18,8 +18,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
-    <None Include="../../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    <None Include="../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -45,7 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Fake4DataverseAbstractions\src\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\Fake4DataverseCore\src\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj" />
+    <ProjectReference Include="..\..\Fake4DataverseAbstractions\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Fake4DataverseCore\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj" />
   </ItemGroup>
 </Project>

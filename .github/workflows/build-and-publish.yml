@@ -92,41 +92,41 @@ jobs:
         Write-Host "Is prerelease: $(if ($isPrereleaseTag -or $versionSuffix) { 'true' } else { 'false' })"
 
     - name: Restore
-      run: dotnet restore Fake4DataverseFree.sln
+      run: dotnet restore Fake4Dataverse.sln
 
     - name: Build
-      run: dotnet build Fake4DataverseFree.sln --configuration Debug --no-restore
+      run: dotnet build Fake4Dataverse.sln --configuration Debug --no-restore
 
     - name: Test net8.0
-      run: dotnet test Fake4DataverseFree.sln --configuration Debug --framework net8.0 --no-build --verbosity normal
+      run: dotnet test Fake4Dataverse.sln --configuration Debug --framework net8.0 --no-build --verbosity normal
 
     - name: Test net462
       run: |
         # Skip Service and CloudFlows tests on net462 since they only target net8.0
-        dotnet test Fake4DataverseAbstractions/tests/Fake4Dataverse.Abstractions.Tests/Fake4Dataverse.Abstractions.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
-        dotnet test Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/Fake4Dataverse.Core.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
-        dotnet test Fake4Dataverse/tests/Fake4Dataverse.Tests/Fake4Dataverse.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
+        dotnet test Fake4DataverseAbstractions/Fake4Dataverse.Abstractions.Tests/Fake4Dataverse.Abstractions.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
+        dotnet test Fake4DataverseCore/Fake4Dataverse.Core.Tests/Fake4Dataverse.Core.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
+        dotnet test Fake4Dataverse/Fake4Dataverse.Tests/Fake4Dataverse.Tests.csproj --configuration Debug --framework net462 --no-build --verbosity normal
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: Fake4DataverseService/mda-app/package-lock.json
+        cache-dependency-path: Fake4DataverseService/Fake4Dataverse.Service/mda-app/package-lock.json
     
     - name: Install Node dependencies
-      working-directory: Fake4DataverseService/mda-app
+      working-directory: Fake4DataverseService/Fake4Dataverse.Service/mda-app
       run: npm ci
     
     - name: Run MDA unit tests
-      working-directory: Fake4DataverseService/mda-app
+      working-directory: Fake4DataverseService/Fake4Dataverse.Service/mda-app
       run: npm test -- --ci --coverage --maxWorkers=2
     
     - name: Upload coverage reports
       uses: codecov/codecov-action@v4
       if: always()
       with:
-        files: ./Fake4DataverseService/mda-app/coverage/lcov.info
+        files: ./Fake4DataverseService/Fake4Dataverse.Service/mda-app/coverage/lcov.info
         flags: mda-unit-tests
         name: mda-coverage
       env:
@@ -134,15 +134,15 @@ jobs:
       continue-on-error: true
     
     - name: Build Next.js app
-      working-directory: Fake4DataverseService/mda-app
+      working-directory: Fake4DataverseService/Fake4Dataverse.Service/mda-app
       run: npm run build
     
     - name: Install Playwright browsers
-      working-directory: Fake4DataverseService/mda-app
+      working-directory: Fake4DataverseService/Fake4Dataverse.Service/mda-app
       run: npx playwright install --with-deps chromium
     
     - name: Run E2E tests with Playwright
-      working-directory: Fake4DataverseService/mda-app
+      working-directory: Fake4DataverseService/Fake4Dataverse.Service/mda-app
       run: npm run test:e2e
     
     - name: Upload Playwright report
@@ -150,7 +150,7 @@ jobs:
       if: always()
       with:
         name: playwright-report
-        path: Fake4DataverseService/mda-app/playwright-report/
+        path: Fake4DataverseService/Fake4Dataverse.Service/mda-app/playwright-report/
         retention-days: 30
     
     - name: Upload test results
@@ -158,7 +158,7 @@ jobs:
       if: always()
       with:
         name: mda-test-results
-        path: Fake4DataverseService/mda-app/test-results/
+        path: Fake4DataverseService/Fake4Dataverse.Service/mda-app/test-results/
         retention-days: 30
 
     - name: Pack Fake4Dataverse.Abstractions
@@ -171,7 +171,7 @@ jobs:
         Write-Host "  Version suffix: $versionSuffix"
 
         $packArgs = @(
-          'Fake4DataverseAbstractions/src/Fake4Dataverse.Abstractions/Fake4Dataverse.Abstractions.csproj',
+          'Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/Fake4Dataverse.Abstractions.csproj',
           '--configuration', 'Debug',
           '--no-build',
           '--output', './nupkgs'
@@ -198,7 +198,7 @@ jobs:
         Write-Host "  Version suffix: $versionSuffix"
 
         $packArgs = @(
-          'Fake4DataverseCore/src/Fake4Dataverse.Core/Fake4Dataverse.Core.csproj',
+          'Fake4DataverseCore/Fake4Dataverse.Core/Fake4Dataverse.Core.csproj',
           '--configuration', 'Debug',
           '--no-build',
           '--output', './nupkgs'
@@ -225,7 +225,7 @@ jobs:
         Write-Host "  Version suffix: $versionSuffix"
 
         $packArgs = @(
-          'Fake4Dataverse/src/Fake4Dataverse/Fake4Dataverse.csproj',
+          'Fake4Dataverse/Fake4Dataverse/Fake4Dataverse.csproj',
           '--configuration', 'Debug',
           '--no-build',
           '--output', './nupkgs'
@@ -252,7 +252,7 @@ jobs:
         Write-Host "  Version suffix: $versionSuffix"
 
         $packArgs = @(
-          'Fake4DataverseService/src/Fake4Dataverse.Service/Fake4Dataverse.Service.csproj',
+          'Fake4DataverseService/Fake4Dataverse.Service/Fake4Dataverse.Service.csproj',
           '--configuration', 'Debug',
           '--no-build',
           '--output', './nupkgs'

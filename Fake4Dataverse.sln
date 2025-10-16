@@ -7,43 +7,43 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Fake4DataverseAbstractions"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F2891E2B-3F2F-2718-72F2-096F70D30A97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Abstractions", "Fake4DataverseAbstractions\src\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj", "{4BB8C275-BA62-485E-8F1D-36E9FC0DB9C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Abstractions", "Fake4DataverseAbstractions\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj", "{4BB8C275-BA62-485E-8F1D-36E9FC0DB9C1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{3635BF71-6E28-00B7-6995-FF0886FCE51A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Abstractions.Tests", "Fake4DataverseAbstractions\tests\Fake4Dataverse.Abstractions.Tests\Fake4Dataverse.Abstractions.Tests.csproj", "{0B1D7288-E523-444A-8831-0A04349A0123}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Abstractions.Tests", "Fake4DataverseAbstractions\Fake4Dataverse.Abstractions.Tests\Fake4Dataverse.Abstractions.Tests.csproj", "{0B1D7288-E523-444A-8831-0A04349A0123}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Fake4DataverseCore", "Fake4DataverseCore", "{09FF767E-0E9C-FF2C-F325-53317B5487EC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6A765392-F65A-FB26-7EB0-AE5D87E1C0F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Core", "Fake4DataverseCore\src\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj", "{C7D744FF-D642-4B94-BD81-55A7E81BA4B2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Core", "Fake4DataverseCore\Fake4Dataverse.Core\Fake4Dataverse.Core.csproj", "{C7D744FF-D642-4B94-BD81-55A7E81BA4B2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{055CC6AB-2088-5AF0-ECFD-464EDA4CBF8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Core.Tests", "Fake4DataverseCore\tests\Fake4Dataverse.Core.Tests\Fake4Dataverse.Core.Tests.csproj", "{779CB643-978C-4D1A-AEEE-FDEC947E4C9F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Core.Tests", "Fake4DataverseCore\Fake4Dataverse.Core.Tests\Fake4Dataverse.Core.Tests.csproj", "{779CB643-978C-4D1A-AEEE-FDEC947E4C9F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Fake4Dataverse", "Fake4Dataverse", "{ACB571F4-FAB8-F362-DC53-6A1F11D76ACF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{103BF730-FD96-80C7-4CC7-6179574EDADC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse", "Fake4Dataverse\src\Fake4Dataverse\Fake4Dataverse.csproj", "{061C9728-EED8-411B-AC8A-4F740C0BF921}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse", "Fake4Dataverse\Fake4Dataverse\Fake4Dataverse.csproj", "{061C9728-EED8-411B-AC8A-4F740C0BF921}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4DE1386F-197A-AC13-67B7-DA1E9DEF4CD8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Tests", "Fake4Dataverse\tests\Fake4Dataverse.Tests\Fake4Dataverse.Tests.csproj", "{4D2D4614-7A5B-48D2-8AF8-A42BE60EBD49}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Tests", "Fake4Dataverse\Fake4Dataverse.Tests\Fake4Dataverse.Tests.csproj", "{4D2D4614-7A5B-48D2-8AF8-A42BE60EBD49}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Fake4DataverseService", "Fake4DataverseService", "{7026A9A1-AB4F-E12C-04FD-EBA544125FD6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2DE68AAB-3AA0-CF3A-3C08-C68BF4CCAF5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Service", "Fake4DataverseService\src\Fake4Dataverse.Service\Fake4Dataverse.Service.csproj", "{7E5BCAD4-7795-447A-8A6A-3F297A68393A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Service", "Fake4DataverseService\Fake4Dataverse.Service\Fake4Dataverse.Service.csproj", "{7E5BCAD4-7795-447A-8A6A-3F297A68393A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B48F1246-51EC-A51C-ABAF-BBF8736814D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Service.Tests", "Fake4DataverseService\tests\Fake4Dataverse.Service.Tests\Fake4Dataverse.Service.Tests.csproj", "{AB0662A7-3B62-41E2-95AD-9E414D799B70}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Service.Tests", "Fake4DataverseService\Fake4Dataverse.Service.Tests\Fake4Dataverse.Service.Tests.csproj", "{AB0662A7-3B62-41E2-95AD-9E414D799B70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Service.IntegrationTests", "Fake4DataverseService\tests\Fake4Dataverse.Service.IntegrationTests\Fake4Dataverse.Service.IntegrationTests.csproj", "{3F497949-98FC-4A1D-A61D-56ACFD8AC99F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fake4Dataverse.Service.IntegrationTests", "Fake4DataverseService\Fake4Dataverse.Service.IntegrationTests\Fake4Dataverse.Service.IntegrationTests.csproj", "{3F497949-98FC-4A1D-A61D-56ACFD8AC99F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

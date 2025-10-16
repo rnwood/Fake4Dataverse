@@ -19,8 +19,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
-    <None Include="../../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    <None Include="../Fake4DataverseLogo_128x128.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -52,25 +52,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Fake4DataverseAbstractions\src\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj" />
+    <ProjectReference Include="..\..\Fake4DataverseAbstractions\Fake4Dataverse.Abstractions\Fake4Dataverse.Abstractions.csproj" />
   </ItemGroup>
 
   <!-- Embed system entity EDM schema files as resources -->
   <ItemGroup>
-    <EmbeddedResource Include="..\..\system-edm-files\Solution.cdm.json" Link="Metadata\Cdm\SystemEntities\Solution.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\SolutionComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\SolutionComponent.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\ComponentDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\ComponentDefinition.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\AppModule.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModule.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\SiteMap.cdm.json" Link="Metadata\Cdm\SystemEntities\SiteMap.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\SavedQuery.cdm.json" Link="Metadata\Cdm\SystemEntities\SavedQuery.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\SystemForm.cdm.json" Link="Metadata\Cdm\SystemEntities\SystemForm.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\WebResource.cdm.json" Link="Metadata\Cdm\SystemEntities\WebResource.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\AppModuleComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModuleComponent.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\EntityDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityDefinition.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\Attribute.cdm.json" Link="Metadata\Cdm\SystemEntities\Attribute.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\RelationshipDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\RelationshipDefinition.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\OptionSetDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\OptionSetDefinition.cdm.json" />
-    <EmbeddedResource Include="..\..\system-edm-files\EntityKeyDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityKeyDefinition.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\Solution.cdm.json" Link="Metadata\Cdm\SystemEntities\Solution.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\SolutionComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\SolutionComponent.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\ComponentDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\ComponentDefinition.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\AppModule.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModule.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\SiteMap.cdm.json" Link="Metadata\Cdm\SystemEntities\SiteMap.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\SavedQuery.cdm.json" Link="Metadata\Cdm\SystemEntities\SavedQuery.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\SystemForm.cdm.json" Link="Metadata\Cdm\SystemEntities\SystemForm.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\WebResource.cdm.json" Link="Metadata\Cdm\SystemEntities\WebResource.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\AppModuleComponent.cdm.json" Link="Metadata\Cdm\SystemEntities\AppModuleComponent.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\EntityDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityDefinition.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\Attribute.cdm.json" Link="Metadata\Cdm\SystemEntities\Attribute.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\RelationshipDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\RelationshipDefinition.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\OptionSetDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\OptionSetDefinition.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\EntityKeyDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityKeyDefinition.cdm.json" />
   </ItemGroup>
 
 </Project>
