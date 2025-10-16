@@ -255,7 +255,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             query.ColumnSet = new ColumnSet("field");
             query.Distinct = true;
 
-            LinkEntity link = new LinkEntity("testentity", "related", "entityid", "entityid", JoinOperator.Inner);
+            LinkEntity link = new LinkEntity("testentity", "related", "testentityid", "entityid", JoinOperator.Inner);
             link.LinkCriteria.AddCondition("include", ConditionOperator.Equal, true);
 
             query.LinkEntities.Add(link);
@@ -297,7 +297,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             query.ColumnSet = new ColumnSet("field");
             query.Distinct = true;
 
-            LinkEntity link = new LinkEntity("testentity", "related", "entityid", "entityid", JoinOperator.Inner);
+            LinkEntity link = new LinkEntity("testentity", "related", "testentityid", "entityid", JoinOperator.Inner);
             link.LinkCriteria.AddCondition("include", ConditionOperator.Equal, true);
             link.Columns = new ColumnSet("linkfield");
 

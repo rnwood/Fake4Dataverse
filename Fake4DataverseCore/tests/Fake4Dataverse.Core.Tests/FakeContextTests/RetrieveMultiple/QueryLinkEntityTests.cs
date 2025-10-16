@@ -517,7 +517,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             _context.Initialize(entity);
             var query = new QueryExpression("testentity");
             query.ColumnSet = new ColumnSet(true);
-            query.AddLink("entity", "name", "name");
+            query.AddLink("testentity", "name", "name");
 
             var queryResult = _service.RetrieveMultiple(query);
 
