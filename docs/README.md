@@ -22,6 +22,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
+- [Auto Number Fields](./usage/auto-number-fields.md) - Auto-generated field values ✅ **NEW**
 - [Metadata Validation](./usage/metadata-validation.md) - IsValidForCreate/Update/Read enforcement ✅ **NEW**
 - [CDM Import](./cdm-import.md) - Import entity metadata from Common Data Model JSON ✅ **NEW**
 - [CDM vs Early-Bound](./cdm-vs-early-bound.md) - Choosing between CDM files and early-bound assemblies ✅ **NEW**
@@ -78,6 +79,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Write my first test**: Start with [Quick Start](./getting-started/quickstart.md)
 - **Test a plugin**: See [Testing Plugins](./usage/testing-plugins.md)
 - **Query test data**: Check [Querying Data](./usage/querying-data.md)
+- **Use auto number fields**: See [Auto Number Fields](./usage/auto-number-fields.md)
 - **Use standard entity schemas**: See [CDM Import](./cdm-import.md)
 - **Query metadata as data**: See [Metadata Persistence](./metadata-persistence.md)
 - **Test concurrent operations**: See [Thread Safety](./thread-safety.md)
