@@ -34,7 +34,7 @@ namespace Fake4Dataverse.Service.IntegrationTests
             
             for (int i = 0; i < 10 && currentDir != null; i++)  // Safety limit of 10 levels
             {
-                var solutionFile = Path.Combine(currentDir.FullName, "Fake4DataverseFree.sln");
+                var solutionFile = Path.Combine(currentDir.FullName, "Fake4Dataverse.sln");
                 if (File.Exists(solutionFile))
                 {
                     repoRoot = currentDir.FullName;
@@ -45,11 +45,11 @@ namespace Fake4Dataverse.Service.IntegrationTests
             
             if (repoRoot == null)
             {
-                throw new DirectoryNotFoundException($"Could not find repository root (with Fake4DataverseFree.sln) from test binary dir: {testBinaryDir}");
+                throw new DirectoryNotFoundException($"Could not find repository root (with Fake4Dataverse.sln) from test binary dir: {testBinaryDir}");
             }
             
             // Start the Fake4DataverseService in the background
-            var serviceProjectPath = Path.Combine(repoRoot, "Fake4DataverseService", "src", "Fake4Dataverse.Service");
+            var serviceProjectPath = Path.Combine(repoRoot, "Fake4DataverseService", "Fake4Dataverse.Service");
 
             // Use local CDM files for faster, more reliable tests (no network download required)
             var cdmFilesPath = Path.Combine(repoRoot, "cdm-schema-files");
