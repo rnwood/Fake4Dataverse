@@ -54,7 +54,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             context.SecurityConfiguration.SecurityEnabled = true;
             
             // Load systemuser metadata (organization-owned entity)
-            context.InitializeMetadataFromCdmFiles(new[] { "Fake4DataverseCore/system-edm-files/SystemUser.cdm.json" });
+            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUser.cdm.json" });
             
             // Act - systemuser is organization-owned
             var privileges = context.CreateQuery("privilege")
