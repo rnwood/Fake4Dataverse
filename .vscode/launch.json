@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Core Launch (Fake4Dataverse Service with MDA)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "Start Next.js Dev Server",
+      "program": "${workspaceFolder}/Fake4DataverseService/Fake4Dataverse.Service/bin/Debug/net8.0/Fake4Dataverse.Service.dll",
+      "args": ["start", "--port", "5000"],
+      "cwd": "${workspaceFolder}/Fake4DataverseService/Fake4Dataverse.Service",
+      "console": "internalConsole",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s/main.aspx"
+      }
+    },
+    {
+      "name": "Attach to Next.js (Frontend)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack (Backend + Frontend)",
+      "configurations": [".NET Core Launch (Fake4Dataverse Service with MDA)", "Attach to Next.js (Frontend)"],
+      "stopAll": true,
+      "preLaunchTask": "build"
+    }
+  ]
+}

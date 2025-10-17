@@ -22,7 +22,6 @@ public class ServiceClientAuthTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Find repository root by looking for the solution file
-        // Start from test binary directory and walk up until we find it
         var testBinaryDir = Directory.GetCurrentDirectory();
         DirectoryInfo? currentDir = new DirectoryInfo(testBinaryDir);
         string? repoRoot = null;
@@ -42,7 +41,7 @@ public class ServiceClientAuthTests : IAsyncLifetime
         {
             throw new DirectoryNotFoundException($"Could not find repository root (with Fake4Dataverse.sln) from test binary dir: {testBinaryDir}");
         }
-        
+
         // Start the Fake4DataverseService with authentication enabled
         var serviceProjectPath = Path.Combine(repoRoot, "Fake4DataverseService", "Fake4Dataverse.Service");
 
