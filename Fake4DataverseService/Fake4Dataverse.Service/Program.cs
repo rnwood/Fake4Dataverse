@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using System.CommandLine;
 using System.IO;
@@ -206,6 +207,35 @@ public class Program
                 {
                     Console.WriteLine("  ⚠ Warning: Core entities (account, contact) were not loaded from crmcommon schema");
                 }
+                
+                // Enable auditing for all loaded entities
+                // By default, CDM metadata may have IsAuditEnabled set to false or null
+                // Enable it for all entities to support audit history tracking
+                Console.WriteLine("Enabling auditing for all loaded entities...");
+                int enabledCount = 0;
+                foreach (var entityMetadata in metadata)
+                {
+                    // IsAuditEnabled might be null - in which case auditing is allowed by default
+                    // But explicitly setting it to true ensures consistent behavior
+                    if (entityMetadata.IsAuditEnabled != null)
+                    {
+                        entityMetadata.IsAuditEnabled.Value = true;
+                        enabledCount++;
+                    }
+                    
+                    // Also enable auditing for all attributes
+                    if (entityMetadata.Attributes != null)
+                    {
+                        foreach (var attribute in entityMetadata.Attributes)
+                        {
+                            if (attribute.IsAuditEnabled != null)
+                            {
+                                attribute.IsAuditEnabled.Value = true;
+                            }
+                        }
+                    }
+                }
+                Console.WriteLine($"Auditing enabled for {enabledCount} entities (out of {entityCount} total)");
             }
             catch (Exception ex)
             {

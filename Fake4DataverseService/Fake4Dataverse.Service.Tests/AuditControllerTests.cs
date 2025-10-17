@@ -5,7 +5,6 @@ using Xunit;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using Fake4Dataverse.Abstractions.Integrity;
 using Fake4Dataverse.Abstractions.Audit;
 
 namespace Fake4Dataverse.Service.Tests;
@@ -25,12 +24,8 @@ public class AuditControllerTests
 
     public AuditControllerTests()
     {
-        // Create a Fake4Dataverse context
-        var context = XrmFakedContextFactory.New(new IntegrityOptions 
-        { 
-            ValidateEntityReferences = false,
-            ValidateAttributeTypes = false 
-        });
+        // Create a Fake4Dataverse context with basic configuration
+        var context = XrmFakedContextFactory.New();
         _organizationService = context.GetOrganizationService();
         _auditRepository = context.GetProperty<IAuditRepository>();
 
