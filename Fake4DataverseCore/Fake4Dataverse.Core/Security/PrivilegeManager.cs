@@ -26,6 +26,12 @@ namespace Fake4Dataverse.Security
         public const int PrivilegeDepthLocal = 2;      // User's business unit
         public const int PrivilegeDepthDeep = 4;       // User's business unit and child business units
         public const int PrivilegeDepthGlobal = 8;     // Organization-wide
+        
+        // Special privilege names
+        // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
+        // The prvActOnBehalfOfAnotherUser privilege is required to impersonate other users.
+        // This privilege is typically granted to the System Administrator role.
+        public const string ActOnBehalfOfAnotherUserPrivilege = "prvActOnBehalfOfAnotherUser";
 
         public PrivilegeManager(IXrmFakedContext context)
         {
