@@ -109,11 +109,16 @@ namespace Fake4Dataverse.Core.Tests.Security
                 ["privilegeid"] = new EntityReference("privilege", prvReadAccount.Id),
                 ["privilegedepthmask"] = 1 // Basic depth
             };
-            context.Initialize(rolePrivilege);
             
-            // Assign role to user
-            service.Associate("systemuser", userId, new Relationship("systemuserroles_association"),
-                new EntityReferenceCollection { new EntityReference("role", roleId) });
+            // Assign role to user via systemuserroles entity
+            var userRole = new Entity("systemuserroles")
+            {
+                Id = Guid.NewGuid(),
+                ["systemuserid"] = userId,
+                ["roleid"] = roleId
+            };
+            
+            context.Initialize(new[] { rolePrivilege, userRole });
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
@@ -147,14 +152,22 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             // Create System Administrator user
             var userId = Guid.NewGuid();
+            
+            // Get System Administrator role ID (this initializes default security entities)
             var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Admin User" };
-            context.Initialize(user);
             
-            // Assign System Administrator role
-            service.Associate("systemuser", userId, new Relationship("systemuserroles_association"),
-                new EntityReferenceCollection { new EntityReference("role", sysAdminRoleId) });
+            // Assign System Administrator role via systemuserroles entity
+            var userRole = new Entity("systemuserroles")
+            {
+                Id = Guid.NewGuid(),
+                ["systemuserid"] = userId,
+                ["roleid"] = sysAdminRoleId
+            };
+            
+            // Initialize user and role assignment together
+            context.Initialize(new[] { user, userRole });
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
@@ -434,11 +447,17 @@ namespace Fake4Dataverse.Core.Tests.Security
                 .Where(r => r.GetAttributeValue<string>("name") == "Role 1")
                 .First();
             
-            // Act & Assert - cannot assign role from different BU
+            // Act & Assert - cannot assign role from different BU (create systemuserroles with cross-BU role)
+            var userRole = new Entity("systemuserroles")
+            {
+                Id = Guid.NewGuid(),
+                ["systemuserid"] = userId,
+                ["roleid"] = shadowRoleInBU2.Id
+            };
+            
             var exception = Assert.Throws<InvalidOperationException>(() =>
             {
-                service.Associate("systemuser", userId, new Relationship("systemuserroles_association"),
-                    new EntityReferenceCollection { new EntityReference("role", shadowRoleInBU2.Id) });
+                context.Initialize(userRole);
             });
             
             Assert.Contains("same business unit", exception.Message);
@@ -481,8 +500,13 @@ namespace Fake4Dataverse.Core.Tests.Security
                 .First();
             
             // Act - assign role from different BU (should work in modern mode)
-            service.Associate("systemuser", userId, new Relationship("systemuserroles_association"),
-                new EntityReferenceCollection { new EntityReference("role", shadowRoleInBU2.Id) });
+            var userRole = new Entity("systemuserroles")
+            {
+                Id = Guid.NewGuid(),
+                ["systemuserid"] = userId,
+                ["roleid"] = shadowRoleInBU2.Id
+            };
+            context.Initialize(userRole);
             
             // Assert - no exception thrown
             var userRoles = context.SecurityManager.GetUserRoles(userId);
@@ -515,10 +539,16 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Create and assign role
             var roleId = Guid.NewGuid();
             var role = new Entity("role") { Id = roleId, ["name"] = "Role 1", ["businessunitid"] = new EntityReference("businessunit", bu1Id) };
-            context.Initialize(role);
             
-            service.Associate("systemuser", userId, new Relationship("systemuserroles_association"),
-                new EntityReferenceCollection { new EntityReference("role", roleId) });
+            // Assign role to user via systemuserroles entity
+            var userRole = new Entity("systemuserroles")
+            {
+                Id = Guid.NewGuid(),
+                ["systemuserid"] = userId,
+                ["roleid"] = roleId
+            };
+            
+            context.Initialize(new[] { role, userRole });
             
             // Verify role is assigned
             Assert.NotEmpty(context.SecurityManager.GetUserRoles(userId));
@@ -579,9 +609,14 @@ namespace Fake4Dataverse.Core.Tests.Security
                 new Entity("roleprivileges") { Id = Guid.NewGuid(), ["roleid"] = new EntityReference("role", roleId), ["privilegeid"] = new EntityReference("privilege", prvWrite.Id), ["privilegedepthmask"] = 1 }
             });
             
-            // Assign role to user
-            service.Associate("systemuser", userId, new Relationship("systemuserroles_association"),
-                new EntityReferenceCollection { new EntityReference("role", roleId) });
+            // Assign role to user via systemuserroles entity
+            var userRole = new Entity("systemuserroles")
+            {
+                Id = Guid.NewGuid(),
+                ["systemuserid"] = userId,
+                ["roleid"] = roleId
+            };
+            context.Initialize(userRole);
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
