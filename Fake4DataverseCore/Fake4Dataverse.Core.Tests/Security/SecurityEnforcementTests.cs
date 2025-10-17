@@ -142,14 +142,18 @@ namespace Fake4Dataverse.Core.Tests.Security
         [Fact]
         public void Should_Allow_Operations_When_Security_Disabled()
         {
-            // Arrange
-            var context = new XrmFakedContext();
+            // Arrange - use middleware builder but keep security disabled
+            var builder = MiddlewareBuilder.New()
+                .AddCrud()  // Wire up CRUD operations
+                .UseCrud(); // Register CRUD middleware to handle Execute(CreateRequest, etc.)
+                
+            var context = builder.Build();
             var service = context.GetOrganizationService();
             
             // Security is disabled by default
             Assert.False(context.SecurityConfiguration.SecurityEnabled);
             
-            // Act - create without setting caller
+            // Act - create without setting caller (should work since security is disabled)
             var accountId = service.Create(new Entity("account")
             {
                 ["name"] = "Test Account"
@@ -164,12 +168,14 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
+                .AddCrud()
                 .AddSecurity() // Add security middleware
-                .AddCrud();
+                .UseCrud();  // Register CRUD middleware
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
+            context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin privileges
             
             var service = context.GetOrganizationService();
             
@@ -182,10 +188,19 @@ namespace Fake4Dataverse.Core.Tests.Security
             };
             context.Initialize(user);
             
+            // Assign System Administrator role to grant all privileges
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
+            var userRole = new Entity("systemuserroles")
+            {
+                ["systemuserid"] = userId,
+                ["roleid"] = sysAdminRoleId
+            };
+            context.Initialize(userRole);
+            
             // Set as caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
             
-            // Act - create account (should work - user owns it)
+            // Act - create account (should work - user has System Admin role)
             var accountId = service.Create(new Entity("account")
             {
                 ["name"] = "Test Account"
@@ -200,8 +215,9 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
+                .AddCrud()
                 .AddSecurity()
-                .AddCrud();
+                .UseCrud();  // Register CRUD middleware
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
@@ -226,18 +242,29 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
-                .AddSecurity()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud()  // Register CRUD middleware
+                .AddSecurity();  // Security middleware runs first (checks permissions before CRUD)
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
+            context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin privileges
             
             var service = context.GetOrganizationService();
             
             var userId = Guid.NewGuid();
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Owner" };
             context.Initialize(user);
+            
+            // Assign System Administrator role to grant all privileges
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
+            var userRole = new Entity("systemuserroles")
+            {
+                ["systemuserid"] = userId,
+                ["roleid"] = sysAdminRoleId
+            };
+            context.Initialize(userRole);
             
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
             
@@ -261,12 +288,14 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
+                .AddCrud()
                 .AddSecurity()
-                .AddCrud();
+                .UseCrud();  // Register CRUD middleware
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
+            context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin privileges
             
             var service = context.GetOrganizationService();
             
@@ -278,11 +307,25 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             context.Initialize(new[] { owner1, owner2 });
             
+            // Assign System Administrator role to both users to grant all privileges
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
+            var userRole1 = new Entity("systemuserroles")
+            {
+                ["systemuserid"] = owner1Id,
+                ["roleid"] = sysAdminRoleId
+            };
+            var userRole2 = new Entity("systemuserroles")
+            {
+                ["systemuserid"] = owner2Id,
+                ["roleid"] = sysAdminRoleId
+            };
+            context.Initialize(new[] { userRole1, userRole2 });
+            
             // Owner 1 creates account
             context.CallerProperties.CallerId = new EntityReference("systemuser", owner1Id);
             var accountId = service.Create(new Entity("account") { ["name"] = "Test" });
             
-            // Act & Assert - Owner 2 tries to update (should fail)
+            // Act & Assert - Owner 2 tries to update (should fail due to record-level security)
             context.CallerProperties.CallerId = new EntityReference("systemuser", owner2Id);
             
             var exception = Assert.Throws<UnauthorizedAccessException>(() =>
@@ -302,12 +345,14 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
+                .AddCrud()
                 .AddSecurity()
-                .AddCrud();
+                .UseCrud();  // Register CRUD middleware
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
+            context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin privileges
             
             var service = context.GetOrganizationService();
             
@@ -318,6 +363,20 @@ namespace Fake4Dataverse.Core.Tests.Security
             var owner2 = new Entity("systemuser") { Id = owner2Id, ["fullname"] = "Owner 2" };
             
             context.Initialize(new[] { owner1, owner2 });
+            
+            // Assign System Administrator role to both users to grant all privileges
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
+            var userRole1 = new Entity("systemuserroles")
+            {
+                ["systemuserid"] = owner1Id,
+                ["roleid"] = sysAdminRoleId
+            };
+            var userRole2 = new Entity("systemuserroles")
+            {
+                ["systemuserid"] = owner2Id,
+                ["roleid"] = sysAdminRoleId
+            };
+            context.Initialize(new[] { userRole1, userRole2 });
             
             // Owner 1 creates account
             context.CallerProperties.CallerId = new EntityReference("systemuser", owner1Id);
