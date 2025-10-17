@@ -781,6 +781,7 @@ namespace Fake4Dataverse
 
         public void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false, bool skipValidation = false)
         {
+
             // Create the entity with defaults
             AddEntityDefaultAttributes(e);
 

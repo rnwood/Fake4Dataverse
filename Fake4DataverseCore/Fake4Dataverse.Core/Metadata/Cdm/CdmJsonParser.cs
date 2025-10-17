@@ -989,6 +989,7 @@ namespace Fake4Dataverse.Metadata.Cdm
                 "Privilege.cdm.json",
                 "RolePrivileges.cdm.json",
                 "PrincipalObjectAccess.cdm.json",
+                "SystemUserRoles.cdm.json",
                 // Then load other system entities
                 "AppModule.cdm.json",
                 "SiteMap.cdm.json",
@@ -1008,15 +1009,18 @@ namespace Fake4Dataverse.Metadata.Cdm
                 
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
                 {
-                    if (stream != null)
+                    if (stream == null)
                     {
-                        using (var reader = new System.IO.StreamReader(stream))
-                        {
-                            var json = reader.ReadToEnd();
-                            var metadata = FromCdmJson(json);
-                            allMetadata.AddRange(metadata);
-                        }
+                        throw new InvalidOperationException($"Embedded system entity resource not found: {resourceName}");
                     }
+                    
+                    using (var reader = new System.IO.StreamReader(stream))
+                    {
+                        var json = reader.ReadToEnd();
+                        var metadata = FromCdmJson(json);
+                        allMetadata.AddRange(metadata);
+                    }
+                    
                 }
             }
             

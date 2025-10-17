@@ -282,6 +282,11 @@ namespace Fake4Dataverse
 
             foreach (var e in entities)
             {
+                if (string.IsNullOrEmpty(e.LogicalName))
+                {
+                    throw new InvalidOperationException("The LogicalName property must not be empty");
+                }
+
                 // Initialize skips validation to allow test data setup with any state
                 // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
                 // Test initialization should allow statecode and other restricted attributes for flexibility

@@ -52,9 +52,9 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var context = new XrmFakedContext();
             context.SecurityConfiguration.SecurityEnabled = true;
-            
+
             // Load systemuser metadata (organization-owned entity)
-            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUser.cdm.json" });
+            context.InitializeSystemEntityMetadata();
             
             // Act - systemuser is organization-owned
             var privileges = context.CreateQuery("privilege")
@@ -428,10 +428,10 @@ namespace Fake4Dataverse.Core.Tests.Security
                 
             var context = builder.Build();
             context.SecurityConfiguration.UseModernBusinessUnits = false; // Traditional mode
-            
+
             // Load metadata for systemuserroles (many-to-many relationship entity)
-            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUserRoles.cdm.json" });
-            
+            context.InitializeSystemEntityMetadata();
+
             var service = context.GetOrganizationService();
             
             // Create two business units
@@ -483,9 +483,9 @@ namespace Fake4Dataverse.Core.Tests.Security
                 
             var context = builder.Build();
             context.SecurityConfiguration.UseModernBusinessUnits = true; // Modern mode
-            
+
             // Load metadata for systemuserroles (many-to-many relationship entity)
-            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUserRoles.cdm.json" });
+            context.InitializeSystemEntityMetadata();
             
             var service = context.GetOrganizationService();
             
@@ -533,12 +533,11 @@ namespace Fake4Dataverse.Core.Tests.Security
                 .AddRoleLifecycle()
                 .AddCrud()
                 .UseCrud();
-                
+
             var context = builder.Build();
             
             // Load metadata for systemuserroles (many-to-many relationship entity)
-            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUserRoles.cdm.json" });
-            
+            context.InitializeSystemEntityMetadata();
             var service = context.GetOrganizationService();
             
             // Create two business units

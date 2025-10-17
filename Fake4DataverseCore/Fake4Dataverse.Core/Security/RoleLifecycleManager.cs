@@ -301,7 +301,7 @@ namespace Fake4Dataverse.Security
             // Try to remove from systemuserroles entity first
             var userRoles = _context.CreateQuery("systemuserroles")
                 .ToList()
-                .Where(ur => GetGuidFromAttribute(ur, "roleid") == roleId)
+                .Where(ur => ur.GetAttributeValue<EntityReference>("roleid")?.Id == roleId)
                 .ToArray();
 
             if (userRoles.Length > 0)
@@ -316,7 +316,7 @@ namespace Fake4Dataverse.Security
                 // Fall back to association entity
                 var userRolesAssoc = _context.CreateQuery("systemuserroles_association")
                     .ToList()
-                    .Where(ur => GetGuidFromAttribute(ur, "roleid") == roleId)
+                    .Where(ur => ur.GetAttributeValue<EntityReference>("roleid")?.Id == roleId)
                     .ToArray();
 
                 foreach (var userRole in userRolesAssoc)
@@ -328,7 +328,7 @@ namespace Fake4Dataverse.Security
             // Try to remove from teamroles entity first
             var teamRoles = _context.CreateQuery("teamroles")
                 .ToList()
-                .Where(tr => GetGuidFromAttribute(tr, "roleid") == roleId)
+                .Where(tr => tr.GetAttributeValue<EntityReference>("roleid")?.Id == roleId)
                 .ToArray();
 
             if (teamRoles.Length > 0)
@@ -343,7 +343,7 @@ namespace Fake4Dataverse.Security
                 // Fall back to association entity
                 var teamRolesAssoc = _context.CreateQuery("teamroles_association")
                     .ToList()
-                    .Where(tr => GetGuidFromAttribute(tr, "roleid") == roleId)
+                    .Where(tr => tr.GetAttributeValue<EntityReference>("roleid")?.Id == roleId)
                     .ToArray();
 
                 foreach (var teamRole in teamRolesAssoc)
@@ -363,7 +363,7 @@ namespace Fake4Dataverse.Security
                 // Try to find role assignments in the systemuserroles entity first
                 var userRoles = _context.CreateQuery("systemuserroles")
                     .ToList()
-                    .Where(ur => GetGuidFromAttribute(ur, "systemuserid") == principalId)
+                    .Where(ur => ur.GetAttributeValue<EntityReference>("systemuserid")?.Id == principalId)
                     .ToArray();
 
                 if (userRoles.Length > 0)
@@ -379,7 +379,7 @@ namespace Fake4Dataverse.Security
                     // Fall back to association entity
                     var userRolesAssoc = _context.CreateQuery("systemuserroles_association")
                         .ToList()
-                        .Where(ur => GetGuidFromAttribute(ur, "systemuserid") == principalId)
+                        .Where(ur => ur.GetAttributeValue<EntityReference>("systemuserid")?.Id == principalId)
                         .ToArray();
 
                     foreach (var userRole in userRolesAssoc)
@@ -393,7 +393,7 @@ namespace Fake4Dataverse.Security
                 // Try to find role assignments in the teamroles entity first
                 var teamRoles = _context.CreateQuery("teamroles")
                     .ToList()
-                    .Where(tr => GetGuidFromAttribute(tr, "teamid") == principalId)
+                    .Where(tr => tr.GetAttributeValue<EntityReference>("teamid")?.Id == principalId)
                     .ToArray();
 
                 if (teamRoles.Length > 0)
@@ -409,7 +409,7 @@ namespace Fake4Dataverse.Security
                     // Fall back to association entity
                     var teamRolesAssoc = _context.CreateQuery("teamroles_association")
                         .ToList()
-                        .Where(tr => GetGuidFromAttribute(tr, "teamid") == principalId)
+                        .Where(tr => tr.GetAttributeValue<EntityReference>("teamid")?.Id == principalId)
                         .ToArray();
 
                     foreach (var teamRole in teamRolesAssoc)
@@ -418,30 +418,6 @@ namespace Fake4Dataverse.Security
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Helper method to extract Guid from an attribute that might be Guid or EntityReference.
-        /// </summary>
-        private Guid GetGuidFromAttribute(Entity entity, string attributeName)
-        {
-            if (!entity.Contains(attributeName))
-            {
-                return Guid.Empty;
-            }
-
-            var value = entity[attributeName];
-            
-            if (value is Guid guidValue)
-            {
-                return guidValue;
-            }
-            else if (value is EntityReference entityRef)
-            {
-                return entityRef.Id;
-            }
-            
-            return Guid.Empty;
         }
     }
 }
