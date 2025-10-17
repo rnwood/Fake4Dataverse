@@ -18,17 +18,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
     /// </summary>
     public class HierarchicalOperatorTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public HierarchicalOperatorTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         /// <summary>
         /// Sets up a test hierarchy of accounts:
@@ -42,7 +31,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         /// </summary>
         private Dictionary<string, Guid> SetupAccountHierarchy()
         {
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Account)));
 
             var accountIds = new Dictionary<string, Guid>
             {
@@ -63,7 +52,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var accountF = new Account { Id = accountIds["F"], Name = "Account F", ParentAccountId = new EntityReference("account", accountIds["C"]) };
             var accountG = new Account { Id = accountIds["G"], Name = "Account G", ParentAccountId = new EntityReference("account", accountIds["D"]) };
 
-            _context.Initialize(new[] { accountA, accountB, accountC, accountD, accountE, accountF, accountG });
+            base._context.Initialize(new[] { accountA, accountB, accountC, accountD, accountE, accountF, accountG });
 
             return accountIds;
         }
@@ -88,7 +77,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("parentaccountid", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.Under, query.Criteria.Conditions[0].Operator);
             Assert.Equal(testGuid, query.Criteria.Conditions[0].Values[0]);
@@ -112,7 +101,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("parentaccountid", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.UnderOrEqual, query.Criteria.Conditions[0].Operator);
             Assert.Equal(testGuid, query.Criteria.Conditions[0].Values[0]);
@@ -136,7 +125,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("parentaccountid", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.Above, query.Criteria.Conditions[0].Operator);
             Assert.Equal(testGuid, query.Criteria.Conditions[0].Values[0]);
@@ -160,7 +149,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("parentaccountid", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.AboveOrEqual, query.Criteria.Conditions[0].Operator);
             Assert.Equal(testGuid, query.Criteria.Conditions[0].Values[0]);
@@ -184,7 +173,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("parentaccountid", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotUnder, query.Criteria.Conditions[0].Operator);
             Assert.Equal(testGuid, query.Criteria.Conditions[0].Values[0]);
@@ -212,7 +201,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
+            var results = base._service.RetrieveMultiple(query);
 
             // Should return B, C, D, E, F, G (all descendants of A, but not A itself)
             Assert.Equal(6, results.Entities.Count);
@@ -244,7 +233,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
+            var results = base._service.RetrieveMultiple(query);
 
             // Should return B, D, E, G (B and all its descendants)
             Assert.Equal(4, results.Entities.Count);
@@ -273,7 +262,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
+            var results = base._service.RetrieveMultiple(query);
 
             // Should return D, B, A (all ancestors of G, but not G itself)
             Assert.Equal(3, results.Entities.Count);
@@ -302,7 +291,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
+            var results = base._service.RetrieveMultiple(query);
 
             // Should return D, B, A (D and all its ancestors)
             Assert.Equal(3, results.Entities.Count);
@@ -330,7 +319,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
+            var results = base._service.RetrieveMultiple(query);
 
             // Should return A, C, F (all records that are NOT under B in the hierarchy)
             Assert.Equal(3, results.Entities.Count);
@@ -360,7 +349,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                               </entity>
                             </fetch>";
 
-            var results = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var results = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             // Should return B, C, D, E, F, G (all descendants of A)
             Assert.Equal(6, results.Entities.Count);
@@ -382,7 +371,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                               </entity>
                             </fetch>";
 
-            var results = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var results = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             // Should return D, B, A (all ancestors of G)
             Assert.Equal(3, results.Entities.Count);
@@ -407,7 +396,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
+            var results = base._service.RetrieveMultiple(query);
 
             // Should return empty since G has no descendants
             Assert.Empty(results.Entities);
@@ -432,7 +421,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 }
             };
 
-            var results = _service.RetrieveMultiple(query);
+            var results = base._service.RetrieveMultiple(query);
 
             // Should return empty since A has no ancestors
             Assert.Empty(results.Entities);

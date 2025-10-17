@@ -19,17 +19,6 @@ namespace Fake4Dataverse.Tests.FakeMessageExecutors
     /// </summary>
     public class RetrieveDuplicatesRequestExecutorTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public RetrieveDuplicatesRequestExecutorTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         /// <summary>
         /// Test: RetrieveDuplicates returns empty collection when no duplicate rules exist

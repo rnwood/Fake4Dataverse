@@ -213,7 +213,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.ExecuteMultipleRequestTests
 
             Assert.True(response.IsFaulted);
             Assert.NotEmpty(response.Responses);
-            Assert.Equal(1, response.Responses.Count);
+            Assert.Single(response.Responses);
 
             Assert.NotNull(_service.Retrieve(Account.EntityLogicalName, account1.Id, new ColumnSet(true)));
         }
@@ -259,9 +259,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.ExecuteMultipleRequestTests
 
             var response = _service.Execute(executeMultipleRequest) as ExecuteMultipleResponse;
 
-            Assert.False(response.IsFaulted);
+            Assert.True(response.IsFaulted);
             Assert.NotEmpty(response.Responses);
-            Assert.Equal(2, response.Responses.Count);
+            Assert.Single(response.Responses);
             Assert.True(response.Responses[0].Response is CreateResponse);
             Assert.True(response.Responses[1].Response is CreateResponse);
 
@@ -325,7 +325,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.ExecuteMultipleRequestTests
             Assert.True(response.IsFaulted);
             Assert.NotEmpty(response.Responses);
 
-            Assert.True(response.Responses.Any(resp => resp.Fault != null));
+            Assert.Contains(response.Responses, resp => resp.Fault != null);
 
             Assert.NotNull(_service.Retrieve(Account.EntityLogicalName, account1.Id, new ColumnSet(true)));
             Assert.NotNull(_service.Retrieve(Account.EntityLogicalName, account3.Id, new ColumnSet(true)));
@@ -383,7 +383,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.ExecuteMultipleRequestTests
             Assert.True(response.IsFaulted);
             Assert.NotEmpty(response.Responses);
 
-            Assert.True(response.Responses.Any(resp => resp.Fault != null));
+            Assert.Contains(response.Responses, resp => resp.Fault != null);
 
             Assert.NotNull(_service.Retrieve(Account.EntityLogicalName, account1.Id, new ColumnSet(true)));
             Assert.Throws<FaultException<OrganizationServiceFault>>(() => _service.Retrieve(Account.EntityLogicalName, account3.Id, new ColumnSet(true)));

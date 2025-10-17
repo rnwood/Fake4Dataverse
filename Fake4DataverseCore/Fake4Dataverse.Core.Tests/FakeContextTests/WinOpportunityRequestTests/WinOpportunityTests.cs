@@ -36,7 +36,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.WinOpportunityRequestTests
                        where op.Id == opportunity.Id
                        select op).FirstOrDefault();
 
-            Assert.Equal(opp.StatusCode.Value, (int)OpportunityState.Won);
+            Assert.Equal((int)OpportunityState.Won, opp.StatusCode.Value);
         }
     }
 }

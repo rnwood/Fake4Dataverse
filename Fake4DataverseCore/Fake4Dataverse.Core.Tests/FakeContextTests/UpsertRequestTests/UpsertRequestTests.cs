@@ -14,15 +14,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests.UpsertRequestTests
 {
     public class UpsertRequestTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public UpsertRequestTests() 
-        {
-            // Use context and service from base class but also expose as instance fields
-            // for compatibility with existing test code
-            _context = base._context;
-            _service = base._service;
-        }
 
         [Fact]
         public void Upsert_Creates_Record_When_It_Does_Not_Exist()
@@ -45,7 +36,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.UpsertRequestTests
 
             var contactCreated = _context.CreateQuery<Contact>().FirstOrDefault();
 
-            Assert.Equal(true, response.RecordCreated);
+            Assert.True(response.RecordCreated);
             Assert.NotNull(contactCreated);
         }
 
@@ -75,7 +66,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.UpsertRequestTests
             var response = (UpsertResponse)_service.Execute(request);
             var contactUpdated = _context.CreateQuery<Contact>().FirstOrDefault();
 
-            Assert.Equal(false, response.RecordCreated);
+            Assert.False(response.RecordCreated);
             Assert.Equal("FakeXrm2", contactUpdated.FirstName);
         }
 
@@ -108,7 +99,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.UpsertRequestTests
 
             var response = (UpsertResponse)_service.Execute(request);
 
-            Assert.Equal(true, response.RecordCreated);
+            Assert.True(response.RecordCreated);
         }
 
         [Fact]
@@ -151,7 +142,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.UpsertRequestTests
 
             var response = (UpsertResponse)_service.Execute(request);
 
-            Assert.Equal(false, response.RecordCreated);
+            Assert.False(response.RecordCreated);
         }
     }
 }

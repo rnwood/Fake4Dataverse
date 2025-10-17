@@ -26,14 +26,8 @@ namespace Fake4Dataverse.Tests.FakeMessageExecutors
     /// </summary>
     public class SolutionImportExportTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
         public SolutionImportExportTests()
         {
-            _context = base._context;
-            _service = base._service;
-
             // Initialize basic solution infrastructure without CDM files
             InitializeSolutionInfrastructure();
         }

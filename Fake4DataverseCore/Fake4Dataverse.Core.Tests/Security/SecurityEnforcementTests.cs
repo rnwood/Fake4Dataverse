@@ -2,7 +2,6 @@ using Fake4Dataverse.Security;
 using Fake4Dataverse.Security.Middleware;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Middleware.Crud;
-using Fake4Dataverse.Integrity;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Crm.Sdk.Messages;
@@ -144,17 +143,12 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Allow_Operations_When_Security_Disabled()
         {
             // Arrange - use middleware builder but keep security disabled
-            var integrityOptions = new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false  // Disable validation for this basic test
-            };
-            
             var builder = MiddlewareBuilder.New()
-                .AddCrud(integrityOptions)  // Wire up CRUD operations with validation disabled
+                .AddCrud()  // Wire up CRUD operations with validation enabled
                 .UseCrud(); // Register CRUD middleware to handle Execute(CreateRequest, etc.)
                 
             var context = builder.Build();
+            context.InitializeMetadataFromCdmFiles(new[] { "cdm-schema-files/Account.cdm.json" });
             var service = context.GetOrganizationService();
             
             // Security is disabled by default
@@ -174,18 +168,13 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Enforce_Security_When_Enabled_With_Middleware()
         {
             // Arrange
-            var integrityOptions = new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
-            };
-            
             var builder = MiddlewareBuilder.New()
-                .AddCrud(integrityOptions)
+                .AddCrud()  // Wire up CRUD operations with validation enabled
                 .UseCrud()  // Register CRUD middleware
                 .AddSecurity(); // Add security middleware (runs first after reversal)
                 
             var context = builder.Build();
+            context.InitializeMetadataFromCdmFiles(new[] { "cdm-schema-files/Account.cdm.json" });
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
             context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin privileges
@@ -258,18 +247,13 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Allow_Record_Owner_To_Update()
         {
             // Arrange
-            var integrityOptions = new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
-            };
-            
             var builder = MiddlewareBuilder.New()
-                .AddCrud(integrityOptions)
+                .AddCrud()  // Wire up CRUD operations with validation enabled
                 .UseCrud()  // Register CRUD middleware
                 .AddSecurity();  // Security middleware runs first (checks permissions before CRUD)
                 
             var context = builder.Build();
+            context.InitializeMetadataFromCdmFiles(new[] { "cdm-schema-files/Account.cdm.json" });
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
             context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin privileges
@@ -314,18 +298,13 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Deny_Access_To_Non_Owner_When_Security_Enabled()
         {
             // Arrange
-            var integrityOptions = new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
-            };
-            
             var builder = MiddlewareBuilder.New()
-                .AddCrud(integrityOptions)
+                .AddCrud()  // Wire up CRUD operations with validation enabled
                 .UseCrud()  // Register CRUD middleware
                 .AddSecurity();  // Security middleware runs first (checks permissions before CRUD)
                 
             var context = builder.Build();
+            context.InitializeMetadataFromCdmFiles(new[] { "cdm-schema-files/Account.cdm.json" });
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
             context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin
@@ -358,18 +337,13 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Allow_Access_Through_Shared_Permissions()
         {
             // Arrange
-            var integrityOptions = new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
-            };
-            
             var builder = MiddlewareBuilder.New()
-                .AddCrud(integrityOptions)
+                .AddCrud()  // Wire up CRUD operations with validation enabled
                 .UseCrud()  // Register CRUD middleware
                 .AddSecurity();  // Security middleware runs first (checks permissions before CRUD)
                 
             var context = builder.Build();
+            context.InitializeMetadataFromCdmFiles(new[] { "cdm-schema-files/Account.cdm.json" });
             context.SecurityConfiguration.SecurityEnabled = true;
             context.SecurityConfiguration.EnforceRecordLevelSecurity = true;
             context.SecurityConfiguration.AutoGrantSystemAdministratorPrivileges = true;  // Enable auto System Admin privileges

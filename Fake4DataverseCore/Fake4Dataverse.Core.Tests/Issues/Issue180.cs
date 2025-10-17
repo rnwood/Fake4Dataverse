@@ -34,7 +34,7 @@ namespace Fake4Dataverse.Tests.Issues
 
             var entities = _service.RetrieveMultiple(qe).Entities;
 
-            Assert.Equal(entities.Count, 1);
+            Assert.Single(entities);
         }
 
         [Fact]
@@ -57,7 +57,7 @@ namespace Fake4Dataverse.Tests.Issues
 
             var entities = _service.RetrieveMultiple(qe).Entities;
 
-            Assert.Equal(entities.Count, 0);
+            Assert.Empty(entities);
         }
     }
 }

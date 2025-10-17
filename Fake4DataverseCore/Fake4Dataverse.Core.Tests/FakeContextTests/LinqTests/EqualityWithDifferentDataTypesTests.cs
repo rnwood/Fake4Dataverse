@@ -18,23 +18,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
     /// </summary>
     public class EqualityWithDifferentDataTypesTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        
-        public EqualityWithDifferentDataTypesTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         [Fact]
         public void When_executing_a_linq_query_with_equals_between_2_strings_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Contact() { Id = guid, FirstName = "Jordi" }
             });
 
@@ -52,7 +41,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_strings_with_date_format_right_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Contact() { Id = guid, FirstName = "11.1" }
             });
 
@@ -70,7 +59,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_booleans_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Contact() { Id = guid, IsBackofficeCustomer = true},
                 new Contact() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -90,7 +79,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_boolean_managed_properties_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Report() { Id = guid, IsCustomizable = new BooleanManagedProperty(true) },
                 new Report() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -109,7 +98,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_integers_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Contact() { Id = guid, NumberOfChildren = 2},
                 new Contact() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -128,7 +117,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_longs_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Contact() { Id = guid },
                 new Contact() { 
                     Id = Guid.NewGuid(), 
@@ -150,7 +139,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_dates_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Contact() { Id = guid, BirthDate = DateTime.Today },
                 new Contact() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -169,7 +158,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_date_times_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Contact() { Id = guid, BirthDate = new DateTime(2015,02,26,3,42,59) },
                 new Contact() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -188,7 +177,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_decimals_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new SalesOrderDetail() { Id = guid, Quantity = 1.1M },
                 new SalesOrderDetail() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -208,7 +197,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         {
             var guid = Guid.NewGuid();
             var barcelonaLatitude = 41.387128;
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Account() { Id = guid, Address1_Latitude = barcelonaLatitude  },
                 new Account() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -227,7 +216,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_moneys_result_is_returned()
         {
             var guid = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new SalesOrderDetail() { Id = guid, BaseAmount = new Money(1.1M) },
                 new SalesOrderDetail() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -246,7 +235,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_entityreferences_result_is_returned()
         {
             var productId = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new SalesOrderDetail() { Id = Guid.NewGuid(), ProductId = new EntityReference(Product.EntityLogicalName, productId) },
                 new SalesOrderDetail() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -266,7 +255,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         {
             var productId = Guid.NewGuid();
             var salesOrderDetailId = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new SalesOrderDetail() { Id = salesOrderDetailId, ProductId = new EntityReference(Product.EntityLogicalName, productId) },
                 new SalesOrderDetail() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -285,7 +274,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         public void When_executing_a_linq_query_with_equals_between_2_optionsets_result_is_returned()
         {
             var productId = Guid.NewGuid();
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Account() { Id = Guid.NewGuid(), StatusCode = new OptionSetValue(1) },
                 new Account() { Id = Guid.NewGuid()}  //To test also nulls
             });
@@ -303,7 +292,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         [Fact]
         public void When_executing_a_linq_query_with_equals_between_2_activityparties_result_is_returned()
         {
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
 
             var contactId = Guid.NewGuid();
             var activityId = Guid.NewGuid();
@@ -315,7 +304,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
                 PartyId = new EntityReference(Contact.EntityLogicalName, contactId)
             };
 
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 new Email() { Id = activityId, ActivityId = activityId, Subject = "Test email"},
                 new ActivityPointer () { Id = Guid.NewGuid(), ActivityId = activityId },
                 partyRecord,
@@ -338,7 +327,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         [Fact]
         public void When_querying_option_sets_with_string_values_right_result_is_returned()
         {
-            _context.Initialize(new List<Entity>()
+            base._context.Initialize(new List<Entity>()
             {
                 new Account() { Id = Guid.NewGuid(), IndustryCode = new OptionSetValue(23) },
                 new Account() { Id = Guid.NewGuid(), IndustryCode = new OptionSetValue(69) }
@@ -350,9 +339,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
                 ColumnSet = new ColumnSet(new string[] { "accountid", "industrycode" }),
             };
             query.Criteria.AddCondition("industrycode", ConditionOperator.Equal, "23");
-            var result = _service.RetrieveMultiple(query);
+            var result = base._service.RetrieveMultiple(query);
 
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
             Assert.Equal(23, (result.Entities[0] as Account).IndustryCode.Value);
         }
 

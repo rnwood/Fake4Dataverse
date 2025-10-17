@@ -85,7 +85,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.ReviseQuoteRequestTests
                 }
             }).Entities.ToList();
 
-            Assert.Equal(1, quoteLines.Count);
+            Assert.Single(quoteLines);
             Assert.Equal(new Money(1000m), quoteLines.Single().GetAttributeValue<Money>("extendedamount"));
         }
     }

@@ -6,8 +6,6 @@ using Fake4Dataverse.Service.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
 using XrmMoney = Microsoft.Xrm.Sdk.Money;
-using Fake4Dataverse.Abstractions.Integrity;
-using Fake4Dataverse.Integrity;
 
 namespace Fake4Dataverse.Service.Tests;
 
@@ -30,13 +28,9 @@ public class OrganizationServiceImplTests
 
     public OrganizationServiceImplTests()
     {
-        // Create a Fake4Dataverse context with validation disabled for now
-        // TODO: Load required metadata and enable validation
-        var context = XrmFakedContextFactory.New(new IntegrityOptions 
-        { 
-            ValidateEntityReferences = false,
-            ValidateAttributeTypes = false 
-        });
+        // Create a Fake4Dataverse context with validation enabled
+        var context = XrmFakedContextFactory.New();
+        context.InitializeMetadataFromCdmFiles(new[] { "cdm-schema-files/Account.cdm.json" });
         _organizationService = context.GetOrganizationService();
 
         // Create the WCF service implementation

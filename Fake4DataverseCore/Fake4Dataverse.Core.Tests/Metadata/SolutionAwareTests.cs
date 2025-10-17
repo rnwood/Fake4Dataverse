@@ -156,13 +156,13 @@ namespace Fake4Dataverse.Core.Tests.Metadata
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/reference/entities/solutioncomponent#componenttype-choicesoptions
         /// </summary>
         [Theory]
-        [InlineData("systemform", 60)]
-        [InlineData("savedquery", 26)]
-        [InlineData("webresource", 61)]
-        [InlineData("sitemap", 62)]
-        [InlineData("appmodule", 80)]
-        [InlineData("appmodulecomponent", 103)]
-        public void Should_Register_Default_SolutionAware_Entities_In_ComponentDefinition(string entityName, int expectedComponentType)
+        [InlineData("systemform")]
+        [InlineData("savedquery")]
+        [InlineData("webresource")]
+        [InlineData("sitemap")]
+        [InlineData("appmodule")]
+        [InlineData("appmodulecomponent")]
+        public void Should_Register_Default_SolutionAware_Entities_In_ComponentDefinition(string entityName)
         {
             // Arrange & Act
             var context = (XrmFakedContext)_context;

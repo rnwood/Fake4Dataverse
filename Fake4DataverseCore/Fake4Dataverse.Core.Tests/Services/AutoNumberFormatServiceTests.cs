@@ -318,7 +318,7 @@ namespace Fake4Dataverse.Tests.Services
         }
 
         [Fact]
-        public void Should_Be_Thread_Safe_For_Sequential_Numbers()
+        public async System.Threading.Tasks.Task Should_Be_Thread_Safe_For_Sequential_Numbers()
         {
             // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/autonumber-fields
             // Auto number generation must be thread-safe to prevent duplicate values.
@@ -339,7 +339,7 @@ namespace Fake4Dataverse.Tests.Services
                 }));
             }
             
-            System.Threading.Tasks.Task.WaitAll(tasks.ToArray());
+            await System.Threading.Tasks.Task.WhenAll(tasks);
             
             // Assert - All values should be unique
             Assert.Equal(100, results.Count);

@@ -13,20 +13,7 @@ using Fake4Dataverse.Middleware;
 namespace Fake4Dataverse.Tests.FakeContextTests.AddUserToRecordTeamRequestTests
 {
     public class AddUserToRecordTeamRequestTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public AddUserToRecordTeamRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void When_can_execute_is_called_with_an_invalid_request_result_is_false()
         {
             var executor = new AddUserToRecordTeamRequestExecutor();
@@ -54,7 +41,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddUserToRecordTeamRequestTests
                 Id = Guid.NewGuid()
             };
 
-            _context.Initialize(new Entity[]
+            base._context.Initialize(new Entity[]
             {
                 teamTemplate, user, account
             });
@@ -70,17 +57,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddUserToRecordTeamRequestTests
 
             executor.Execute(req, _context);
 
-            var team = _context.CreateQuery<Team>().FirstOrDefault(p => p.TeamTemplateId.Id == teamTemplate.Id);
+            var team = base._context.CreateQuery<Team>().FirstOrDefault(p => p.TeamTemplateId.Id == teamTemplate.Id);
             Assert.NotNull(team);
 
-            var teamMembership = _context.CreateQuery<TeamMembership>().FirstOrDefault(p => p.SystemUserId == user.Id && p.TeamId == team.Id);
+            var teamMembership = base._context.CreateQuery<TeamMembership>().FirstOrDefault(p => p.SystemUserId == user.Id && p.TeamId == team.Id);
             Assert.NotNull(teamMembership);
 
-            var poa = _context.CreateQuery("principalobjectaccess").FirstOrDefault(p => (Guid)p["objectid"] == account.Id && 
+            var poa = base._context.CreateQuery("principalobjectaccess").FirstOrDefault(p => (Guid)p["objectid"] == account.Id && 
                                                                                        (Guid)p["principalid"] == team.Id);
             Assert.NotNull(poa);
 
-            var response = _context.GetProperty<IAccessRightsRepository>().RetrievePrincipalAccess(account.ToEntityReference(),
+            var response = base._context.GetProperty<IAccessRightsRepository>().RetrievePrincipalAccess(account.ToEntityReference(),
                 user.ToEntityReference());
             Assert.Equal((AccessRights)teamTemplate.DefaultAccessRightsMask, response.AccessRights);
 
