@@ -199,16 +199,20 @@ namespace Fake4Dataverse.Core.Tests.Security
                 Id = userId,
                 ["fullname"] = "Test User"
             };
-            context.Initialize(user);
+            
+            // Get System Administrator role ID (this initializes default security entities)
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             
             // Assign System Administrator role to grant all privileges
-            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             var userRole = new Entity("systemuserroles")
             {
+                Id = Guid.NewGuid(),  // Many-to-many relationship entity needs ID
                 ["systemuserid"] = userId,
                 ["roleid"] = sysAdminRoleId
             };
-            context.Initialize(userRole);
+            
+            // Initialize user and role assignment together
+            context.Initialize(new[] { user, userRole });
             
             // Set as caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
@@ -281,6 +285,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Assign System Administrator role to grant all privileges
             var userRole = new Entity("systemuserroles")
             {
+                Id = Guid.NewGuid(),  // Many-to-many relationship entity needs ID
                 ["systemuserid"] = userId,
                 ["roleid"] = sysAdminRoleId
             };
@@ -333,21 +338,25 @@ namespace Fake4Dataverse.Core.Tests.Security
             var owner1 = new Entity("systemuser") { Id = owner1Id, ["fullname"] = "Owner 1" };
             var owner2 = new Entity("systemuser") { Id = owner2Id, ["fullname"] = "Owner 2" };
             
-            context.Initialize(new[] { owner1, owner2 });
+            // Get System Administrator role ID (this initializes default security entities)
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             
             // Assign System Administrator role to both users to grant all privileges
-            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             var userRole1 = new Entity("systemuserroles")
             {
+                Id = Guid.NewGuid(),  // Many-to-many relationship entity needs ID
                 ["systemuserid"] = owner1Id,
                 ["roleid"] = sysAdminRoleId
             };
             var userRole2 = new Entity("systemuserroles")
             {
+                Id = Guid.NewGuid(),  // Many-to-many relationship entity needs ID
                 ["systemuserid"] = owner2Id,
                 ["roleid"] = sysAdminRoleId
             };
-            context.Initialize(new[] { userRole1, userRole2 });
+            
+            // Initialize all entities together
+            context.Initialize(new[] { owner1, owner2, userRole1, userRole2 });
             
             // Owner 1 creates account
             context.CallerProperties.CallerId = new EntityReference("systemuser", owner1Id);
@@ -396,21 +405,25 @@ namespace Fake4Dataverse.Core.Tests.Security
             var owner1 = new Entity("systemuser") { Id = owner1Id, ["fullname"] = "Owner 1" };
             var owner2 = new Entity("systemuser") { Id = owner2Id, ["fullname"] = "Owner 2" };
             
-            context.Initialize(new[] { owner1, owner2 });
+            // Get System Administrator role ID (this initializes default security entities)
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             
             // Assign System Administrator role to both users to grant all privileges
-            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             var userRole1 = new Entity("systemuserroles")
             {
+                Id = Guid.NewGuid(),  // Many-to-many relationship entity needs ID
                 ["systemuserid"] = owner1Id,
                 ["roleid"] = sysAdminRoleId
             };
             var userRole2 = new Entity("systemuserroles")
             {
+                Id = Guid.NewGuid(),  // Many-to-many relationship entity needs ID
                 ["systemuserid"] = owner2Id,
                 ["roleid"] = sysAdminRoleId
             };
-            context.Initialize(new[] { userRole1, userRole2 });
+            
+            // Initialize all entities together
+            context.Initialize(new[] { owner1, owner2, userRole1, userRole2 });
             
             // Owner 1 creates account
             context.CallerProperties.CallerId = new EntityReference("systemuser", owner1Id);
