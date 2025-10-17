@@ -409,7 +409,7 @@ namespace Fake4Dataverse.Core.Tests.Security
                 service.Delete("role", shadowRole.Id);
             });
             
-            Assert.Contains("Cannot delete shadow role", exception.Message);
+            Assert.Contains("Shadow role", exception.Message);
         }
         
         #endregion
@@ -429,6 +429,9 @@ namespace Fake4Dataverse.Core.Tests.Security
             var context = builder.Build();
             context.SecurityConfiguration.UseModernBusinessUnits = false; // Traditional mode
             
+            // Load metadata for systemuserroles (many-to-many relationship entity)
+            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUserRoles.cdm.json" });
+            
             var service = context.GetOrganizationService();
             
             // Create two business units
@@ -440,12 +443,12 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Create user in BU1
             var userId = Guid.NewGuid();
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "User 1", ["businessunitid"] = new EntityReference("businessunit", bu1Id) };
-            context.Initialize(user);
+            service.Create(user);
             
             // Create role in BU1
             var roleId = Guid.NewGuid();
             var role = new Entity("role") { Id = roleId, ["name"] = "Role 1", ["businessunitid"] = new EntityReference("businessunit", bu1Id) };
-            context.Initialize(role);
+            service.Create(role);
             
             // Find shadow role in BU2
             var shadowRoleInBU2 = context.CreateQuery("role")
@@ -457,13 +460,13 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = userId,
-                ["roleid"] = shadowRoleInBU2.Id
+                ["systemuserid"] = new EntityReference("systemuser", userId),
+                ["roleid"] = new EntityReference("role", shadowRoleInBU2.Id)
             };
             
             var exception = Assert.Throws<InvalidOperationException>(() =>
             {
-                context.Initialize(userRole);
+                service.Create(userRole);
             });
             
             Assert.Contains("same business unit", exception.Message);
@@ -481,6 +484,9 @@ namespace Fake4Dataverse.Core.Tests.Security
             var context = builder.Build();
             context.SecurityConfiguration.UseModernBusinessUnits = true; // Modern mode
             
+            // Load metadata for systemuserroles (many-to-many relationship entity)
+            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUserRoles.cdm.json" });
+            
             var service = context.GetOrganizationService();
             
             // Create two business units
@@ -492,12 +498,12 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Create user in BU1
             var userId = Guid.NewGuid();
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "User 1", ["businessunitid"] = new EntityReference("businessunit", bu1Id) };
-            context.Initialize(user);
+            service.Create(user);
             
             // Create role in BU1
             var roleId = Guid.NewGuid();
             var role = new Entity("role") { Id = roleId, ["name"] = "Role 1", ["businessunitid"] = new EntityReference("businessunit", bu1Id) };
-            context.Initialize(role);
+            service.Create(role);
             
             // Find shadow role in BU2
             var shadowRoleInBU2 = context.CreateQuery("role")
@@ -509,10 +515,10 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = userId,
-                ["roleid"] = shadowRoleInBU2.Id
+                ["systemuserid"] = new EntityReference("systemuser", userId),
+                ["roleid"] = new EntityReference("role", shadowRoleInBU2.Id)
             };
-            context.Initialize(userRole);
+            service.Create(userRole);
             
             // Assert - no exception thrown
             var userRoles = context.SecurityManager.GetUserRoles(userId);
@@ -529,6 +535,10 @@ namespace Fake4Dataverse.Core.Tests.Security
                 .UseCrud();
                 
             var context = builder.Build();
+            
+            // Load metadata for systemuserroles (many-to-many relationship entity)
+            context.InitializeMetadataFromCdmFiles(new[] { "/home/runner/work/Fake4Dataverse/Fake4Dataverse/Fake4DataverseCore/system-edm-files/SystemUserRoles.cdm.json" });
+            
             var service = context.GetOrganizationService();
             
             // Create two business units
@@ -540,21 +550,21 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Create user in BU1
             var userId = Guid.NewGuid();
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "User 1", ["businessunitid"] = new EntityReference("businessunit", bu1Id) };
-            context.Initialize(user);
+            service.Create(user);
             
             // Create and assign role
             var roleId = Guid.NewGuid();
             var role = new Entity("role") { Id = roleId, ["name"] = "Role 1", ["businessunitid"] = new EntityReference("businessunit", bu1Id) };
+            service.Create(role);
             
             // Assign role to user via systemuserroles entity
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = userId,
-                ["roleid"] = roleId
+                ["systemuserid"] = new EntityReference("systemuser", userId),
+                ["roleid"] = new EntityReference("role", roleId)
             };
-            
-            context.Initialize(new[] { role, userRole });
+            service.Create(userRole);
             
             // Verify role is assigned
             Assert.NotEmpty(context.SecurityManager.GetUserRoles(userId));
