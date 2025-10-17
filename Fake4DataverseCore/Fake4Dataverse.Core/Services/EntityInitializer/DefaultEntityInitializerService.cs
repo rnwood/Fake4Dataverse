@@ -48,11 +48,13 @@ namespace Fake4Dataverse.Services
             // Handle impersonation for audit fields
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
             // When impersonating:
-            // - createdby/modifiedby = impersonated user
-            // - createdonbehalfof/modifiedonbehalfof = actual calling user
+            // - createdby/modifiedby = impersonated user (passed in as gCallerId - the effective user)
+            // - createdonbehalfof/modifiedonbehalfof = actual calling user (from CallerProperties.CallerId)
             var callerProperties = ctx.CallerProperties as CallerProperties;
-            var effectiveUser = callerProperties?.GetEffectiveUser() ?? CallerId;
             var isImpersonating = callerProperties?.ImpersonatedUserId != null;
+            
+            // The gCallerId parameter already represents the effective user (impersonated or actual caller)
+            var effectiveUser = CallerId;
 
             var now = DateTime.UtcNow;
 

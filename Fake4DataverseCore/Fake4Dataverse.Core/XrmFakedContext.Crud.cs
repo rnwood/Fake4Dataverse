@@ -412,10 +412,11 @@ namespace Fake4Dataverse
         public void AddEntityDefaultAttributes(Entity e)
         {
             // Add createdon, modifiedon, createdby, modifiedby properties
-            if (CallerId == null)
+            // Ensure CallerProperties.CallerId is set if not already
+            if (CallerProperties != null && CallerProperties.CallerId == null)
             {
-                CallerId = new EntityReference("systemuser", Guid.NewGuid()); // Create a new instance by default
-
+                CallerProperties.CallerId = new EntityReference("systemuser", Guid.NewGuid());
+                
                 var integrityOptions = GetProperty<IIntegrityOptions>();
 
                 if (integrityOptions.ValidateEntityReferences)
@@ -424,21 +425,31 @@ namespace Fake4Dataverse
                     lock (systemUserLock)
                     {
                         var systemUserCollection = Data.GetOrAdd("systemuser", _ => new Dictionary<Guid, Entity>());
-                        if (!systemUserCollection.ContainsKey(CallerId.Id))
+                        if (!systemUserCollection.ContainsKey(CallerProperties.CallerId.Id))
                         {
-                            systemUserCollection.Add(CallerId.Id, new Entity("systemuser") { Id = CallerId.Id });
+                            systemUserCollection.Add(CallerProperties.CallerId.Id, new Entity("systemuser") { Id = CallerProperties.CallerId.Id });
                         }
                     }
                 }
-
+            }
+            
+            // Also set deprecated CallerId for backward compatibility
+            if (CallerId == null && CallerProperties?.CallerId != null)
+            {
+                CallerId = CallerProperties.CallerId;
             }
 
             var isManyToManyRelationshipEntity = e.LogicalName != null && this._relationships.ContainsKey(e.LogicalName);
 
             // Get the effective user ID for entity initialization
             // When impersonating, use the impersonated user's ID, otherwise use the caller's ID
-            var callerProperties = CallerProperties as CallerProperties;
-            var effectiveUserId = callerProperties?.GetEffectiveUser()?.Id ?? CallerId?.Id ?? Guid.Empty;
+            var effectiveUserId = CallerProperties?.GetEffectiveUser()?.Id ?? Guid.Empty;
+            
+            // If still empty, fall back to deprecated CallerId for backward compatibility
+            if (effectiveUserId == Guid.Empty && CallerId != null)
+            {
+                effectiveUserId = CallerId.Id;
+            }
             
             EntityInitializerService.Initialize(e, effectiveUserId, this, isManyToManyRelationshipEntity);
         }

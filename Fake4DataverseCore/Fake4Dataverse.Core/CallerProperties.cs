@@ -33,6 +33,12 @@ namespace Fake4Dataverse
         /// </summary>
         public EntityReference GetEffectiveUser()
         {
+            // Ensure CallerId is never null
+            if (CallerId == null)
+            {
+                CallerId = new EntityReference("systemuser", Guid.NewGuid());
+            }
+            
             return ImpersonatedUserId ?? CallerId;
         }
     }
