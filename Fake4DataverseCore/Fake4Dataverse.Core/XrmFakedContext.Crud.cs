@@ -443,7 +443,10 @@ namespace Fake4Dataverse
 
             // Get the effective user ID for entity initialization
             // When impersonating, use the impersonated user's ID, otherwise use the caller's ID
-            var effectiveUserId = CallerProperties?.GetEffectiveUser()?.Id ?? Guid.Empty;
+            var effectiveUser = CallerProperties?.GetEffectiveUser();
+            var effectiveUserId = effectiveUser?.Id ?? Guid.Empty;
+            
+
             
             // If still empty, fall back to deprecated CallerId for backward compatibility
             if (effectiveUserId == Guid.Empty && CallerId != null)
