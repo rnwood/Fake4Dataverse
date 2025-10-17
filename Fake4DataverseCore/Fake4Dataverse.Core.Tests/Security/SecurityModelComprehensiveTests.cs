@@ -53,6 +53,9 @@ namespace Fake4Dataverse.Core.Tests.Security
             var context = new XrmFakedContext();
             context.SecurityConfiguration.SecurityEnabled = true;
             
+            // Load systemuser metadata (organization-owned entity)
+            context.InitializeMetadataFromCdmFiles(new[] { "Fake4DataverseCore/system-edm-files/SystemUser.cdm.json" });
+            
             // Act - systemuser is organization-owned
             var privileges = context.CreateQuery("privilege")
                 .Where(p => p.GetAttributeValue<string>("name").Contains("Systemuser"))
@@ -86,6 +89,10 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             var service = context.GetOrganizationService();
             
+            // Grant Basic depth privilege (user can only access their own records)
+            // Load metadata first (this initializes default security entities)
+            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
+            
             // Create user and role
             var userId = Guid.NewGuid();
             var roleId = Guid.NewGuid();
@@ -93,11 +100,6 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Test User", ["businessunitid"] = new EntityReference("businessunit", buId) };
             var role = new Entity("role") { Id = roleId, ["name"] = "Test Role", ["businessunitid"] = new EntityReference("businessunit", buId) };
-            
-            context.Initialize(new[] { user, role });
-            
-            // Grant Basic depth privilege (user can only access their own records)
-            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
             
             var prvReadAccount = context.CreateQuery("privilege")
                 .FirstOrDefault(p => p.GetAttributeValue<string>("name") == "prvReadAccount");
@@ -118,7 +120,8 @@ namespace Fake4Dataverse.Core.Tests.Security
                 ["roleid"] = roleId
             };
             
-            context.Initialize(new[] { rolePrivilege, userRole });
+            // Initialize all entities together
+            context.Initialize(new[] { user, role, rolePrivilege, userRole });
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
@@ -593,24 +596,15 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Create user
             var userId = Guid.NewGuid();
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Sales Rep", ["businessunitid"] = new EntityReference("businessunit", buId) };
-            context.Initialize(user);
             
             // Create role
             var roleId = Guid.NewGuid();
             var role = new Entity("role") { Id = roleId, ["name"] = "Sales Representative", ["businessunitid"] = new EntityReference("businessunit", buId) };
-            context.Initialize(role);
             
             // Grant privileges to role
             var prvCreate = context.CreateQuery("privilege").First(p => p.GetAttributeValue<string>("name") == "prvCreateAccount");
             var prvRead = context.CreateQuery("privilege").First(p => p.GetAttributeValue<string>("name") == "prvReadAccount");
             var prvWrite = context.CreateQuery("privilege").First(p => p.GetAttributeValue<string>("name") == "prvWriteAccount");
-            
-            context.Initialize(new[]
-            {
-                new Entity("roleprivileges") { Id = Guid.NewGuid(), ["roleid"] = new EntityReference("role", roleId), ["privilegeid"] = new EntityReference("privilege", prvCreate.Id), ["privilegedepthmask"] = 1 },
-                new Entity("roleprivileges") { Id = Guid.NewGuid(), ["roleid"] = new EntityReference("role", roleId), ["privilegeid"] = new EntityReference("privilege", prvRead.Id), ["privilegedepthmask"] = 1 },
-                new Entity("roleprivileges") { Id = Guid.NewGuid(), ["roleid"] = new EntityReference("role", roleId), ["privilegeid"] = new EntityReference("privilege", prvWrite.Id), ["privilegedepthmask"] = 1 }
-            });
             
             // Assign role to user via systemuserroles entity
             var userRole = new Entity("systemuserroles")
@@ -619,7 +613,17 @@ namespace Fake4Dataverse.Core.Tests.Security
                 ["systemuserid"] = userId,
                 ["roleid"] = roleId
             };
-            context.Initialize(userRole);
+            
+            // Initialize all entities together
+            context.Initialize(new[]
+            {
+                user,
+                role,
+                new Entity("roleprivileges") { Id = Guid.NewGuid(), ["roleid"] = new EntityReference("role", roleId), ["privilegeid"] = new EntityReference("privilege", prvCreate.Id), ["privilegedepthmask"] = 1 },
+                new Entity("roleprivileges") { Id = Guid.NewGuid(), ["roleid"] = new EntityReference("role", roleId), ["privilegeid"] = new EntityReference("privilege", prvRead.Id), ["privilegedepthmask"] = 1 },
+                new Entity("roleprivileges") { Id = Guid.NewGuid(), ["roleid"] = new EntityReference("role", roleId), ["privilegeid"] = new EntityReference("privilege", prvWrite.Id), ["privilegedepthmask"] = 1 },
+                userRole
+            });
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
