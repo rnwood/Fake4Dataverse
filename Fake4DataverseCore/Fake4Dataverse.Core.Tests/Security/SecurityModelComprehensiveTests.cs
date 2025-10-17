@@ -32,7 +32,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             // Act
             var privileges = context.CreateQuery("privilege")
-                .Where(p => p.GetAttributeValue<string>("name").Contains("sales"))
+                .Where(p => p.GetAttributeValue<string>("name").Contains("Account"))
                 .ToList();
             
             // Assert - should have all 8 privileges for user-owned entities
@@ -149,6 +149,9 @@ namespace Fake4Dataverse.Core.Tests.Security
             context.SecurityConfiguration.SecurityEnabled = true;
             
             var service = context.GetOrganizationService();
+            
+            // Load account metadata (needed for validation)
+            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
             
             // Create System Administrator user
             var userId = Guid.NewGuid();

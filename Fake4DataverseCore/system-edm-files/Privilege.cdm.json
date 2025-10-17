@@ -118,6 +118,14 @@
                 "description": "Information that specifies whether the privilege applies to the user's business unit."
               },
               {
+                "name": "canBePrivate",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "canbeprivate",
+                "displayName": "Can Be Private",
+                "description": "Information that specifies whether the privilege can be granted at the private/individual level."
+              },
+              {
                 "name": "privilegeType",
                 "purpose": "hasA",
                 "dataType": "integer",
