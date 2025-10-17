@@ -3,6 +3,8 @@ using Microsoft.Xrm.Sdk;
 using Fake4Dataverse.Extensions;
 using System.Collections.Generic;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Metadata;
+using System.Linq;
 
 namespace Fake4Dataverse.Services
 {
@@ -13,7 +15,10 @@ namespace Fake4Dataverse.Services
     }
     public class DefaultEntityInitializerService : IEntityInitializerService
     {
-        public Dictionary<string, IEntityInitializerService> InitializerServiceDictionary { get; set; } 
+        public Dictionary<string, IEntityInitializerService> InitializerServiceDictionary { get; set; }
+        
+        // Shared auto number service for all entities
+        private static readonly AutoNumberFormatService _autoNumberService = new AutoNumberFormatService();
 
         public DefaultEntityInitializerService()
         {
@@ -56,6 +61,11 @@ namespace Fake4Dataverse.Services
             e.SetValueIfEmpty("ownerid", CallerId);
             e.SetValueIfEmpty("statecode", new OptionSetValue(0)); //Active by default
 
+            // Process auto number fields
+            // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/autonumber-fields
+            // Auto number fields automatically generate values when a record is created
+            ProcessAutoNumberFields(e, ctx);
+
             if (ctx.InitializationLevel == EntityInitializationLevel.PerEntity)
             {
                 if (!string.IsNullOrEmpty(e.LogicalName) && InitializerServiceDictionary.ContainsKey(e.LogicalName))
@@ -68,6 +78,41 @@ namespace Fake4Dataverse.Services
         public Entity Initialize(Entity e, XrmFakedContext ctx, bool isManyToManyRelationshipEntity = false)
         {
             return this.Initialize(e, Guid.NewGuid(), ctx, isManyToManyRelationshipEntity);
+        }
+
+        /// <summary>
+        /// Processes auto number fields for an entity based on metadata.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/autonumber-fields
+        /// Auto number fields are string attributes with an AutoNumberFormat property that defines the pattern.
+        /// </summary>
+        private void ProcessAutoNumberFields(Entity e, XrmFakedContext ctx)
+        {
+            // Get entity metadata
+            var entityMetadata = ctx.GetEntityMetadataByName(e.LogicalName);
+            if (entityMetadata == null || entityMetadata.Attributes == null)
+            {
+                return;
+            }
+
+            // Find string attributes with AutoNumberFormat
+            var autoNumberAttributes = entityMetadata.Attributes
+                .OfType<StringAttributeMetadata>()
+                .Where(attr => !string.IsNullOrEmpty(attr.AutoNumberFormat))
+                .ToList();
+
+            foreach (var attribute in autoNumberAttributes)
+            {
+                // Only generate if the attribute is not already set
+                if (!e.Contains(attribute.LogicalName) || e[attribute.LogicalName] == null)
+                {
+                    var autoNumberValue = _autoNumberService.GenerateAutoNumber(
+                        e.LogicalName,
+                        attribute.LogicalName,
+                        attribute.AutoNumberFormat);
+                    
+                    e[attribute.LogicalName] = autoNumberValue;
+                }
+            }
         }
     }
 }
