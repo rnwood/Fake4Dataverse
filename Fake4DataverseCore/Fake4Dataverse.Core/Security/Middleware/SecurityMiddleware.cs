@@ -36,15 +36,39 @@ namespace Fake4Dataverse.Security.Middleware
                     return next(context, request);
                 }
 
-                // Validate impersonation if active
+                // Validate impersonation if active (must be done before sys admin bypass)
                 // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
                 // The calling user must have the prvActOnBehalfOfAnotherUser privilege to impersonate another user.
+                // Even System Administrators need to perform this check on the CALLING user, not the impersonated user.
                 if (context.CallerProperties.ImpersonatedUserId != null)
                 {
-                    ValidateImpersonationPrivilege(context);
+                    var callerId = context.CallerProperties.CallerId;
+                    if (callerId == null)
+                    {
+                        throw new UnauthorizedAccessException("Cannot impersonate without a calling user context.");
+                    }
+
+                    // Check if the CALLING user (not impersonated) is System Administrator or has the privilege
+                    bool isCallerSystemAdmin = context.SecurityManager.IsSystemAdministrator(callerId.Id);
+                    
+                    if (!isCallerSystemAdmin)
+                    {
+                        // Check if the calling user has the prvActOnBehalfOfAnotherUser privilege
+                        var hasPrivilege = context.SecurityManager.PrivilegeManager.HasPrivilege(
+                            callerId.Id,
+                            PrivilegeManager.ActOnBehalfOfAnotherUserPrivilege,
+                            PrivilegeManager.PrivilegeDepthGlobal);
+
+                        if (!hasPrivilege)
+                        {
+                            throw new UnauthorizedAccessException(
+                                $"User {callerId.Id} does not have the '{PrivilegeManager.ActOnBehalfOfAnotherUserPrivilege}' privilege required for impersonation.");
+                        }
+                    }
                 }
 
-                // Check if user is System Administrator - they bypass all security
+                // Check if EFFECTIVE user is System Administrator - they bypass all OTHER security
+                // The effective user is the impersonated user if impersonating, otherwise the caller
                 var effectiveUser = context.CallerProperties.ImpersonatedUserId ?? context.CallerProperties.CallerId;
                 
                 if (effectiveUser != null && effectiveUser.LogicalName == "systemuser")
@@ -62,39 +86,6 @@ namespace Fake4Dataverse.Security.Middleware
                 // Continue to next middleware
                 return next(context, request);
             });
-        }
-
-        /// <summary>
-        /// Validates that the calling user has the privilege to impersonate another user.
-        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
-        /// The prvActOnBehalfOfAnotherUser privilege is required for impersonation.
-        /// This privilege is typically granted to System Administrator and Delegate roles.
-        /// </summary>
-        private static void ValidateImpersonationPrivilege(IXrmFakedContext context)
-        {
-            var callerId = context.CallerProperties.CallerId;
-            if (callerId == null)
-            {
-                throw new UnauthorizedAccessException("Cannot impersonate without a calling user context.");
-            }
-
-            // System Administrators always have impersonation privilege
-            if (context.SecurityManager.IsSystemAdministrator(callerId.Id))
-            {
-                return;
-            }
-
-            // Check if the calling user has the prvActOnBehalfOfAnotherUser privilege
-            var hasPrivilege = context.SecurityManager.PrivilegeManager.HasPrivilege(
-                callerId.Id,
-                PrivilegeManager.ActOnBehalfOfAnotherUserPrivilege,
-                PrivilegeManager.PrivilegeDepthGlobal);
-
-            if (!hasPrivilege)
-            {
-                throw new UnauthorizedAccessException(
-                    $"User {callerId.Id} does not have the '{PrivilegeManager.ActOnBehalfOfAnotherUserPrivilege}' privilege required for impersonation.");
-            }
         }
 
         private static void EnforceSecurityForRequest(IXrmFakedContext context, OrganizationRequest request)

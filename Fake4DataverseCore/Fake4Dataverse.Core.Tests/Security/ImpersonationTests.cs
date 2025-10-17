@@ -50,7 +50,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             context.AddEntity(targetUser);
 
             // Assign System Administrator role to admin
-            context.SecurityManager.AssignRole(adminUserId, context.SecurityManager.SystemAdministratorRoleId);
+            service.Associate("systemuser", adminUserId, new Relationship("systemuserroles_association"),
+                new EntityReferenceCollection { new EntityReference("role", context.SecurityManager.SystemAdministratorRoleId) });
 
             // Set caller as admin
             context.CallerProperties.CallerId = new EntityReference("systemuser", adminUserId);
@@ -103,7 +104,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             context.AddEntity(targetUser);
 
             // Assign System Administrator role
-            context.SecurityManager.AssignRole(adminUserId, context.SecurityManager.SystemAdministratorRoleId);
+            service.Associate("systemuser", adminUserId, new Relationship("systemuserroles_association"),
+                new EntityReferenceCollection { new EntityReference("role", context.SecurityManager.SystemAdministratorRoleId) });
 
             // Set impersonation
             context.CallerProperties.CallerId = new EntityReference("systemuser", adminUserId);
@@ -157,7 +159,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             context.AddEntity(targetUser);
 
             // Assign System Administrator role
-            context.SecurityManager.AssignRole(adminUserId, context.SecurityManager.SystemAdministratorRoleId);
+            service.Associate("systemuser", adminUserId, new Relationship("systemuserroles_association"),
+                new EntityReferenceCollection { new EntityReference("role", context.SecurityManager.SystemAdministratorRoleId) });
 
             // Set impersonation
             context.CallerProperties.CallerId = new EntityReference("systemuser", adminUserId);
@@ -250,7 +253,8 @@ namespace Fake4Dataverse.Core.Tests.Security
                 ["fullname"] = "Admin User"
             };
             context.AddEntity(adminUser);
-            context.SecurityManager.AssignRole(adminUserId, context.SecurityManager.SystemAdministratorRoleId);
+            service.Associate("systemuser", adminUserId, new Relationship("systemuserroles_association"),
+                new EntityReferenceCollection { new EntityReference("role", context.SecurityManager.SystemAdministratorRoleId) });
 
             // Set caller (no impersonation)
             context.CallerProperties.CallerId = new EntityReference("systemuser", adminUserId);

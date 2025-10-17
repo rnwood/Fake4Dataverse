@@ -435,7 +435,12 @@ namespace Fake4Dataverse
 
             var isManyToManyRelationshipEntity = e.LogicalName != null && this._relationships.ContainsKey(e.LogicalName);
 
-            EntityInitializerService.Initialize(e, CallerId.Id, this, isManyToManyRelationshipEntity);
+            // Get the effective user ID for entity initialization
+            // When impersonating, use the impersonated user's ID, otherwise use the caller's ID
+            var callerProperties = CallerProperties as CallerProperties;
+            var effectiveUserId = callerProperties?.GetEffectiveUser()?.Id ?? CallerId?.Id ?? Guid.Empty;
+            
+            EntityInitializerService.Initialize(e, effectiveUserId, this, isManyToManyRelationshipEntity);
         }
 
         protected void ValidateEntity(Entity e)
