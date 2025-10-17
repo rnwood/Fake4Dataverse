@@ -2,6 +2,7 @@ using Fake4Dataverse.Security;
 using Fake4Dataverse.Security.Middleware;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Middleware.Crud;
+using Fake4Dataverse.Integrity;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Crm.Sdk.Messages;
@@ -143,8 +144,14 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Allow_Operations_When_Security_Disabled()
         {
             // Arrange - use middleware builder but keep security disabled
+            var integrityOptions = new IntegrityOptions 
+            { 
+                ValidateEntityReferences = false,
+                ValidateAttributeTypes = false  // Disable validation for this basic test
+            };
+            
             var builder = MiddlewareBuilder.New()
-                .AddCrud()  // Wire up CRUD operations
+                .AddCrud(integrityOptions)  // Wire up CRUD operations with validation disabled
                 .UseCrud(); // Register CRUD middleware to handle Execute(CreateRequest, etc.)
                 
             var context = builder.Build();
@@ -167,10 +174,16 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Enforce_Security_When_Enabled_With_Middleware()
         {
             // Arrange
+            var integrityOptions = new IntegrityOptions 
+            { 
+                ValidateEntityReferences = false,
+                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
+            };
+            
             var builder = MiddlewareBuilder.New()
-                .AddCrud()
-                .AddSecurity() // Add security middleware
-                .UseCrud();  // Register CRUD middleware
+                .AddCrud(integrityOptions)
+                .UseCrud()  // Register CRUD middleware
+                .AddSecurity(); // Add security middleware (runs first after reversal)
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
@@ -241,8 +254,14 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Allow_Record_Owner_To_Update()
         {
             // Arrange
+            var integrityOptions = new IntegrityOptions 
+            { 
+                ValidateEntityReferences = false,
+                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
+            };
+            
             var builder = MiddlewareBuilder.New()
-                .AddCrud()
+                .AddCrud(integrityOptions)
                 .UseCrud()  // Register CRUD middleware
                 .AddSecurity();  // Security middleware runs first (checks permissions before CRUD)
                 
@@ -255,16 +274,19 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             var userId = Guid.NewGuid();
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Owner" };
-            context.Initialize(user);
+            
+            // Get System Administrator role ID (this initializes default security entities)
+            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             
             // Assign System Administrator role to grant all privileges
-            var sysAdminRoleId = context.SecurityManager.SystemAdministratorRoleId;
             var userRole = new Entity("systemuserroles")
             {
                 ["systemuserid"] = userId,
                 ["roleid"] = sysAdminRoleId
             };
-            context.Initialize(userRole);
+            
+            // Initialize user and role assignment together
+            context.Initialize(new[] { user, userRole });
             
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
             
@@ -287,10 +309,16 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Deny_Access_To_Non_Owner_When_Security_Enabled()
         {
             // Arrange
+            var integrityOptions = new IntegrityOptions 
+            { 
+                ValidateEntityReferences = false,
+                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
+            };
+            
             var builder = MiddlewareBuilder.New()
-                .AddCrud()
-                .AddSecurity()
-                .UseCrud();  // Register CRUD middleware
+                .AddCrud(integrityOptions)
+                .UseCrud()  // Register CRUD middleware
+                .AddSecurity();  // Security middleware runs first (checks permissions before CRUD)
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
@@ -344,10 +372,16 @@ namespace Fake4Dataverse.Core.Tests.Security
         public void Should_Allow_Access_Through_Shared_Permissions()
         {
             // Arrange
+            var integrityOptions = new IntegrityOptions 
+            { 
+                ValidateEntityReferences = false,
+                ValidateAttributeTypes = false  // Disable validation - testing security not metadata
+            };
+            
             var builder = MiddlewareBuilder.New()
-                .AddCrud()
-                .AddSecurity()
-                .UseCrud();  // Register CRUD middleware
+                .AddCrud(integrityOptions)
+                .UseCrud()  // Register CRUD middleware
+                .AddSecurity();  // Security middleware runs first (checks permissions before CRUD)
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
