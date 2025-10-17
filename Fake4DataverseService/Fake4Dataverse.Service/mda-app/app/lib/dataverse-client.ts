@@ -3,9 +3,10 @@
  * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/overview
  */
 
-import type { ODataResponse, EntityRecord } from '../types/dataverse';
+import type { ODataResponse, EntityRecord, AuditRecord, AuditDetail, AuditStatus } from '../types/dataverse';
 
 const API_BASE_URL = '/api/data/v9.2';
+const AUDIT_API_BASE_URL = '/api/audit';
 
 export class DataverseApiClient {
   /**
@@ -242,6 +243,136 @@ export class DataverseApiClient {
         'OData-MaxVersion': '4.0',
         'OData-Version': '4.0',
       },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Fetch all audit records (global summary)
+   * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/retrieve-audit-data
+   */
+  async fetchAuditRecords(
+    options?: {
+      top?: number;
+      skip?: number;
+      orderby?: string;
+      filter?: string;
+    }
+  ): Promise<{ value: AuditRecord[]; count: number }> {
+    const params = new URLSearchParams();
+    
+    if (options?.top !== undefined) {
+      params.append('top', options.top.toString());
+    }
+    if (options?.skip !== undefined) {
+      params.append('skip', options.skip.toString());
+    }
+    if (options?.orderby) {
+      params.append('orderby', options.orderby);
+    }
+    if (options?.filter) {
+      params.append('filter', options.filter);
+    }
+
+    const url = `${AUDIT_API_BASE_URL}${params.toString() ? '?' + params.toString() : ''}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Fetch audit records for a specific entity record
+   * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/retrieve-audit-data
+   */
+  async fetchEntityAuditRecords(
+    entityName: string,
+    id: string
+  ): Promise<{ value: AuditRecord[]; count: number }> {
+    const url = `${AUDIT_API_BASE_URL}/entity/${entityName}/${id}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Fetch audit details including old and new values
+   * Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.retrieveauditdetailsrequest
+   */
+  async fetchAuditDetails(auditId: string): Promise<AuditDetail> {
+    const url = `${AUDIT_API_BASE_URL}/details/${auditId}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get audit status (whether auditing is enabled)
+   */
+  async fetchAuditStatus(): Promise<AuditStatus> {
+    const url = `${AUDIT_API_BASE_URL}/status`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Set audit status (enable or disable auditing)
+   */
+  async setAuditStatus(isEnabled: boolean): Promise<AuditStatus> {
+    const url = `${AUDIT_API_BASE_URL}/status`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ isAuditEnabled: isEnabled }),
     });
 
     if (!response.ok) {

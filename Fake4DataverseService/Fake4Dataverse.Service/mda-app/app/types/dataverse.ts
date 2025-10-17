@@ -288,3 +288,43 @@ export interface AttributeMetadata {
   };
   [key: string]: any;
 }
+
+/**
+ * Audit record from Dataverse auditing system
+ * Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview
+ */
+export interface AuditRecord {
+  auditid: string;
+  action: number; // 1=Create, 2=Update, 3=Delete, 64=Access, etc.
+  operation: string;
+  objectid: EntityReference;
+  objecttypecode: string;
+  userid: EntityReference;
+  createdon: string; // ISO 8601 date string
+}
+
+/**
+ * Entity reference object
+ */
+export interface EntityReference {
+  logicalName: string;
+  id: string;
+  name?: string;
+}
+
+/**
+ * Audit detail response containing old and new values
+ * Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.crm.sdk.messages.attributeauditdetail
+ */
+export interface AuditDetail {
+  auditRecord: AuditRecord;
+  oldValue: { [key: string]: any };
+  newValue: { [key: string]: any };
+}
+
+/**
+ * Audit status response
+ */
+export interface AuditStatus {
+  isAuditEnabled: boolean;
+}
