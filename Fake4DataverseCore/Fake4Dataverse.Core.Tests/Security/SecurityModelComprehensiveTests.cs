@@ -28,11 +28,11 @@ namespace Fake4Dataverse.Core.Tests.Security
             context.SecurityConfiguration.SecurityEnabled = true;
             
             // Load account metadata (user-owned entity)
-            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "Account" }).Wait();
+            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
             
             // Act
             var privileges = context.CreateQuery("privilege")
-                .Where(p => p.GetAttributeValue<string>("name").Contains("Account"))
+                .Where(p => p.GetAttributeValue<string>("name").Contains("sales"))
                 .ToList();
             
             // Assert - should have all 8 privileges for user-owned entities
@@ -76,8 +76,9 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
-                .AddSecurity()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud()
+                .AddSecurity();
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
@@ -96,7 +97,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             context.Initialize(new[] { user, role });
             
             // Grant Basic depth privilege (user can only access their own records)
-            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "Account" }).Wait();
+            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
             
             var prvReadAccount = context.CreateQuery("privilege")
                 .FirstOrDefault(p => p.GetAttributeValue<string>("name") == "prvReadAccount");
@@ -135,8 +136,9 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
-                .AddSecurity()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud()
+                .AddSecurity();
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
@@ -197,8 +199,9 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var builder = MiddlewareBuilder.New()
-                .AddSecurity()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud()
+                .AddSecurity();
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
@@ -233,7 +236,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud();
                 
             var context = builder.Build();
             var service = context.GetOrganizationService();
@@ -280,7 +284,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud();
                 
             var context = builder.Build();
             var service = context.GetOrganizationService();
@@ -322,7 +327,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud();
                 
             var context = builder.Build();
             var service = context.GetOrganizationService();
@@ -355,7 +361,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud();
                 
             var context = builder.Build();
             var service = context.GetOrganizationService();
@@ -396,8 +403,9 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddSecurity()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud()
+                .AddSecurity();
                 
             var context = builder.Build();
             context.SecurityConfiguration.UseModernBusinessUnits = false; // Traditional mode
@@ -442,7 +450,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud();
                 
             var context = builder.Build();
             context.SecurityConfiguration.UseModernBusinessUnits = true; // Modern mode
@@ -486,7 +495,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud();
                 
             var context = builder.Build();
             var service = context.GetOrganizationService();
@@ -531,8 +541,9 @@ namespace Fake4Dataverse.Core.Tests.Security
             // Arrange - set up complete security environment
             var builder = MiddlewareBuilder.New()
                 .AddRoleLifecycle()
-                .AddSecurity()
-                .AddCrud();
+                .AddCrud()
+                .UseCrud()
+                .AddSecurity();
                 
             var context = builder.Build();
             context.SecurityConfiguration.SecurityEnabled = true;
@@ -541,7 +552,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             var service = context.GetOrganizationService();
             
             // Load account metadata
-            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "Account" }).Wait();
+            context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
             
             // Create business unit
             var buId = context.SecurityManager.RootBusinessUnitId;
