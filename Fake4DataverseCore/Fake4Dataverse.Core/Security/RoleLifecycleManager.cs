@@ -298,26 +298,58 @@ namespace Fake4Dataverse.Security
         /// </summary>
         private void RemoveAllRoleAssignments(Guid roleId)
         {
-            // Remove from systemuserroles_association
-            var userRoles = _context.CreateQuery("systemuserroles_association")
-                .Where(ur => ur.GetAttributeValue<EntityReference>("roleid") != null &&
-                            ur.GetAttributeValue<EntityReference>("roleid").Id == roleId)
+            // Try to remove from systemuserroles entity first
+            var userRoles = _context.CreateQuery("systemuserroles")
+                .ToList()
+                .Where(ur => GetGuidFromAttribute(ur, "roleid") == roleId)
                 .ToArray();
 
-            foreach (var userRole in userRoles)
+            if (userRoles.Length > 0)
             {
-                _context.DeleteEntity(new EntityReference("systemuserroles_association", userRole.Id));
+                foreach (var userRole in userRoles)
+                {
+                    _context.DeleteEntity(new EntityReference("systemuserroles", userRole.Id));
+                }
+            }
+            else
+            {
+                // Fall back to association entity
+                var userRolesAssoc = _context.CreateQuery("systemuserroles_association")
+                    .ToList()
+                    .Where(ur => GetGuidFromAttribute(ur, "roleid") == roleId)
+                    .ToArray();
+
+                foreach (var userRole in userRolesAssoc)
+                {
+                    _context.DeleteEntity(new EntityReference("systemuserroles_association", userRole.Id));
+                }
             }
 
-            // Remove from teamroles_association
-            var teamRoles = _context.CreateQuery("teamroles_association")
-                .Where(tr => tr.GetAttributeValue<EntityReference>("roleid") != null &&
-                            tr.GetAttributeValue<EntityReference>("roleid").Id == roleId)
+            // Try to remove from teamroles entity first
+            var teamRoles = _context.CreateQuery("teamroles")
+                .ToList()
+                .Where(tr => GetGuidFromAttribute(tr, "roleid") == roleId)
                 .ToArray();
 
-            foreach (var teamRole in teamRoles)
+            if (teamRoles.Length > 0)
             {
-                _context.DeleteEntity(new EntityReference("teamroles_association", teamRole.Id));
+                foreach (var teamRole in teamRoles)
+                {
+                    _context.DeleteEntity(new EntityReference("teamroles", teamRole.Id));
+                }
+            }
+            else
+            {
+                // Fall back to association entity
+                var teamRolesAssoc = _context.CreateQuery("teamroles_association")
+                    .ToList()
+                    .Where(tr => GetGuidFromAttribute(tr, "roleid") == roleId)
+                    .ToArray();
+
+                foreach (var teamRole in teamRolesAssoc)
+                {
+                    _context.DeleteEntity(new EntityReference("teamroles_association", teamRole.Id));
+                }
             }
         }
 
@@ -328,28 +360,88 @@ namespace Fake4Dataverse.Security
         {
             if (principalType == "systemuser")
             {
-                var userRoles = _context.CreateQuery("systemuserroles_association")
-                    .Where(ur => ur.GetAttributeValue<EntityReference>("systemuserid") != null &&
-                                ur.GetAttributeValue<EntityReference>("systemuserid").Id == principalId)
+                // Try to find role assignments in the systemuserroles entity first
+                var userRoles = _context.CreateQuery("systemuserroles")
+                    .ToList()
+                    .Where(ur => GetGuidFromAttribute(ur, "systemuserid") == principalId)
                     .ToArray();
 
-                foreach (var userRole in userRoles)
+                if (userRoles.Length > 0)
                 {
-                    _context.DeleteEntity(new EntityReference("systemuserroles_association", userRole.Id));
+                    // Delete from systemuserroles entity
+                    foreach (var userRole in userRoles)
+                    {
+                        _context.DeleteEntity(new EntityReference("systemuserroles", userRole.Id));
+                    }
+                }
+                else
+                {
+                    // Fall back to association entity
+                    var userRolesAssoc = _context.CreateQuery("systemuserroles_association")
+                        .ToList()
+                        .Where(ur => GetGuidFromAttribute(ur, "systemuserid") == principalId)
+                        .ToArray();
+
+                    foreach (var userRole in userRolesAssoc)
+                    {
+                        _context.DeleteEntity(new EntityReference("systemuserroles_association", userRole.Id));
+                    }
                 }
             }
             else if (principalType == "team")
             {
-                var teamRoles = _context.CreateQuery("teamroles_association")
-                    .Where(tr => tr.GetAttributeValue<EntityReference>("teamid") != null &&
-                                tr.GetAttributeValue<EntityReference>("teamid").Id == principalId)
+                // Try to find role assignments in the teamroles entity first
+                var teamRoles = _context.CreateQuery("teamroles")
+                    .ToList()
+                    .Where(tr => GetGuidFromAttribute(tr, "teamid") == principalId)
                     .ToArray();
 
-                foreach (var teamRole in teamRoles)
+                if (teamRoles.Length > 0)
                 {
-                    _context.DeleteEntity(new EntityReference("teamroles_association", teamRole.Id));
+                    // Delete from teamroles entity
+                    foreach (var teamRole in teamRoles)
+                    {
+                        _context.DeleteEntity(new EntityReference("teamroles", teamRole.Id));
+                    }
+                }
+                else
+                {
+                    // Fall back to association entity
+                    var teamRolesAssoc = _context.CreateQuery("teamroles_association")
+                        .ToList()
+                        .Where(tr => GetGuidFromAttribute(tr, "teamid") == principalId)
+                        .ToArray();
+
+                    foreach (var teamRole in teamRolesAssoc)
+                    {
+                        _context.DeleteEntity(new EntityReference("teamroles_association", teamRole.Id));
+                    }
                 }
             }
+        }
+
+        /// <summary>
+        /// Helper method to extract Guid from an attribute that might be Guid or EntityReference.
+        /// </summary>
+        private Guid GetGuidFromAttribute(Entity entity, string attributeName)
+        {
+            if (!entity.Contains(attributeName))
+            {
+                return Guid.Empty;
+            }
+
+            var value = entity[attributeName];
+            
+            if (value is Guid guidValue)
+            {
+                return guidValue;
+            }
+            else if (value is EntityReference entityRef)
+            {
+                return entityRef.Id;
+            }
+            
+            return Guid.Empty;
         }
     }
 }

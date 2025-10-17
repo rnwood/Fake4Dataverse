@@ -264,10 +264,11 @@ namespace Fake4Dataverse.Security
                 // Query the systemuserroles intersect entity directly
                 // In Dataverse, N:N relationships are stored in intersect entities
                 var userRoles = _context.CreateQuery("systemuserroles")
-                    .Where(ur => ur.GetAttributeValue<Guid>("systemuserid") == userId)
+                    .ToList()
+                    .Where(ur => GetGuidFromAttribute(ur, "systemuserid") == userId)
                     .ToList();
                 
-                return userRoles.Select(ur => ur.GetAttributeValue<Guid>("roleid")).ToArray();
+                return userRoles.Select(ur => GetGuidFromAttribute(ur, "roleid")).ToArray();
             }
             catch
             {
@@ -289,16 +290,42 @@ namespace Fake4Dataverse.Security
                 // Query the teamroles intersect entity directly
                 // In Dataverse, N:N relationships are stored in intersect entities
                 var teamRoles = _context.CreateQuery("teamroles")
-                    .Where(tr => tr.GetAttributeValue<Guid>("teamid") == teamId)
+                    .ToList()
+                    .Where(tr => GetGuidFromAttribute(tr, "teamid") == teamId)
                     .ToList();
                 
-                return teamRoles.Select(tr => tr.GetAttributeValue<Guid>("roleid")).ToArray();
+                return teamRoles.Select(tr => GetGuidFromAttribute(tr, "roleid")).ToArray();
             }
             catch
             {
                 // If teamroles entity doesn't exist, return empty array
                 return Array.Empty<Guid>();
             }
+        }
+
+        /// <summary>
+        /// Helper method to extract Guid from an attribute that might be Guid or EntityReference.
+        /// Many-to-many relationship entities should use EntityReference, but this handles both for compatibility.
+        /// </summary>
+        private Guid GetGuidFromAttribute(Entity entity, string attributeName)
+        {
+            if (!entity.Contains(attributeName))
+            {
+                return Guid.Empty;
+            }
+
+            var value = entity[attributeName];
+            
+            if (value is Guid guidValue)
+            {
+                return guidValue;
+            }
+            else if (value is EntityReference entityRef)
+            {
+                return entityRef.Id;
+            }
+            
+            return Guid.Empty;
         }
     }
 }

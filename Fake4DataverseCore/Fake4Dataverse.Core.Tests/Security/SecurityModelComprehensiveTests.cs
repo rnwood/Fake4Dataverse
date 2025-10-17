@@ -7,8 +7,6 @@ using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Crm.Sdk.Messages;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Xunit;
 
@@ -91,24 +89,20 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             var service = context.GetOrganizationService();
             
+            // Grant Basic depth privilege (user can only access their own records)
             // Load metadata first (this initializes default security entities)
             context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
-            context.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "account" }).Wait();
-            
-            // Load systemuserroles metadata
-            var systemUserRolesCdmPath = Path.Combine(Directory.GetCurrentDirectory(), "../../../../system-edm-files/SystemUserRoles.cdm.json");
-            context.InitializeMetadataFromCdmFiles(new List<string> { systemUserRolesCdmPath });
             
             // Create user and role
             var userId = Guid.NewGuid();
             var roleId = Guid.NewGuid();
             var buId = context.SecurityManager.RootBusinessUnitId;
             
-            var prvReadAccount = context.CreateQuery("privilege")
-                .FirstOrDefault(p => p.GetAttributeValue<string>("name") == "prvReadAccount");
-            
             var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Test User", ["businessunitid"] = new EntityReference("businessunit", buId) };
             var role = new Entity("role") { Id = roleId, ["name"] = "Test Role", ["businessunitid"] = new EntityReference("businessunit", buId) };
+            
+            var prvReadAccount = context.CreateQuery("privilege")
+                .FirstOrDefault(p => p.GetAttributeValue<string>("name") == "prvReadAccount");
             
             var rolePrivilege = new Entity("roleprivileges")
             {
@@ -122,15 +116,12 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = new EntityReference("systemuser", userId),
-                ["roleid"] = new EntityReference("role", roleId)
+                ["systemuserid"] = userId,
+                ["roleid"] = roleId
             };
             
-            // Use service.Create to trigger middleware validation
-            service.Create(user);
-            service.Create(role);
-            service.Create(rolePrivilege);
-            service.Create(userRole);
+            // Initialize all entities together
+            context.Initialize(new[] { user, role, rolePrivilege, userRole });
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
@@ -186,9 +177,6 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
-            
-            // Load account metadata
-            context.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "account" }).Wait();
             
             // Act - create account without any explicit privilege grants
             var accountId = service.Create(new Entity("account") { ["name"] = "Admin Account" });
@@ -282,8 +270,7 @@ namespace Fake4Dataverse.Core.Tests.Security
                 ["name"] = "Sales Department",
                 ["parentbusinessunitid"] = new EntityReference("businessunit", bu1Id)
             };
-            // Initialize the second business unit
-            context.Initialize(bu2);
+            service.Create(bu2);
             
             // Act - create a role in BU1
             var roleId = Guid.NewGuid();
@@ -341,7 +328,7 @@ namespace Fake4Dataverse.Core.Tests.Security
                 ["name"] = "Sales Department",
                 ["parentbusinessunitid"] = new EntityReference("businessunit", bu1Id)
             };
-            context.Initialize(bu2);
+            service.Create(bu2);
             
             // Assert - shadow copy of the role should be created for new BU
             var rolesInBU2 = context.CreateQuery("role")
@@ -369,7 +356,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             var bu1Id = context.SecurityManager.RootBusinessUnitId;
             var bu2Id = Guid.NewGuid();
             var bu2 = new Entity("businessunit") { Id = bu2Id, ["name"] = "Sales" };
-            context.Initialize(bu2);
+            service.Create(bu2);
             
             // Create a role (creates shadow copy)
             var roleId = Guid.NewGuid();
@@ -403,7 +390,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             var bu1Id = context.SecurityManager.RootBusinessUnitId;
             var bu2Id = Guid.NewGuid();
             var bu2 = new Entity("businessunit") { Id = bu2Id, ["name"] = "Sales" };
-            context.Initialize(bu2);
+            service.Create(bu2);
             
             // Create a role (creates shadow copy)
             var roleId = Guid.NewGuid();
@@ -451,7 +438,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             var bu1Id = context.SecurityManager.RootBusinessUnitId;
             var bu2Id = Guid.NewGuid();
             var bu2 = new Entity("businessunit") { Id = bu2Id, ["name"] = "Sales" };
-            context.Initialize(bu2);
+            service.Create(bu2);
             
             // Create user in BU1
             var userId = Guid.NewGuid();
@@ -506,7 +493,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             var bu1Id = context.SecurityManager.RootBusinessUnitId;
             var bu2Id = Guid.NewGuid();
             var bu2 = new Entity("businessunit") { Id = bu2Id, ["name"] = "Sales" };
-            context.Initialize(bu2);
+            service.Create(bu2);
             
             // Create user in BU1
             var userId = Guid.NewGuid();
@@ -528,8 +515,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = userId,  // Use Guid directly so GetUserRoles can find it
-                ["roleid"] = shadowRoleInBU2.Id  // Use Guid directly
+                ["systemuserid"] = new EntityReference("systemuser", userId),
+                ["roleid"] = new EntityReference("role", shadowRoleInBU2.Id)
             };
             service.Create(userRole);
             
@@ -558,7 +545,7 @@ namespace Fake4Dataverse.Core.Tests.Security
             var bu1Id = context.SecurityManager.RootBusinessUnitId;
             var bu2Id = Guid.NewGuid();
             var bu2 = new Entity("businessunit") { Id = bu2Id, ["name"] = "Sales" };
-            context.Initialize(bu2);
+            service.Create(bu2);
             
             // Create user in BU1
             var userId = Guid.NewGuid();
@@ -574,8 +561,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = userId,  // Use Guid directly so GetUserRoles can find it
-                ["roleid"] = roleId  // Use Guid directly
+                ["systemuserid"] = new EntityReference("systemuser", userId),
+                ["roleid"] = new EntityReference("role", roleId)
             };
             service.Create(userRole);
             
