@@ -90,7 +90,7 @@ namespace Fake4Dataverse.Tests.Issues
                         </fetch> ", contact.Id);
 
             EntityCollection result = _service.RetrieveMultiple(new FetchExpression(fetchQuery));
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
         }
     }
 }

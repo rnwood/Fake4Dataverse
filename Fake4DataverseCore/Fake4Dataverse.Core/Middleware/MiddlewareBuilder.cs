@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.Middleware;
-using Fake4Dataverse.Integrity;
 using System.Linq;
 using Microsoft.Xrm.Sdk;
 using FakeItEasy;
-using Fake4Dataverse.Abstractions.Integrity;
 
 namespace Fake4Dataverse.Middleware
 {
@@ -22,7 +20,6 @@ namespace Fake4Dataverse.Middleware
         public static IMiddlewareBuilder New() 
         {
             var builder = new MiddlewareBuilder();
-            builder.AddDefaults();
             return builder;
         }
 
@@ -30,11 +27,6 @@ namespace Fake4Dataverse.Middleware
         {
             addToContextAction.Invoke(_context);
             return this;
-        }
-
-        private void AddDefaults()
-        {
-            _context.SetProperty<IIntegrityOptions>(new IntegrityOptions() {  ValidateEntityReferences = false });
         }
 
         public IMiddlewareBuilder Use(Func<OrganizationRequestDelegate, OrganizationRequestDelegate> middleware) 

@@ -201,6 +201,11 @@ namespace Fake4Dataverse
 
         public EntityMetadata GetEntityMetadataByName(string sLogicalName)
         {
+            if (string.IsNullOrWhiteSpace(sLogicalName))
+            {
+                throw new ArgumentException("Logical name parameter can not be null or empty", nameof(sLogicalName));
+            }
+
             if (EntityMetadata.ContainsKey(sLogicalName))
                 return EntityMetadata[sLogicalName].Copy();
 

@@ -1,6 +1,4 @@
 using Fake4Dataverse.Abstractions;
-using Fake4Dataverse.Abstractions.Integrity;
-using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Services;

@@ -15,22 +15,10 @@ using Xunit;
 namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
 {
     public class MetadataInferenceTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public MetadataInferenceTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void When_using_proxy_types_assembly_the_entity_metadata_is_inferred_from_the_proxy_types_assembly()
         {
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
 
             //Empty contecxt (no Initialize), but we should be able to query any typed entity without an entity not found exception
             using (XrmServiceContext ctx = new XrmServiceContext(_service))
@@ -46,12 +34,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         [Fact]
         public void When_using_proxy_types_assembly_the_attribute_metadata_is_inferred_from_the_proxy_types_assembly()
         {
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
 
             var contact1 = new Entity("contact") { Id = Guid.NewGuid() }; contact1["fullname"] = "Contact 1"; contact1["firstname"] = "First 1";
             var contact2 = new Entity("contact") { Id = Guid.NewGuid() }; contact2["fullname"] = "Contact 2"; contact2["firstname"] = "First 2";
 
-            _context.Initialize(new List<Entity>() { contact1, contact2 });
+            base._context.Initialize(new List<Entity>() { contact1, contact2 });
 
             var guid = Guid.NewGuid();
 
@@ -70,12 +58,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         [Fact]
         public void When_using_proxy_types_assembly_the_attribute_metadata_is_inferred_from_injected_metadata_as_a_fallback()
         {
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
 
             var contact1 = new Entity("contact") { Id = Guid.NewGuid() }; contact1["injectedAttribute"] = "Contact 1";
             var contact2 = new Entity("contact") { Id = Guid.NewGuid() }; contact2["injectedAttribute"] = "Contact 2";
 
-            _context.Initialize(new List<Entity>() { contact1, contact2 });
+            base._context.Initialize(new List<Entity>() { contact1, contact2 });
 
             var contactMetadata = new EntityMetadata()
             {
@@ -88,7 +76,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
             };
 
             contactMetadata.SetAttribute(injectedAttribute);
-            _context.InitializeMetadata(contactMetadata);
+            base._context.InitializeMetadata(contactMetadata);
 
             var guid = Guid.NewGuid();
 
@@ -108,12 +96,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         [Fact]
         public void When_using_proxy_types_assembly_the_optionset_metadata_is_inferred_from_injected_metadata_as_a_fallback()
         {
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
 
             var contact1 = new Entity("contact") { Id = Guid.NewGuid() }; contact1["injectedAttribute"] = new OptionSetValue(10001);
             var contact2 = new Entity("contact") { Id = Guid.NewGuid() }; contact2["injectedAttribute"] = new OptionSetValue(10002);
 
-            _context.Initialize(new List<Entity>() { contact1, contact2 });
+            base._context.Initialize(new List<Entity>() { contact1, contact2 });
 
             var contactMetadata = new EntityMetadata()
             {
@@ -126,7 +114,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
             };
 
             contactMetadata.SetAttribute(injectedAttribute);
-            _context.InitializeMetadata(contactMetadata);
+            base._context.InitializeMetadata(contactMetadata);
 
             var guid = Guid.NewGuid();
 
@@ -145,7 +133,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         [Fact]
         public void When_using_proxy_types_assembly_multi_select_option_set_metadata_is_inferred_from_injected_metadata_as_a_fallback()
         {
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
 
             var record1 = new Entity("contact")
             {
@@ -169,7 +157,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
                     })
             };
 
-            _context.Initialize(new List<Entity>() { record1, record2 });
+            base._context.Initialize(new List<Entity>() { record1, record2 });
 
             var entityMetadata = new EntityMetadata()
             {
@@ -182,13 +170,13 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
             };
 
             entityMetadata.SetAttribute(injectedAttribute);
-            _context.InitializeMetadata(entityMetadata);
+            base._context.InitializeMetadata(entityMetadata);
 
             var guid = Guid.NewGuid();
 
             //Empty context (no Initialize), but we should be able to query any typed entity without an entity not found exception
 
-            var contacts = _service.RetrieveMultiple(new QueryExpression(Contact.EntityLogicalName)
+            var contacts = base._service.RetrieveMultiple(new QueryExpression(Contact.EntityLogicalName)
             {
                 Criteria = new FilterExpression()
                 {
@@ -206,12 +194,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.LinqTests
         [Fact]
         public void When_using_proxy_types_assembly_the_finding_attribute_metadata_fails_if_neither_proxy_type_or_injected_metadata_exist()
         {
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
 
             var contact1 = new Entity("contact") { Id = Guid.NewGuid() }; contact1["injectedAttribute"] = "Contact 1";
             var contact2 = new Entity("contact") { Id = Guid.NewGuid() }; contact2["injectedAttribute"] = "Contact 2";
 
-            _context.Initialize(new List<Entity>() { contact1, contact2 });
+            base._context.Initialize(new List<Entity>() { contact1, contact2 });
 
             var guid = Guid.NewGuid();
 

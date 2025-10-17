@@ -12,16 +12,6 @@ namespace Fake4Dataverse.Tests.Services.EntityInitializer
 {
     public class InvoiceDetailInitializerServiceTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public InvoiceDetailInitializerServiceTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         [Fact]
         public void When_using_default_entity_initialization_level_invoice_detail_init_service_is_not_called()

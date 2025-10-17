@@ -28,7 +28,7 @@ export default defineConfig({
   webServer: [
     {
       // Start Fake4Dataverse backend service on port 5000
-      command: 'dotnet run --project ../src/Fake4Dataverse.Service/Fake4Dataverse.Service.csproj -- start --port 5000',
+      command: 'dotnet run --project ../Fake4Dataverse.Service.csproj -- start --port 5000',
       url: 'http://localhost:5000/health',
       reuseExistingServer: !process.env.CI,
       timeout: 120 * 1000,

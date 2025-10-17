@@ -62,7 +62,7 @@ namespace Fake4Dataverse.Tests
             var contact = (from c in _context.CreateQuery<Contact>()
                            select c).ToList();
 
-            Assert.Equal(contact.Count, 0);
+            Assert.Empty(contact);
         }
 
         [Fact]
@@ -73,7 +73,7 @@ namespace Fake4Dataverse.Tests
             var contact = (from c in _context.CreateQuery("contact")
                            select c).ToList();
 
-            Assert.Equal(contact.Count, 0);
+            Assert.Empty(contact);
         }
 
         [Fact]
@@ -84,7 +84,7 @@ namespace Fake4Dataverse.Tests
             var contact = (from c in _context.CreateQuery("contact")
                            select c).ToList();
 
-            Assert.Equal(contact.Count, 0);
+            Assert.Empty(contact);
         }
 
         [Fact]

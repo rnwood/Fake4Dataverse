@@ -9,16 +9,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveVersionRequestTests
 {
     public class RetrieveVersionRequestTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public RetrieveVersionRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         [Fact]
         public void AddsFakeVersionRequest()

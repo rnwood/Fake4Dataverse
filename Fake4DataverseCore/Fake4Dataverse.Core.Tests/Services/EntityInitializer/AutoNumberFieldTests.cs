@@ -4,7 +4,6 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Xunit;
 using Fake4Dataverse.Abstractions;
-using Fake4Dataverse.Abstractions.Integrity;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Extensions;
 
@@ -17,20 +16,6 @@ namespace Fake4Dataverse.Tests.Services.EntityInitializer
     /// </summary>
     public class AutoNumberFieldTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public AutoNumberFieldTests()
-        {
-            _context = base._context;
-            _service = base._service;
-
-            // Enable validation to ensure metadata is required
-            var integrityOptions = _context.GetProperty<IIntegrityOptions>();
-            integrityOptions.ValidateEntityReferences = true;
-            integrityOptions.ValidateAttributeTypes = true;
-        }
-
         [Fact]
         public void Should_Generate_Auto_Number_On_Create_With_Metadata()
         {
@@ -391,27 +376,6 @@ namespace Fake4Dataverse.Tests.Services.EntityInitializer
             // Assert - No auto-generation should occur
             var retrieved = _service.Retrieve("new_customer", customerId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
             Assert.False(retrieved.Contains("new_customername"));
-        }
-
-        [Fact]
-        public void Should_Work_Without_Metadata_If_No_Auto_Number_Fields()
-        {
-            // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/autonumber-fields
-            // Entities without auto number fields should work normally even without metadata.
-            
-            // Arrange - Disable validation for this test
-            var integrityOptions = _context.GetProperty<IIntegrityOptions>();
-            integrityOptions.ValidateEntityReferences = false;
-            integrityOptions.ValidateAttributeTypes = false;
-
-            // Act
-            var simpleEntity = new Entity("new_simple");
-            simpleEntity["new_name"] = "Test";
-            var simpleId = _service.Create(simpleEntity);
-
-            // Assert
-            var retrieved = _service.Retrieve("new_simple", simpleId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
-            Assert.Equal("Test", retrieved["new_name"]);
         }
     }
 }

@@ -566,6 +566,11 @@ namespace Fake4Dataverse.Metadata.Cdm
             // These attributes are not typically in CDM files but exist on all user-owned entities
             AddSystemOwnerAttributes(attributes, logicalName);
             
+            // Add system audit attributes that are common to all entities in Dataverse
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
+            // These attributes track creation, modification, and state information
+            AddSystemAuditAttributes(attributes, logicalName);
+            
             // Set attributes
             if (attributes.Any())
             {
@@ -989,6 +994,7 @@ namespace Fake4Dataverse.Metadata.Cdm
                 "Privilege.cdm.json",
                 "RolePrivileges.cdm.json",
                 "PrincipalObjectAccess.cdm.json",
+                "SystemUserRoles.cdm.json",
                 // Then load other system entities
                 "AppModule.cdm.json",
                 "SiteMap.cdm.json",
@@ -1008,15 +1014,18 @@ namespace Fake4Dataverse.Metadata.Cdm
                 
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
                 {
-                    if (stream != null)
+                    if (stream == null)
                     {
-                        using (var reader = new System.IO.StreamReader(stream))
-                        {
-                            var json = reader.ReadToEnd();
-                            var metadata = FromCdmJson(json);
-                            allMetadata.AddRange(metadata);
-                        }
+                        throw new InvalidOperationException($"Embedded system entity resource not found: {resourceName}");
                     }
+                    
+                    using (var reader = new System.IO.StreamReader(stream))
+                    {
+                        var json = reader.ReadToEnd();
+                        var metadata = FromCdmJson(json);
+                        allMetadata.AddRange(metadata);
+                    }
+                    
                 }
             }
             
@@ -1074,6 +1083,128 @@ namespace Fake4Dataverse.Metadata.Cdm
                 owningbusinessunit.SetFieldValue("_entityLogicalName", entityLogicalName);
                 owningbusinessunit.MetadataId = Guid.NewGuid();
                 attributes.Add(owningbusinessunit);
+            }
+        }
+        
+        /// <summary>
+        /// Adds system audit attributes that are common to all entities in Dataverse.
+        /// These attributes track creation, modification, and state information.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
+        /// </summary>
+        private static void AddSystemAuditAttributes(List<AttributeMetadata> attributes, string entityLogicalName)
+        {
+            // Check if audit attributes already exist (they might be in the CDM)
+            bool hasCreatedOn = attributes.Any(a => a.LogicalName == "createdon");
+            bool hasCreatedBy = attributes.Any(a => a.LogicalName == "createdby");
+            bool hasModifiedOn = attributes.Any(a => a.LogicalName == "modifiedon");
+            bool hasModifiedBy = attributes.Any(a => a.LogicalName == "modifiedby");
+            bool hasStateCode = attributes.Any(a => a.LogicalName == "statecode");
+            bool hasStatusCode = attributes.Any(a => a.LogicalName == "statuscode");
+            bool hasOverriddenCreatedOn = attributes.Any(a => a.LogicalName == "overriddencreatedon");
+            
+            // Add createdon if not present
+            if (!hasCreatedOn)
+            {
+                var createdon = new DateTimeAttributeMetadata();
+                createdon.SetFieldValue("_logicalName", "createdon");
+                createdon.SetFieldValue("_entityLogicalName", entityLogicalName);
+                createdon.MetadataId = Guid.NewGuid();
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // createdon cannot be set during Create (IsValidForCreate=false), it's set by the system
+                createdon.SetSealedPropertyValue("IsValidForCreate", false);
+                createdon.SetSealedPropertyValue("IsValidForUpdate", false);
+                createdon.SetSealedPropertyValue("IsValidForRead", true);
+                attributes.Add(createdon);
+            }
+            
+            // Add createdby if not present
+            if (!hasCreatedBy)
+            {
+                var createdby = new LookupAttributeMetadata();
+                createdby.SetFieldValue("_logicalName", "createdby");
+                createdby.SetFieldValue("_entityLogicalName", entityLogicalName);
+                createdby.MetadataId = Guid.NewGuid();
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // createdby cannot be set during Create (IsValidForCreate=false), it's set by the system
+                createdby.SetSealedPropertyValue("IsValidForCreate", false);
+                createdby.SetSealedPropertyValue("IsValidForUpdate", false);
+                createdby.SetSealedPropertyValue("IsValidForRead", true);
+                attributes.Add(createdby);
+            }
+            
+            // Add modifiedon if not present
+            if (!hasModifiedOn)
+            {
+                var modifiedon = new DateTimeAttributeMetadata();
+                modifiedon.SetFieldValue("_logicalName", "modifiedon");
+                modifiedon.SetFieldValue("_entityLogicalName", entityLogicalName);
+                modifiedon.MetadataId = Guid.NewGuid();
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // modifiedon cannot be set during Create (IsValidForCreate=false), it's set by the system
+                modifiedon.SetSealedPropertyValue("IsValidForCreate", false);
+                modifiedon.SetSealedPropertyValue("IsValidForUpdate", false);
+                modifiedon.SetSealedPropertyValue("IsValidForRead", true);
+                attributes.Add(modifiedon);
+            }
+            
+            // Add modifiedby if not present
+            if (!hasModifiedBy)
+            {
+                var modifiedby = new LookupAttributeMetadata();
+                modifiedby.SetFieldValue("_logicalName", "modifiedby");
+                modifiedby.SetFieldValue("_entityLogicalName", entityLogicalName);
+                modifiedby.MetadataId = Guid.NewGuid();
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // modifiedby cannot be set during Create (IsValidForCreate=false), it's set by the system
+                modifiedby.SetSealedPropertyValue("IsValidForCreate", false);
+                modifiedby.SetSealedPropertyValue("IsValidForUpdate", false);
+                modifiedby.SetSealedPropertyValue("IsValidForRead", true);
+                attributes.Add(modifiedby);
+            }
+            
+            // Add statecode if not present
+            if (!hasStateCode)
+            {
+                var statecode = new StateAttributeMetadata();
+                statecode.SetFieldValue("_logicalName", "statecode");
+                statecode.SetFieldValue("_entityLogicalName", entityLogicalName);
+                statecode.MetadataId = Guid.NewGuid();
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // statecode can be set during Create but cannot be updated directly (use SetState)
+                statecode.SetSealedPropertyValue("IsValidForCreate", true);
+                statecode.SetSealedPropertyValue("IsValidForUpdate", true);
+                statecode.SetSealedPropertyValue("IsValidForRead", true);
+                attributes.Add(statecode);
+            }
+            
+            // Add statuscode if not present
+            if (!hasStatusCode)
+            {
+                var statuscode = new StatusAttributeMetadata();
+                statuscode.SetFieldValue("_logicalName", "statuscode");
+                statuscode.SetFieldValue("_entityLogicalName", entityLogicalName);
+                statuscode.MetadataId = Guid.NewGuid();
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // statuscode can be set during Create but cannot be updated directly (managed by statecode)
+                statuscode.SetSealedPropertyValue("IsValidForCreate", true);
+                statuscode.SetSealedPropertyValue("IsValidForUpdate", true);
+                statuscode.SetSealedPropertyValue("IsValidForRead", true);
+                attributes.Add(statuscode);
+            }
+            
+            // Add overriddencreatedon if not present
+            if (!hasOverriddenCreatedOn)
+            {
+                var overriddencreatedon = new DateTimeAttributeMetadata();
+                overriddencreatedon.SetFieldValue("_logicalName", "overriddencreatedon");
+                overriddencreatedon.SetFieldValue("_entityLogicalName", entityLogicalName);
+                overriddencreatedon.MetadataId = Guid.NewGuid();
+                // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
+                // overriddencreatedon can be set during Create and Update, allows overriding the createdon date
+                overriddencreatedon.SetSealedPropertyValue("IsValidForCreate", true);
+                overriddencreatedon.SetSealedPropertyValue("IsValidForUpdate", true);
+                overriddencreatedon.SetSealedPropertyValue("IsValidForRead", true);
+                attributes.Add(overriddencreatedon);
             }
         }
     }

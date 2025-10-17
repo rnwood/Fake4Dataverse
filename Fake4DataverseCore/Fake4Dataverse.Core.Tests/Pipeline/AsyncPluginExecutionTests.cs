@@ -430,7 +430,7 @@ namespace Fake4Dataverse.Tests.Pipeline
 
             Assert.Equal(2, allOps.Count);
             Assert.Equal(2, completedOps.Count);
-            Assert.Equal(1, failedOps.Count);
+            Assert.Single(failedOps);
             Assert.Equal(1, simulator.AsyncJobQueue.FailedCount);
         }
 
@@ -469,7 +469,7 @@ namespace Fake4Dataverse.Tests.Pipeline
 
             // Assert
             Assert.Equal(2, clearedCount);
-            Assert.Equal(0, simulator.AsyncJobQueue.GetAll().Count);
+            Assert.Empty(simulator.AsyncJobQueue.GetAll());
         }
 
         [Fact]

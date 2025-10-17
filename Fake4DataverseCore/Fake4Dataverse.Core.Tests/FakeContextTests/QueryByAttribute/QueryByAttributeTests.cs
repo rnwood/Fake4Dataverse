@@ -72,7 +72,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.QueryByAttributeTests
             Collection<Entity> entityList = ((RetrieveMultipleResponse) _service.Execute(request)).EntityCollection.Entities;
 
             Assert.True(entityList.Count == 1);
-            Assert.Equal(entityList[0]["name"].ToString(), "Test");
+            Assert.Equal("Test", entityList[0]["name"].ToString());
         }
 
         [Fact]
@@ -99,7 +99,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.QueryByAttributeTests
             Collection<Entity> entityList = ((RetrieveMultipleResponse) _service.Execute(request)).EntityCollection.Entities;
 
             Assert.True(entityList.Count == 1);
-            Assert.Equal(entityList[0]["name"].ToString(), "Test");
+            Assert.Equal("Test", entityList[0]["name"].ToString());
         }
 
         [Fact]
@@ -198,7 +198,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.QueryByAttributeTests
             };
             var results = _service.RetrieveMultiple(query);
 
-            Assert.Equal(1, results.Entities.Count);
+            Assert.Single(results.Entities);
             Assert.Equal(2, results.TotalRecordCount);
         }
     }

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using FakeItEasy;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
-using Fake4Dataverse.Abstractions.Integrity;
-using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Abstractions.Middleware;
 using Fake4Dataverse.Middleware.Crud.FakeMessageExecutors;
 using Microsoft.Xrm.Sdk;
@@ -37,30 +35,11 @@ namespace Fake4Dataverse.Middleware.Crud
 
                 context.SetProperty(crudMessageExecutors);
                 
-                // Set default IntegrityOptions with validation enabled to match production Dataverse behavior
-                context.SetProperty<IIntegrityOptions>(new IntegrityOptions 
-                { 
-                    ValidateEntityReferences = true,
-                    ValidateAttributeTypes = true
-                });
-                
                 AddFakeCreate(context, service);
                 AddFakeRetrieve(context, service);
                 AddFakeRetrieveMultiple(context, service);
                 AddFakeUpdate(context,service);
                 AddFakeDelete(context,service);
-            });
-
-            return builder;
-        }
-
-        public static IMiddlewareBuilder AddCrud(this IMiddlewareBuilder builder, IIntegrityOptions integrityOptions) 
-        {
-            builder.AddCrud();
-
-            //Add now integrity options
-            builder.Add(context => {
-                context.SetProperty(integrityOptions);
             });
 
             return builder;

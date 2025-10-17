@@ -14,16 +14,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 {
     public class QueryLinkEntityTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public QueryLinkEntityTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
         
         [Fact]
         public void Should_Find_Faked_N_To_N_Records()
@@ -97,7 +87,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var result = _service.RetrieveMultiple(query);
             Assert.NotEmpty(result.Entities);
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
         }
 
         [Fact]
@@ -196,7 +186,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var result = _service.RetrieveMultiple(query);
             Assert.NotEmpty(result.Entities);
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
         }
 
         [Fact]
@@ -355,7 +345,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var result = _service.RetrieveMultiple(query);
             Assert.NotEmpty(result.Entities);
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
         }
 
         [Fact]
@@ -505,7 +495,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var result = _service.RetrieveMultiple(query);
             Assert.NotEmpty(result.Entities);
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
         }
 
         [Fact]
@@ -521,7 +511,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var queryResult = _service.RetrieveMultiple(query);
 
-            Assert.Equal(1, queryResult.Entities.Count);
+            Assert.Single(queryResult.Entities);
         }
 
         [Fact]
@@ -577,7 +567,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 
             var result = _service.RetrieveMultiple(query);
 
-            Assert.Equal(0, result.Entities.Count);
+            Assert.Empty(result.Entities);
         }
 
         [Fact]
@@ -604,7 +594,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                                 where c.FirstName == name || c.LastName == name
                                 select new Contact { Id = c.Id, FirstName = c.FirstName, LastName = c.LastName }).ToList();
 
-                Assert.Equal(1, contacts.Count);
+                Assert.Single(contacts);
                 Assert.Null(contacts[0].FirstName);
             }
         }
@@ -759,7 +749,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             };
 
             var incidents = _service.RetrieveMultiple(query).Entities;
-            Assert.Equal(1, incidents.Count);
+            Assert.Single(incidents);
         }
 
         [Fact]
@@ -839,7 +829,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             };
 
             var incidents = _service.RetrieveMultiple(query).Entities;
-            Assert.Equal(1, incidents.Count);
+            Assert.Single(incidents);
         }
 #endif
 
@@ -1137,7 +1127,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             Assert.Equal("entity2", entity2Name);
 
             // this fails (entity2Value is "value")
-            Assert.Equal(null, entity2Value);
+            Assert.Null(entity2Value);
         }
     }
 }

@@ -115,7 +115,6 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var context = new XrmFakedContext();
-            var service = context.GetOrganizationService();
 
             // Act
             var userId = Guid.NewGuid();
@@ -129,8 +128,8 @@ namespace Fake4Dataverse.Core.Tests.Security
 
             context.Initialize(user);
 
-            // Assert
-            var retrievedUser = service.Retrieve("systemuser", userId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            // Assert - use GetEntityById which works without middleware
+            var retrievedUser = context.GetEntityById("systemuser", userId);
             Assert.NotNull(retrievedUser);
             Assert.Equal("Test User", retrievedUser.GetAttributeValue<string>("fullname"));
             Assert.Equal("DOMAIN\\testuser", retrievedUser.GetAttributeValue<string>("domainname"));
@@ -141,7 +140,6 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var context = new XrmFakedContext();
-            var service = context.GetOrganizationService();
 
             // Act
             var buId = Guid.NewGuid();
@@ -153,8 +151,8 @@ namespace Fake4Dataverse.Core.Tests.Security
 
             context.Initialize(businessUnit);
 
-            // Assert
-            var retrievedBU = service.Retrieve("businessunit", buId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            // Assert - use GetEntityById which works without middleware
+            var retrievedBU = context.GetEntityById("businessunit", buId);
             Assert.NotNull(retrievedBU);
             Assert.Equal("Test Business Unit", retrievedBU.GetAttributeValue<string>("name"));
         }
@@ -164,7 +162,6 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var context = new XrmFakedContext();
-            var service = context.GetOrganizationService();
 
             // Act
             var teamId = Guid.NewGuid();
@@ -185,8 +182,8 @@ namespace Fake4Dataverse.Core.Tests.Security
 
             context.Initialize(new[] { businessUnit, team });
 
-            // Assert
-            var retrievedTeam = service.Retrieve("team", teamId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            // Assert - use GetEntityById which works without middleware
+            var retrievedTeam = context.GetEntityById("team", teamId);
             Assert.NotNull(retrievedTeam);
             Assert.Equal("Test Team", retrievedTeam.GetAttributeValue<string>("name"));
         }
@@ -196,7 +193,6 @@ namespace Fake4Dataverse.Core.Tests.Security
         {
             // Arrange
             var context = new XrmFakedContext();
-            var service = context.GetOrganizationService();
 
             // Act
             var roleId = Guid.NewGuid();
@@ -217,8 +213,8 @@ namespace Fake4Dataverse.Core.Tests.Security
 
             context.Initialize(new[] { businessUnit, role });
 
-            // Assert
-            var retrievedRole = service.Retrieve("role", roleId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            // Assert - use GetEntityById which works without middleware
+            var retrievedRole = context.GetEntityById("role", roleId);
             Assert.NotNull(retrievedRole);
             Assert.Equal("Test Role", retrievedRole.GetAttributeValue<string>("name"));
         }

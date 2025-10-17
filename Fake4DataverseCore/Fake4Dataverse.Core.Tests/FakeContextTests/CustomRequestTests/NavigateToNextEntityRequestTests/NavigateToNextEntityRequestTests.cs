@@ -10,20 +10,7 @@ using Xunit;
 namespace Fake4Dataverse.Tests.FakeContextTests.CustomRequestTests.NavigateToNextEntityRequestTests
 {
     public class NavigateToNextEntityRequestTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public NavigateToNextEntityRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void Test_if_Entity_moved_to_next_stage_in_workflow()
         {
             // Entities
@@ -63,7 +50,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CustomRequestTests.NavigateToNex
             };
             nextStage.ProcessId = workflow.ToEntityReference();
 
-            _context.Initialize(new Entity[] { workflow, contract, opp, currentStage, nextStage });
+            base._context.Initialize(new Entity[] { workflow, contract, opp, currentStage, nextStage });
 
             // Build Request
 
@@ -82,10 +69,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CustomRequestTests.NavigateToNex
 
             // Execute
 
-            var response = _service.Execute(request);
+            var response = base._service.Execute(request);
             var traversedPath = response.Results[NavigateToNextEntityOrganizationRequestExecutor.ParameterTraversedPath];
 
-            var oppAfterSet = (from o in _context.CreateQuery("opportunity")
+            var oppAfterSet = (from o in base._context.CreateQuery("opportunity")
                                where o.Id == opp.Id
                                select o).First();
 

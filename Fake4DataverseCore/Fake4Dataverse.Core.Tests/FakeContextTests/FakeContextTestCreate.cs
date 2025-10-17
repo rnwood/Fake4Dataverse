@@ -1,5 +1,6 @@
 using Crm;
 using Fake4Dataverse.Abstractions;
+using Fake4Dataverse.Extensions;
 using Fake4Dataverse.Middleware;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
@@ -14,13 +15,49 @@ using Xunit;
 namespace Fake4Dataverse.Tests
 {
     public class FakeContextTestCreate : Fake4DataverseTests
-    {                [Fact]
+    {
+        public FakeContextTestCreate()
+        {
+            // Load metadata from early-bound assembly to get complete attribute definitions
+            _context.InitializeMetadata(typeof(Crm.Account).Assembly);
+            
+            // Initialize metadata for entities not in the early-bound assembly
+            var salesOrderMetadata = new Microsoft.Xrm.Sdk.Metadata.EntityMetadata()
+            {
+                LogicalName = "salesorder",
+                SchemaName = "SalesOrder"
+            };
+            salesOrderMetadata.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
+            salesOrderMetadata.SetSealedPropertyValue("PrimaryIdAttribute", "salesorderid");
+            salesOrderMetadata.SetSealedPropertyValue("PrimaryNameAttribute", "name");
+
+            var salesOrderDetailMetadata = new Microsoft.Xrm.Sdk.Metadata.EntityMetadata()
+            {
+                LogicalName = "salesorderdetail",
+                SchemaName = "SalesOrderDetail"
+            };
+            salesOrderDetailMetadata.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
+            salesOrderDetailMetadata.SetSealedPropertyValue("PrimaryIdAttribute", "salesorderdetailid");
+            salesOrderDetailMetadata.SetSealedPropertyValue("PrimaryNameAttribute", "productdescription");
+
+            // Add metadata for new_myentity
+            var newMyEntityMetadata = new Microsoft.Xrm.Sdk.Metadata.EntityMetadata()
+            {
+                LogicalName = "new_myentity",
+                SchemaName = "NewMyEntity"
+            };
+            newMyEntityMetadata.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
+            newMyEntityMetadata.SetSealedPropertyValue("PrimaryIdAttribute", "new_myentityid");
+            newMyEntityMetadata.SetSealedPropertyValue("PrimaryNameAttribute", "name");
+
+            _context.InitializeMetadata(new[] { salesOrderMetadata, salesOrderDetailMetadata, newMyEntityMetadata });
+        }                [Fact]
         public void When_a_null_entity_is_created_an_exception_is_thrown()
         {
             var service = _context.GetOrganizationService();
 
             var ex = Assert.Throws<InvalidOperationException>(() => service.Create(null));
-            Assert.Equal(ex.Message, "The entity must not be null");
+            Assert.Equal("The entity must not be null", ex.Message);
         }
 
         [Fact]
@@ -31,7 +68,7 @@ namespace Fake4Dataverse.Tests
             var e = new Entity("") { Id = Guid.Empty };
 
             var ex = Assert.Throws<InvalidOperationException>(() => service.Create(e));
-            Assert.Equal(ex.Message, "The LogicalName property must not be empty");
+            Assert.Equal("The LogicalName property must not be empty", ex.Message);
         }
 
         [Fact]
@@ -235,7 +272,7 @@ namespace Fake4Dataverse.Tests
             var exception = Record.Exception(() => _service.Execute(request));
 
             Assert.IsType<Exception>(exception);
-            Assert.Equal(exception.Message, "Relationship order_details does not exist in the metadata cache");
+            Assert.Equal("Relationship order_details does not exist in the metadata cache", exception.Message);
         }
 
         [Fact]
@@ -274,7 +311,7 @@ namespace Fake4Dataverse.Tests
             var id = (_service.Execute(request) as CreateResponse).id;
             var createdOrderDetails = _context.CreateQuery<SalesOrderDetail>().ToList();
 
-            Assert.Equal(createdOrderDetails.Count, 2);
+            Assert.Equal(2, createdOrderDetails.Count);
             Assert.Equal(createdOrderDetails[0].SalesOrderId.Id, id);
             Assert.Equal(createdOrderDetails[1].SalesOrderId.Id, id);
         }
@@ -289,7 +326,7 @@ namespace Fake4Dataverse.Tests
             newAccount.Id = _service.Create(newAccount);
 
             Entity retrievedAccount = _service.Retrieve("account", newAccount.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
-            Assert.True(retrievedAccount.Attributes.Contains("name"));
+            Assert.Contains("name", retrievedAccount.Attributes.Keys);
 
             //do the same as above, but this time clear the attributes - see that when retrieved, the retrieved entity does not contain the name attribute
             Entity newAccount1 = new Entity("account");
@@ -299,7 +336,7 @@ namespace Fake4Dataverse.Tests
             newAccount1.Attributes.Clear();
 
             Entity retrievedAccount1 = _service.Retrieve("account", newAccount1.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
-            Assert.True(retrievedAccount1.Attributes.Contains("name"));
+            Assert.Contains("name", retrievedAccount1.Attributes.Keys);
 
             //third time around, change the name to something new, the retrieved entity should not reflect this change
             Entity newAccount2 = new Entity("account");

@@ -13,27 +13,14 @@ using Fake4Dataverse.Middleware;
 namespace Fake4Dataverse.Tests.FakeContextTests.AssignRequestTests
 {
     public class AssignRequestTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public AssignRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void When_Assigned_Team_As_Owner_OwningTeam_Is_Set()
         {
             var user1 = new SystemUser { Id = Guid.NewGuid(), FirstName = "User1" };
             var team1 = new Team { Id = Guid.NewGuid(), Name = "Team1" };
             var account1 = new Account { Id = Guid.NewGuid(), Name = "Acc1" };
 
-            _context.Initialize(new List<Entity> {
+            base._context.Initialize(new List<Entity> {
                 user1, team1, account1
             });
 
@@ -41,7 +28,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssignRequestTests
             AssignRequest req = new AssignRequest() { Target = account1.ToEntityReference(), Assignee = team1.ToEntityReference() };
             executor.Execute(req, _context);
 
-            var acc_Fresh = _context.GetOrganizationService().Retrieve(account1.LogicalName, account1.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            var acc_Fresh = base._context.GetOrganizationService().Retrieve(account1.LogicalName, account1.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
             Assert.Equal(team1.Id, acc_Fresh.GetAttributeValue<EntityReference>("owningteam").Id);
             Assert.Null(acc_Fresh.GetAttributeValue<EntityReference>("owninguser"));
         }
@@ -53,7 +40,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssignRequestTests
             var team1 = new Team { Id = Guid.NewGuid(), Name = "Team1" };
             var account1 = new Account { Id = Guid.NewGuid(), Name = "Acc1" };
 
-            _context.Initialize(new List<Entity> {
+            base._context.Initialize(new List<Entity> {
                 user1, team1, account1
             });
 
@@ -61,7 +48,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssignRequestTests
             AssignRequest req = new AssignRequest() { Target = account1.ToEntityReference(), Assignee = user1.ToEntityReference() };
             executor.Execute(req, _context);
 
-            var acc_Fresh = _context.GetOrganizationService().Retrieve(account1.LogicalName, account1.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            var acc_Fresh = base._context.GetOrganizationService().Retrieve(account1.LogicalName, account1.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
             Assert.Equal(user1.Id, acc_Fresh.GetAttributeValue<EntityReference>("owninguser").Id);
             Assert.Null(acc_Fresh.GetAttributeValue<EntityReference>("owningteam"));
         }

@@ -12,20 +12,7 @@ using Xunit;
 namespace Fake4Dataverse.Tests.FakeContextTests.AddToQueueRequestTests
 {
     public class AddToQueueRequestTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public AddToQueueRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void When_can_execute_is_called_with_an_invalid_request_result_is_false()
         {
             var executor = new AddToQueueRequestExecutor();
@@ -51,7 +38,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddToQueueRequestTests
                 Id = Guid.NewGuid(),
             };
 
-            _context.Initialize(new[]
+            base._context.Initialize(new[]
             {
                 queue, email
             });
@@ -66,7 +53,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddToQueueRequestTests
 
             executor.Execute(req, _context);
 
-            var queueItem = _context.CreateQuery(Crm.QueueItem.EntityLogicalName).Single();
+            var queueItem = base._context.CreateQuery(Crm.QueueItem.EntityLogicalName).Single();
 
             Assert.Equal(queue.ToEntityReference(), queueItem.GetAttributeValue<EntityReference>("queueid"));
             Assert.Equal(email.ToEntityReference(), queueItem.GetAttributeValue<EntityReference>("objectid"));
@@ -91,7 +78,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddToQueueRequestTests
                 Id = Guid.NewGuid(),
             };
 
-            _context.Initialize(new[]
+            base._context.Initialize(new[]
             {
                 queue, email
             });
@@ -110,7 +97,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddToQueueRequestTests
 
             executor.Execute(req, _context);
 
-            var queueItem = _context.CreateQuery(Crm.QueueItem.EntityLogicalName).Single();
+            var queueItem = base._context.CreateQuery(Crm.QueueItem.EntityLogicalName).Single();
 
             Assert.Equal(queue.ToEntityReference(), queueItem.GetAttributeValue<EntityReference>("queueid"));
             Assert.Equal(email.ToEntityReference(), queueItem.GetAttributeValue<EntityReference>("objectid"));
@@ -143,7 +130,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddToQueueRequestTests
                 ObjectId = email.ToEntityReference()
             };
 
-            _context.Initialize(new[]
+            base._context.Initialize(new[]
             {
                 queue, email
             });
@@ -162,9 +149,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AddToQueueRequestTests
 
             executor.Execute(req, _context);
 
-            Assert.Equal(1, _context.CreateQuery(Crm.QueueItem.EntityLogicalName).Count());
+            Assert.Equal(1, base._context.CreateQuery(Crm.QueueItem.EntityLogicalName).Count());
 
-            queueItem = _context.CreateQuery(Crm.QueueItem.EntityLogicalName).Single().ToEntity<QueueItem>();
+            queueItem = base._context.CreateQuery(Crm.QueueItem.EntityLogicalName).Single().ToEntity<QueueItem>();
 
             Assert.Equal(queue.ToEntityReference(), queueItem.GetAttributeValue<EntityReference>("queueid"));
             Assert.Equal(email.ToEntityReference(), queueItem.GetAttributeValue<EntityReference>("objectid"));

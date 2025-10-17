@@ -2,12 +2,10 @@ using FakeItEasy;
 using Fake4Dataverse.Abstractions;
 using Fake4Dataverse.Abstractions.CloudFlows;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
-using Fake4Dataverse.Abstractions.Integrity;
 using Fake4Dataverse.Abstractions.Metadata;
 using Fake4Dataverse.Abstractions.Permissions;
 using Fake4Dataverse.Abstractions.Plugins;
 using Fake4Dataverse.Abstractions.Security;
-using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Permissions;
 using Fake4Dataverse.Security;
@@ -78,34 +76,6 @@ namespace Fake4Dataverse
         /// </summary>
         private readonly ConcurrentDictionary<string, object> _entityLocks = new ConcurrentDictionary<string, object>();
 
-        [Obsolete("Please use ProxyTypesAssemblies to retrieve assemblies and EnableProxyTypes to add new ones")]
-        public Assembly ProxyTypesAssembly
-        {
-            get
-            {
-                // TODO What we should do when ProxyTypesAssemblies contains multiple assemblies? One shouldn't throw exceptions from properties.
-                return _proxyTypesAssemblies.FirstOrDefault();
-            }
-            set
-            {
-                _proxyTypesAssemblies = new List<Assembly>();
-                if (value != null)
-                {
-                    _proxyTypesAssemblies.Add(value);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Sets the user to assign the CreatedBy and ModifiedBy properties when entities are added to the context.
-        /// All requests will be executed on behalf of this user
-        /// </summary>
-        [Obsolete("Please use CallerProperties instead")]
-        public EntityReference CallerId { get; set; }
-
-        [Obsolete("Please use CallerProperties instead")]
-        public EntityReference BusinessUnitId { get; set; }
-
         public delegate OrganizationResponse ServiceRequestExecution(OrganizationRequest req);
 
         /// <summary>
@@ -170,7 +140,6 @@ namespace Fake4Dataverse
             SetProperty<IAccessRightsRepository>(new AccessRightsRepository());
             SetProperty<IOptionSetMetadataRepository>(new OptionSetMetadataRepository());
             SetProperty<IStatusAttributeMetadataRepository>(new StatusAttributeMetadataRepository());
-            SetProperty<IIntegrityOptions>(new IntegrityOptions());
             
             // Initialize audit repository
             InitializeAuditRepository();
@@ -282,6 +251,11 @@ namespace Fake4Dataverse
 
             foreach (var e in entities)
             {
+                if (string.IsNullOrEmpty(e.LogicalName))
+                {
+                    throw new InvalidOperationException("The LogicalName property must not be empty");
+                }
+
                 // Initialize skips validation to allow test data setup with any state
                 // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
                 // Test initialization should allow statecode and other restricted attributes for flexibility

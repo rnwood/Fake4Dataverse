@@ -13,21 +13,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml.OperatorTests.Strings
 {
     public class StringOperatorTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public StringOperatorTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         [Fact]
         public void FetchXml_Operator_Lt_Translation()
         {
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -41,10 +31,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml.OperatorTests.Strings
 
             var ct = new Contact();
 
-            var query = fetchXml.ToQueryExpression(_context);
+            var query = fetchXml.ToQueryExpression(base._context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("nickname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LessThan, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Bob", query.Criteria.Conditions[0].Values[0]);
@@ -66,9 +56,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml.OperatorTests.Strings
             var ct2 = new Contact() { Id = Guid.NewGuid(), NickName = "Bob" };
             var ct3 = new Contact() { Id = Guid.NewGuid(), NickName = "Nati" };
             
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Equal("Alice", collection.Entities[0]["nickname"]);
@@ -78,7 +68,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml.OperatorTests.Strings
         [Fact]
         public void FetchXml_Operator_Gt_Translation()
         {
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -92,10 +82,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml.OperatorTests.Strings
 
             var ct = new Contact();
 
-            var query = fetchXml.ToQueryExpression(_context);
+            var query = fetchXml.ToQueryExpression(base._context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("nickname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.GreaterThan, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Bob", query.Criteria.Conditions[0].Values[0]);
@@ -117,9 +107,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml.OperatorTests.Strings
             var ct2 = new Contact() { Id = Guid.NewGuid(), NickName = "Bob" };
             var ct3 = new Contact() { Id = Guid.NewGuid(), NickName = "Nati" };
             
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Equal("Bob", collection.Entities[0]["nickname"]);

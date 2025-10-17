@@ -31,6 +31,12 @@ namespace Fake4Dataverse.Security.Middleware
                 // Handle different request types
                 if (request is CreateRequest createRequest)
                 {
+                    // Validate role assignments before creation (for systemuserroles/teamroles)
+                    if (createRequest.Target.LogicalName == "systemuserroles" || createRequest.Target.LogicalName == "teamroles")
+                    {
+                        ValidateRoleAssignmentOnCreate(context, createRequest.Target);
+                    }
+                    
                     // Let the create happen first
                     var response = next(context, request);
                     
@@ -126,6 +132,66 @@ namespace Fake4Dataverse.Security.Middleware
                         request.Target.Id);
                 }
             }
+        }
+
+        private static void ValidateRoleAssignmentOnCreate(IXrmFakedContext context, Entity roleAssignment)
+        {
+            // Extract principal type and IDs from the entity
+            string principalType = roleAssignment.LogicalName == "systemuserroles" ? "systemuser" : "team";
+            string principalIdField = roleAssignment.LogicalName == "systemuserroles" ? "systemuserid" : "teamid";
+            string roleIdField = "roleid";
+
+            // Get the principal ID and role ID from the entity
+            Guid principalId;
+            Guid roleId;
+
+            if (roleAssignment.Contains(principalIdField))
+            {
+                var principalValue = roleAssignment[principalIdField];
+                if (principalValue is EntityReference principalRef)
+                {
+                    principalId = principalRef.Id;
+                }
+                else if (principalValue is Guid principalGuid)
+                {
+                    principalId = principalGuid;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid {principalIdField} value type");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Missing {principalIdField} in role assignment");
+            }
+
+            if (roleAssignment.Contains(roleIdField))
+            {
+                var roleValue = roleAssignment[roleIdField];
+                if (roleValue is EntityReference roleRef)
+                {
+                    roleId = roleRef.Id;
+                }
+                else if (roleValue is Guid roleGuid)
+                {
+                    roleId = roleGuid;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Invalid {roleIdField} value type");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException($"Missing {roleIdField} in role assignment");
+            }
+
+            // Validate the role assignment
+            context.SecurityManager.RoleLifecycleManager.ValidateRoleAssignment(
+                roleId,
+                principalType,
+                principalId);
         }
     }
 }

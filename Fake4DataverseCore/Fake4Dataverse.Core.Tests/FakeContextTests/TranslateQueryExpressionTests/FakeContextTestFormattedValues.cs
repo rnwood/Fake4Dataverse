@@ -27,7 +27,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests
                 var a = (from acc in ctx.CreateQuery<Account>()
                          select acc).FirstOrDefault();
 
-                Assert.Equal(0, a.FormattedValues.Count);
+                Assert.Empty(a.FormattedValues);
                 Assert.False(a.FormattedValues.Contains("statecode"));
             }
         }

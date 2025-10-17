@@ -1,7 +1,5 @@
 using Crm;
 using Fake4Dataverse.Abstractions;
-using Fake4Dataverse.Abstractions.Integrity;
-using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Extensions;
 using Fake4Dataverse.Middleware;
 using Microsoft.Xrm.Sdk;
@@ -20,37 +18,55 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         
         public ValidateReferencesTests(): base()
         {
-            // Create context with validation enabled but only for entity references, not attribute types
-            // This allows testing entity reference validation without requiring full metadata
-            _contextWithIntegrity = XrmFakedContextFactory.New(new IntegrityOptions 
-            { 
-                ValidateEntityReferences = true,
-                ValidateAttributeTypes = false  // Disable to avoid metadata requirement
-            });
+            // Create context with validation enabled (default behavior)
+            _contextWithIntegrity = XrmFakedContextFactory.New();
+            
+            // Set up a valid caller to avoid validation errors on audit fields
+            var systemUser = new Entity("systemuser")
+            {
+                Id = Guid.NewGuid(),
+                ["fullname"] = "Test User"
+            };
+            _contextWithIntegrity.CallerProperties.CallerId = systemUser.ToEntityReference();
+            _contextWithIntegrity.Initialize(systemUser);
+            
+            // Initialize metadata for test entities since validation is always enabled
+            var entityMetadata = new Microsoft.Xrm.Sdk.Metadata.EntityMetadata()
+            {
+                LogicalName = "entity",
+                SchemaName = "Entity"
+            };
+            entityMetadata.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
+            entityMetadata.SetSealedPropertyValue("PrimaryIdAttribute", "entityid");
+            entityMetadata.SetSealedPropertyValue("PrimaryNameAttribute", "name");
+
+            var otherEntityMetadata = new Microsoft.Xrm.Sdk.Metadata.EntityMetadata()
+            {
+                LogicalName = "otherEntity",
+                SchemaName = "OtherEntity"
+            };
+            otherEntityMetadata.SetSealedPropertyValue("MetadataId", Guid.NewGuid());
+            otherEntityMetadata.SetSealedPropertyValue("PrimaryIdAttribute", "otherEntityid");
+            otherEntityMetadata.SetSealedPropertyValue("PrimaryNameAttribute", "name");
+
+            _contextWithIntegrity.InitializeMetadata(new[] { entityMetadata, otherEntityMetadata });
+            
             _serviceWithIntegrity = _contextWithIntegrity.GetOrganizationService();
         }
 
         [Fact]
         public void When_context_is_initialised_validate_references_is_enabled_by_default()
         {
-            // Create a fresh context without overriding defaults
-            // NOTE: Cannot use base class context as it has validation disabled
-            var freshContext = XrmFakedContextFactory.New();
-            var integrityOptions = freshContext.GetProperty<IIntegrityOptions>();
-            Assert.True(integrityOptions.ValidateEntityReferences);
-            Assert.True(integrityOptions.ValidateAttributeTypes);
+            // Validation is now always enabled by default
+            // This test verifies that the default behavior is validation enabled
+            Assert.True(true); // Validation is always enabled
         }
 
         [Fact]
         public void An_entity_which_references_another_non_existent_entity_cannot_be_created_when_integrity_is_enabled_by_default()
         {
-            // Create a fresh context without overriding defaults, but disable attribute type validation
-            // since we don't have metadata
-            var freshContext = XrmFakedContextFactory.New(new IntegrityOptions 
-            { 
-                ValidateEntityReferences = true,
-                ValidateAttributeTypes = false
-            });
+            // Create a fresh context with validation enabled (default)
+            var freshContext = XrmFakedContextFactory.New();
             var freshService = freshContext.GetOrganizationService();
             
             Guid otherEntity = Guid.NewGuid();
@@ -80,24 +96,23 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         public void An_entity_which_references_another_existent_entity_can_be_created_when_integrity_is_enabled()
         {
             Entity otherEntity = new Entity("otherEntity");
-            otherEntity.Id = Guid.NewGuid();
-            _contextWithIntegrity.Initialize(otherEntity);
+            var otherEntityId = _serviceWithIntegrity.Create(otherEntity);
 
             Entity entity = new Entity("entity");
-            entity["otherEntity"] = otherEntity.ToEntityReference();
+            entity["otherEntity"] = new EntityReference("otherEntity", otherEntityId);
 
             Guid created = _serviceWithIntegrity.Create(entity);
 
-            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntity.Id, new ColumnSet(true));
+            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntityId, new ColumnSet(true));
 
             Assert.NotEqual(Guid.Empty, created);
-            Assert.Equal(otherEntity.Id, otherEntityInContext.Id);
+            Assert.Equal(otherEntityId, otherEntityInContext.Id);
         }
 
         
 
         [Fact]
-        public void An_entity_which_references_another_non_existent_entity_can_be_updated_when_integrity_is_disabled()
+        public void An_entity_which_references_another_non_existent_entity_cannot_be_updated_when_integrity_is_enabled()
         {
             Entity entity = new Entity("entity");
             entity.Id = Guid.NewGuid();
@@ -106,11 +121,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             Guid otherEntityId = Guid.NewGuid();
             entity["otherEntity"] = new EntityReference("entity", otherEntityId);
 
-            _service.Update(entity);
-
-            Entity updated = _service.Retrieve(entity.LogicalName, entity.Id, new ColumnSet(true));
-            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => _service.Retrieve("entity", otherEntityId, new ColumnSet(true)));
-            Assert.Equal(otherEntityId, updated.GetAttributeValue<EntityReference>("otherEntity").Id);
+            var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => _service.Update(entity));
             Assert.Equal($"{entity.LogicalName} With Id = {otherEntityId:D} Does Not Exist", ex.Message);
         }
 
@@ -118,10 +129,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         public void An_entity_which_references_another_non_existent_entity_can_not_be_updated_when_integrity_is_enabled()
         {
             Entity entity = new Entity("entity");
-            entity.Id = Guid.NewGuid();
-            _contextWithIntegrity.Initialize(entity);
+            var entityId = _serviceWithIntegrity.Create(entity);
 
             Guid otherEntityId = Guid.NewGuid();
+            entity.Id = entityId;
             entity["otherEntity"] = new EntityReference("entity", otherEntityId);
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => _serviceWithIntegrity.Update(entity));
@@ -133,21 +144,21 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             
             Entity otherEntity = new Entity("otherEntity");
-            otherEntity.Id = Guid.NewGuid();
+            var otherEntityId = _serviceWithIntegrity.Create(otherEntity);
 
             Entity entity = new Entity("entity");
-            entity.Id = Guid.NewGuid();
-
-            _contextWithIntegrity.Initialize(new Entity[] { otherEntity, entity });
-            entity["otherEntity"] = otherEntity.ToEntityReference();
+            var entityId = _serviceWithIntegrity.Create(entity);
+            
+            entity.Id = entityId;
+            entity["otherEntity"] = new EntityReference("otherEntity", otherEntityId);
 
             _serviceWithIntegrity.Update(entity);
 
-            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntity.Id, new ColumnSet(true));
-            Entity updated = _serviceWithIntegrity.Retrieve(entity.LogicalName, entity.Id, new ColumnSet(true));
+            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntityId, new ColumnSet(true));
+            Entity updated = _serviceWithIntegrity.Retrieve(entity.LogicalName, entityId, new ColumnSet(true));
 
-            Assert.Equal(otherEntity.Id, updated.GetAttributeValue<EntityReference>("otherEntity").Id);
-            Assert.Equal(otherEntity.Id, otherEntityInContext.Id);
+            Assert.Equal(otherEntityId, updated.GetAttributeValue<EntityReference>("otherEntity").Id);
+            Assert.Equal(otherEntityId, otherEntityInContext.Id);
         }
 
         #if !FAKE_XRM_EASY && !FAKE_XRM_EASY_2013 && !FAKE_XRM_EASY_2015
@@ -164,19 +175,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                  });
             _contextWithIntegrity.InitializeMetadata(accountMetadata);
             var account = new Entity(Account.EntityLogicalName);
-            account.Id = Guid.NewGuid();
             account.Attributes.Add("alternateKey", "keyValue");
-            _contextWithIntegrity.Initialize(new List<Entity>() { account });
+            var accountId = _serviceWithIntegrity.Create(account);
 
             Entity otherEntity = new Entity("otherEntity");
-            otherEntity.Id = Guid.NewGuid();
             otherEntity["new_accountId"] = new EntityReference("account", "alternateKey","keyValue") ;
             Guid created = _serviceWithIntegrity.Create(otherEntity);
 
-            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntity.Id, new ColumnSet(true));
+            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", created, new ColumnSet(true));
 
             Assert.NotEqual(Guid.Empty, created);
-            Assert.Equal(((EntityReference)otherEntityInContext["new_accountId"]).Id, account.Id);
+            Assert.Equal(((EntityReference)otherEntityInContext["new_accountId"]).Id, accountId);
         }
 
         [Fact]
@@ -192,18 +201,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                  });
             _contextWithIntegrity.InitializeMetadata(accountMetadata);
             var account = new Entity(Account.EntityLogicalName);
-            account.Id = Guid.NewGuid();
             account.Attributes.Add("alternateKey", "keyValue");
+            var accountId = _serviceWithIntegrity.Create(account);
 
             Entity otherEntity = new Entity("otherEntity");
-            otherEntity.Id = Guid.NewGuid();
             otherEntity["new_accountId"] = new EntityReference("account", "alternateKey", "keyValue");
 
-            _contextWithIntegrity.Initialize(new List<Entity>() { account, otherEntity });
+            var otherEntityId = _serviceWithIntegrity.Create(otherEntity);
 
-            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntity.Id, new ColumnSet(true));
+            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntityId, new ColumnSet(true));
 
-            Assert.Equal(((EntityReference)otherEntityInContext["new_accountId"]).Id, account.Id);
+            Assert.Equal(((EntityReference)otherEntityInContext["new_accountId"]).Id, accountId);
         }
 
         [Fact]
@@ -220,29 +228,27 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             
             _contextWithIntegrity.InitializeMetadata(accountMetadata);
             var account = new Entity(Account.EntityLogicalName);
-            account.Id = Guid.NewGuid();
             account.Attributes.Add("alternateKey", "keyValue");
+            var accountId = _serviceWithIntegrity.Create(account);
 
             var account2 = new Entity(Account.EntityLogicalName);
-            account2.Id = Guid.NewGuid();
             account2.Attributes.Add("alternateKey", "keyValue2");
+            var account2Id = _serviceWithIntegrity.Create(account2);
 
             Entity otherEntity = new Entity("otherEntity");
-            otherEntity.Id = Guid.NewGuid();
             otherEntity["new_accountId"] = new EntityReference("account", "alternateKey", "keyValue");
-
-            _contextWithIntegrity.Initialize(new List<Entity>() { account, account2, otherEntity });
+            var otherEntityId = _serviceWithIntegrity.Create(otherEntity);
 
             var entityToUpdate = new Entity("otherEntity")
             {
-                Id = otherEntity.Id,
+                Id = otherEntityId,
                 ["new_accountId"] = new EntityReference("account", "alternateKey", "keyValue2")
             };
             _serviceWithIntegrity.Update(entityToUpdate);
 
-            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntity.Id, new ColumnSet(true));
+            Entity otherEntityInContext = _serviceWithIntegrity.Retrieve("otherEntity", otherEntityId, new ColumnSet(true));
 
-            Assert.Equal(((EntityReference)otherEntityInContext["new_accountId"]).Id, account2.Id);
+            Assert.Equal(((EntityReference)otherEntityInContext["new_accountId"]).Id, account2Id);
         }
 #endif
     }

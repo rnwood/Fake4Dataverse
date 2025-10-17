@@ -56,7 +56,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             foreach (Entity e in initialEntities)
             {
-                Assert.True(allRecords.Any(r => r.Id == e.Id));
+                Assert.Contains(allRecords, r => r.Id == e.Id);
             }
         }
 
@@ -83,7 +83,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
                             </fetch>";
             var query = new FetchExpression(fetchXml);
             EntityCollection result = _service.RetrieveMultiple(query);
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
             Assert.False(result.MoreRecords);
         }
 
@@ -128,7 +128,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             QueryExpression query = new QueryExpression("testentity");
             query.Criteria.AddCondition("retrieve", ConditionOperator.Equal, true);
             EntityCollection result = _service.RetrieveMultiple(query);
-            Assert.Equal(0, result.Entities.Count);
+            Assert.Empty(result.Entities);
             Assert.False(result.MoreRecords);
         }
 
@@ -221,7 +221,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             QueryExpression query = new QueryExpression("testentity");
             query.PageInfo = new PagingInfo() { PageNumber = 2, Count = 20 };
-            Assert.Equal(0, _service.RetrieveMultiple(query).Entities.Count);
+            Assert.Empty(_service.RetrieveMultiple(query).Entities);
         }
 
         /// <summary>
@@ -260,7 +260,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             query.LinkEntities.Add(link);
 
-            Assert.Equal(1, _service.RetrieveMultiple(query).Entities.Count);
+            Assert.Single(_service.RetrieveMultiple(query).Entities);
         }
 
         /// <summary>
@@ -477,7 +477,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             _context.InitializeMetadata(userMetadata);
             _context.Initialize(user);
-            (_context as XrmFakedContext).CallerId = user.ToEntityReference();
+            _context.CallerProperties.CallerId = user.ToEntityReference();
 
             var account = new Entity() { LogicalName = "account" };
             var accountId = _service.Create(account);
@@ -513,7 +513,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             query.Criteria.AddCondition("contact", "retrieve", ConditionOperator.Equal, true);
             query.AddLink("contact", "contactid", "contactid");
             EntityCollection result = _service.RetrieveMultiple(query);
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
         }
 
         [Fact]
@@ -537,7 +537,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
             query.Criteria.AddCondition("mycontact", "retrieve", ConditionOperator.Equal, true);
             query.AddLink("contact", "contactid", "contactid").EntityAlias="mycontact";
             EntityCollection result = _service.RetrieveMultiple(query);
-            Assert.Equal(1, result.Entities.Count);
+            Assert.Single(result.Entities);
         }
 #endif
 
@@ -561,7 +561,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.RetrieveMultiple
 
             var accounts = _service.RetrieveMultiple(query);
 
-            Assert.True(accounts.Entities.First().Contains("primary.contact.firstname"));
+            Assert.Contains("primary.contact.firstname", accounts.Entities.First().Attributes.Keys);
             Assert.Equal("Jordi", accounts.Entities.First().GetAttributeValue<AliasedValue>("primary.contact.firstname").Value);
         }
 

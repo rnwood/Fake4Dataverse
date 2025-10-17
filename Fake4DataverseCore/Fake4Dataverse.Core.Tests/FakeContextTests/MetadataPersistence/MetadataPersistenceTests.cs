@@ -1,6 +1,5 @@
 using Fake4Dataverse.Extensions;
 using Fake4Dataverse.Middleware;
-using Fake4Dataverse.Integrity;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -167,12 +166,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.MetadataPersistence
         [Fact]
         public void Should_Have_Metadata_Tables_Initialized_Automatically()
         {
-            // Arrange - Create new context
-            var context = XrmFakedContextFactory.New(new IntegrityOptions
-            {
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false
-            });
+            // Arrange - Create new context (validation is now always enabled)
+            var context = XrmFakedContextFactory.New();
             var service = context.GetOrganizationService();
 
             // Assert - Metadata tables should be automatically initialized

@@ -256,7 +256,7 @@ namespace Fake4Dataverse.Tests
             qe.ColumnSet = new ColumnSet(new string[] { "this attribute doesnt exists!" });
 
             var exception = Assert.Throws<FaultException<OrganizationServiceFault>>(() => qe.ToQueryable(_context).ToList());
-            Assert.Equal(exception.Detail.ErrorCode, (int)ErrorCodes.QueryBuilderNoAttribute);
+            Assert.Equal((int)ErrorCodes.QueryBuilderNoAttribute, exception.Detail.ErrorCode);
         }
 
         [Fact]
@@ -292,7 +292,7 @@ namespace Fake4Dataverse.Tests
             qe.ColumnSet = new ColumnSet(new string[] { "this attribute doesnt exists!" });
 
             var exception = Assert.Throws<FaultException<OrganizationServiceFault>>(() => qe.ToQueryable(_context).ToList());
-            Assert.Equal(exception.Detail.ErrorCode, (int)ErrorCodes.QueryBuilderNoAttribute);
+            Assert.Equal((int)ErrorCodes.QueryBuilderNoAttribute, exception.Detail.ErrorCode);
         }
 
         [Fact]
@@ -724,7 +724,7 @@ namespace Fake4Dataverse.Tests
                                   join parent in ctx.CreateQuery<Role>() on r.ParentRoleId.Id equals parent.RoleId.Value
                                   select r).FirstOrDefault();
 
-                Assert.Equal(roleResult, null);
+                Assert.Null(roleResult);
             }
         }
 
@@ -883,7 +883,7 @@ namespace Fake4Dataverse.Tests
 
             invoiceDetails = _service.RetrieveMultiple(query);
 
-            Assert.Equal(1, invoiceDetails.Entities.Count);
+            Assert.Single(invoiceDetails.Entities);
             Assert.Equal(invoicedetail02.Id, invoiceDetails.Entities[0].Id);
         }
     }
