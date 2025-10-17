@@ -94,8 +94,12 @@ namespace Fake4Dataverse.Service.IntegrationTests
             var startTime = DateTime.UtcNow;
             var timeout = TimeSpan.FromSeconds(30);
             var actualUrl = string.Empty;
+            var urlFound = new TaskCompletionSource<bool>();
 
-            // Start reading output on a background task and capture it for debugging
+            // CRITICAL: Continuously consume stdout to prevent the service process from blocking
+            // If we stop reading after finding ACTUAL_URL, the service's output buffer can fill up
+            // and cause the service to hang when writing to stdout, leading to timeouts in CI.
+            // Reference: https://learn.microsoft.com/en-us/dotnet/api/system.diagnostics.process.standardoutput
             var outputTask = Task.Run(() =>
             {
                 while (!_serviceProcess.StandardOutput.EndOfStream)
@@ -104,16 +108,17 @@ namespace Fake4Dataverse.Service.IntegrationTests
                     if (line != null)
                     {
                         _serviceOutput.AppendLine(line);
-                        if (line.StartsWith("ACTUAL_URL:"))
+                        if (line.StartsWith("ACTUAL_URL:") && string.IsNullOrEmpty(actualUrl))
                         {
                             actualUrl = line.Substring("ACTUAL_URL:".Length).Trim();
-                            break;
+                            urlFound.TrySetResult(true);
                         }
                     }
                 }
             });
             
-            // Capture error output in background
+            // CRITICAL: Continuously consume stderr to prevent the service process from blocking
+            // Same reasoning as stdout - must continuously read to prevent buffer overflow
             var errorTask = Task.Run(() =>
             {
                 while (!_serviceProcess.StandardError.EndOfStream)
@@ -127,8 +132,8 @@ namespace Fake4Dataverse.Service.IntegrationTests
             });
 
             // Wait for the ACTUAL_URL to be parsed or timeout
-            var waitResult = await Task.WhenAny(outputTask, Task.Delay(timeout));
-            if (waitResult != outputTask || string.IsNullOrEmpty(actualUrl))
+            var waitResult = await Task.WhenAny(urlFound.Task, Task.Delay(timeout));
+            if (waitResult != urlFound.Task || string.IsNullOrEmpty(actualUrl))
             {
                 // Collect all output before throwing exception
                 await Task.Delay(500); // Give a moment for more output to be captured
