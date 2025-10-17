@@ -7,6 +7,8 @@ using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Crm.Sdk.Messages;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Xunit;
 
@@ -89,25 +91,24 @@ namespace Fake4Dataverse.Core.Tests.Security
             
             var service = context.GetOrganizationService();
             
-            // Grant Basic depth privilege (user can only access their own records)
             // Load metadata first (this initializes default security entities)
             context.InitializeMetadataFromStandardCdmSchemasAsync(new[] { "sales" }).Wait();
+            context.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "account" }).Wait();
+            
+            // Load systemuserroles metadata
+            var systemUserRolesCdmPath = Path.Combine(Directory.GetCurrentDirectory(), "../../../../system-edm-files/SystemUserRoles.cdm.json");
+            context.InitializeMetadataFromCdmFiles(new List<string> { systemUserRolesCdmPath });
             
             // Create user and role
             var userId = Guid.NewGuid();
             var roleId = Guid.NewGuid();
             var buId = context.SecurityManager.RootBusinessUnitId;
             
-            var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Test User", ["businessunitid"] = new EntityReference("businessunit", buId) };
-            var role = new Entity("role") { Id = roleId, ["name"] = "Test Role", ["businessunitid"] = new EntityReference("businessunit", buId) };
-            
-            context.Initialize(new[] { user, role });
-            
-            // Grant Basic depth privilege (user can only access their own records)
-            context.InitializeMetadataFromStandardCdmEntitiesAsync(new[] { "account" }).Wait();
-            
             var prvReadAccount = context.CreateQuery("privilege")
                 .FirstOrDefault(p => p.GetAttributeValue<string>("name") == "prvReadAccount");
+            
+            var user = new Entity("systemuser") { Id = userId, ["fullname"] = "Test User", ["businessunitid"] = new EntityReference("businessunit", buId) };
+            var role = new Entity("role") { Id = roleId, ["name"] = "Test Role", ["businessunitid"] = new EntityReference("businessunit", buId) };
             
             var rolePrivilege = new Entity("roleprivileges")
             {
@@ -121,12 +122,15 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = userId,
-                ["roleid"] = roleId
+                ["systemuserid"] = new EntityReference("systemuser", userId),
+                ["roleid"] = new EntityReference("role", roleId)
             };
             
-            // Initialize all entities together
-            context.Initialize(new[] { user, role, rolePrivilege, userRole });
+            // Use service.Create to trigger middleware validation
+            service.Create(user);
+            service.Create(role);
+            service.Create(rolePrivilege);
+            service.Create(userRole);
             
             // Set caller
             context.CallerProperties.CallerId = new EntityReference("systemuser", userId);
@@ -524,8 +528,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = new EntityReference("systemuser", userId),
-                ["roleid"] = new EntityReference("role", shadowRoleInBU2.Id)
+                ["systemuserid"] = userId,  // Use Guid directly so GetUserRoles can find it
+                ["roleid"] = shadowRoleInBU2.Id  // Use Guid directly
             };
             service.Create(userRole);
             
@@ -570,8 +574,8 @@ namespace Fake4Dataverse.Core.Tests.Security
             var userRole = new Entity("systemuserroles")
             {
                 Id = Guid.NewGuid(),
-                ["systemuserid"] = new EntityReference("systemuser", userId),
-                ["roleid"] = new EntityReference("role", roleId)
+                ["systemuserid"] = userId,  // Use Guid directly so GetUserRoles can find it
+                ["roleid"] = roleId  // Use Guid directly
             };
             service.Create(userRole);
             
