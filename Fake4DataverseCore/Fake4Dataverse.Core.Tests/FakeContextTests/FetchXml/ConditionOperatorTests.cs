@@ -121,17 +121,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
     /// </summary>
     public class ConditionOperatorTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        public ConditionOperatorTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
         private DateTime GetFirstDayOfWeek(DateTime date)
         {
             var dayOfWeekDelta = (int) date.DayOfWeek - (int)CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
@@ -156,7 +145,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.Equal, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -180,7 +169,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotEqual, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -204,7 +193,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotEqual, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -228,7 +217,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.Contains, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -252,7 +241,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.BeginsWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -276,7 +265,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.BeginsWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -300,7 +289,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.DoesNotBeginWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -324,7 +313,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.EndsWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -348,7 +337,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.EndsWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -372,7 +361,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.DoesNotEndWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -396,7 +385,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.DoesNotContain, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -420,7 +409,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.DoesNotBeginWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -444,7 +433,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.DoesNotEndWith, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -471,7 +460,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.In, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -499,7 +488,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotIn, query.Criteria.Conditions[0].Operator);
             Assert.Equal("Messi", query.Criteria.Conditions[0].Values[0].ToString());
@@ -511,7 +500,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_In_MultiSelectOptionSet()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -528,7 +517,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("new_multiselectattribute", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.In, query.Criteria.Conditions[0].Operator);
             Assert.Equal(1, query.Criteria.Conditions[0].Values[0]);
@@ -539,7 +528,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_NotIn_MultiSelectOptionSet()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -556,7 +545,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("new_multiselectattribute", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotIn, query.Criteria.Conditions[0].Operator);
             Assert.Equal(1, query.Criteria.Conditions[0].Values[0]);
@@ -582,10 +571,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.Null, query.Criteria.Conditions[0].Operator);
-            Assert.Equal(0, query.Criteria.Conditions[0].Values.Count);
+            Assert.Empty(query.Criteria.Conditions[0].Values);
         }
 
         [Fact]
@@ -606,17 +595,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("fullname", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotNull, query.Criteria.Conditions[0].Operator);
-            Assert.Equal(0, query.Criteria.Conditions[0].Values.Count);
+            Assert.Empty(query.Criteria.Conditions[0].Values);
         }
 
         [Fact]
         public void FetchXml_Operator_Gt_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -634,7 +623,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("address1_longitude", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.GreaterThan, query.Criteria.Conditions[0].Operator);
             Assert.Equal(1.2345, query.Criteria.Conditions[0].Values[0]);
@@ -657,12 +646,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.23 };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.33 };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.2345 };
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             Assert.Equal(1.33, collection.Entities[0]["address1_longitude"]);
         }
 
@@ -670,7 +659,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Ge_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -686,7 +675,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("address1_longitude", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.GreaterEqual, query.Criteria.Conditions[0].Operator);
             Assert.Equal(1.2345, query.Criteria.Conditions[0].Values[0]);
@@ -696,7 +685,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Months_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -712,7 +701,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.OlderThanXMonths, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -722,7 +711,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Months_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -747,10 +736,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(-1) }; //Shouldnt
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(-3) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -762,7 +751,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Minutes_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -778,7 +767,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.OlderThanXMinutes, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -788,7 +777,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Minutes_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -813,10 +802,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMinutes(-1) }; //Shouldnt
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMinutes(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMinutes(-3) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -827,7 +816,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Hours_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -843,7 +832,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.OlderThanXHours, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -853,7 +842,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Hours_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -878,10 +867,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(-1) }; //Shouldnt
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(-3) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -892,7 +881,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Days_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -908,7 +897,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.OlderThanXDays, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -918,7 +907,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Days_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -943,10 +932,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-1) }; //Shouldnt
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-3) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -957,7 +946,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Weeks_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -973,7 +962,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.OlderThanXWeeks, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -983,7 +972,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Weeks_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -1008,10 +997,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-7) }; //Shouldnt
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(7) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-21) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -1022,7 +1011,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Years_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1038,7 +1027,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.OlderThanXYears, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -1048,7 +1037,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Older_Than_X_Years_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -1073,10 +1062,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(-1) }; //Shouldnt
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(-3) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -1088,7 +1077,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_Seven_Days_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1104,17 +1093,17 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("createdon", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.Last7Days, query.Criteria.Conditions[0].Operator);
-            Assert.Equal(0, query.Criteria.Conditions[0].Values.Count);
+            Assert.Empty(query.Criteria.Conditions[0].Values);
         }
 
         [Fact]
         public void FetchXml_Operator_Last_Seven_Days_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1132,12 +1121,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), BirthDate = date.AddDays(-1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), BirthDate = date.AddDays(-8) }; //Shouldn't be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), BirthDate = date.AddDays(1) }; //Shouldn't be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             Assert.Equal(ct1.Id, collection.Entities[0].Id);
         }
 
@@ -1158,10 +1147,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.23 };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.33 };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.2345 };
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Equal(1.33, collection.Entities[0]["address1_longitude"]);
@@ -1172,7 +1161,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Lt_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1188,7 +1177,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("address1_longitude", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LessThan, query.Criteria.Conditions[0].Operator);
             Assert.Equal(1.2345, query.Criteria.Conditions[0].Values[0]);
@@ -1211,12 +1200,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.23 };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.33 };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.2345 };
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             Assert.Equal(1.23, collection.Entities[0]["address1_longitude"]);
         }
 
@@ -1224,7 +1213,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Le_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1240,7 +1229,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("address1_longitude", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LessEqual, query.Criteria.Conditions[0].Operator);
             Assert.Equal(1.2345, query.Criteria.Conditions[0].Values[0]);
@@ -1261,10 +1250,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.23 };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.33 };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Address1_Longitude = 1.2345 };
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Equal(1.23, collection.Entities[0]["address1_longitude"]);
@@ -1275,7 +1264,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_On_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1289,7 +1278,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("anniversary", query.Criteria.Conditions[0].AttributeName);
 
             var date = query.Criteria.Conditions[0].Values[0] as DateTime?;
@@ -1316,12 +1305,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var date = new DateTime(2014, 11, 23);
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(1) };
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             var retrievedDate = collection.Entities[0]["anniversary"] as DateTime?;
             Assert.Equal(2014, retrievedDate.Value.Year);
             Assert.Equal(11, retrievedDate.Value.Month);
@@ -1346,10 +1335,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-1) }; //Should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(1) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             var retrievedDateFirst = collection.Entities[0]["anniversary"] as DateTime?;
@@ -1375,10 +1364,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(1) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             var retrievedDateFirst = collection.Entities[0]["anniversary"] as DateTime?;
@@ -1403,12 +1392,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var date = DateTime.Today;
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-1) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
 
             var retrievedDate = collection.Entities[0]["anniversary"] as DateTime?;
             Assert.Equal(retrievedDate, DateTime.Today);
@@ -1430,12 +1419,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var date = DateTime.Today;
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date }; //Shouldnt 
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-1) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
 
             var retrievedDate = collection.Entities[0]["anniversary"] as DateTime?;
             Assert.Equal(retrievedDate, DateTime.Today.AddDays(-1));
@@ -1457,12 +1446,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var date = DateTime.Today;
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date }; //Shouldnt 
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(1) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
 
             var retrievedDate = collection.Entities[0]["anniversary"] as DateTime?;
             Assert.Equal(retrievedDate, DateTime.Today.AddDays(1));
@@ -1472,7 +1461,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Between_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1489,7 +1478,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("anniversary", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.Between, query.Criteria.Conditions[0].Operator);
             Assert.Equal(new DateTime(2013, 5, 17), query.Criteria.Conditions[0].Values[0]);
@@ -1512,7 +1501,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                                   </entity>
                             </fetch>";
 
-            Assert.Throws<Exception>(() => _service.RetrieveMultiple(new FetchExpression(fetchXml)));
+            Assert.Throws<Exception>(() => base._service.RetrieveMultiple(new FetchExpression(fetchXml)));
 
             fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1525,7 +1514,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                                   </entity>
                             </fetch>";
 
-            Assert.Throws<Exception>(() => _service.RetrieveMultiple(new FetchExpression(fetchXml)));
+            Assert.Throws<Exception>(() => base._service.RetrieveMultiple(new FetchExpression(fetchXml)));
         }
 
         [Fact]
@@ -1547,12 +1536,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var date = DateTime.Today;
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date }; //Shouldnt 
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(2013, 05, 19) }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
 
             var retrievedDate = collection.Entities[0]["anniversary"] as DateTime?;
             Assert.Equal(retrievedDate, new DateTime(2013, 05, 19));
@@ -1562,7 +1551,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_NotBetween_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1579,7 +1568,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("anniversary", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotBetween, query.Criteria.Conditions[0].Operator);
             Assert.Equal(new DateTime(2013, 5, 17), query.Criteria.Conditions[0].Values[0]);
@@ -1602,7 +1591,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                                   </entity>
                             </fetch>";
 
-            Assert.Throws<Exception>(() => _service.RetrieveMultiple(new FetchExpression(fetchXml)));
+            Assert.Throws<Exception>(() => base._service.RetrieveMultiple(new FetchExpression(fetchXml)));
 
             fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -1615,7 +1604,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                                   </entity>
                             </fetch>";
 
-            Assert.Throws<Exception>(() => _service.RetrieveMultiple(new FetchExpression(fetchXml)));
+            Assert.Throws<Exception>(() => base._service.RetrieveMultiple(new FetchExpression(fetchXml)));
         }
 
         [Fact]
@@ -1637,12 +1626,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var date = DateTime.Today;
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date }; //Should
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(2013, 05, 19) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
 
             var retrievedDate = collection.Entities[0]["anniversary"] as DateTime?;
             Assert.Equal(retrievedDate, date);
@@ -1670,10 +1659,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct5 = new Contact() { Id = Guid.NewGuid(), Anniversary = today.AddYears(1) };                   // One year in the future - should not be returned
             var ct6 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear + 1, 1, 1) };      // First day of next year - should not be returned
             var ct7 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear - 1, 12, 31) };    // Last day of last year - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(3, collection.Entities.Count);
 
@@ -1689,7 +1678,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var thisYear = today.Year;
 
             
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() { StartDate = new DateTime(thisYear, 1, 2), FiscalPeriodTemplate = FiscalYearSettings.Template.Annually });
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() { StartDate = new DateTime(thisYear, 1, 2), FiscalPeriodTemplate = FiscalYearSettings.Template.Annually });
             var fetchXml = $@"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
                                     <attribute name='anniversary' />
@@ -1702,10 +1691,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, 1, 2) };        // Second day of this year - should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, 12, 31) };      // Last day of this year - should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear + 1, 1, 2) };      // Second day of next year - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
 
@@ -1736,10 +1725,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct5 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, thisMonth, 1).AddDays(-1) };                // Last day of previous month - should not be returned
             var ct6 = new Contact() { Id = Guid.NewGuid(), Anniversary = today.AddYears(1) };                                               // One year in the future - should not be returned
             var ct7 = new Contact() { Id = Guid.NewGuid(), Anniversary = today.AddYears(1) };                                               // One year in the past - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(3, collection.Entities.Count);
 
@@ -1771,10 +1760,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, thisMonth, 1).AddMonths(1) };               // First day of next month - should not be returned
             var ct5 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, thisMonth, 1).AddMonths(-1) };              // First day of last month - should be returned
             var ct6 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, thisMonth, 1).AddDays(-1) };                // Last day of last month - should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
 
@@ -1807,10 +1796,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct6 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, thisMonth, 1).AddDays(-1) };                // Last day of last month - should not be returned
             var ct7 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear, thisMonth, 1).AddMonths(-1) };              // First day of last month - should not be returned
 
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
 
@@ -1840,10 +1829,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct5 = new Contact() { Id = Guid.NewGuid(), Anniversary = today.AddYears(1) };                   // One year in the future - should not be returned
             var ct6 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear - 1, 1, 1) };    // First day of last year - should be returned
             var ct7 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear - 1, 12, 31) };  // Last day of last year - should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(3, collection.Entities.Count);
 
@@ -1874,10 +1863,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct5 = new Contact() { Id = Guid.NewGuid(), Anniversary = today.AddYears(-1) };                  // One year in the past - should not be returned
             var ct6 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear + 1, 1, 1) };    // First day of next year - should be returned
             var ct7 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(thisYear + 1, 12, 31) };  // Last day of next year - should be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4, ct5, ct6, ct7 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(3, collection.Entities.Count);
 
@@ -1901,10 +1890,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("systemuserid", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.EqualUserId, query.Criteria.Conditions[0].Operator);
-            Assert.Equal(0, query.Criteria.Conditions[0].Values.Count);
+            Assert.Empty(query.Criteria.Conditions[0].Values);
         }
 
         [Fact]
@@ -1921,14 +1910,14 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             var su1 = new SystemUser() { Id = Guid.NewGuid() }; //Should
             var su2 = new SystemUser() { Id = Guid.NewGuid() }; //Shouldnt
-            _context.Initialize(new[] { su1, su2 });
+            base._context.Initialize(new[] { su1, su2 });
 
             
-            _context.CallerProperties.CallerId = su1.ToEntityReference();
+            base._context.CallerProperties.CallerId = su1.ToEntityReference();
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
             Assert.Equal(retrievedUser, su1.Id);
         }
@@ -1948,10 +1937,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("systemuserid", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NotEqualUserId, query.Criteria.Conditions[0].Operator);
-            Assert.Equal(0, query.Criteria.Conditions[0].Values.Count);
+            Assert.Empty(query.Criteria.Conditions[0].Values);
         }
 
         [Fact]
@@ -1968,14 +1957,14 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             var su1 = new SystemUser() { Id = Guid.NewGuid() }; //Shouldnt
             var su2 = new SystemUser() { Id = Guid.NewGuid() }; //Should
-            _context.Initialize(new[] { su1, su2 });
+            base._context.Initialize(new[] { su1, su2 });
 
             
-            _context.CallerProperties.CallerId = su1.ToEntityReference();
+            base._context.CallerProperties.CallerId = su1.ToEntityReference();
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
             Assert.Equal(retrievedUser, su2.Id);
         }
@@ -1995,12 +1984,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var date = DateTime.Now;
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(7 * 2) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(7 * 4) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             var retrievedDateFirst = collection.Entities[0]["anniversary"] as DateTime?;
             //var retrievedDateSecond = collection.Entities[1]["anniversary"] as DateTime?;
             //Assert.Equal(23, retrievedDateFirst.Value.Day);
@@ -2033,10 +2022,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(3) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(7) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(8) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2078,10 +2067,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastDayOfLastWeek }; //Should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = firstDayOfLastWeek.AddDays(-1) }; //Should NOT be returned
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastDayOfLastWeek.AddDays(1) }; //Should NOT be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Equal(ct1.Id, collection.Entities[0].Id);
@@ -2131,10 +2120,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastDayOfThisWeek }; //Should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = firstDayOfThisWeek.AddDays(-1) }; //Shouldnt
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastDayOfThisWeek.AddDays(1) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Equal(ct1.Id, collection.Entities[0].Id);
@@ -2180,10 +2169,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = firstDayOfNextWeek.AddDays(-1) }; //Should NOT be returned
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastDayOfNextWeek.AddDays(1) };  //Should NOT be returned
 
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Equal(ct1.Id, collection.Entities[0].Id);
@@ -2196,7 +2185,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_ContainValues_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version=""1.0"" output-format=""xml-platform"" mapping=""logical"" distinct=""false"">
                                <entity name=""contact"">
@@ -2213,7 +2202,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("new_multiselectattribute", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.ContainValues, query.Criteria.Conditions[0].Operator);
             Assert.Equal(2, query.Criteria.Conditions[0].Values.Count);
@@ -2239,12 +2228,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             var ct1 = new Contact() { Id = Guid.NewGuid(), new_MultiSelectAttribute = new OptionSetValueCollection() { new OptionSetValue(1) } }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), new_MultiSelectAttribute = new OptionSetValueCollection() { new OptionSetValue(3) } }; //Shouldn't be returned
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             Assert.Equal(ct1.Id, collection.Entities[0].Id);
         }
 
@@ -2252,7 +2241,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_DoesNotContainValues_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version=""1.0"" output-format=""xml-platform"" mapping=""logical"" distinct=""false"">
                                <entity name=""contact"">
@@ -2269,7 +2258,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("new_multiselectattribute", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.DoesNotContainValues, query.Criteria.Conditions[0].Operator);
             Assert.Equal(2, query.Criteria.Conditions[0].Values.Count);
@@ -2295,12 +2284,12 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             var ct1 = new Contact() { Id = Guid.NewGuid(), new_MultiSelectAttribute = new OptionSetValueCollection() { new OptionSetValue(1) } }; //Shouldn't be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), new_MultiSelectAttribute = new OptionSetValueCollection() { new OptionSetValue(3) } }; //Should be returned
-            _context.Initialize(new[] { ct1, ct2 });
+            base._context.Initialize(new[] { ct1, ct2 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(1, collection.Entities.Count);
+            Assert.Single(collection.Entities);
             Assert.Equal(ct2.Id, collection.Entities[0].Id);
         }
 #endif
@@ -2328,11 +2317,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("currentcost", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal("product", query.Criteria.Conditions[0].EntityName);
             Assert.Equal(ConditionOperator.Null, query.Criteria.Conditions[0].Operator);
-            Assert.Equal(0, query.Criteria.Conditions[0].Values.Count);
+            Assert.Empty(query.Criteria.Conditions[0].Values);
 
         }
 
@@ -2369,13 +2358,13 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 QuoteId = new EntityReference("quote", quote.Id)
             };
 
-            _context.Initialize(new List<Entity>() {
+            base._context.Initialize(new List<Entity>() {
                 product, quote, quoteProduct
             });
 
-            var collection = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
 
-            Assert.Equal(0, collection.Entities.Count);
+            Assert.Empty(collection.Entities);
         }
 
         [Fact]
@@ -2393,7 +2382,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 ["contactid"] = e.ToEntityReference()
             };
 
-            _context.Initialize(new Entity[] { e, e2 });
+            base._context.Initialize(new Entity[] { e, e2 });
 
             var fetchXml = @"<fetch top='50' >
                               <entity name='account' >
@@ -2406,7 +2395,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                               </entity>
                             </fetch>";
 
-            var result = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var result = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.True(result.Entities.Any());
         }
@@ -2426,7 +2415,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                 ["contactid"] = e.ToEntityReference()
             };
 
-            _context.Initialize(new Entity[] { e, e2 });
+            base._context.Initialize(new Entity[] { e, e2 });
 
             var fetchXml = @"<fetch top='50' >
                               <entity name='account' >
@@ -2439,7 +2428,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                               </entity>
                             </fetch>";
 
-            var result = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var result = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.True(result.Entities.Any());
         }
@@ -2449,7 +2438,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Hours_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2465,7 +2454,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LastXHours, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2475,7 +2464,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Hours_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2500,10 +2489,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(-1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(-3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2514,7 +2503,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Hours_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2530,7 +2519,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NextXHours, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2540,7 +2529,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Hours_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2565,10 +2554,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(-1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddHours(3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2579,7 +2568,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Days_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2595,7 +2584,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LastXDays, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2605,7 +2594,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Days_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2630,10 +2619,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2644,7 +2633,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Days_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2660,7 +2649,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NextXDays, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2670,7 +2659,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Days_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2695,10 +2684,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2709,7 +2698,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Weeks_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2725,7 +2714,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LastXWeeks, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2735,7 +2724,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Weeks_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2760,10 +2749,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-7) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(7) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddDays(-21) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2774,7 +2763,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Weeks_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2790,7 +2779,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NextXWeeks, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2800,7 +2789,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Months_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2816,7 +2805,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LastXMonths, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2826,7 +2815,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Months_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2851,10 +2840,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(-1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(-3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2865,7 +2854,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Months_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2881,7 +2870,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NextXMonths, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2891,7 +2880,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Months_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2916,10 +2905,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(-1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddMonths(3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2930,7 +2919,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Years_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -2946,7 +2935,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.LastXYears, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -2956,7 +2945,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Last_X_Years_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -2981,10 +2970,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(-1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(-3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -2995,7 +2984,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Years_Translation()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                               <entity name='contact'>
@@ -3011,7 +3000,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
+            Assert.Single(query.Criteria.Conditions);
             Assert.Equal("birthdate", query.Criteria.Conditions[0].AttributeName);
             Assert.Equal(ConditionOperator.NextXYears, query.Criteria.Conditions[0].Operator);
             Assert.Equal(3, query.Criteria.Conditions[0].Values[0]);
@@ -3021,7 +3010,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         public void FetchXml_Operator_Next_X_Years_Execution()
         {
             
-            _context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
+            base._context.EnableProxyTypes(Assembly.GetAssembly(typeof(Contact)));
 
             var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
                                <entity name='contact'>
@@ -3046,10 +3035,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(1) }; //Should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(-1) }; //Shouldnt
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = date.AddYears(3) }; //Shouldnt
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
             
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Single(collection.Entities);
             var retrievedUser = collection.Entities[0].Id;
@@ -3057,3 +3046,4 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         }
     }
 }
+

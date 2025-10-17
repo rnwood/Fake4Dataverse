@@ -1,0 +1,93 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "SystemUserRoles",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "System User Roles"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Many-to-many relationship between system users and security roles."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "systemuserrolesId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "systemuserroleid",
+                "displayName": "System User Role",
+                "description": "Unique identifier of the system user role."
+              },
+              {
+                "name": "systemUserId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "sourceName": "systemuserid",
+                "displayName": "System User",
+                "description": "Unique identifier of the system user."
+              },
+              {
+                "name": "roleId",
+                "purpose": "hasA",
+                "dataType": "entityId",
+                "sourceName": "roleid",
+                "displayName": "Role",
+                "description": "Unique identifier of the role."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

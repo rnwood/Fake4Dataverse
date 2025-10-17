@@ -20,7 +20,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests.Op
             var qe = new QueryExpression("contact");
             qe.Criteria.AddCondition("firstname", ConditionOperator.BeginsWith, "jim");
 
-            Assert.Equal(1, _service.RetrieveMultiple(qe).Entities.Count);
+            Assert.Single(_service.RetrieveMultiple(qe).Entities);
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests.Op
             var qe = new QueryExpression("contact");
             qe.Criteria.AddCondition("firstname", ConditionOperator.EndsWith, "y");
 
-            Assert.Equal(1, _service.RetrieveMultiple(qe).Entities.Count);
+            Assert.Single(_service.RetrieveMultiple(qe).Entities);
         }
 
         [Fact]
@@ -45,7 +45,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests.Op
             var qe = new QueryExpression("contact");
             qe.Criteria.AddCondition("firstname", ConditionOperator.Like, "JIM%");
 
-            Assert.Equal(1, _service.RetrieveMultiple(qe).Entities.Count);
+            Assert.Single(_service.RetrieveMultiple(qe).Entities);
         }
 
         [Fact]
@@ -127,7 +127,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests.Op
 
             var result = qe.ToQueryable(_context).ToList();
 
-            Assert.Equal(1, result.Count);
+            Assert.Single(result);
             Assert.Equal("Al", result[0]["nickname"]);
         }
 
@@ -172,7 +172,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.TranslateQueryExpressionTests.Op
 
             var result = qe.ToQueryable(_context).ToList();
 
-            Assert.Equal(1, result.Count);
+            Assert.Single(result);
             Assert.Equal("Charlie", result[0]["nickname"]);
         }
 

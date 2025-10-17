@@ -11,7 +11,6 @@ using System.ServiceModel;
 using Fake4Dataverse.Abstractions;
 using Microsoft.Xrm.Sdk.Client;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
-using Fake4Dataverse.Abstractions.Integrity;
 
 namespace Fake4Dataverse
 {
@@ -26,20 +25,6 @@ namespace Fake4Dataverse
             if (string.IsNullOrWhiteSpace(record.LogicalName))
             {
                 throw new InvalidOperationException("The entity logical name must not be null or empty.");
-            }
-
-            // Don't fail with invalid operation exception, if no record of this entity exists, but entity is known
-            if (!Data.ContainsKey(record.LogicalName) && !EntityMetadata.ContainsKey(record.LogicalName))
-            {
-                if (ProxyTypesAssembly == null)
-                {
-                    throw new InvalidOperationException($"The entity logical name {record.LogicalName} is not valid.");
-                }
-
-                if (!ProxyTypesAssembly.GetTypes().Any(type => FindReflectedType(record.LogicalName) != null))
-                {
-                    throw new InvalidOperationException($"The entity logical name {record.LogicalName} is not valid.");
-                }
             }
 
             if (record.Id == Guid.Empty && record.HasKeyAttributes())
@@ -105,12 +90,8 @@ namespace Fake4Dataverse
             var reference = e.ToEntityReferenceWithKeyAttributes();
             e.Id = GetRecordUniqueId(reference);
 
-            // Validate attribute types if enabled
-            var integrityOptions = GetProperty<IIntegrityOptions>();
-            if (integrityOptions.ValidateAttributeTypes)
-            {
-                ValidateAttributeTypes(e, "Update");
-            }
+            // Validate attribute types
+            ValidateAttributeTypes(e, "Update");
 
             // Thread-safe update with per-entity-type locking for better concurrency
             var entityLock = _entityLocks.GetOrAdd(e.LogicalName, _ => new object());
@@ -188,7 +169,7 @@ namespace Fake4Dataverse
                     }
                     else
                     {
-                        if (attribute is EntityReference && integrityOptions.ValidateEntityReferences)
+                        if (attribute is EntityReference)
                         {
                             var target = (EntityReference)e[sAttributeName];
                             attribute = ResolveEntityReference(target);
@@ -199,7 +180,7 @@ namespace Fake4Dataverse
 
                 // Update ModifiedOn
                 cachedEntity["modifiedon"] = DateTime.UtcNow;
-                cachedEntity["modifiedby"] = CallerId;
+                cachedEntity["modifiedby"] = CallerProperties.CallerId;
 
                 // Evaluate calculated fields after update
                 // Reference: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields
@@ -416,10 +397,14 @@ namespace Fake4Dataverse
             if (CallerProperties != null && CallerProperties.CallerId == null)
             {
                 CallerProperties.CallerId = new EntityReference("systemuser", Guid.NewGuid());
-                
-                var integrityOptions = GetProperty<IIntegrityOptions>();
+               
 
-                if (integrityOptions.ValidateEntityReferences)
+            // Ensure the systemuser entity exists for the caller
+            var systemUserLock = _entityLocks.GetOrAdd("systemuser", _ => new object());
+            lock (systemUserLock)
+            {
+                var systemUserCollection = Data.GetOrAdd("systemuser", _ => new Dictionary<Guid, Entity>());
+                if (!systemUserCollection.ContainsKey( CallerProperties.CallerId.Id))
                 {
                     var systemUserLock = _entityLocks.GetOrAdd("systemuser", _ => new object());
                     lock (systemUserLock)
@@ -432,13 +417,7 @@ namespace Fake4Dataverse
                     }
                 }
             }
-            
-            // Also set deprecated CallerId for backward compatibility
-            if (CallerId == null && CallerProperties?.CallerId != null)
-            {
-                CallerId = CallerProperties.CallerId;
-            }
-
+           
             var isManyToManyRelationshipEntity = e.LogicalName != null && this._relationships.ContainsKey(e.LogicalName);
 
             // Get the effective user ID for entity initialization
@@ -446,15 +425,7 @@ namespace Fake4Dataverse
             var effectiveUser = CallerProperties?.GetEffectiveUser();
             var effectiveUserId = effectiveUser?.Id ?? Guid.Empty;
             
-
-            
-            // If still empty, fall back to deprecated CallerId for backward compatibility
-            if (effectiveUserId == Guid.Empty && CallerId != null)
-            {
-                effectiveUserId = CallerId.Id;
-            }
-            
-            EntityInitializerService.Initialize(e, effectiveUserId, this, isManyToManyRelationshipEntity);
+            EntityInitializerService.Initialize(e,  effectiveUserId, this, isManyToManyRelationshipEntity);
         }
 
         protected void ValidateEntity(Entity e)
@@ -747,11 +718,7 @@ namespace Fake4Dataverse
             // Validate attribute types and IsValidForCreate before adding defaults
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
             // This validates user-provided attributes before system defaults (like statecode) are added
-            var integrityOptions = GetProperty<IIntegrityOptions>();
-            if (integrityOptions.ValidateAttributeTypes)
-            {
-                ValidateAttributeTypes(clone, "Create");
-            }
+            ValidateAttributeTypes(clone, "Create");
 
             // Create specific validations
             if (clone.Id != Guid.Empty && 
@@ -800,6 +767,7 @@ namespace Fake4Dataverse
 
         public void AddEntityWithDefaults(Entity e, bool clone = false, bool usePluginPipeline = false, bool skipValidation = false)
         {
+
             // Create the entity with defaults
             AddEntityDefaultAttributes(e);
 
@@ -889,12 +857,10 @@ namespace Fake4Dataverse
 
             ValidateEntity(e); //Entity must have a logical name and an Id
 
-            var integrityOptions = GetProperty<IIntegrityOptions>();
-
-            // Validate attribute types if enabled and not skipping validation
+            // Validate attribute types if not skipping validation
             // For Create operations called via CreateEntity, validation is done before defaults are added
             // This skipValidation parameter allows Initialize and other paths to bypass validation
-            if (!skipValidation && integrityOptions.ValidateAttributeTypes)
+            if (!skipValidation)
             {
                 ValidateAttributeTypes(e, "Create");
             }
@@ -906,10 +872,17 @@ namespace Fake4Dataverse
                 {
                     e[sAttributeName] = ConvertToUtc((DateTime)e[sAttributeName]);
                 }
-                if (attribute is EntityReference && integrityOptions.ValidateEntityReferences)
+                if (attribute is EntityReference)
                 {
-                    var target = (EntityReference)e[sAttributeName];
-                    e[sAttributeName] = ResolveEntityReference(target);
+                    // Skip resolving system audit fields to avoid circular references during entity initialization
+                    var systemAttributes = new[] { "createdby", "createdon", "modifiedby", "modifiedon", "ownerid", 
+                                                  "createdonbehalfby", "modifiedonbehalfby",
+                                                  $"{e.LogicalName}id" };  // Primary key attribute
+                    if (!systemAttributes.Contains(sAttributeName.ToLower()))
+                    {
+                        var target = (EntityReference)e[sAttributeName];
+                        e[sAttributeName] = ResolveEntityReference(target);
+                    }
                 }
             }
 

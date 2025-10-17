@@ -22,17 +22,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CustomApiTests
     /// </summary>
     public class CustomApiExecutorTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public CustomApiExecutorTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         [Fact]
         public void Should_Execute_Simple_Custom_Api_With_No_Parameters()

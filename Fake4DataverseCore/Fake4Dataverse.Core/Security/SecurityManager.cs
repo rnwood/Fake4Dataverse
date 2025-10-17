@@ -264,10 +264,11 @@ namespace Fake4Dataverse.Security
                 // Query the systemuserroles intersect entity directly
                 // In Dataverse, N:N relationships are stored in intersect entities
                 var userRoles = _context.CreateQuery("systemuserroles")
-                    .Where(ur => ur.GetAttributeValue<Guid>("systemuserid") == userId)
+                    .ToList()
+                    .Where(ur => ur.GetAttributeValue<EntityReference>("systemuserid")?.Id == userId)
                     .ToList();
-                
-                return userRoles.Select(ur => ur.GetAttributeValue<Guid>("roleid")).ToArray();
+
+                return userRoles.Select(ur => ur.GetAttributeValue<EntityReference>("roleid")?.Id ?? Guid.Empty).ToArray();
             }
             catch
             {
@@ -289,10 +290,11 @@ namespace Fake4Dataverse.Security
                 // Query the teamroles intersect entity directly
                 // In Dataverse, N:N relationships are stored in intersect entities
                 var teamRoles = _context.CreateQuery("teamroles")
-                    .Where(tr => tr.GetAttributeValue<Guid>("teamid") == teamId)
+                    .ToList()
+                    .Where(tr => tr.GetAttributeValue<EntityReference>("teamid")?.Id == teamId)
                     .ToList();
-                
-                return teamRoles.Select(tr => tr.GetAttributeValue<Guid>("roleid")).ToArray();
+
+                return teamRoles.Select(tr => tr.GetAttributeValue<EntityReference>("roleid")?.Id ?? Guid.Empty).ToArray();
             }
             catch
             {
@@ -300,5 +302,6 @@ namespace Fake4Dataverse.Security
                 return Array.Empty<Guid>();
             }
         }
+
     }
 }

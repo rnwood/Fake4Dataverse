@@ -32,7 +32,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             OrganizationResponse response = service.Execute(request);
             Assert.Equal("testinput", response["output"]);
             context.RemoveGenericFakeMessageExecutor("new_TestAction");
-            Assert.Throws(typeof(Fake4Dataverse.PullRequestException), () => service.Execute(request));
+            Assert.Throws<Fake4Dataverse.PullRequestException>(() => service.Execute(request));
         }
     }
 

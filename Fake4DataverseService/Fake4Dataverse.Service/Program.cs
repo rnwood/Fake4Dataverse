@@ -1,6 +1,4 @@
 using Fake4Dataverse.Abstractions;
-using Fake4Dataverse.Abstractions.Integrity;
-using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Service.Services;
@@ -10,6 +8,7 @@ using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System.CommandLine;
@@ -286,15 +285,18 @@ public class Program
 
         var app = builder.Build();
         
-        // Enable static file serving for Model-Driven App
-        // NOTE: Order matters - UseDefaultFiles must come before UseStaticFiles
+        // In development mode, requests to SPA routes will be automatically proxied to the Next.js dev server
+        // The Microsoft.AspNetCore.SpaProxy package handles this automatically based on SpaProxyServerUrl configuration
+        // In production, serve pre-built static files from wwwroot/mda
+        
+        // Production mode: serve static files from wwwroot/mda
         // Use AppContext.BaseDirectory to get the application's base directory (where the DLL is)
         // This ensures the path works correctly whether running with 'dotnet run' or 'dotnet run --no-build'
         var mdaPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "mda");
         
         // Only configure static file serving if the MDA path exists
         // This allows the service to run even without MDA files (for testing)
-        if (Directory.Exists(mdaPath))
+        if (Directory.Exists(mdaPath) && !app.Environment.IsDevelopment())
         {
             // Serve MDA at /main.aspx to match real Dynamics 365 MDA URLs
             // Reference: https://learn.microsoft.com/en-us/power-apps/developer/model-driven-apps/navigate-to-custom-page-examples

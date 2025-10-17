@@ -17,13 +17,13 @@ namespace Fake4Dataverse.Tests
         public void When_retrieve_is_invoked_with_an_empty_logical_name_an_exception_is_thrown()
         {
             var ex = Assert.Throws<InvalidOperationException>(() => _service.Retrieve(null, Guid.Empty, new ColumnSet()));
-            Assert.Equal(ex.Message, "The entity logical name must not be null or empty.");
+            Assert.Equal("The entity logical name must not be null or empty.", ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => _service.Retrieve("", Guid.Empty, new ColumnSet()));
-            Assert.Equal(ex.Message, "The entity logical name must not be null or empty.");
+            Assert.Equal("The entity logical name must not be null or empty.", ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => _service.Retrieve("     ", Guid.Empty, new ColumnSet()));
-            Assert.Equal(ex.Message, "The entity logical name must not be null or empty.");
+            Assert.Equal("The entity logical name must not be null or empty.", ex.Message);
         }
 
         [Fact]
@@ -39,7 +39,7 @@ namespace Fake4Dataverse.Tests
         public void When_retrieve_is_invoked_with_a_null_columnset_exception_is_thrown()
         {
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() => _service.Retrieve("account", Guid.NewGuid(), null));
-            Assert.Equal(ex.Message, "Required field 'ColumnSet' is missing");
+            Assert.Equal("Required field 'ColumnSet' is missing", ex.Message);
         }
 
         [Fact]
@@ -91,7 +91,7 @@ namespace Fake4Dataverse.Tests
 
             var result = _service.Retrieve("account", guid, new ColumnSet(true));
             Assert.Equal(result.Id, data.FirstOrDefault().Id);
-            Assert.Equal(result.Attributes.Count, 7);
+            Assert.Equal(7, result.Attributes.Count);
         }
 
         [Fact]

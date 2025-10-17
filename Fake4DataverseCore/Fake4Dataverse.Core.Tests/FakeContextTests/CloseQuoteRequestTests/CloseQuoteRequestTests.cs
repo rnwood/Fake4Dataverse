@@ -11,20 +11,7 @@ using Xunit;
 namespace Fake4Dataverse.Tests.FakeContextTests.CloseQuoteRequestTests
 {
     public class CloseQuoteRequestTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public CloseQuoteRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void When_can_execute_is_called_with_an_invalid_request_result_is_false()
         {
             var executor = new CloseQuoteRequestExecutor();
@@ -46,7 +33,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseQuoteRequestTests
                 }
             };
 
-            _context.Initialize(new[]
+            base._context.Initialize(new[]
             {
                 quote
             });
@@ -67,7 +54,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseQuoteRequestTests
 
             executor.Execute(req, _context);
 
-            quote = _service.Retrieve("quote", quote.Id, new ColumnSet(true));
+            quote = base._service.Retrieve("quote", quote.Id, new ColumnSet(true));
 
             Assert.Equal(new OptionSetValue(1), quote.GetAttributeValue<OptionSetValue>("statuscode"));
         }

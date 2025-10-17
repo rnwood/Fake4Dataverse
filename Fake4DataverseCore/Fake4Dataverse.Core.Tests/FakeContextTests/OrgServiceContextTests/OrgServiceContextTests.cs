@@ -10,20 +10,7 @@ using Fake4Dataverse.Middleware;
 namespace Fake4Dataverse.Tests.FakeContextTests.OrgServiceContextTests
 {
     public class OrgServiceContextTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public OrgServiceContextTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        //   MS_ISSUE  Rpcrt4 related
+    {//   MS_ISSUE  Rpcrt4 related
         [Fact]
         public void When_calling_context_add_and_save_changes_entity_is_added_to_the_faked_context()
         {
@@ -75,7 +62,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.OrgServiceContextTests
                 Entity1LogicalName = "account",
                 Entity2LogicalName = "lead"
             };
-            _context.AddRelationship("accountleads", relationship);
+            base._context.AddRelationship("accountleads", relationship);
 
             using (var ctx = new XrmServiceContext(_service))
             {

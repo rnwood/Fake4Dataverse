@@ -12,17 +12,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.QueryTranslationTests
 {
     public class ProjectionTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
         private readonly Account _account;
 
         public ProjectionTests()
         {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
 
             _account = new Account()
             {
@@ -34,17 +27,18 @@ namespace Fake4Dataverse.Tests.FakeContextTests.QueryTranslationTests
         [Fact]
         public void Should_return_primary_key_attribute_even_if_not_specified_in_column_set()
         {
-            _context.Initialize(_account);
-            var account = _service.Retrieve(Account.EntityLogicalName, _account.Id, new ColumnSet(new string[] { "name" }));
+            base._context.Initialize(_account);
+            var account = base._service.Retrieve(Account.EntityLogicalName, _account.Id, new ColumnSet(new string[] { "name" }));
             Assert.True(account.Attributes.ContainsKey("accountid"));
         }
 
         [Fact]
         public void Should_return_primary_key_attribute_when_retrieving_using_all_columns()
         {
-            _context.Initialize(_account);
-            var account = _service.Retrieve(Account.EntityLogicalName, _account.Id, new ColumnSet(true));
+            base._context.Initialize(_account);
+            var account = base._service.Retrieve(Account.EntityLogicalName, _account.Id, new ColumnSet(true));
             Assert.True(account.Attributes.ContainsKey("accountid"));
         }
     }
 }
+

@@ -19,7 +19,7 @@ namespace Fake4Dataverse.FakeMessageExecutors
         {
             var req = (RemoveMembersTeamRequest)request;
 
-            if (req.TeamId == null || req.TeamId == Guid.Empty)
+            if (req.TeamId == Guid.Empty)
             {
                 throw FakeOrganizationServiceFaultFactory.New("TeamId parameter is required");
             }

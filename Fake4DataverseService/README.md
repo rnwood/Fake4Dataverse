@@ -14,6 +14,13 @@ Fake4DataverseService exposes the Fake4Dataverse testing framework as a SOAP/WCF
 - **Continuous integration** with fast, isolated tests
 - **SDK compatibility** - Works with any tool or library that uses IOrganizationService via WCF
 - **Optional authentication** - Run with or without access token validation
+- **Model-Driven App** - Integrated Next.js-based MDA frontend for visual testing and development
+
+## Quick Links
+
+- **[Development Guide](Fake4Dataverse.Service/DEVELOPMENT.md)** - Full-stack development with backend and frontend
+- **[MDA App Documentation](Fake4Dataverse.Service/mda-app/README.md)** - Frontend-specific information
+- **[ServiceClient Guide](SERVICECLIENT.md)** - Using with PowerPlatform.Dataverse.Client
 
 ## Features
 

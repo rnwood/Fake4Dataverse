@@ -19,7 +19,7 @@ namespace Fake4Dataverse.Tests
             user.Id = Guid.NewGuid();
             initialEntities.Add(user);
 
-            (_context as XrmFakedContext).CallerId = user.ToEntityReference();
+            _context.CallerProperties.CallerId = user.ToEntityReference();
 
             Entity testEntity = new Entity("test");
             testEntity.Id = Guid.NewGuid();

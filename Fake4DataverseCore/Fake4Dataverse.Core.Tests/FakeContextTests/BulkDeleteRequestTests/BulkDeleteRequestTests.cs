@@ -15,21 +15,7 @@ using Fake4Dataverse.Middleware;
 namespace Fake4Dataverse.Tests.FakeContextTests.BulkDeleteRequestTests
 {
     public class BulkDeleteRequestTests : Fake4DataverseTests
-    {
-
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        
-        public BulkDeleteRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void When_can_execute_is_called_with_an_invalid_request_result_is_false()
         {
             var executor = new BulkDeleteRequestExecutor();
@@ -104,8 +90,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.BulkDeleteRequestTests
         public void Check_if_contacts_have_been_deleted_after_sending_request()
         {
             
-            _context.EnableProxyTypes(Assembly.GetExecutingAssembly());
-            var service = _context.GetOrganizationService();
+            base._context.EnableProxyTypes(Assembly.GetExecutingAssembly());
+            var service = base._context.GetOrganizationService();
 
             // initialize data
             var parentAccountId = Guid.NewGuid();
@@ -135,7 +121,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.BulkDeleteRequestTests
                 ParentCustomerId = new EntityReference(Account.EntityLogicalName, Guid.NewGuid())
             };
 
-            _context.Initialize(new[] { contactA, contactB, contactC });
+            base._context.Initialize(new[] { contactA, contactB, contactC });
 
             var query = new QueryExpression
             {
@@ -167,19 +153,18 @@ namespace Fake4Dataverse.Tests.FakeContextTests.BulkDeleteRequestTests
             var response = (BulkDeleteResponse)service.Execute(request);
 
             // validate
-            var deletedContacts = (from c in _context.CreateQuery<Contact>()
+            var deletedContacts = (from c in base._context.CreateQuery<Contact>()
                                    where Equals(c.ParentCustomerId, new EntityReference(Account.EntityLogicalName, parentAccountId))
                                    select c);
-            var allContacts = (from c in _context.CreateQuery<Contact>()
+            var allContacts = (from c in base._context.CreateQuery<Contact>()
                                select c);
 
-            var asyncOperation = (from a in _context.CreateQuery<AsyncOperation>()
+            var asyncOperation = (from a in base._context.CreateQuery<AsyncOperation>()
                                   where a.AsyncOperationId == response.JobId
                                   select a);
 
             Assert.NotNull(response);
             Assert.IsType<BulkDeleteResponse>(response);
-            Assert.NotNull(response.JobId);
             Assert.NotEqual(Guid.Empty, response.JobId);
             Assert.Equal(0, deletedContacts.Count());
             Assert.Equal(1, allContacts.Count());

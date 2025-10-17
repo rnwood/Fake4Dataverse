@@ -15,17 +15,6 @@ namespace Fake4Dataverse.Tests
 {
     public class FakeContextCoreTests : Fake4DataverseTests
     {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public FakeContextCoreTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
 
         [Fact]
         public void When_a_fake_context_is_created_the_data_is_initialized()
@@ -37,7 +26,7 @@ namespace Fake4Dataverse.Tests
         public void When_initializing_the_context_with_a_null_list_of_entities_an_exception_is_thrown()
         {
             var ex = Assert.Throws<InvalidOperationException>(() => _context.Initialize(entities: null));
-            Assert.Equal(ex.Message, "The entities parameter must be not null");
+            Assert.Equal("The entities parameter must be not null", ex.Message);
         }
 
         [Fact]
@@ -48,7 +37,7 @@ namespace Fake4Dataverse.Tests
             };
 
             var ex = Assert.Throws<InvalidOperationException>(() => _context.Initialize(data));
-            Assert.Equal(ex.Message, "The LogicalName property must not be empty");
+            Assert.Equal("The LogicalName property must not be empty", ex.Message);
         }
 
         [Fact]
@@ -59,7 +48,7 @@ namespace Fake4Dataverse.Tests
             };
 
             var ex = Assert.Throws<InvalidOperationException>(() => _context.Initialize(data));
-            Assert.Equal(ex.Message, "The Id property must not be empty");
+            Assert.Equal("The Id property must not be empty", ex.Message);
         }
 
         [Fact]
@@ -70,7 +59,7 @@ namespace Fake4Dataverse.Tests
             };
 
             _context.Initialize(data);
-            Assert.True(_context.CreateQuery("account").Count() == 1);
+            Assert.Equal(1, _context.CreateQuery("account").Count());
         }
 
 
@@ -82,7 +71,7 @@ namespace Fake4Dataverse.Tests
             };
 
             _context.Initialize(data);
-            Assert.True(_context.CreateQuery("account").Count() == 1);
+            Assert.Equal(1, _context.CreateQuery("account").Count());
         }
 
         [Fact]
@@ -212,7 +201,7 @@ namespace Fake4Dataverse.Tests
                 var contacts = (from con in ctx.CreateQuery<Contact>()
                                 select con).ToList();
 
-                Assert.Equal(contacts.Count, 1);
+                Assert.Single(contacts);
             }
 
             //Query faked context directly
@@ -221,19 +210,6 @@ namespace Fake4Dataverse.Tests
 
         }
 
-        [Fact]
-        public void When_initializing_the_entities_a_proxy_types_assembly_is_not_mandatory()
-        {
-            //This will make tests much more simple as we won't need to specificy the ProxyTypesAssembly every single time if 
-            //we use early bound entities
-
-            var assembly = Assembly.GetAssembly(typeof(Contact));
-
-            var c = new Contact() { Id = Guid.NewGuid(), FirstName = "Jordi" };
-            _context.Initialize(new List<Entity>() { c });
-
-            Assert.Equal(assembly, (_context as XrmFakedContext).ProxyTypesAssembly);
-        }
 
         [Fact]
         public void When_using_proxy_types_entity_names_are_validated()

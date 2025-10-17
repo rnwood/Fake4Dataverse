@@ -12,20 +12,7 @@ using Fake4Dataverse.Middleware;
 namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
 {
     public class AssociateRequestTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public AssociateRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void When_can_execute_is_called_with_an_invalid_request_result_is_false()
         {
             var executor = new AssociateRequestExecutor();
@@ -48,7 +35,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
             
             var executor = new AssociateRequestExecutor();
             var req = new AssociateRequest() { Target = null, Relationship = new Relationship("fakeRelationship") };
-            _context.AddRelationship("fakeRelationship", new XrmFakedRelationship());
+            base._context.AddRelationship("fakeRelationship", new XrmFakedRelationship());
             Assert.Throws<Exception>(() => executor.Execute(req, _context));
         }
 
@@ -60,7 +47,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
             var userId = Guid.NewGuid();
             var teamId = Guid.NewGuid();
             var user2Id = Guid.NewGuid();
-            _context.Initialize(new List<Entity> {
+            base._context.Initialize(new List<Entity> {
                 new SystemUser
                 {
                     Id = userId
@@ -75,7 +62,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
                 }
             });
 
-            _context.AddRelationship("teammembership", new XrmFakedRelationship()
+            base._context.AddRelationship("teammembership", new XrmFakedRelationship()
             {
                 RelationshipType = XrmFakedRelationship.FakeRelationshipType.ManyToMany,
                 IntersectEntity = "teammembership",
@@ -85,7 +72,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
                 Entity2LogicalName = "team"
             });
 
-            var orgSvc = _context.GetOrganizationService();
+            var orgSvc = base._context.GetOrganizationService();
             orgSvc.Associate("team", teamId, new Relationship("teammembership"),
                 new EntityReferenceCollection(new List<EntityReference> { new EntityReference("systemuser", userId) }));
 
@@ -114,7 +101,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
             
             var executor = new AssociateRequestExecutor();
 
-            _context.AddRelationship("fakeRelationship",
+            base._context.AddRelationship("fakeRelationship",
                 new XrmFakedRelationship()
                 {
                     IntersectEntity = "account_contact_intersect",
@@ -126,7 +113,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
 
             var contact = new Entity("contact") { Id = Guid.NewGuid() };
             var account = new Entity("account") { Id = Guid.NewGuid() };
-            _context.Initialize(new List<Entity>()
+            base._context.Initialize(new List<Entity>()
             {
                 account
             });
@@ -148,7 +135,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
             
             var executor = new AssociateRequestExecutor();
 
-            _context.AddRelationship("fakeRelationship",
+            base._context.AddRelationship("fakeRelationship",
                 new XrmFakedRelationship()
                 {
                     IntersectEntity = "account_contact_intersect",
@@ -160,7 +147,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.AssociateRequestTests
 
             var contact = new Entity("contact") { Id = Guid.NewGuid() };
             var account = new Entity("account") { Id = Guid.NewGuid() };
-            _context.Initialize(new List<Entity>()
+            base._context.Initialize(new List<Entity>()
             {
                 contact
             });

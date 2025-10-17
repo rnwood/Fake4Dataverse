@@ -33,8 +33,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.SetStateRequestTests
                            where con.Id == c.Id
                            select con).FirstOrDefault();
 
-            Assert.Equal((int)contact.StateCode.Value, 69);
-            Assert.Equal((int)contact.StatusCode.Value, 6969);
+            Assert.Equal(69, (int)contact.StateCode.Value);
+            Assert.Equal(6969, (int)contact.StatusCode.Value);
         }
 
         [Fact]
@@ -51,7 +51,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.SetStateRequestTests
                            where con.Id == c.Id
                            select con).FirstOrDefault();
 
-            Assert.Equal((int)contact.StateCode.Value, 0); //Active
+            Assert.Equal(0, (int)contact.StateCode.Value); //Active
         }
 
         [Fact]
@@ -71,7 +71,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.SetStateRequestTests
                            where con.Id == c.Id
                            select con).FirstOrDefault();
 
-            Assert.Equal((int)contact.StateCode.Value, 69); //Set
+            Assert.Equal(69, (int)contact.StateCode.Value); //Set
         }
     }
 }

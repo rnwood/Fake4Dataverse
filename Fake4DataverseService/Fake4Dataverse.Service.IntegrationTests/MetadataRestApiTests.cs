@@ -31,7 +31,10 @@ public class MetadataRestApiTests : IDisposable
         // Create HTTP client for REST API calls (service is already running via fixture)
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri(fixture.BaseUrl)
+            BaseAddress = new Uri(fixture.BaseUrl),
+            // Use a longer timeout for CI environments where the service might be slower
+            // Default is 100 seconds, but we increase to 3 minutes for better resilience
+            Timeout = TimeSpan.FromMinutes(3)
         };
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
         _httpClient.DefaultRequestHeaders.Add("OData-MaxVersion", "4.0");

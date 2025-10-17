@@ -25,19 +25,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
     ///   Monthly (12 periods), or Four-Week (13 periods)
     /// </summary>
     public class FiscalPeriodOperatorTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public FiscalPeriodOperatorTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-        [Fact]
+    {[Fact]
         public void FetchXml_Operator_InFiscalPeriod_Quarterly_Execution()
         {
             // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.query.conditionoperator
@@ -48,7 +36,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var currentYear = today.Year;
             
             // Set up quarterly fiscal calendar starting January 1
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = new DateTime(currentYear, 1, 1), 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Quarterly 
@@ -68,9 +56,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 5, 20) };  // Q2 - should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 2, 10) };  // Q1 - should not be returned
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 5) };   // Q3 - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -89,7 +77,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var targetYear = currentYear - 1;
             
             // Set up quarterly fiscal calendar
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = new DateTime(currentYear, 1, 1), 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Quarterly 
@@ -108,9 +96,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(targetYear, 2, 20) };  // Should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 1, 10) }; // Wrong year - should not be returned
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(targetYear, 5, 5) };   // Q2 - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
 
-            var collection = _service.RetrieveMultiple(query);
+            var collection = base._service.RetrieveMultiple(query);
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -128,7 +116,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var currentYear = today.Year;
             
             // Set up monthly fiscal calendar
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = new DateTime(currentYear, 1, 1), 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Monthly 
@@ -188,9 +176,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastPeriodStart };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastPeriodEnd };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = today }; // Current period - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -207,7 +195,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var currentYear = today.Year;
             
             // Set up quarterly fiscal calendar
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = new DateTime(currentYear, 1, 1), 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Quarterly 
@@ -235,9 +223,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = nextPeriodStart };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = nextPeriodEnd };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = today }; // Current period - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -255,7 +243,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             
             // Set up fiscal calendar with April 1 start
             var fiscalStartDate = new DateTime(currentYear, 4, 1);
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = fiscalStartDate, 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Annually 
@@ -279,9 +267,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastFiscalYearEnd };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentFiscalYear, 5, 1) }; // Current fiscal year
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentFiscalYear - 2, 5, 1) }; // Too old
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -299,7 +287,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             
             // Set up fiscal calendar with July 1 start
             var fiscalStartDate = new DateTime(currentYear, 7, 1);
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = fiscalStartDate, 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Annually 
@@ -323,9 +311,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = nextFiscalYearEnd };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentFiscalYear, 8, 1) }; // Current fiscal year
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentFiscalYear + 2, 8, 1) }; // Too far in future
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
 
-            var collection = _service.RetrieveMultiple(new FetchExpression(fetchXml));
+            var collection = base._service.RetrieveMultiple(new FetchExpression(fetchXml));
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -342,7 +330,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var currentYear = today.Year;
             
             // Set up quarterly fiscal calendar
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = new DateTime(currentYear, 1, 1), 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Quarterly 
@@ -361,9 +349,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 1) };      // Q3 - should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear + 1, 1, 1) };  // Next year - should be returned
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 2, 1) };      // Q1 - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
 
-            var collection = _service.RetrieveMultiple(query);
+            var collection = base._service.RetrieveMultiple(query);
 
             Assert.Equal(3, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -381,7 +369,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var currentYear = today.Year;
             
             // Set up quarterly fiscal calendar
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = new DateTime(currentYear, 1, 1), 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Quarterly 
@@ -401,9 +389,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 6, 30) };      // Q2 - should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear - 1, 12, 31) }; // Previous year - should be returned
             var ct4 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 15) };      // Q3 - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3, ct4 });
+            base._context.Initialize(new[] { ct1, ct2, ct3, ct4 });
 
-            var collection = _service.RetrieveMultiple(query);
+            var collection = base._service.RetrieveMultiple(query);
 
             Assert.Equal(3, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -421,7 +409,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var currentYear = today.Year;
             
             // Set up semi-annual fiscal calendar
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = new DateTime(currentYear, 1, 1), 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.SemiAnnually 
@@ -439,9 +427,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 7, 15) };   // H2 - should be returned
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 12, 31) }; // H2 - should be returned
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentYear, 3, 15) };  // H1 - should not be returned
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
 
-            var collection = _service.RetrieveMultiple(query);
+            var collection = base._service.RetrieveMultiple(query);
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -460,7 +448,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             
             // Set up fiscal calendar with October 1 start (common for many organizations)
             var fiscalStartDate = new DateTime(currentYear, 10, 1);
-            _context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
+            base._context.SetProperty<FiscalYearSettings>(new FiscalYearSettings() 
             { 
                 StartDate = fiscalStartDate, 
                 FiscalPeriodTemplate = FiscalYearSettings.Template.Annually 
@@ -481,9 +469,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var ct1 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastFiscalYearStart };
             var ct2 = new Contact() { Id = Guid.NewGuid(), Anniversary = lastFiscalYearEnd };
             var ct3 = new Contact() { Id = Guid.NewGuid(), Anniversary = new DateTime(currentFiscalYear, 11, 1) }; // Current fiscal year
-            _context.Initialize(new[] { ct1, ct2, ct3 });
+            base._context.Initialize(new[] { ct1, ct2, ct3 });
 
-            var collection = _service.RetrieveMultiple(query);
+            var collection = base._service.RetrieveMultiple(query);
 
             Assert.Equal(2, collection.Entities.Count);
             Assert.Contains(collection.Entities, e => e.Id == ct1.Id);
@@ -491,3 +479,4 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
         }
     }
 }
+

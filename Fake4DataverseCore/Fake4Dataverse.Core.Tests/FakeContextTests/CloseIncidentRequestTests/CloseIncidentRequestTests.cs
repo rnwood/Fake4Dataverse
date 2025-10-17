@@ -15,18 +15,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
     {
         private const int StatusProblemSolved = 5;
 
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-        
-        public CloseIncidentRequestTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
         [Fact]
         public void When_a_request_is_called_Incident_Is_Resolved()
         {
@@ -36,7 +24,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
                 Id = Guid.NewGuid()
             };
 
-            _context.Initialize(new[]
+            base._context.Initialize(new[]
             {
                 incident
             });
@@ -58,7 +46,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
 
             executor.Execute(closeIncidentRequest, _context);
 
-            var retrievedIncident = _context.CreateQuery(Crm.Incident.EntityLogicalName).Single();
+            var retrievedIncident = base._context.CreateQuery(Crm.Incident.EntityLogicalName).Single();
 
             Assert.Equal(StatusProblemSolved, retrievedIncident.GetAttributeValue<OptionSetValue>("statuscode").Value);
             Assert.Equal((int)Crm.IncidentState.Resolved, retrievedIncident.GetAttributeValue<OptionSetValue>("statecode").Value);
@@ -68,7 +56,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
         public void When_a_request_with_invalid_incidentid_is_called_exception_is_raised()
         {
             
-            _context.Initialize(new Entity(Crm.Incident.EntityLogicalName) { Id = Guid.NewGuid() });
+            base._context.Initialize(new Entity(Crm.Incident.EntityLogicalName) { Id = Guid.NewGuid() });
             var executor = new CloseIncidentRequestExecutor();
 
             Entity incidentResolution = new Entity
@@ -98,7 +86,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
                 Id = Guid.NewGuid()
             };
 
-            _context.Initialize(new[]
+            base._context.Initialize(new[]
             {
                 incident
             });
@@ -125,7 +113,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.CloseIncidentRequestTests
                 Id = Guid.NewGuid()
             };
 
-            _context.Initialize(new[]
+            base._context.Initialize(new[]
             {
                 incident
             });

@@ -13,20 +13,7 @@ using Xunit;
 namespace Fake4Dataverse.Tests.FakeContextTests.QueryTests
 {
     public class EqualBusinessIdTests : Fake4DataverseTests
-    {
-        private readonly IXrmFakedContext _context;
-        private readonly IOrganizationService _service;
-
-        public EqualBusinessIdTests()
-        {
-            // Use context and service from base class
-
-            _context = base._context;
-
-            _service = base._service;
-        }
-
-        [Fact]
+    {[Fact]
         public void FetchXml_Operator_EqualBusinessId_Translation()
         {
             string _fetchXml =
@@ -72,11 +59,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.QueryTests
                 new Resource() { Id = Guid.Parse(_resource2Id), BusinessUnitId = new EntityReference("resource", Guid.Parse(_business2Id)) }
             };
 
-            _context.CallerProperties.BusinessUnitId = new EntityReference("businessunit", Guid.Parse(_business2Id));
+            base._context.CallerProperties.BusinessUnitId = new EntityReference("businessunit", Guid.Parse(_business2Id));
 
-            _context.Initialize(_entities);
+            base._context.Initialize(_entities);
 
-            EntityCollection _collection = _service.RetrieveMultiple(new FetchExpression(_fetchXml));
+            EntityCollection _collection = base._service.RetrieveMultiple(new FetchExpression(_fetchXml));
 
             Assert.NotNull(_collection);
             Assert.Single(_collection.Entities);
@@ -85,3 +72,4 @@ namespace Fake4Dataverse.Tests.FakeContextTests.QueryTests
 
     }
 }
+

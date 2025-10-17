@@ -73,6 +73,7 @@
     <EmbeddedResource Include="..\system-edm-files\EntityKeyDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityKeyDefinition.cdm.json" />
     <!-- Security model entities -->
     <EmbeddedResource Include="..\system-edm-files\SystemUser.cdm.json" Link="Metadata\Cdm\SystemEntities\SystemUser.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\SystemUserRoles.cdm.json" Link="Metadata\Cdm\SystemEntities\SystemUserRoles.cdm.json" />
     <EmbeddedResource Include="..\system-edm-files\BusinessUnit.cdm.json" Link="Metadata\Cdm\SystemEntities\BusinessUnit.cdm.json" />
     <EmbeddedResource Include="..\system-edm-files\Team.cdm.json" Link="Metadata\Cdm\SystemEntities\Team.cdm.json" />
     <EmbeddedResource Include="..\system-edm-files\Role.cdm.json" Link="Metadata\Cdm\SystemEntities\Role.cdm.json" />

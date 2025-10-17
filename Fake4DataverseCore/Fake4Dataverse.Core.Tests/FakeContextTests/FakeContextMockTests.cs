@@ -1,6 +1,4 @@
 using Fake4Dataverse.Abstractions;
-using Fake4Dataverse.Abstractions.Integrity;
-using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Abstractions.FakeMessageExecutors;
 using Fake4Dataverse.Middleware;
 using Fake4Dataverse.Middleware.Messages;
@@ -14,18 +12,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests
 {
     public class FakeContextMockTests : Fake4DataverseTests
     {
-        private IXrmFakedContext _context;
-        private IOrganizationService _service;
-                [Fact]
+        [Fact]
         public void Should_Execute_Mock_For_OrganizationRequests()
         {
             var context = MiddlewareBuilder
                         .New()
-                        .Add(ctx => ctx.SetProperty<IIntegrityOptions>(new IntegrityOptions 
-                        { 
-                            ValidateEntityReferences = false,
-                            ValidateAttributeTypes = false 
-                        }))
                         .AddExecutionMock<RetrieveEntityRequest>(RetrieveEntityMock)
                         .UseMessages()
                         .Build();
@@ -58,11 +49,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             var context = MiddlewareBuilder
                         .New()
-                        .Add(ctx => ctx.SetProperty<IIntegrityOptions>(new IntegrityOptions 
-                        { 
-                            ValidateEntityReferences = false,
-                            ValidateAttributeTypes = false 
-                        }))
                         .AddExecutionMock<RetrieveEntityRequest>(RetrieveEntityMock)
                         .AddExecutionMock<RetrieveEntityRequest>(AnotherRetrieveEntityMock)
                         .UseMessages()
@@ -86,11 +72,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         {
             var context = MiddlewareBuilder
                         .New()
-                        .Add(ctx => ctx.SetProperty<IIntegrityOptions>(new IntegrityOptions 
-                        { 
-                            ValidateEntityReferences = false,
-                            ValidateAttributeTypes = false 
-                        }))
                         .AddFakeMessageExecutors()
                         .AddFakeMessageExecutor(new FakeRetrieveEntityRequestExecutor())
                         .UseMessages()

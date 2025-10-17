@@ -16,7 +16,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
         public void Executor_Should_Execute_Simple_Rule_With_Action()
         {
             // Arrange
-            var executor = new BusinessRuleExecutor();
+            var executor = new BusinessRuleExecutor(null);
             var rule = new BusinessRuleDefinition
             {
                 Name = "TestRule",
@@ -55,7 +55,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
         public void Executor_Should_Execute_Rule_Only_When_Condition_Is_Met()
         {
             // Arrange
-            var executor = new BusinessRuleExecutor();
+            var executor = new BusinessRuleExecutor(null);
             var rule = new BusinessRuleDefinition
             {
                 Name = "ConditionalRule",
@@ -108,7 +108,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
         public void Executor_Should_Generate_Error_When_ShowErrorMessage_Action_Executes()
         {
             // Arrange
-            var executor = new BusinessRuleExecutor();
+            var executor = new BusinessRuleExecutor(null);
             var rule = new BusinessRuleDefinition
             {
                 Name = "ValidationRule",
@@ -154,7 +154,7 @@ namespace Fake4Dataverse.Tests.BusinessRules
         public void Executor_Should_Execute_ElseActions_When_Conditions_Not_Met()
         {
             // Arrange
-            var executor = new BusinessRuleExecutor();
+            var executor = new BusinessRuleExecutor(null);
             var rule = new BusinessRuleDefinition
             {
                 Name = "ElseRule",

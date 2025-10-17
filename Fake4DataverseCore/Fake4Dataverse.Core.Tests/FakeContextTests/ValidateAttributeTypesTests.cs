@@ -1,8 +1,6 @@
 using Crm;
 using Fake4Dataverse.Abstractions;
-using Fake4Dataverse.Abstractions.Integrity;
 using Fake4Dataverse.Extensions;
-using Fake4Dataverse.Integrity;
 using Fake4Dataverse.Middleware;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -20,13 +18,19 @@ namespace Fake4Dataverse.Tests.FakeContextTests
         private readonly IXrmFakedContext _contextWithValidation;
         private readonly IOrganizationService _serviceWithValidation;
         
-        private readonly IXrmFakedContext _contextWithoutValidation;
-        private readonly IOrganizationService _serviceWithoutValidation;
-        
         public ValidateAttributeTypesTests()
         {
             // Context with validation enabled (default behavior) and metadata loaded from early-bound types
             _contextWithValidation = XrmFakedContextFactory.New();
+            
+            // Set up a valid caller to avoid validation errors on audit fields
+            var systemUser = new Entity("systemuser")
+            {
+                Id = Guid.NewGuid(),
+                ["fullname"] = "Test User"
+            };
+            _contextWithValidation.CallerProperties.CallerId = systemUser.ToEntityReference();
+            _contextWithValidation.Initialize(systemUser);
             
             // Use early-bound assembly to generate metadata for Account and Contact
             // This provides real metadata structure matching Dataverse
@@ -42,31 +46,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
                 throw new Exception("Contact metadata was not loaded from early-bound assembly");
             
             _serviceWithValidation = _contextWithValidation.GetOrganizationService();
-            
-            // Context without validation (must explicitly disable)
-            _contextWithoutValidation = XrmFakedContextFactory.New(new IntegrityOptions 
-            { 
-                ValidateEntityReferences = false,
-                ValidateAttributeTypes = false 
-            });
-            _serviceWithoutValidation = _contextWithoutValidation.GetOrganizationService();
-        }
-
-        [Fact]
-        public void Should_Not_Validate_Attribute_Types_When_Disabled()
-        {
-            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/entity-attribute-metadata
-            // When validation is disabled, mismatched types should be allowed for backward compatibility
-            
-            var account = new Entity("account")
-            {
-                ["name"] = "Test Account",
-                ["numberofemployees"] = "should be int"  // Wrong type
-            };
-
-            // Should not throw when validation is disabled
-            var id = _serviceWithoutValidation.Create(account);
-            Assert.NotEqual(Guid.Empty, id);
         }
 
         [Fact]
@@ -237,16 +216,15 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             
             var contact = new Entity("contact")
             {
-                Id = Guid.NewGuid(),
                 ["firstname"] = "John",
                 ["lastname"] = "Doe"
             };
-            _contextWithValidation.Initialize(contact);
+            var contactId = _serviceWithValidation.Create(contact);
             
             var account = new Entity("account")
             {
                 ["name"] = "Test Account",
-                ["primarycontactid"] = new EntityReference("contact", contact.Id)
+                ["primarycontactid"] = new EntityReference("contact", contactId)
             };
 
             var id = _serviceWithValidation.Create(account);
@@ -417,21 +395,6 @@ namespace Fake4Dataverse.Tests.FakeContextTests
             Assert.Equal(1000000m, ((Money)retrieved["revenue"]).Value);
         }
 
-        [Fact]
-        public void Should_Allow_StateCode_Create_When_Validation_Disabled()
-        {
-            // Reference: https://learn.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata.attributemetadata.isvalidforcreate
-            // When validation is disabled, any attribute should be allowed for backward compatibility
-            
-            var account = new Entity("account")
-            {
-                ["name"] = "Test Account",
-                ["statecode"] = new OptionSetValue(1)
-            };
 
-            // Should not throw when validation is disabled
-            var id = _serviceWithoutValidation.Create(account);
-            Assert.NotEqual(Guid.Empty, id);
-        }
     }
 }

@@ -96,7 +96,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
 
             var query = fetchXml.ToQueryExpression(_context);
 
-            Assert.True(query.EntityName.Equals("contact"));
+            Assert.Equal("contact", query.EntityName);
         }
 
         [Fact]
@@ -114,11 +114,11 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.ColumnSet != null);
-            Assert.Equal(false, query.ColumnSet.AllColumns);
+            Assert.False(query.ColumnSet.AllColumns);
             Assert.Equal(3, query.ColumnSet.Columns.Count);
-            Assert.True(query.ColumnSet.Columns.Contains("fullname"));
-            Assert.True(query.ColumnSet.Columns.Contains("telephone1"));
-            Assert.True(query.ColumnSet.Columns.Contains("contactid"));
+            Assert.Contains("fullname", query.ColumnSet.Columns);
+            Assert.Contains("telephone1", query.ColumnSet.Columns);
+            Assert.Contains("contactid", query.ColumnSet.Columns);
         }
 
         [Fact]
@@ -134,7 +134,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.ColumnSet != null);
-            Assert.Equal(true, query.ColumnSet.AllColumns);
+            Assert.True(query.ColumnSet.AllColumns);
         }
 
         [Fact]
@@ -153,7 +153,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Orders != null);
-            Assert.Equal(1, query.Orders.Count);
+            Assert.Single(query.Orders);
             Assert.Equal("fullname", query.Orders[0].AttributeName);
             Assert.Equal(Microsoft.Xrm.Sdk.Query.OrderType.Ascending, query.Orders[0].OrderType);
         }
@@ -174,7 +174,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Orders != null);
-            Assert.Equal(1, query.Orders.Count);
+            Assert.Single(query.Orders);
             Assert.Equal("fullname", query.Orders[0].AttributeName);
             Assert.Equal(Microsoft.Xrm.Sdk.Query.OrderType.Descending, query.Orders[0].OrderType);
         }
@@ -296,8 +296,8 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.Criteria != null);
-            Assert.Equal(1, query.Criteria.Conditions.Count);
-            Assert.Equal(1, query.Criteria.Filters.Count);
+            Assert.Single(query.Criteria.Conditions);
+            Assert.Single(query.Criteria.Filters);
             Assert.Equal(LogicalOperator.Or, query.Criteria.Filters[0].FilterOperator);
             Assert.Equal(2, query.Criteria.Filters[0].Conditions.Count);
         }
@@ -326,7 +326,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.LinkEntities != null);
-            Assert.Equal(1, query.LinkEntities.Count);
+            Assert.Single(query.LinkEntities);
             Assert.Equal("account", query.LinkEntities[0].LinkFromEntityName);
             Assert.Equal("accountid", query.LinkEntities[0].LinkFromAttributeName);
             Assert.Equal("account", query.LinkEntities[0].LinkToEntityName);
@@ -357,9 +357,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.LinkEntities != null);
-            Assert.Equal(1, query.LinkEntities.Count);
+            Assert.Single(query.LinkEntities);
             Assert.False(query.LinkEntities[0].Columns.AllColumns);
-            Assert.Equal(1, query.LinkEntities[0].Columns.Columns.Count);
+            Assert.Single(query.LinkEntities[0].Columns.Columns);
             Assert.Equal("telephone2", query.LinkEntities[0].Columns.Columns[0]);
         }
 
@@ -385,7 +385,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.LinkEntities != null);
-            Assert.Equal(1, query.LinkEntities.Count);
+            Assert.Single(query.LinkEntities);
             Assert.True(query.LinkEntities[0].Columns.AllColumns);
         }
 
@@ -420,10 +420,10 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             var query = fetchXml.ToQueryExpression(_context);
 
             Assert.True(query.LinkEntities != null);
-            Assert.Equal(1, query.LinkEntities.Count);
+            Assert.Single(query.LinkEntities);
             Assert.True(query.LinkEntities[0].LinkCriteria != null);
-            Assert.Equal(1, query.LinkEntities[0].LinkCriteria.Filters.Count);
-            Assert.Equal(1, query.LinkEntities[0].LinkCriteria.Conditions.Count);
+            Assert.Single(query.LinkEntities[0].LinkCriteria.Filters);
+            Assert.Single(query.LinkEntities[0].LinkCriteria.Conditions);
             Assert.Equal(2, query.LinkEntities[0].LinkCriteria.Filters[0].Conditions.Count);
         }
 
@@ -560,7 +560,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                  "</fetch>";
             fetchXml = string.Format(fetchXml, accountId);
             var rows = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
-            Assert.Equal(rows.Entities.Count, 2);
+            Assert.Equal(2, rows.Entities.Count);
         }
 
         [Fact]
@@ -593,7 +593,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                  "</fetch>";
             fetchXml = string.Format(fetchXml, contactId1);
             var rows = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
-            Assert.Equal(rows.Entities.Count, 1);
+            Assert.Single(rows.Entities);
         }
 
         [Fact]
@@ -625,7 +625,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                  "  </entity>" +
                  "</fetch>";
             var rows = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
-            Assert.Equal(rows.Entities.Count, 1);
+            Assert.Single(rows.Entities);
         }
 
         [Fact]
@@ -656,7 +656,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                  "  </entity>" +
                  "</fetch>";
             var rows = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
-            Assert.Equal(rows.Entities.Count, 1);
+            Assert.Single(rows.Entities);
             Assert.Equal(rows.Entities[0]["name"], account1["name"]);
         }
 
@@ -688,7 +688,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                  "  </entity>" +
                  "</fetch>";
             var rows = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
-            Assert.Equal(rows.Entities.Count, 1);
+            Assert.Single(rows.Entities);
             Assert.Equal(rows.Entities[0].ToEntity<Account>().Name, account1.Name);
         }
 
@@ -726,7 +726,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             </fetch>";
 
             var rows = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
-            Assert.Equal(rows.Entities.Count, 1);
+            Assert.Single(rows.Entities);
         }
 
         [Fact]
@@ -758,7 +758,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
                  "  </entity>" +
                  "</fetch>";
             var rows = _context.GetOrganizationService().RetrieveMultiple(new FetchExpression(fetchXml));
-            Assert.Equal(rows.Entities.Count, 1);
+            Assert.Single(rows.Entities);
         }
 
         [Fact]
@@ -869,9 +869,9 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             Assert.True(queryExpression.LinkEntities.Count == 1);
 
             var linkedEntity = queryExpression.LinkEntities[0];
-            Assert.Equal(linkedEntity.LinkFromAttributeName, "primarycontactid");
-            Assert.Equal(linkedEntity.LinkToAttributeName, "contactid");
-            Assert.Equal(linkedEntity.JoinOperator, JoinOperator.Inner);
+            Assert.Equal("primarycontactid", linkedEntity.LinkFromAttributeName);
+            Assert.Equal("contactid", linkedEntity.LinkToAttributeName);
+            Assert.Equal(JoinOperator.Inner, linkedEntity.JoinOperator);
 
             var request = new RetrieveMultipleRequest { Query = new FetchExpression(fetchXml) };
             var response = ((RetrieveMultipleResponse)_service.Execute(request));
@@ -926,7 +926,7 @@ namespace Fake4Dataverse.Tests.FakeContextTests.FetchXml
             Assert.True(queryExpression.LinkEntities.Count == 1);
 
             var linkedEntity = queryExpression.LinkEntities[0];
-            Assert.Equal(linkedEntity.JoinOperator, JoinOperator.LeftOuter);
+            Assert.Equal(JoinOperator.LeftOuter, linkedEntity.JoinOperator);
 
             //Executed correctly
             var request = new RetrieveMultipleRequest { Query = new FetchExpression(fetchXml) };
