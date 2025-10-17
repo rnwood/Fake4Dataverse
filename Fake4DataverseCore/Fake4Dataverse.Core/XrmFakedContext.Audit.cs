@@ -129,6 +129,9 @@ namespace Fake4Dataverse
         /// For Create operations in Dataverse:
         /// - OldValue is an empty entity (the record didn't exist)
         /// - NewValue contains the created entity's attributes
+        /// 
+        /// When impersonating, the audit uses the impersonated user's ID.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
         /// </summary>
         internal void RecordCreateAudit(Entity entity)
         {
@@ -138,7 +141,8 @@ namespace Fake4Dataverse
             }
 
             var auditRepository = GetProperty<IAuditRepository>();
-            var userId = CallerProperties?.CallerId?.Id ?? Guid.Empty;
+            var effectiveUser = (CallerProperties as CallerProperties)?.GetEffectiveUser() ?? CallerProperties?.CallerId;
+            var userId = effectiveUser?.Id ?? Guid.Empty;
             var objectRef = new EntityReference(entity.LogicalName, entity.Id);
             
             // Pass the created entity so audit details can capture the new values
@@ -152,6 +156,9 @@ namespace Fake4Dataverse
 
         /// <summary>
         /// Records an audit entry for an Update operation
+        /// 
+        /// When impersonating, the audit uses the impersonated user's ID.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
         /// </summary>
         internal void RecordUpdateAudit(Entity oldEntity, Entity newEntity)
         {
@@ -161,7 +168,8 @@ namespace Fake4Dataverse
             }
 
             var auditRepository = GetProperty<IAuditRepository>();
-            var userId = CallerProperties?.CallerId?.Id ?? Guid.Empty;
+            var effectiveUser = (CallerProperties as CallerProperties)?.GetEffectiveUser() ?? CallerProperties?.CallerId;
+            var userId = effectiveUser?.Id ?? Guid.Empty;
             var objectRef = new EntityReference(newEntity.LogicalName, newEntity.Id);
 
             // System-managed attributes that should not be audited as user changes
@@ -208,6 +216,9 @@ namespace Fake4Dataverse
 
         /// <summary>
         /// Records an audit entry for a Delete operation
+        /// 
+        /// When impersonating, the audit uses the impersonated user's ID.
+        /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
         /// </summary>
         internal void RecordDeleteAudit(EntityReference entityRef)
         {
@@ -217,7 +228,8 @@ namespace Fake4Dataverse
             }
 
             var auditRepository = GetProperty<IAuditRepository>();
-            var userId = CallerProperties?.CallerId?.Id ?? Guid.Empty;
+            var effectiveUser = (CallerProperties as CallerProperties)?.GetEffectiveUser() ?? CallerProperties?.CallerId;
+            var userId = effectiveUser?.Id ?? Guid.Empty;
             
             auditRepository.CreateAuditRecord(
                 AuditAction.Delete,

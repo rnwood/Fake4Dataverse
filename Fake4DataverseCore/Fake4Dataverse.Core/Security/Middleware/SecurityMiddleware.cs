@@ -36,12 +36,44 @@ namespace Fake4Dataverse.Security.Middleware
                     return next(context, request);
                 }
 
-                // Check if user is System Administrator - they bypass all security
-                var callerId = context.CallerProperties.CallerId;
-                
-                if (callerId != null && callerId.LogicalName == "systemuser")
+                // Validate impersonation if active (must be done before sys admin bypass)
+                // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
+                // The calling user must have the prvActOnBehalfOfAnotherUser privilege to impersonate another user.
+                // Even System Administrators need to perform this check on the CALLING user, not the impersonated user.
+                if (context.CallerProperties.ImpersonatedUserId != null)
                 {
-                    if (context.SecurityManager.IsSystemAdministrator(callerId.Id))
+                    var callerId = context.CallerProperties.CallerId;
+                    if (callerId == null)
+                    {
+                        throw new UnauthorizedAccessException("Cannot impersonate without a calling user context.");
+                    }
+
+                    // Check if the CALLING user (not impersonated) is System Administrator or has the privilege
+                    bool isCallerSystemAdmin = context.SecurityManager.IsSystemAdministrator(callerId.Id);
+                    
+                    if (!isCallerSystemAdmin)
+                    {
+                        // Check if the calling user has the prvActOnBehalfOfAnotherUser privilege
+                        var hasPrivilege = context.SecurityManager.PrivilegeManager.HasPrivilege(
+                            callerId.Id,
+                            PrivilegeManager.ActOnBehalfOfAnotherUserPrivilege,
+                            PrivilegeManager.PrivilegeDepthGlobal);
+
+                        if (!hasPrivilege)
+                        {
+                            throw new UnauthorizedAccessException(
+                                $"User {callerId.Id} does not have the '{PrivilegeManager.ActOnBehalfOfAnotherUserPrivilege}' privilege required for impersonation.");
+                        }
+                    }
+                }
+
+                // Check if EFFECTIVE user is System Administrator - they bypass all OTHER security
+                // The effective user is the impersonated user if impersonating, otherwise the caller
+                var effectiveUser = context.CallerProperties.ImpersonatedUserId ?? context.CallerProperties.CallerId;
+                
+                if (effectiveUser != null && effectiveUser.LogicalName == "systemuser")
+                {
+                    if (context.SecurityManager.IsSystemAdministrator(effectiveUser.Id))
                     {
                         // System Administrators bypass all security checks
                         return next(context, request);

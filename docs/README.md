@@ -22,6 +22,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
 - **[Security Model](./usage/security-model.md)** - Complete Dataverse security implementation ✅ **NEW**
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
+- **[Impersonation](./usage/impersonation.md)** - Perform operations on behalf of other users ✅ **NEW**
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
 - [Auto Number Fields](./usage/auto-number-fields.md) - Auto-generated field values ✅ **NEW**
 - [Metadata Validation](./usage/metadata-validation.md) - IsValidForCreate/Update/Read enforcement ✅ **NEW**
@@ -43,6 +44,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 ### 🌐 [Network Testing](.)
 - [Fake4DataverseService](./service.md) - Network-accessible SOAP/WCF service for integration testing ✅ **NEW**
 - [REST/OData API Endpoints](./rest-api.md) - OData v4.0 endpoints with advanced query support ✅ **NEW**
+- **[Model-Driven App Interface](./usage/mda-interface.md)** - Web UI for visual testing and user impersonation ✅ **NEW**
 
 ### 🏗️ [Architecture & Planning](.)
 - [Testing Guide](./TESTING_GUIDE.md) - How to run all tests in the repository ✅ **NEW**
@@ -89,9 +91,11 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Understand the architecture**: Read [Middleware Architecture](./concepts/middleware.md)
 - **Test security with full Dataverse model**: See [Security Model](./usage/security-model.md) ✅ **NEW**
 - **Test basic security**: See [Security and Permissions](./usage/security-permissions.md)
+- **Impersonate another user**: See [Impersonation](./usage/impersonation.md)
 - **Migrate from FakeXrmEasy**: Check the [Migration Guides](./migration/)
 - **Find supported messages**: Browse [Message Executors](./messages/)
 - **Do integration testing**: Use [Fake4DataverseService](./service.md) for network-accessible testing
+- **Use the web interface**: See [Model-Driven App Interface](./usage/mda-interface.md) for visual testing
 
 ## Quick Example
 

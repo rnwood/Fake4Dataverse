@@ -44,6 +44,17 @@ namespace Fake4Dataverse.Services
             }
 
             var CallerId = new EntityReference("systemuser", gCallerId); //Create a new instance by default
+            
+            // Handle impersonation for audit fields
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
+            // When impersonating:
+            // - createdby/modifiedby = impersonated user (passed in as gCallerId - the effective user)
+            // - createdonbehalfof/modifiedonbehalfof = actual calling user (from CallerProperties.CallerId)
+            var callerProperties = ctx.CallerProperties as CallerProperties;
+            var isImpersonating = callerProperties?.ImpersonatedUserId != null;
+            
+            // The gCallerId parameter already represents the effective user (impersonated or actual caller)
+            var effectiveUser = CallerId;
 
             var now = DateTime.UtcNow;
 
@@ -56,9 +67,19 @@ namespace Fake4Dataverse.Services
             }
 
             e.SetValueIfEmpty("modifiedon", now);
-            e.SetValueIfEmpty("createdby", CallerId);
-            e.SetValueIfEmpty("modifiedby", CallerId);
-            e.SetValueIfEmpty("ownerid", CallerId);
+            e.SetValueIfEmpty("createdby", effectiveUser);
+            e.SetValueIfEmpty("modifiedby", effectiveUser);
+            e.SetValueIfEmpty("ownerid", effectiveUser);
+            
+            // Set createdonbehalfof when impersonating
+            // Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/webapi/impersonate-another-user-web-api
+            // The createdonbehalfof field stores the actual user who initiated the operation (the impersonator)
+            if (isImpersonating && callerProperties?.CallerId != null)
+            {
+                e.SetValueIfEmpty("createdonbehalfof", callerProperties.CallerId);
+                e.SetValueIfEmpty("modifiedonbehalfof", callerProperties.CallerId);
+            }
+            
             e.SetValueIfEmpty("statecode", new OptionSetValue(0)); //Active by default
 
             // Process auto number fields
