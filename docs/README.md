@@ -20,6 +20,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [CRUD Operations](./usage/crud-operations.md) - Create, Read, Update, Delete operations
 - [Querying Data](./usage/querying-data.md) - LINQ and FetchXML queries
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
+- **[Security Model](./usage/security-model.md)** - Complete Dataverse security implementation ✅ **NEW**
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
 - [Auto Number Fields](./usage/auto-number-fields.md) - Auto-generated field values ✅ **NEW**
@@ -86,7 +87,8 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Use alternate keys**: See [Alternate Keys](./usage/alternate-keys.md)
 - **Test duplicate detection**: Check [Duplicate Detection](./usage/duplicate-detection.md)
 - **Understand the architecture**: Read [Middleware Architecture](./concepts/middleware.md)
-- **Test security**: See [Security and Permissions](./usage/security-permissions.md)
+- **Test security with full Dataverse model**: See [Security Model](./usage/security-model.md) ✅ **NEW**
+- **Test basic security**: See [Security and Permissions](./usage/security-permissions.md)
 - **Migrate from FakeXrmEasy**: Check the [Migration Guides](./migration/)
 - **Find supported messages**: Browse [Message Executors](./messages/)
 - **Do integration testing**: Use [Fake4DataverseService](./service.md) for network-accessible testing

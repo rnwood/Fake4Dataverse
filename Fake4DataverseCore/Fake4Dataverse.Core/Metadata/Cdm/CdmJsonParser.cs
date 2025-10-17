@@ -979,6 +979,16 @@ namespace Fake4Dataverse.Metadata.Cdm
                 "Solution.cdm.json",
                 "SolutionComponent.cdm.json",
                 "ComponentDefinition.cdm.json",
+                // Then load security model entities
+                // Reference: https://learn.microsoft.com/en-us/power-platform/admin/wp-security
+                "Organization.cdm.json",
+                "BusinessUnit.cdm.json",
+                "SystemUser.cdm.json",
+                "Team.cdm.json",
+                "Role.cdm.json",
+                "Privilege.cdm.json",
+                "RolePrivileges.cdm.json",
+                "PrincipalObjectAccess.cdm.json",
                 // Then load other system entities
                 "AppModule.cdm.json",
                 "SiteMap.cdm.json",

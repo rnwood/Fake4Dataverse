@@ -71,6 +71,15 @@
     <EmbeddedResource Include="..\system-edm-files\RelationshipDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\RelationshipDefinition.cdm.json" />
     <EmbeddedResource Include="..\system-edm-files\OptionSetDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\OptionSetDefinition.cdm.json" />
     <EmbeddedResource Include="..\system-edm-files\EntityKeyDefinition.cdm.json" Link="Metadata\Cdm\SystemEntities\EntityKeyDefinition.cdm.json" />
+    <!-- Security model entities -->
+    <EmbeddedResource Include="..\system-edm-files\SystemUser.cdm.json" Link="Metadata\Cdm\SystemEntities\SystemUser.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\BusinessUnit.cdm.json" Link="Metadata\Cdm\SystemEntities\BusinessUnit.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\Team.cdm.json" Link="Metadata\Cdm\SystemEntities\Team.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\Role.cdm.json" Link="Metadata\Cdm\SystemEntities\Role.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\Privilege.cdm.json" Link="Metadata\Cdm\SystemEntities\Privilege.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\RolePrivileges.cdm.json" Link="Metadata\Cdm\SystemEntities\RolePrivileges.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\Organization.cdm.json" Link="Metadata\Cdm\SystemEntities\Organization.cdm.json" />
+    <EmbeddedResource Include="..\system-edm-files\PrincipalObjectAccess.cdm.json" Link="Metadata\Cdm\SystemEntities\PrincipalObjectAccess.cdm.json" />
   </ItemGroup>
 
 </Project>

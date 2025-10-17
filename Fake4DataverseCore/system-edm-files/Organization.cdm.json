@@ -1,0 +1,138 @@
+{
+  "documentVersion": "1.3",
+  "jsonSchemaSemanticVersion": "1.0.0",
+  "imports": [
+    {
+      "corpusPath": "_allImports.cdm.json"
+    }
+  ],
+  "definitions": [
+    {
+      "entityName": "Organization",
+      "extendsEntity": "CdsStandard",
+      "exhibitsTraits": [
+        {
+          "traitReference": "is.localized.displayedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Organization"
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "traitReference": "is.localized.describedAs",
+          "arguments": [
+            {
+              "entityReference": {
+                "entityShape": "localizedTable",
+                "constantValues": [
+                  [
+                    "en",
+                    "Top level of the Microsoft Dynamics 365 business hierarchy. The organization can be a specific business, holding company, or corporation."
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "hasAttributes": [
+        {
+          "attributeGroupReference": {
+            "attributeGroupName": "attributesAddedAtThisScope",
+            "members": [
+              {
+                "name": "organizationId",
+                "purpose": "identifiedBy",
+                "dataType": "entityId",
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "systemrequired"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "organizationid",
+                "displayName": "Organization",
+                "description": "Unique identifier of the organization."
+              },
+              {
+                "name": "name",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 160,
+                "appliedTraits": [
+                  {
+                    "traitReference": "is.requiredAtLevel",
+                    "arguments": [
+                      {
+                        "name": "level",
+                        "value": "required"
+                      }
+                    ]
+                  }
+                ],
+                "sourceName": "name",
+                "displayName": "Organization Name",
+                "description": "Name of the organization. The name is set when Microsoft CRM is installed and should not be changed."
+              },
+              {
+                "name": "isDisabled",
+                "purpose": "hasA",
+                "dataType": "boolean",
+                "sourceName": "isdisabled",
+                "displayName": "Is Disabled",
+                "description": "Information that specifies whether the organization is disabled."
+              },
+              {
+                "name": "fiscalYearFormat",
+                "purpose": "hasA",
+                "dataType": "string",
+                "maximumLength": 25,
+                "sourceName": "fiscalyearformat",
+                "displayName": "Fiscal Year Format",
+                "description": "Information that specifies how the name of the fiscal year is displayed throughout Microsoft CRM."
+              },
+              {
+                "name": "dateFormatCode",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "dateformatcode",
+                "displayName": "Date Format Code",
+                "description": "Information about how the date is displayed throughout Microsoft CRM."
+              },
+              {
+                "name": "timeFormatCode",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "timeformatcode",
+                "displayName": "Time Format Code",
+                "description": "Information that specifies how the time is displayed throughout Microsoft CRM."
+              },
+              {
+                "name": "currencyFormatCode",
+                "purpose": "hasA",
+                "dataType": "integer",
+                "sourceName": "currencyformatcode",
+                "displayName": "Currency Format Code",
+                "description": "Information about how currency symbols are placed throughout Microsoft CRM."
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
