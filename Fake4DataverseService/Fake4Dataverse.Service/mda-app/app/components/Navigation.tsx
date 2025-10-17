@@ -18,6 +18,7 @@ import {
 import {
   Navigation20Regular,
   Settings20Regular,
+  History20Regular,
   bundleIcon,
   
   // Default icons for common entities
@@ -163,6 +164,18 @@ export default function Navigation({ areas, selectedEntity, onNavigate }: Naviga
           }}
         >
           Solutions & Tables
+        </Button>
+        <Button
+          appearance="subtle"
+          icon={<History20Regular />}
+          className={styles.makeButton}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/audit';
+            }
+          }}
+        >
+          Audit History
         </Button>
         <Divider className={styles.divider} />
         {areas.map((area) => (

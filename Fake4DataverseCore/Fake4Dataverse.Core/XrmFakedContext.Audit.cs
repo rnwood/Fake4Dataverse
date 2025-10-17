@@ -52,6 +52,9 @@ namespace Fake4Dataverse
         /// 1. Organization-level IsAuditEnabled = true
         /// 2. Entity-level IsAuditEnabled = true (from EntityMetadata)
         /// 3. Attribute-level IsAuditEnabled = true (from AttributeMetadata) for attribute changes
+        /// 
+        /// Note: If entity metadata exists but IsAuditEnabled is null, we allow auditing
+        /// (this matches the behavior where no explicit audit setting means auditing is allowed)
         /// </summary>
         private bool ShouldAuditEntity(string entityLogicalName)
         {
@@ -65,8 +68,10 @@ namespace Fake4Dataverse
             if (EntityMetadata.ContainsKey(entityLogicalName))
             {
                 var entityMetadata = EntityMetadata[entityLogicalName];
-                // IsAuditEnabled is a nullable bool, so we check for true explicitly
-                if (entityMetadata.IsAuditEnabled?.Value != true)
+                // IsAuditEnabled is a nullable bool
+                // If it's explicitly set to false, don't audit
+                // If it's true or null, allow auditing
+                if (entityMetadata.IsAuditEnabled?.Value == false)
                 {
                     return false;
                 }
@@ -79,6 +84,9 @@ namespace Fake4Dataverse
         /// <summary>
         /// Filters attribute changes to only include audited attributes
         /// Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/configure
+        /// 
+        /// Note: If attribute metadata exists but IsAuditEnabled is null, we include the attribute
+        /// (this matches the behavior where no explicit audit setting means auditing is allowed)
         /// </summary>
         private Dictionary<string, (object oldValue, object newValue)> FilterAuditedAttributes(
             string entityLogicalName,
@@ -107,7 +115,9 @@ namespace Fake4Dataverse
                 if (attributeMetadata != null)
                 {
                     // IsAuditEnabled is a BooleanManagedProperty
-                    if (attributeMetadata.IsAuditEnabled?.Value == true)
+                    // If it's explicitly set to false, don't audit
+                    // If it's true or null, include the change
+                    if (attributeMetadata.IsAuditEnabled?.Value != false)
                     {
                         filteredChanges[change.Key] = change.Value;
                     }

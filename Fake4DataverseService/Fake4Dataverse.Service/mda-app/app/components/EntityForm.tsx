@@ -26,6 +26,7 @@ import {
 import { dataverseClient } from '../lib/dataverse-client';
 import { parseFormXml } from '../lib/form-utils';
 import { XrmApiImplementation, executeFormScript } from '../lib/xrm-api';
+import AuditRecordView from './AuditRecordView';
 import type { EntityRecord, SystemForm, FormDefinition, WebResource } from '../types/dataverse';
 
 const useStyles = makeStyles({
@@ -475,6 +476,10 @@ export default function EntityForm({
   const visibleTabs = formDefinition.tabs.filter((tab) => tab.visible);
   const currentTab = visibleTabs.find((tab) => tab.id === selectedTab);
 
+  // Add audit history tab for existing records
+  const hasAuditTab = recordId !== undefined;
+  const AUDIT_TAB_ID = '__audit_history__';
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -505,7 +510,7 @@ export default function EntityForm({
         </Button>
       </div>
       <div className={styles.content}>
-        {visibleTabs.length > 1 && (
+        {(visibleTabs.length > 1 || hasAuditTab) && (
           <TabList
             selectedValue={selectedTab}
             onTabSelect={handleTabSelect}
@@ -516,9 +521,18 @@ export default function EntityForm({
                 {tab.label}
               </Tab>
             ))}
+            {hasAuditTab && (
+              <Tab key={AUDIT_TAB_ID} value={AUDIT_TAB_ID}>
+                Audit History
+              </Tab>
+            )}
           </TabList>
         )}
-        {currentTab && renderTab(currentTab)}
+        {selectedTab === AUDIT_TAB_ID && hasAuditTab ? (
+          <AuditRecordView entityName={entityName} recordId={recordId!} />
+        ) : (
+          currentTab && renderTab(currentTab)
+        )}
       </div>
     </div>
   );
