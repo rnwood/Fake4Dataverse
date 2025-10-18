@@ -4,7 +4,6 @@
 
 Fiscal period operators enable date-based queries using fiscal calendars instead of standard calendar dates. This is essential for financial reporting, budgeting, and any scenario where your organization's fiscal year differs from the calendar year.
 
-**Implemented:** 2025-10-10 (Issue #3)
 
 ## Microsoft Documentation
 

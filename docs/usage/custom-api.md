@@ -4,7 +4,6 @@
 
 Custom APIs are the modern way to create custom messages in Dataverse, replacing the legacy Custom Actions approach. They provide strongly-typed request/response parameters and better integration with the Power Platform.
 
-**Implemented:** 2025-10-10 (Issue #4)
 
 ## Microsoft Documentation
 

@@ -2,14 +2,13 @@
 
 ## Overview
 
-Cloud Flows (Power Automate flows) are an increasingly common integration pattern for Dataverse applications. The Cloud Flow simulation feature in Fake4Dataverse enables developers to test Dataverse-triggered flows, verify flow execution, and validate flow actions/outputs in unit tests.
-
+Cloud Flows (Power Automate flows) have become a common way to integrate Dataverse applications with other systems. Fake4Dataverse lets you test these flows in unit tests without needing a live environment.
 
 **Package:** `Fake4DataverseCloudFlows` (.NET 8.0 only) - Separate package for advanced OData support
 
-**Test Coverage:** 208 unit tests, all passing ✅ (includes control flow actions, JSON import, and OData conversion)
+**Test Coverage:** 208 unit tests, all passing (includes control flow actions, JSON import, and OData conversion)
 
-> **Note:** Cloud Flow simulation has been moved to a separate `Fake4DataverseCloudFlows` project targeting .NET 8.0 only. This allows it to use Microsoft.OData.Core for advanced OData query processing. Install the `Fake4Dataverse.CloudFlows` package and initialize with:
+> **Note:** Cloud Flow simulation lives in a separate `Fake4DataverseCloudFlows` project that targets .NET 8.0. This allows it to use Microsoft.OData.Core for advanced OData query processing. Install the `Fake4Dataverse.CloudFlows` package and initialize with:
 > ```csharp
 > var context = XrmFakedContextFactory.New();
 > context.CloudFlowSimulator = new CloudFlowSimulator(context);
@@ -25,7 +24,7 @@ Official references:
 
 ## What are Cloud Flows?
 
-Cloud Flows allow you to:
+Cloud Flows let you:
 - Automate business processes triggered by Dataverse events
 - Integrate Dataverse with external systems (Outlook, Teams, SharePoint, custom APIs)
 - Execute complex multi-step workflows with branching logic
@@ -33,7 +32,7 @@ Cloud Flows allow you to:
 
 ## Capabilities
 
-The Cloud Flow simulation feature provides:
+Cloud Flow simulation supports:
 1. **Flow Registration** - Register flow definitions programmatically or from JSON
 2. **JSON Import** - Import real Cloud Flow definitions exported from Power Automate
 3. **Expression Language** - Full Power Automate expression evaluation using Jint.net
@@ -49,7 +48,7 @@ The Cloud Flow simulation feature provides:
 
 ### Expression Language Support
 
-Fake4Dataverse now supports Power Automate expression language for dynamic values in flow actions:
+Fake4Dataverse supports Power Automate expression language for dynamic values in flow actions:
 
 ```csharp
 var flowDefinition = new CloudFlowDefinition

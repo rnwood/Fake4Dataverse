@@ -1,6 +1,5 @@
 # Metadata Persistence
 
-**Implementation Date**: December 2025  
 **Issue Reference**: [Persist tables/columns and other metadata](https://github.com/rnwood/Fake4Dataverse/issues/89)
 
 Fake4Dataverse automatically persists entity and attribute metadata to standard Dataverse metadata tables, allowing metadata to be queried like regular entity data.

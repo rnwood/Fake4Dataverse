@@ -4,8 +4,6 @@
 
 Calculated fields (also known as calculated columns) are fields whose values are automatically computed based on formulas. Fake4Dataverse simulates Dataverse calculated field evaluation using the NCalc expression engine, supporting arithmetic operations, string manipulation, date/time functions, and logical operators.
 
-**Implemented:** 2025-10-11 (Issue #22)
-
 ## Microsoft Documentation
 
 Official references:
@@ -14,7 +12,7 @@ Official references:
 
 ## What are Calculated Fields?
 
-Calculated fields allow you to:
+Calculated fields let you:
 - Automatically compute field values based on formulas
 - Reference other fields in the same entity or related entities
 - Use built-in functions for string manipulation, date math, and logical operations

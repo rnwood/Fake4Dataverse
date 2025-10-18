@@ -4,7 +4,6 @@
 
 The Merge Request feature allows you to merge two entity records in Dataverse, combining their data and updating all references to point to the surviving record. This is a common operation when dealing with duplicate records.
 
-**Implemented:** 2025-10-10 (Issue #1)
 
 ## Microsoft Documentation
 

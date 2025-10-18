@@ -2,11 +2,11 @@
 
 ## Overview
 
-Fake4Dataverse provides built-in thread safety for CRUD operations with database-like serialization of transactions. This ensures that concurrent operations from multiple threads can safely access the same `IXrmFakedContext` instance without race conditions or data corruption.
+Fake4Dataverse has built-in thread safety for CRUD operations with database-like serialization of transactions. This means concurrent operations from multiple threads can safely access the same `IXrmFakedContext` instance without race conditions or data corruption.
 
 ## Why Thread Safety Matters
 
-In real-world testing scenarios, you may need to:
+In real-world testing, you might need to:
 
 - **Test parallel plugin execution** - Multiple plugins running concurrently
 - **Simulate concurrent user operations** - Multiple users accessing the system simultaneously
@@ -14,16 +14,16 @@ In real-world testing scenarios, you may need to:
 - **Verify race condition handling** - Ensure your code handles concurrent access correctly
 
 Without thread safety, concurrent operations could lead to:
-- ❌ Data corruption
-- ❌ Lost updates
-- ❌ Inconsistent state
-- ❌ Test flakiness
+- Data corruption
+- Lost updates
+- Inconsistent state
+- Test flakiness
 
 ## How It Works
 
 ### Per-Entity-Type Locking for Better Concurrency
 
-Fake4Dataverse implements thread safety using **per-entity-type locks**, providing optimal concurrency while maintaining data consistency:
+Fake4Dataverse uses **per-entity-type locks** for optimal concurrency while maintaining data consistency:
 
 ```csharp
 // Operations on DIFFERENT entity types can execute concurrently

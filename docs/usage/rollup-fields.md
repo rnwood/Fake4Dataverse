@@ -4,7 +4,6 @@
 
 Rollup fields (also known as rollup columns) automatically aggregate data from related child records using functions such as SUM, COUNT, MIN, MAX, and AVG. Fake4Dataverse simulates Dataverse rollup field evaluation, allowing you to test business logic that depends on aggregated values from related entities.
 
-**Implemented:** 2025-10-11 (Issue #7)
 
 ## Microsoft Documentation
 

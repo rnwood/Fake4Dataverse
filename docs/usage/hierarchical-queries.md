@@ -4,7 +4,6 @@
 
 Hierarchical query operators allow you to query parent-child relationships in entity hierarchies. This is essential for working with organizational structures, account hierarchies, and other tree-like data structures in Dataverse.
 
-**Implemented:** 2025-10-10 (Issue #2)
 
 ## Microsoft Documentation
 
