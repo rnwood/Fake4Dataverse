@@ -575,4 +575,3 @@ var successCount = (int)response.Results["SuccessCount"];
   - `Fake4DataverseAbstractions/Fake4Dataverse.Abstractions/FakeMessageExecutors/OrganizationRequestExecutors.cs`
   - `Fake4DataverseCore/Fake4Dataverse.Core/Middleware/Messages/MiddlewareBuilderExtensions.Messages.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/CustomApiTests/`
-- **Feature Parity**: Matches FakeXrmEasy v2+ behavior

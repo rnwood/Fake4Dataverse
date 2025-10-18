@@ -844,17 +844,6 @@ In Dataverse, asynchronous plugins (Mode = 1) are queued as asyncoperation recor
 - Tracking async operation status (Ready, InProgress, Succeeded, Failed)
 - Capturing plugin execution errors
 
-### Key Differences from FakeXrmEasy v2
-
-**Important**: The async plugin implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| **Async Plugin Execution** | Executes synchronously by default | Queued by default, execute on-demand |
-| **System Job Queue** | Not exposed | Fully exposed via `AsyncJobQueue` |
-| **Monitoring** | Limited | Full asyncoperation entity simulation |
-| **Control** | Automatic | Manual control with auto-execute option |
-
 ### Basic Async Plugin Testing
 
 Register an async plugin and control when it executes:
@@ -1228,7 +1217,7 @@ The plugin pipeline implementation provides:
 
 4. **Direct Configuration**: Plugin configuration (secure/unsecure) is passed directly in the `PluginStepRegistration` object, not through external configuration files.
 
-5. **Async Plugin Queuing**: Async plugins are queued in a simulated system job queue (unlike FakeXrmEasy v2 which executes them synchronously). See [Async Plugins](#async-plugins) section for details.
+5. **Async Plugin Queuing**: Async plugins are queued in a simulated system job queue for on-demand execution. See [Async Plugins](#async-plugins) section for details.
 
 ### Auto-Registration Mode (Recommended)
 
@@ -1889,15 +1878,6 @@ public void Should_UseCustomAttributeConverter()
 - You don't use SPKL or custom attributes
 - You need to test edge cases or specific configurations
 
-### Differences from FakeXrmEasy v2
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| **Auto-Discovery** | Built-in assembly scanning | Explicit via `DiscoverAndRegisterPlugins()` |
-| **Attribute Support** | SPKL attributes | SPKL attributes (via reflection) + custom attributes |
-| **Custom Converters** | Limited | Full support for type and attribute converters |
-| **Configuration** | Config file based | Code-based with full flexibility |
-
 ## Custom Action and Custom API Plugin Support
 
 Fake4Dataverse supports registering and executing plugins for Custom Actions and Custom APIs.
@@ -2140,24 +2120,6 @@ context.PluginPipelineSimulator.RegisterPluginStep(new PluginStepRegistration
     PluginType = typeof(PostProcessPlugin)
 });
 ```
-
-### Differences from FakeXrmEasy v2
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| **Custom Action Support** | ✅ Yes | ✅ Yes |
-| **Custom API Support** | ✅ Yes | ✅ Yes |
-| **Entity-Bound Actions** | ✅ Yes | ✅ Yes |
-| **Global Actions** | ✅ Yes | ✅ Yes |
-| **All Pipeline Stages** | ✅ Yes | ✅ Yes |
-| **Multiple Plugins** | ✅ Yes | ✅ Yes |
-| **Execution Order** | ✅ Yes | ✅ Yes |
-| **Auto-Discovery** | ✅ Yes | ✅ Yes (via SPKL attributes) |
-
-**Key differences:**
-- FakeXrmEasy v2+ may automatically discover custom action metadata from assemblies
-- Fake4Dataverse requires explicit custom API metadata setup via `customapi` entity
-- Both support full plugin pipeline simulation for custom actions/APIs
 
 ## Best Practices
 

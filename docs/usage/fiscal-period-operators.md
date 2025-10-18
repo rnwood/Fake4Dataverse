@@ -581,4 +581,3 @@ var results = service.RetrieveMultiple(query);
   - `Fake4DataverseCore/Fake4Dataverse.Core/Query/ConditionExpressionExtensions.FiscalPeriod.cs`
   - `Fake4DataverseCore/Fake4Dataverse.Core/Extensions/XmlExtensionsForFetchXml.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/FetchXml/FiscalPeriodOperatorTests.cs`
-- **Feature Parity**: Matches FakeXrmEasy v2+ behavior

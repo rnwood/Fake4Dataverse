@@ -247,4 +247,3 @@ service.Execute(mergeRequest);
 
 - **File**: `Fake4DataverseCore/Fake4Dataverse.Core/FakeMessageExecutors/MergeRequestExecutor.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/MergeRequestTests/`
-- **Feature Parity**: Matches FakeXrmEasy v2+ behavior

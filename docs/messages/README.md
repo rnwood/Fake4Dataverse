@@ -351,7 +351,7 @@ public void Should_Throw_When_EntityNotFound()
 ```
 
 
-## Cloud Flow Actions ✅ **NEW**
+## Cloud Flow Actions
 
 In addition to traditional message executors, Fake4Dataverse supports **Cloud Flow (Power Automate) actions** through the Dataverse connector. These actions provide an alternative, higher-level API for testing flows.
 
@@ -369,8 +369,8 @@ In addition to traditional message executors, Fake4Dataverse supports **Cloud Fl
 | `Relate` | Associate records | ✅ Supported |
 | `Unrelate` | Disassociate records | ✅ Supported |
 | `ExecuteAction` | Execute custom actions/APIs | ✅ Supported |
-| `UploadFile` | Upload files/images to columns | ✅ **NEW** |
-| `DownloadFile` | Download files/images from columns | ✅ **NEW** |
+| `UploadFile` | Upload files/images to columns | |
+| `DownloadFile` | Download files/images from columns | |
 
 ### File Operations Example
 

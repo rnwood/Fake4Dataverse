@@ -345,7 +345,7 @@ Now that you've written your first tests, explore these topics:
 - **[Basic Concepts](./basic-concepts.md)** - Understand how the framework works
 - **[Testing Plugins](../usage/testing-plugins.md)** - Dive deep into plugin testing
 - **[Querying Data](../usage/querying-data.md)** - Master LINQ and FetchXML queries
-- **[Cloud Flows](../usage/cloud-flows.md)** - Test Power Automate flows (with JSON import!) ✅ **NEW**
+- **[Cloud Flows](../usage/cloud-flows.md)** - Test Power Automate flows (with JSON import!)
 - **[CRUD Operations](../usage/crud-operations.md)** - Learn all CRUD patterns
 - **[Batch Operations](../usage/batch-operations.md)** - Test ExecuteMultiple and transactions
 - **[Custom API](../usage/custom-api.md)** - Test Custom APIs
@@ -355,7 +355,7 @@ Now that you've written your first tests, explore these topics:
 Explore advanced testing scenarios:
 - **Pipeline Simulation** - Test plugins with full pipeline behavior  
 - **Security Testing** - Test security roles and permissions
-- **JSON Import for Flows** - Import real Power Automate flows and test them ✅ **NEW**
+- **JSON Import for Flows** - Import real Power Automate flows and test them
 - **Message Executors** - See all [supported Dataverse messages](../messages/)
 
 ### Need Help?

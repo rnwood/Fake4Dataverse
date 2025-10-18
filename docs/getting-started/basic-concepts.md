@@ -339,7 +339,7 @@ While Fake4Dataverse simulates Dataverse closely, there are differences:
 - Calculated/Rollup fields
 
 ✅ **Now Supported**:
-- Cloud Flows - Power Automate flow simulation (with JSON import!) ✅ **NEW**
+- Cloud Flows - Power Automate flow simulation (with JSON import!)
 - Custom APIs - Modern Dataverse Custom APIs
 
 ❌ **Not Simulated**:
