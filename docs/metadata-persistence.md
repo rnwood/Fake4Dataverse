@@ -1,6 +1,5 @@
 # Metadata Persistence
 
-**Implementation Date**: December 2025  
 **Issue Reference**: [Persist tables/columns and other metadata](https://github.com/rnwood/Fake4Dataverse/issues/89)
 
 Fake4Dataverse automatically persists entity and attribute metadata to standard Dataverse metadata tables, allowing metadata to be queried like regular entity data.
@@ -344,9 +343,9 @@ The metadata persistence feature is **fully automatic and backward compatible**:
 
 ✅ **Entity metadata** - Full support via EntityDefinition table  
 ✅ **Attribute metadata** - Full support via Attribute table  
-✅ **Relationship metadata tables** - Relationship table available for querying ✅ **NEW**  
-✅ **OptionSet metadata tables** - OptionSet table available for querying ✅ **NEW**  
-✅ **EntityKey metadata tables** - EntityKey table available for querying ✅ **NEW**  
+✅ **Relationship metadata tables** - Relationship table available for querying  
+✅ **OptionSet metadata tables** - OptionSet table available for querying  
+✅ **EntityKey metadata tables** - EntityKey table available for querying  
 ✅ **Automatic initialization** - All metadata tables automatically loaded  
 ✅ **Automatic persistence** - Entity and Attribute metadata transparently persisted
 

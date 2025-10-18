@@ -20,40 +20,41 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [CRUD Operations](./usage/crud-operations.md) - Create, Read, Update, Delete operations
 - [Querying Data](./usage/querying-data.md) - LINQ and FetchXML queries
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
-- **[Security Model](./usage/security-model.md)** - Complete Dataverse security implementation ✅ **NEW**
+- [Auditing](./usage/auditing.md) - Testing audit functionality and change tracking
+- [Business Rules](./usage/business-rules.md) - Testing business rule execution
+- [Security Model](./usage/security-model.md) - Complete Dataverse security implementation
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
-- **[Impersonation](./usage/impersonation.md)** - Perform operations on behalf of other users ✅ **NEW**
+- [Impersonation](./usage/impersonation.md) - Perform operations on behalf of other users
 - [ExecuteMultiple and Transactions](./usage/batch-operations.md) - Batch operations and transactions
-- [Auto Number Fields](./usage/auto-number-fields.md) - Auto-generated field values ✅ **NEW**
-- [Metadata Validation](./usage/metadata-validation.md) - IsValidForCreate/Update/Read enforcement ✅ **NEW**
-- [CDM Import](./cdm-import.md) - Import entity metadata from Common Data Model JSON ✅ **NEW**
-- [CDM vs Early-Bound](./cdm-vs-early-bound.md) - Choosing between CDM files and early-bound assemblies ✅ **NEW**
-- [Metadata Persistence](./metadata-persistence.md) - Query metadata from EntityDefinition and Attribute tables ✅ **NEW**
-- [Thread Safety](./thread-safety.md) - Concurrent operations and thread safety ✅ **NEW**
-- [Alternate Keys](./usage/alternate-keys.md) - Using alternate keys for record identification ✅ **NEW**
-- [Duplicate Detection](./usage/duplicate-detection.md) - Testing duplicate detection rules ✅ **NEW**
+- [Auto Number Fields](./usage/auto-number-fields.md) - Auto-generated field values
+- [Metadata Validation](./usage/metadata-validation.md) - IsValidForCreate/Update/Read enforcement
+- [CDM Import](./cdm-import.md) - Import entity metadata from Common Data Model JSON
+- [CDM vs Early-Bound](./cdm-vs-early-bound.md) - Choosing between CDM files and early-bound assemblies
+- [Metadata Persistence](./metadata-persistence.md) - Query metadata from EntityDefinition and Attribute tables
+- [Thread Safety](./thread-safety.md) - Concurrent operations and thread safety
+- [Alternate Keys](./usage/alternate-keys.md) - Using alternate keys for record identification
+- [Duplicate Detection](./usage/duplicate-detection.md) - Testing duplicate detection rules
 - [Calculated Fields](./usage/calculated-fields.md) - Simulating calculated field evaluation
 - [Rollup Fields](./usage/rollup-fields.md) - Simulating rollup field evaluation
 - [Custom API Support](./usage/custom-api.md) - Implementing Custom APIs
-- [Cloud Flows](./usage/cloud-flows.md) - Testing Power Automate flows ✅ **IMPLEMENTED** (requires Fake4DataverseCloudFlows package)
-- [Expression Language](./expression-language.md) - Power Automate expressions ✅ **NEW**
+- [Cloud Flows](./usage/cloud-flows.md) - Testing Power Automate flows (requires Fake4DataverseCloudFlows package)
+- [Expression Language](./expression-language.md) - Power Automate expressions
 - [Merge Request Operations](./usage/merge-request.md) - Merging entity records
 - [Hierarchical Queries](./usage/hierarchical-queries.md) - Querying hierarchical data
 - [Fiscal Period Operators](./usage/fiscal-period-operators.md) - Fiscal calendar queries
 
 ### 🌐 [Network Testing](.)
-- [Fake4DataverseService](./service.md) - Network-accessible SOAP/WCF service for integration testing ✅ **NEW**
-- [REST/OData API Endpoints](./rest-api.md) - OData v4.0 endpoints with advanced query support ✅ **NEW**
-- **[Model-Driven App Interface](./usage/mda-interface.md)** - Web UI for visual testing and user impersonation ✅ **NEW**
+- [Fake4DataverseService](./service.md) - Network-accessible SOAP/WCF service for integration testing
+- [REST/OData API Endpoints](./rest-api.md) - OData v4.0 endpoints with advanced query support
+- [Model-Driven App Interface](./usage/mda-interface.md) - Web UI for visual testing and user impersonation
 
 ### 🏗️ [Architecture & Planning](.)
-- [Testing Guide](./TESTING_GUIDE.md) - How to run all tests in the repository ✅ **NEW**
+- [Testing Guide](./TESTING_GUIDE.md) - How to run all tests in the repository
 - [Cloud Flow API Design](./API_DESIGN_CLOUD_FLOWS.md) - Technical design for Cloud Flow simulation
 - [Cloud Flow Architecture](./CLOUD_FLOW_ARCHITECTURE.md) - Architecture diagrams and patterns
-- [Cloud Flow JSON Import](./CLOUD_FLOW_JSON_IMPORT_SUMMARY.md) - JSON flow definition import
 - [Async Plugin Implementation](./async-plugin-implementation.md) - Async plugin execution design
 - [Documentation Overview](./DOCUMENTATION_OVERVIEW.md) - This documentation structure
-- [Known Gaps & Limitations](./GAPS.md) - Comprehensive list of unsupported features ✅ **NEW**
+- [Known Gaps & Limitations](./GAPS.md) - Comprehensive list of unsupported features
 
 ### 📋 [Message Executors](./messages/)
 - [Overview](./messages/README.md) - Supported Dataverse messages
@@ -61,6 +62,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Association Messages](./messages/associations.md) - Associate, Disassociate
 - [Metadata Messages](./messages/metadata.md) - Retrieve entity/attribute metadata
 - [Security Messages](./messages/security.md) - Grant/Revoke access, sharing
+- [Audit Messages](./messages/audit.md) - Audit data retrieval and management
 - [Business Process Messages](./messages/business-process.md) - Win/Lose opportunity, Close incident, etc.
 - [Queue Messages](./messages/queues.md) - Queue operations
 - [Team Messages](./messages/teams.md) - Team membership management
@@ -82,6 +84,8 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Write my first test**: Start with [Quick Start](./getting-started/quickstart.md)
 - **Test a plugin**: See [Testing Plugins](./usage/testing-plugins.md)
 - **Query test data**: Check [Querying Data](./usage/querying-data.md)
+- **Test auditing**: See [Auditing](./usage/auditing.md)
+- **Test business rules**: See [Business Rules](./usage/business-rules.md)
 - **Use auto number fields**: See [Auto Number Fields](./usage/auto-number-fields.md)
 - **Use standard entity schemas**: See [CDM Import](./cdm-import.md)
 - **Query metadata as data**: See [Metadata Persistence](./metadata-persistence.md)
@@ -89,7 +93,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Use alternate keys**: See [Alternate Keys](./usage/alternate-keys.md)
 - **Test duplicate detection**: Check [Duplicate Detection](./usage/duplicate-detection.md)
 - **Understand the architecture**: Read [Middleware Architecture](./concepts/middleware.md)
-- **Test security with full Dataverse model**: See [Security Model](./usage/security-model.md) ✅ **NEW**
+- **Test security with full Dataverse model**: See [Security Model](./usage/security-model.md)
 - **Test basic security**: See [Security and Permissions](./usage/security-permissions.md)
 - **Impersonate another user**: See [Impersonation](./usage/impersonation.md)
 - **Migrate from FakeXrmEasy**: Check the [Migration Guides](./migration/)
@@ -138,11 +142,11 @@ public class MyPluginTests
 }
 ```
 
-## 🆕 What's New in v4.0
+## Key Features
 
-### System Entity Metadata (Embedded in Core)
+### System Entity Metadata
 
-**Key Difference from FakeXrmEasy v2+**: Fake4Dataverse includes system entity metadata as embedded resources in the Core library.
+Fake4Dataverse includes system entity metadata as embedded resources in the Core library, making it easy to test with standard Dataverse entities without additional setup.
 
 ```csharp
 // Load system entities (solution, appmodule, sitemap, etc.)
@@ -159,10 +163,10 @@ var solutionId = service.Create(solution);
 ```
 
 **Benefits:**
-- ✅ No external CDM files needed for system entities
-- ✅ Validation enabled by default
-- ✅ Perfect for MDA and ALM testing
-- ✅ Embedded in Core library
+- No external CDM files needed for system entities
+- Validation enabled by default
+- Perfect for MDA and ALM testing
+- Embedded in Core library
 
 **Available System Entities:**
 - solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent

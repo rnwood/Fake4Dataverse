@@ -327,7 +327,7 @@ Yes! See [Middleware Architecture](./concepts/middleware.md).
 
 ### Can I test Power Automate Cloud Flows?
 
-Yes! ✅ **NEW** - Fake4Dataverse now supports Cloud Flow simulation including:
+Yes! - Fake4Dataverse now supports Cloud Flow simulation including:
 - Registering flows programmatically
 - **Importing real Power Automate flows from exported JSON** (new feature!)
 - Automatic triggering on CRUD operations

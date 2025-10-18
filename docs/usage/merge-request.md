@@ -2,9 +2,8 @@
 
 ## Overview
 
-The Merge Request feature allows you to merge two entity records in Dataverse, combining their data and updating all references to point to the surviving record. This is a common operation when dealing with duplicate records.
+Fake4Dataverse supports merge operations for testing record consolidation scenarios. The merge operation combines two entity records, updates references to point to the surviving record, and handles duplicate record scenarios.
 
-**Implemented:** 2025-10-10 (Issue #1)
 
 ## Microsoft Documentation
 
@@ -247,4 +246,3 @@ service.Execute(mergeRequest);
 
 - **File**: `Fake4DataverseCore/Fake4Dataverse.Core/FakeMessageExecutors/MergeRequestExecutor.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/MergeRequestTests/`
-- **Feature Parity**: Matches FakeXrmEasy v2+ behavior

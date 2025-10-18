@@ -2,35 +2,51 @@
 
 ## About This Project
 
-Fake4Dataverse is a fork of the FakeXrmEasy project, originally created by Jordi Montaña. This fork continues the development of the testing framework under the MIT License, based on the last version of FakeXrmEasy that was available under that license.
+Fake4Dataverse is an open-source testing framework for Microsoft Dynamics 365 / Dataverse and the Power Platform. Originally forked from FakeXrmEasy by Jordi Montaña, this project has evolved with a **different vision and direction** focused on comprehensive testing capabilities including network-accessible services, REST/OData endpoints, and modern integration testing patterns.
 
-> [!WARNING]
+> [!NOTE]
 >
-> This fork is not ready for real use. I'm using it test some highly experimental ideas.
-> Watch this space.
+> **A New Direction**: While Fake4Dataverse started as a fork of FakeXrmEasy, it has grown beyond a compatibility layer. This project focuses on providing comprehensive testing infrastructure including CLI services, REST/OData endpoints, and web interfaces - capabilities designed for modern integration and end-to-end testing scenarios that extend beyond the original framework's scope.
 
 **Author:** Rob Wood  
 **Original Author:** Jordi Montaña (@jordimontana)  
 **License:** MIT (see LICENSE.txt files in each project folder)
 
-## 🆕 Fake4DataverseService - Network-Accessible Testing
+## 🌐 Fake4DataverseService - Network-Accessible Testing
 
-**NEW**: Fake4Dataverse now includes a CLI service that exposes both SOAP/WCF and REST/OData endpoints, matching Microsoft's actual Dynamics 365/Dataverse endpoints!
+Fake4Dataverse includes a CLI service that exposes both SOAP/WCF and REST/OData endpoints for integration testing across services and applications.
 
 ### SOAP/WCF Endpoints
 - **SOAP/WCF Protocol**: Uses standard `/XRMServices/2011/Organization.svc` endpoint
 - **SDK Compatible**: Works with standard WCF channels and IOrganizationService interface
-- **100% Type Compatible**: Uses Microsoft's official Dataverse SDK types
+- **Type Compatible**: Uses Microsoft's official Dataverse SDK types
 
-### REST/OData v4.0 Endpoints ✅ **NEW**
+### REST/OData v4.0 Endpoints
 - **OData v4.0 Protocol**: Uses `/api/data/v9.2` endpoint
 - **Advanced Queries**: Full $filter, $select, $orderby, $top, $skip, $expand support
-- **Microsoft.AspNetCore.OData**: Leverages official Microsoft OData library for full compliance
+- **Microsoft.AspNetCore.OData**: Leverages official Microsoft OData library
 - **JSON Format**: Standard Dataverse Web API JSON format with @odata annotations
 
 ### Common Features
-- **Integration Testing**: Perfect for testing across multiple services or applications
+- **Integration Testing**: Test across multiple services or applications
 - **No Authentication Required**: Bypass OAuth for testing - just connect and go
+
+### Roadmap: Expanding Integration Testing Capabilities
+
+We're actively working to enhance Fake4DataverseService with additional testing capabilities:
+
+#### Planned Features
+- **📄 Web Resources Support**: Serve custom JavaScript, CSS, HTML, and image files for testing client-side code
+- **🔌 Plugin Registration via SDK**: Register plugins programmatically using the SDK plugin registration messages
+- **🌐 Enhanced REST API Support**: Additional OData endpoints and query capabilities
+- **📊 Custom API Execution**: Full support for Custom API invocation via REST endpoints
+- **🔐 OAuth Simulation**: Optional authentication simulation for testing security flows
+- **📱 Power Apps Component Framework (PCF)**: Support for testing PCF controls with mock Dataverse context
+
+#### Future Integrations
+- **Power Automate Cloud Flow Testing**: Enhanced flow testing with HTTP trigger endpoints
+- **Canvas App Testing**: Serve connectors and data sources for Canvas App testing
+- **Model-Driven App Extensions**: Full web resource and form script testing support
 
 **[Learn more about Fake4DataverseService →](./Fake4DataverseService/README.md)** | **[REST API Documentation →](./docs/rest-api.md)**
 
@@ -50,6 +66,8 @@ var service = factory.CreateChannel();
 
 This fork is based on an early development version of FakeXrmEasy v2, which was released under the MIT License. The original FakeXrmEasy project subsequently changed its licensing model. This fork preserves the last MIT-licensed version to ensure continued open-source availability for the community.
 
+**Important**: Fake4Dataverse has evolved significantly beyond the original fork with its own architecture decisions, feature set, and direction. While it maintains the core testing principles, it is not designed to be a drop-in replacement or maintain API compatibility with FakeXrmEasy v2+.
+
 **Original Repositories:**
 - Core: https://github.com/DynamicsValue/fake-xrm-easy-core
 - Abstractions: https://github.com/DynamicsValue/fake-xrm-easy-abstractions
@@ -59,7 +77,7 @@ The original repositories were licensed under MIT at the time this fork was crea
 
 ## Why This Fork?
 
-The original Fake4Dataverse project was an invaluable tool for the Dynamics 365 / Dataverse community, providing a comprehensive testing framework that enabled developers to write unit tests without requiring a live CRM instance. However, the original project moved to a commercial licensing model after version 2.x.
+The original FakeXrmEasy project was an invaluable tool for the Dynamics 365 / Dataverse community, providing a comprehensive testing framework that enabled developers to write unit tests without requiring a live CRM instance. However, the original project moved to a commercial licensing model after version 2.x.
 
 This fork serves several purposes:
 
@@ -67,9 +85,18 @@ This fork serves several purposes:
 
 2. **Community-Driven Development**: This fork is maintained by the community, for the community. We welcome contributions and aim to keep the project aligned with community needs.
 
-3. **Modern Platform Support**: While respecting the original codebase, we aim to update and maintain compatibility with modern versions of Dataverse, Power Platform, and .NET.
+3. **Different Direction and Vision**: Fake4Dataverse has evolved beyond a simple fork to include:
+   - Network-accessible services for integration testing
+   - REST/OData v4.0 endpoints
+   - Web interface for visual testing
+   - Focus on modern integration and end-to-end testing patterns
+   - Extended capabilities for testing web resources, client-side code, and custom APIs
 
-4. **Legal Clarity**: This fork is completely legal and in accordance with the MIT License under which the original FakeXrmEasy was released. The MIT License explicitly permits forking, modification, and redistribution of the code.
+4. **Modern Platform Support**: We aim to support modern versions of Dataverse, Power Platform, and .NET while maintaining the testing-focused approach.
+
+5. **Legal Clarity**: This fork is completely legal and in accordance with the MIT License under which the original FakeXrmEasy was released. The MIT License explicitly permits forking, modification, and redistribution of the code.
+
+**Note**: Fake4Dataverse is not intended to be compatible with or a replacement for FakeXrmEasy v2+. It has its own architecture, API design, and feature set tailored to modern testing scenarios.
 
 ## Is Forking from the Last MIT Version Legal?
 
@@ -99,8 +126,8 @@ We are deeply grateful to **Jordi Montaña** for creating FakeXrmEasy and releas
 - **[Installation Guide](./docs/getting-started/installation.md)** - Get Fake4Dataverse installed (v9+ only)
 - **[Quick Start](./docs/getting-started/quickstart.md)** - Your first test in 5 minutes
 
-### 🔒 Security Model (NEW)
-Fake4Dataverse now includes a **complete Dataverse security model** implementation for realistic security testing:
+### 🔒 Security Model
+Fake4Dataverse includes a **complete Dataverse security model** implementation for realistic security testing:
 
 - **✅ Privilege-Based Access Control** - Users need specific privileges granted through roles
 - **✅ Privilege Depth Enforcement** - Basic, Local, Deep, and Global access levels
@@ -136,18 +163,18 @@ var service = context.GetOrganizationService();
 - **[CRUD Operations](./docs/usage/crud-operations.md)** - Create, Read, Update, Delete operations
 - **[Querying Data](./docs/usage/querying-data.md)** - LINQ and FetchXML queries
 - **[Batch Operations](./docs/usage/batch-operations.md)** - ExecuteMultiple and Transactions
-- **[Metadata Validation](./docs/usage/metadata-validation.md)** - IsValidForCreate/Update/Read enforcement ✅ **NEW**
-- **[CDM Import](./docs/cdm-import.md)** - Import entity metadata from Common Data Model JSON ✅ **NEW**
-- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
+- **[Metadata Validation](./docs/usage/metadata-validation.md)** - IsValidForCreate/Update/Read enforcement
+- **[CDM Import](./docs/cdm-import.md)** - Import entity metadata from Common Data Model JSON
+- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows
 
 ### Advanced Topics
 - **[XrmFakedContext](./docs/concepts/xrm-faked-context.md)** - Deep dive into the context
 - **[Middleware Architecture](./docs/concepts/middleware.md)** - Understanding the pipeline
 - **[Message Executors](./docs/messages/README.md)** - All supported Dataverse messages
 - **[Custom Executors](./docs/api/custom-executors.md)** - Creating your own executors
-- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows ✅ **NEW**
-- **[Expression Language](./docs/expression-language.md)** - Power Automate expression evaluation ✅ **NEW**
-- **[Known Gaps & Limitations](./docs/GAPS.md)** - Comprehensive limitations guide ✅ **NEW**
+- **[Cloud Flows](./docs/usage/cloud-flows.md)** - Testing Power Automate flows
+- **[Expression Language](./docs/expression-language.md)** - Power Automate expression evaluation
+- **[Known Gaps & Limitations](./docs/GAPS.md)** - Comprehensive limitations guide
 
 ### Migration
 - **[From FakeXrmEasy v1.x](./docs/migration/from-v1.md)** - Migrate from v1.x
@@ -168,13 +195,13 @@ This is a monorepo containing multiple projects:
 - **Former Name**: FakeXrmEasy.Core
 - **Note**: Plugins and workflows are tested within Core (no separate plugin project)
 
-### 3. Fake4DataverseCloudFlows ✅ **NEW**
+### 3. Fake4DataverseCloudFlows
 - **Location**: `/Fake4DataverseCloudFlows/`
 - **Purpose**: Cloud Flow (Power Automate) simulation for testing automated flows
 - **Target**: .NET 8.0 only (for advanced OData support via Microsoft.OData.Core)
 - **Features**: Flow execution, expression evaluation, OData query support
 
-### 4. Fake4DataverseService ✅ **NEW**
+### 4. Fake4DataverseService
 - **Location**: `/Fake4DataverseService/`
 - **Purpose**: Network-accessible service exposing SOAP/WCF and REST/OData endpoints
 - **Features**: 
@@ -227,7 +254,7 @@ npm run build           # Build Next.js app
 
 ## Feature Comparison: FakeXrmEasy v1 vs Fake4Dataverse vs FakeXrmEasy v2
 
-The following table compares the features available across different versions of the testing framework. This comparison is designed to help you understand the capabilities and limitations of each version, particularly highlighting features that Fake4Dataverse does not yet have.
+The following table compares the features available across different versions of the testing framework. **Note**: Fake4Dataverse has evolved with its own architecture and is not designed to be compatible with or a replacement for FakeXrmEasy v2+. This comparison highlights the capabilities and differences between versions.
 
 ### Architecture & Core Framework
 
@@ -402,41 +429,35 @@ This comparison is based on:
    - Middleware architecture: `Middleware/MiddlewareBuilder.cs`
    - Query operators: `Query/ConditionExpressionExtensions.*.cs`
 
-### Key Gaps in Fake4Dataverse (This Fork)
+### Differences and Limitations in Fake4Dataverse
 
-Based on this analysis, Fake4Dataverse is missing several features compared to the commercial FakeXrmEasy v2+:
+Fake4Dataverse has taken a different architectural direction focused on integration testing and network-accessible services. While it provides solid core testing capabilities, it differs significantly from FakeXrmEasy v2+ in scope and feature set:
 
-#### High-Priority Missing Features:
+#### Architectural Differences:
+- **Focus on Integration Testing**: Network-accessible services, REST/OData endpoints, and web interfaces
+- **Different API Design**: Not designed for API compatibility with FakeXrmEasy v2+
+- **Extended Service Model**: CLI service, web UI, and REST API capabilities beyond traditional unit testing
+
+#### Features Not Available (compared to FakeXrmEasy v2+):
 1. **Workflow/Custom Workflow Activities** - Removed due to SDK limitations
 2. **Custom Actions** - Limited support for custom actions
-4. **Duplicate Detection** - No duplicate detection simulation
+3. **Duplicate Detection** - Not yet implemented
+4. **Virtual Entities** - Not supported
+5. **Elastic Tables** - Not supported
+6. **Connection References** - Not supported
+7. **Advanced Security Model** - More limited than commercial version
+8. **Complete Pre/Post Image Support** - Basic implementation only
+9. **Global OptionSets** - Partial support only
+10. **Publisher/Solution Metadata** - Not supported
+11. **Many Advanced Message Executors** - ~47 executors vs 100+ in commercial version
 
-#### Modern Dataverse Features Not Supported:
-7. **Virtual Entities** - No virtual entity support
-8. **Elastic Tables** - No elastic table support
-9. **Power Automate Testing** - Cloud Flows fully supported with JSON import ✅ **NEW**, broader Power Automate integration limited
-11. **Connection References** - No connection reference support
-12. **Advanced Security Model** - Limited security role and privilege simulation
-13. **Concurrent Execution Testing** - No multi-threaded execution testing
-14. **Performance Profiling** - No built-in profiling tools
+#### Unique Capabilities in Fake4Dataverse:
+- **Network-Accessible Service**: SOAP/WCF and REST/OData endpoints for integration testing
+- **Web Interface**: Visual testing and user impersonation
+- **Roadmap for Web Resources**: Planned support for client-side testing
+- **Community-Driven**: Open-source with community contributions
 
-#### Pipeline & Plugin Limitations:
-15. **Complete Pre/Post Image Support** - Basic implementation only
-
-#### Metadata Limitations:
-17. **Global OptionSets** - Partial support only
-18. **Publisher Metadata** - Not supported
-19. **Solution Metadata** - Not supported
-20. **Complete Metadata Operations** - Many RetrieveMetadata variants missing
-21. **Metadata Validation** - IsValidForCreate/Update/Read fully supported ✅ **IMPLEMENTED** (v4.0.0)
-
-#### Additional Missing Message Executors (estimated 50+ messages):
-21. Various business-specific messages (Marketing, Service, Field Service specific)
-22. Advanced relationship messages
-23. Modern Dataverse-specific messages
-24. And many more organization requests added in recent Dynamics 365 versions
-
-This honest assessment shows that while Fake4Dataverse provides a solid foundation with 47 message executors and core testing capabilities, it represents an early v2 development snapshot and lacks the maturity and feature completeness of the actively developed commercial FakeXrmEasy v2+. The commercial version has continued to add significant features, especially around modern Dataverse capabilities, advanced pipeline simulation, and quality-of-life improvements that benefit from ongoing commercial development and support.
+This reflects Fake4Dataverse's focus as an integration testing framework rather than a complete Dataverse simulator. We do not claim 100% Dataverse compatibility or feature parity with the commercial FakeXrmEasy v2+.
 
 ## Contributing
 

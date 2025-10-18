@@ -1,6 +1,5 @@
 # Impersonation
 
-**Implementation Date:** January 2025  
 **Issue:** [#116](https://github.com/rnwood/Fake4Dataverse/issues/116)
 
 ## Overview
@@ -260,18 +259,6 @@ public void Should_Respect_Impersonated_User_Permissions()
     Assert.Throws<UnauthorizedAccessException>(() => service.Create(account));
 }
 ```
-
-## Key Differences from FakeXrmEasy v2
-
-**Important**: Fake4Dataverse's impersonation differs from FakeXrmEasy v2+ in the following ways:
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|-----------------|-------------------|
-| Property Name | `CallerProperties.ImpersonationUserId` | `CallerProperties.ImpersonatedUserId` |
-| Interface Method | None | `ICallerProperties.GetEffectiveUser()` |
-| Privilege Check | Automatic | Explicit validation in SecurityMiddleware |
-| HTTP Header | Manual setup | Built-in middleware support |
-| SOAP Header | Manual setup | Built-in middleware support |
 
 ## Best Practices
 

@@ -86,7 +86,7 @@ docs/
 
 **Other Technical Docs:**
 - `async-plugin-implementation.md` - Async plugin execution architecture
-- `GAPS.md` - Known gaps and limitations guide ✅ **NEW**
+- `GAPS.md` - Known gaps and limitations guide
 
 **Meta Documentation:**
 - `DOCUMENTATION_OVERVIEW.md` - This file, explains documentation structure

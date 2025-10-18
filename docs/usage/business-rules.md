@@ -1,19 +1,17 @@
 # Testing Business Rules
 
-Business rules provide a simple interface to implement and maintain fast-changing data validation and field logic in Microsoft Dataverse. This guide shows how to test business rules using Fake4Dataverse.
+Business rules give you a simple way to implement and maintain data validation and field logic in Microsoft Dataverse. This guide shows how to test business rules using Fake4Dataverse.
 
 **Microsoft Documentation**: https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-create-business-rule
 
 ## Overview
 
-Business rules in Dataverse allow administrators to:
-- Validate data and show error messages
-- Set or clear field values automatically
-- Show/hide or enable/disable fields (client-side)
-- Set business requirements and recommendations
-- Control field requirements
-
-Fake4Dataverse simulates business rule execution during Create and Update operations, allowing you to test business logic without requiring a live CRM instance.
+Fake4Dataverse simulates business rule execution during Create and Update operations. Supported capabilities:
+- Data validation with error messages
+- Automatic field value setting and clearing
+- Client-side actions (show/hide, enable/disable fields) - tracked but not enforced in tests
+- Business requirements and recommendations
+- Field requirement control
 
 ## Quick Start
 
@@ -537,19 +535,17 @@ Business rules work with all standard Dataverse field types:
 - Boolean
 - Lookups (EntityReference)
 
-## Key Differences from FakeXrmEasy v2
+## Implementation Notes
 
-**Note**: Based on research as of October 2025, business rules support in FakeXrmEasy v2+ could not be verified through public documentation or repositories. The table below compares to hypothetical FakeXrmEasy v2 implementation if it exists in their commercial version.
+Fake4Dataverse's business rules implementation is based on Microsoft's official documentation and provides comprehensive simulation of server-side business rule behavior. The framework supports:
 
-| Feature | FakeXrmEasy v2+ (if available) | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| **Context Setup** | Potentially `new XrmRealContext()` or similar | Must use `XrmFakedContextFactory.New()` |
-| **Accessing Executor** | Potentially direct property access | Requires casting: `(XrmFakedContext)context` |
-| **Rule Registration** | Unknown - potentially metadata-based | Manual `BusinessRuleDefinition` objects |
-| **Scope Support** | Unknown | Entity (server-side) scope only |
-| **Client-Side Rules** | Unknown | Tracked but not enforced |
+- Entity-scoped (server-side) business rules
+- Field validation and default values
+- Conditional logic and branching
+- Error messaging for validation failures
+- Integration with the plugin pipeline
 
-**Important**: Fake4Dataverse's business rules implementation is based on Microsoft's official documentation and provides comprehensive simulation of server-side business rule behavior. If you're using FakeXrmEasy v1, this is a new capability not available in that version.
+For detailed configuration options, see the API documentation for `BusinessRuleDefinition` and related types.
 
 ## Advanced Topics
 
@@ -627,7 +623,3 @@ var executor = context.BusinessRuleExecutor;
 - [Testing Plugins](./testing-plugins.md) - Business rules execute before plugins
 - [CRUD Operations](./crud-operations.md) - How Create/Update trigger business rules
 - [Microsoft Business Rules Documentation](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/data-platform-create-business-rule)
-
-## Implementation Date
-
-Business rules simulation was implemented in October 2025 as part of Feature Parity Issue #8.

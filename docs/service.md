@@ -1,6 +1,5 @@
 # Fake4DataverseService: Network-Accessible Testing
 
-**Implementation Date:** October 2025  
 **Issue:** N/A (New feature)
 
 > **💡 For ServiceClient Users:** See the [ServiceClient Compatibility Guide](../Fake4DataverseService/SERVICECLIENT.md) for patterns and best practices when testing existing ServiceClient-based code.

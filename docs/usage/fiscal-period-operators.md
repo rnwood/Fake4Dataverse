@@ -4,7 +4,6 @@
 
 Fiscal period operators enable date-based queries using fiscal calendars instead of standard calendar dates. This is essential for financial reporting, budgeting, and any scenario where your organization's fiscal year differs from the calendar year.
 
-**Implemented:** 2025-10-10 (Issue #3)
 
 ## Microsoft Documentation
 
@@ -581,4 +580,3 @@ var results = service.RetrieveMultiple(query);
   - `Fake4DataverseCore/Fake4Dataverse.Core/Query/ConditionExpressionExtensions.FiscalPeriod.cs`
   - `Fake4DataverseCore/Fake4Dataverse.Core/Extensions/XmlExtensionsForFetchXml.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/FetchXml/FiscalPeriodOperatorTests.cs`
-- **Feature Parity**: Matches FakeXrmEasy v2+ behavior

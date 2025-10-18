@@ -2,9 +2,8 @@
 
 ## Overview
 
-Hierarchical query operators allow you to query parent-child relationships in entity hierarchies. This is essential for working with organizational structures, account hierarchies, and other tree-like data structures in Dataverse.
+Fake4Dataverse supports hierarchical query operators for testing parent-child relationships in entity hierarchies, including organizational structures, account hierarchies, and tree-like data structures.
 
-**Implemented:** 2025-10-10 (Issue #2)
 
 ## Microsoft Documentation
 
@@ -447,4 +446,3 @@ var query = new QueryExpression("contact") // Contact doesn't have parentcontact
   - `Fake4DataverseCore/Fake4Dataverse.Core/Query/ConditionExpressionExtensions.Hierarchical.cs`
   - `Fake4DataverseCore/Fake4Dataverse.Core/Extensions/XmlExtensionsForFetchXml.cs`
 - **Tests**: `Fake4DataverseCore/tests/Fake4Dataverse.Core.Tests/FakeContextTests/HierarchicalQueryTests/`
-- **Feature Parity**: Matches FakeXrmEasy v2+ behavior

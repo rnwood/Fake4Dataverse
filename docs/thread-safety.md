@@ -2,14 +2,11 @@
 
 ## Overview
 
-Starting from version 4.x, Fake4Dataverse provides built-in thread safety for CRUD operations with database-like serialization of transactions. This ensures that concurrent operations from multiple threads can safely access the same `IXrmFakedContext` instance without race conditions or data corruption.
-
-**Implementation Date**: October 2025  
-**Reference Issue**: Thread safety and database-like transaction serialization
+Fake4Dataverse has built-in thread safety for CRUD operations with database-like serialization of transactions. This means concurrent operations from multiple threads can safely access the same `IXrmFakedContext` instance without race conditions or data corruption.
 
 ## Why Thread Safety Matters
 
-In real-world testing scenarios, you may need to:
+In real-world testing, you might need to:
 
 - **Test parallel plugin execution** - Multiple plugins running concurrently
 - **Simulate concurrent user operations** - Multiple users accessing the system simultaneously
@@ -17,16 +14,16 @@ In real-world testing scenarios, you may need to:
 - **Verify race condition handling** - Ensure your code handles concurrent access correctly
 
 Without thread safety, concurrent operations could lead to:
-- ❌ Data corruption
-- ❌ Lost updates
-- ❌ Inconsistent state
-- ❌ Test flakiness
+- Data corruption
+- Lost updates
+- Inconsistent state
+- Test flakiness
 
 ## How It Works
 
 ### Per-Entity-Type Locking for Better Concurrency
 
-Fake4Dataverse implements thread safety using **per-entity-type locks**, providing optimal concurrency while maintaining data consistency:
+Fake4Dataverse uses **per-entity-type locks** for optimal concurrency while maintaining data consistency:
 
 ```csharp
 // Operations on DIFFERENT entity types can execute concurrently
@@ -300,17 +297,6 @@ The implementation guarantees:
 3. **Isolation** - Concurrent operations on the same entity type don't see partial updates
 4. **Concurrency** - Operations on different entity types execute in parallel
 5. **Durability** - Changes are immediately visible to subsequent operations
-
-## Key Differences from FakeXrmEasy v2
-
-**Important**: The thread safety implementation in Fake4Dataverse differs from FakeXrmEasy v2+:
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| Thread Safety | Not documented | ✅ Built-in with per-entity-type locking |
-| Lock Granularity | Unknown | One lock per entity type (e.g., account, contact) |
-| Concurrency | Unknown | ✅ Operations on different entities run in parallel |
-| Test Support | No specific tests | ✅ Comprehensive thread safety tests included |
 
 ## Best Practices
 

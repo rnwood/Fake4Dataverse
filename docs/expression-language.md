@@ -1,10 +1,9 @@
-# Cloud Flow Expression Language Implementation
+# Cloud Flow Expression Language
 
 ## Overview
 
-Fake4Dataverse now supports Power Automate expression language evaluation using Jint.net JavaScript engine. This enables Cloud Flows to use dynamic expressions for accessing trigger data, action outputs, and performing transformations.
+Fake4Dataverse supports Power Automate expression language evaluation using the Jint.net JavaScript engine. This lets Cloud Flows use dynamic expressions for accessing trigger data, action outputs, and performing transformations.
 
-**Implementation Date:** October 12, 2025  
 **Issue:** Implement 100% compatible cloud flow expression language  
 **Test Coverage:** 64+ passing expression tests + 7 safe navigation/path tests with real-world examples  
 **Engine:** Jint 4.2.0  
@@ -16,7 +15,7 @@ Official reference: https://learn.microsoft.com/en-us/azure/logic-apps/workflow-
 
 ## Supported Expression Categories
 
-### ✅ Reference Functions (Fully Supported)
+### Reference Functions
 Access data from triggers and actions:
 - `triggerOutputs()` - Get trigger output data
 - `triggerBody()` - Get trigger body data  
@@ -32,18 +31,18 @@ var result = evaluator.Evaluate("@triggerBody()['firstname']");
 // Returns: "John"
 ```
 
-### ✅ String Functions (Fully Supported)
+### String Functions
 Text manipulation and formatting:
 - `concat(...)` - Concatenate multiple strings
 - `substring(text, start, length?)` - Extract substring
-- `slice(text, startIndex, endIndex?)` - Extract substring by indices ✅ **NEW**
+- `slice(text, startIndex, endIndex?)` - Extract substring by indices
 - `replace(text, old, new)` - Replace text
 - `toLower(text)` / `toUpper(text)` - Change case
 - `trim(text)` - Remove whitespace
 - `split(text, delimiter)` - Split into array
 - `length(text)` - Get string length
 - `indexOf(text, search)` / `lastIndexOf(text, search)` - Find position
-- `nthIndexOf(text, search, occurrence)` - Find nth occurrence ✅ **NEW**
+- `nthIndexOf(text, search, occurrence)` - Find nth occurrence
 - `startsWith(text, search)` / `endsWith(text, search)` - Check prefix/suffix
 - `guid()` - Generate GUID
 
@@ -54,7 +53,7 @@ var result = evaluator.Evaluate("@concat('Hello ', triggerBody()['firstname'], '
 // Returns: "Hello John Doe"
 ```
 
-### ✅ Comparison Functions (Fully Supported)
+### Comparison Functions
 Logical comparisons:
 - `equals(value1, value2)` - Equality check
 - `greater(value1, value2)` - Greater than
@@ -71,7 +70,7 @@ var result = evaluator.Evaluate("@greater(triggerBody()['estimatedvalue'], 10000
 // Returns: true
 ```
 
-### ✅ Conversion Functions (Fully Supported)
+### Conversion Functions
 Type conversions:
 - `string(value)` - Convert to string
 - `int(value)` - Convert to integer
@@ -80,39 +79,39 @@ Type conversions:
 - `base64(value)` - Base64 encode
 - `base64ToString(value)` - Base64 decode
 
-### ✅ Collection Functions (Fully Supported)
+### Collection Functions
 Array operations:
 - `first(collection)` - Get first item
 - `last(collection)` - Get last item
 - `take(collection, count)` - Take first N items
 - `skip(collection, count)` - Skip first N items
 - `join(array, delimiter)` - Join array elements
-- `reverse(collection)` - Reverse array or string ✅ **NEW**
-- `createArray(...)` - Create array from arguments ✅ **NEW**
-- `flatten(collection)` - Flatten nested arrays ✅ **NEW**
+- `reverse(collection)` - Reverse array or string
+- `createArray(...)` - Create array from arguments
+- `flatten(collection)` - Flatten nested arrays
 - `union(...)` - Union of collections
 - `intersection(...)` - Intersection of collections
 
-### ✅ Date/Time Functions (Fully Supported)
+### Date/Time Functions
 Date manipulation:
 - `utcNow()` - Get current UTC timestamp
 - `addDays(timestamp, days)` - Add days
 - `addHours(timestamp, hours)` - Add hours
 - `addMinutes(timestamp, minutes)` - Add minutes
 - `addSeconds(timestamp, seconds)` - Add seconds
-- `subtractFromTime(timestamp, interval, timeUnit)` - Subtract time ✅ **NEW**
-- `getPastTime(interval, timeUnit, format?)` - Get past time ✅ **NEW**
-- `getFutureTime(interval, timeUnit, format?)` - Get future time ✅ **NEW**
+- `subtractFromTime(timestamp, interval, timeUnit)` - Subtract time
+- `getPastTime(interval, timeUnit, format?)` - Get past time
+- `getFutureTime(interval, timeUnit, format?)` - Get future time
 - `formatDateTime(timestamp, format)` - Format date
-- `startOfDay(timestamp)` - Get start of day ✅ **NEW**
-- `startOfHour(timestamp)` - Get start of hour ✅ **NEW**
-- `startOfMonth(timestamp)` - Get start of month ✅ **NEW**
+- `startOfDay(timestamp)` - Get start of day
+- `startOfHour(timestamp)` - Get start of hour
+- `startOfMonth(timestamp)` - Get start of month
 - `dayOfMonth(timestamp)` - Get day of month
 - `dayOfWeek(timestamp)` - Get day of week
 - `dayOfYear(timestamp)` - Get day of year
 - `ticks(timestamp)` - Get ticks value
 
-### ✅ Math Functions (Fully Supported)
+### Math Functions
 Arithmetic operations:
 - `add(a, b)` - Addition
 - `sub(a, b)` - Subtraction
@@ -128,7 +127,7 @@ Arithmetic operations:
 Working:
 - Simple comparisons: `@equals(value1, value2)`
 - Simple conditions: `@greater(value1, value2)`
-- `xor(condition1, condition2)` - Exclusive OR ✅ **NEW**
+- `xor(condition1, condition2)` - Exclusive OR
 
 Limited Support:
 - `and(condition1, condition2, ...)` - Works with simple boolean values
@@ -138,7 +137,7 @@ Limited Support:
 
 **Workaround:** For complex nested logical operations, use programmatic flow definitions instead of JSON expressions, or break down complex expressions into multiple simpler action steps.
 
-### ✅ Type Checking Functions (Fully Supported) ✅ **NEW**
+### Type Checking Functions
 Validate data types:
 - `isInt(value)` - Check if integer
 - `isFloat(value)` - Check if floating point
@@ -153,7 +152,7 @@ var result = evaluator.Evaluate("@isString('hello')");
 // Returns: true
 ```
 
-### ✅ URI Functions (Fully Supported) ✅ **NEW**
+### URI Functions
 URL manipulation and parsing:
 - `uriComponent(value)` - URL encode
 - `uriComponentToString(value)` - URL decode
@@ -187,7 +186,7 @@ Use `@{...}` within text:
 "Contact name is @{triggerBody()['firstname']} @{triggerBody()['lastname']}"
 ```
 
-### Safe Navigation Operator (?) ✅ **NEW**
+### Safe Navigation Operator (?)
 
 The safe navigation operator `?` provides null-safe property access, preventing errors when objects are null or undefined.
 
@@ -213,7 +212,7 @@ The safe navigation operator `?` provides null-safe property access, preventing 
 - Works with all reference functions: `triggerBody()`, `outputs()`, `body()`, `item()`
 - Combines seamlessly with path separators
 
-### Path Separator (/) ✅ **NEW**
+### Path Separator (/)
 
 Path separators allow accessing nested properties using slash notation, making expressions more concise.
 
@@ -382,7 +381,7 @@ var result = evaluator.Evaluate("@outputs('Get_Contact')['emailaddress1']");
 ## Limitations and Known Issues
 
 ### 1. Complex Nested Logical Expressions
-**Status:** ✅ **RESOLVED**
+**Status:** Resolved
 
 Complex nested expressions with `and()`, `or()`, and `if()` are now fully supported.
 
@@ -394,10 +393,10 @@ Complex nested expressions with `and()`, `or()`, and `if()` are now fully suppor
 ```
 
 ### 2. Variables, Parameters, and Loop Context
-**Status:** ✅ **Variables and item() NOW SUPPORTED** | Parameters placeholder
+**Status:** Variables and item() supported | Parameters placeholder
 
-- `variables('variableName')` ✅ **IMPLEMENTED** - Get/set flow variable values
-- `item()` ✅ **IMPLEMENTED** - Returns current item in Apply to Each loops
+- `variables('variableName')` - Get/set flow variable values
+- `item()` - Returns current item in Apply to Each loops
 - `parameters('parameterName')` - Returns null (placeholder, parameters not yet implemented)
 
 **Variables Usage:**
@@ -432,11 +431,12 @@ var applyToEach = new ApplyToEachAction
 ```
 
 ### 3. Advanced Collection Operations
-**Status:** ✅ **FULLY IMPLEMENTED**
 
-- `union()` ✅ **FULLY IMPLEMENTED** - Combines collections with duplicates removed
-- `intersection()` ✅ **FULLY IMPLEMENTED** - Returns common elements across all collections
-- `flatten()` ✅ **IMPLEMENTED** - Flattens nested arrays
+Collection operations for combining and manipulating arrays:
+
+- `union()` - Combines collections with duplicates removed
+- `intersection()` - Returns common elements across all collections
+- `flatten()` - Flattens nested arrays
 
 ### 4. JSON Parsing
 **Status:** Basic support
@@ -446,14 +446,10 @@ var applyToEach = new ApplyToEachAction
 ## Future Enhancements
 
 Potential improvements for future versions:
-1. ~~Fix nested logical expression evaluation~~ ✅ **COMPLETED**
-2. ~~Implement variables support~~ ✅ **COMPLETED**
-3. ~~Add loop context (`item()`) support~~ ✅ **COMPLETED**
-4. ~~Enhance collection operations~~ ✅ **COMPLETED**
-5. Implement parameters support (flow input parameters)
-6. Add more advanced date/time functions (convertTimeZone, etc.)
-7. Performance optimization (engine pooling, function caching)
-8. Enhance JSON parsing for complex scenarios
+1. Implement parameters support (flow input parameters)
+2. Add more advanced date/time functions (convertTimeZone, etc.)
+3. Performance optimization (engine pooling, function caching)
+4. Enhance JSON parsing for complex scenarios
 
 ## Migration from v1.x / v2.x
 
@@ -478,28 +474,30 @@ The Cloud Flow expression language implementation provides comprehensive support
 
 **Test Coverage:** 138 total tests passing (64 expression tests + 7 safe nav/path tests + 67 cloud flow tests)  
 **Supported Functions:** 80+ Power Automate functions across 10 categories  
-**Main Use Cases:** ✅ Fully supported  
-**Advanced Features:** ✅ Safe navigation (?), path separators (/), Compose actions, Apply to Each loops
+**Main Use Cases:** Fully supported  
+**Advanced Features:** Safe navigation (?), path separators (/), Compose actions, Apply to Each loops
 
 ### Function Summary by Category
 
 | Category | Functions | Status |
 |----------|-----------|--------|
-| Reference | 6 (triggerOutputs, outputs, body, variables, item, etc.) | ✅ Full |
-| String | 13 (concat, substring, slice, nthIndexOf, etc.) | ✅ Full |
-| Logical/Comparison | 13 (equals, greater, and, or, if, xor, etc.) | ✅ Full |
-| Conversion | 7 (string, int, bool, base64, json, etc.) | ✅ Full |
-| Collection | 10 (first, last, reverse, flatten, union, etc.) | ✅ Full |
-| Date/Time | 16 (utcNow, addDays, startOfDay, getPast/Future, etc.) | ✅ Full |
-| Math | 9 (add, sub, min, max, rand, etc.) | ✅ Full |
-| Type Checking | 5 (isInt, isString, isArray, etc.) | ✅ Full |
-| URI | 8 (uriComponent, uriHost, uriPath, etc.) | ✅ Full |
+| Reference | 6 (triggerOutputs, outputs, body, variables, item, etc.) | Full |
+| String | 13 (concat, substring, slice, nthIndexOf, etc.) | Full |
+| Logical/Comparison | 13 (equals, greater, and, or, if, xor, etc.) | Full |
+| Conversion | 7 (string, int, bool, base64, json, etc.) | Full |
+| Collection | 10 (first, last, reverse, flatten, union, etc.) | Full |
+| Date/Time | 16 (utcNow, addDays, startOfDay, getPast/Future, etc.) | Full |
+| Math | 9 (add, sub, min, max, rand, etc.) | Full |
+| Type Checking | 5 (isInt, isString, isArray, etc.) | Full |
+| URI | 8 (uriComponent, uriHost, uriPath, etc.) | Full |
 | **Total** | **80+** | **90%+ coverage** |
 
-### New Features (October 2025)
+### Key Features
 
-- ✅ **Safe Navigation Operator (?)** - Null-safe property access
-- ✅ **Path Separator (/)** - Simplified nested property access
-- ✅ **Compose Actions** - Data transformation and composition
-- ✅ **Apply to Each Loops** - Collection iteration with `item()` function
-- ✅ **Nested Loops** - Stack-based item tracking for complex scenarios
+The expression language implementation includes:
+
+- **Safe Navigation Operator (?)** - Null-safe property access
+- **Path Separator (/)** - Simplified nested property access
+- **Compose Actions** - Data transformation and composition
+- **Apply to Each Loops** - Collection iteration with `item()` function
+- **Nested Loops** - Stack-based item tracking for complex scenarios

@@ -6,9 +6,8 @@ Fake4Dataverse supports duplicate detection for testing scenarios involving the 
 
 **Reference:** https://learn.microsoft.com/en-us/power-apps/developer/data-platform/detect-duplicate-data
 
-Duplicate detection in Dataverse helps prevent duplicate records by defining rules that compare attributes across records. Fake4Dataverse simulates this behavior by evaluating `duplicaterule` and `duplicaterulecondition` entities that you configure in your test context.
+Fake4Dataverse simulates duplicate detection by evaluating `duplicaterule` and `duplicaterulecondition` entities configured in your test context. This enables testing how code handles duplicate records based on configurable rules.
 
-**Implementation Date:** January 2025  
 **GitHub PR:** [#456](https://github.com/your-org/Fake4Dataverse/pull/456)
 
 ## How Duplicate Detection Works

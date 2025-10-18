@@ -1,11 +1,10 @@
 # Auto Number Fields
 
-**Implementation Date:** October 2025  
 **Issue:** [Support auto number fields](https://github.com/rnwood/Fake4Dataverse/issues/...)
 
 ## Overview
 
-Auto number fields in Dataverse automatically generate alphanumeric strings when a new record is created. Fake4Dataverse fully supports auto number field generation using the same format patterns as real Dataverse.
+Fake4Dataverse supports auto number field generation using format patterns for testing scenarios that require automatically generated alphanumeric strings.
 
 **Reference:** [Microsoft Docs - Auto Number Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/autonumber-fields)
 

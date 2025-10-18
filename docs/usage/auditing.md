@@ -1,7 +1,6 @@
 # Auditing in Fake4Dataverse
 
-Testing audit functionality is essential for ensuring your Dataverse applications properly track changes to data. This guide covers enabling auditing, testing audit records, and retrieving audit history.
-
+Testing audit functionality helps ensure your Dataverse applications properly track changes to data. This guide covers enabling auditing, testing audit records, and retrieving audit history.
 
 **Reference:** [Dataverse Auditing Overview](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview) - Microsoft documentation on the auditing system in Dataverse, including audit entity structure, audit details, and auditing configuration.
 
@@ -26,21 +25,20 @@ Testing audit functionality is essential for ensuring your Dataverse application
 - [User Tracking](#user-tracking)
 - [Clearing Audit Data](#clearing-audit-data)
 - [Complete Examples](#complete-examples)
-- [Key Differences from FakeXrmEasy v2](#key-differences-from-fakexrmeasy-v2)
 - [Best Practices](#best-practices)
 - [See Also](#see-also)
 
 ## Overview
 
-Dataverse auditing tracks changes to records over time, capturing:
+Fake4Dataverse simulates audit tracking for record changes. Captured audit data includes:
 
-- **Create operations**: When records are created
-- **Update operations**: When records are modified, including old and new attribute values
-- **Delete operations**: When records are deleted
-- **User information**: Which user performed each operation
-- **Timestamps**: When each operation occurred
+- **Create operations**: Record creation events
+- **Update operations**: Field modifications with old and new values
+- **Delete operations**: Record deletion events
+- **User information**: User who performed each operation
+- **Timestamps**: Operation timestamps
 
-In Dataverse, auditing must be explicitly enabled at both the organization and entity level. In Fake4Dataverse, auditing is disabled by default to match this behavior.
+Auditing is disabled by default and must be explicitly enabled at organization and entity levels, matching Dataverse behavior.
 
 ## Enabling Auditing
 
@@ -692,40 +690,6 @@ public void Should_MaintainCompleteAuditTrail()
     var updateTime = audits[1].GetAttributeValue<DateTime>("createdon");
     Assert.True(updateTime > createTime);
 }
-```
-
-## Key Differences from FakeXrmEasy v2
-
-**Important**: The audit implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
-
-### Setup and Configuration
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse |
-|---------|----------------|----------------|
-| **Enable Auditing** | `context.AuditingEnabled = true` | `context.GetProperty<IAuditRepository>().IsAuditEnabled = true` |
-| **Access Audits** | `context.GetAuditRecords()` | `context.GetProperty<IAuditRepository>().GetAllAuditRecords()` |
-| **Clear Audits** | `context.ClearAudits()` | `context.GetProperty<IAuditRepository>().ClearAuditData()` |
-
-### Key Differences:
-
-1. **Property-based Access**: Fake4Dataverse uses the property system for audit repository access, following its architecture pattern
-2. **Interface-based**: Uses `IAuditRepository` interface for better testability and extensibility
-3. **SDK Compatibility**: Uses SDK `AttributeAuditDetail` class directly instead of custom classes
-4. **Metadata-Based Configuration**: Fake4Dataverse fully supports Dataverse's three-level audit configuration (organization, entity, attribute levels) through EntityMetadata and AttributeMetadata, matching real Dataverse behavior exactly
-
-### Migration Example:
-
-**FakeXrmEasy v2:**
-```csharp
-context.AuditingEnabled = true;
-var audits = context.GetAuditRecords();
-```
-
-**Fake4Dataverse:**
-```csharp
-var auditRepo = context.GetProperty<IAuditRepository>();
-auditRepo.IsAuditEnabled = true;
-var audits = auditRepo.GetAllAuditRecords();
 ```
 
 ## Best Practices

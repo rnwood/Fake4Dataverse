@@ -1,6 +1,5 @@
 # Dataverse Security Model
 
-**Implementation Date:** October 2024  
 **Status:** ✅ Complete  
 **Issue:** [#114](https://github.com/rnwood/Fake4Dataverse/issues/114)
 

@@ -1,6 +1,5 @@
 # Model-Driven App (MDA) Interface
 
-**Implementation Date:** January 2025  
 **Issue:** [#116](https://github.com/rnwood/Fake4Dataverse/issues/116)
 
 ## Overview

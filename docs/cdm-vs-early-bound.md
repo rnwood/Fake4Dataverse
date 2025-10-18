@@ -13,7 +13,7 @@ When metadata validation is enabled (default in v4.0.0+), tests need entity meta
 
 ## Approach 1: Embedded System Entities (v4.0+)
 
-**🆕 Key Difference from FakeXrmEasy v2+**: System entity metadata is embedded in Fake4Dataverse Core.
+**Key Difference from FakeXrmEasy v2+**: System entity metadata is embedded in Fake4Dataverse Core.
 
 If you're working with system entities (solution, appmodule, sitemap, savedquery, systemform, webresource, appmodulecomponent), they're automatically available:
 

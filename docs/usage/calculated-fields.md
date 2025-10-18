@@ -2,27 +2,22 @@
 
 ## Overview
 
-Calculated fields (also known as calculated columns) are fields whose values are automatically computed based on formulas. Fake4Dataverse simulates Dataverse calculated field evaluation using the NCalc expression engine, supporting arithmetic operations, string manipulation, date/time functions, and logical operators.
-
-**Implemented:** 2025-10-11 (Issue #22)
+Fake4Dataverse simulates calculated field evaluation using the NCalc expression engine. Supported features:
+- Arithmetic operations
+- String manipulation
+- Date/time functions
+- Logical operators
+- Field references within the same entity or related entities
 
 ## Microsoft Documentation
 
 Official references:
 - [Define Calculated Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields) - Main documentation for calculated columns
-- [Types of Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/types-of-fields) - Field types in Dataverse
+- [Types of Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/types-of-fields) - Field types
 
-## What are Calculated Fields?
+## Evaluation Behavior
 
-Calculated fields allow you to:
-- Automatically compute field values based on formulas
-- Reference other fields in the same entity or related entities
-- Use built-in functions for string manipulation, date math, and logical operations
-- Update values in real-time when dependencies change
-
-### When Calculated Fields are Evaluated
-
-According to Microsoft documentation, calculated fields are evaluated:
+Fake4Dataverse evaluates calculated fields:
 - **On entity retrieve** - Calculated in real-time when the entity is retrieved
 - **On entity update** - Re-calculated when dependent field values change
 
@@ -553,28 +548,6 @@ public void Plugin_Should_Use_Calculated_Field()
     Assert.Equal(75000m, opportunity.GetAttributeValue<decimal>("weightedrevenue"));
 }
 ```
-
-## Key Differences from FakeXrmEasy v2
-
-**Important**: The calculated fields implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
-
-1. **Registration Approach**: 
-   - **FakeXrmEasy v2+**: Calculated fields may be registered via metadata
-   - **Fake4Dataverse v4**: Calculated fields are registered directly via `CalculatedFieldEvaluator.RegisterCalculatedField()`
-
-2. **Formula Syntax**:
-   - Both versions use square brackets for field references: `[fieldname]`
-   - Both support similar function names and operators
-
-3. **Evaluation Timing**:
-   - Both evaluate on retrieve and update operations
-   - Fake4Dataverse uses explicit evaluator calls in the pipeline
-
-4. **Function Support**:
-   - Fake4Dataverse implements functions verified from Microsoft documentation
-   - Function names are case-insensitive
-
-**Migration Tip**: When migrating from FakeXrmEasy v2+, replace metadata-based calculated field setup with direct `RegisterCalculatedField()` calls in your test arrangement.
 
 ## Limitations
 
