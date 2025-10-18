@@ -10,7 +10,7 @@ The Common Data Model (CDM) is Microsoft's standard schema definition format tha
 
 ## System Entity Metadata (v4.0+)
 
-**🆕 Key Difference from FakeXrmEasy v2+**: Fake4Dataverse includes built-in system entity metadata embedded in the Core library.
+**Key Difference from FakeXrmEasy v2+**: Fake4Dataverse includes built-in system entity metadata embedded in the Core library.
 
 Starting with v4.0.0, Fake4Dataverse includes system entity metadata (Solution, AppModule, SiteMap, SavedQuery, SystemForm, WebResource, AppModuleComponent) as **embedded resources in the Core library**. This means:
 
@@ -48,11 +48,11 @@ The following system entities are included as embedded CDM metadata in Core:
 - **systemform** - Entity forms entity
 - **webresource** - Web resources (JS, CSS, HTML) entity
 - **appmodulecomponent** - App component linking entity
-- **entitydefinition** - Entity metadata (virtual table) ✅ **NEW**
-- **attribute** - Attribute metadata (virtual table) ✅ **NEW**
-- **relationship** - Relationship metadata (virtual table) ✅ **NEW**
-- **optionset** - OptionSet metadata (virtual table) ✅ **NEW**
-- **entitykey** - Entity key metadata (virtual table) ✅ **NEW**
+- **entitydefinition** - Entity metadata (virtual table)
+- **attribute** - Attribute metadata (virtual table)
+- **relationship** - Relationship metadata (virtual table)
+- **optionset** - OptionSet metadata (virtual table)
+- **entitykey** - Entity key metadata (virtual table)
 
 These entities are automatically loaded by Fake4DataverseService and can be manually loaded in tests using `InitializeSystemEntityMetadata()`.
 

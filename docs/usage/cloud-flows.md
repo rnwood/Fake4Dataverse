@@ -4,7 +4,6 @@
 
 Cloud Flows (Power Automate flows) are an increasingly common integration pattern for Dataverse applications. The Cloud Flow simulation feature in Fake4Dataverse enables developers to test Dataverse-triggered flows, verify flow execution, and validate flow actions/outputs in unit tests.
 
-**Status:** ✅ **Implemented** (October 12, 2025) - Phases 1-7 Complete, JSON Import Extended
 
 **Package:** `Fake4DataverseCloudFlows` (.NET 8.0 only) - Separate package for advanced OData support
 
@@ -36,8 +35,8 @@ Cloud Flows allow you to:
 
 The Cloud Flow simulation feature provides:
 1. **Flow Registration** - Register flow definitions programmatically or from JSON
-2. **JSON Import** - Import real Cloud Flow definitions exported from Power Automate ✅ **NEW**
-3. **Expression Language** - Full Power Automate expression evaluation using Jint.net ✅ **NEW**
+2. **JSON Import** - Import real Cloud Flow definitions exported from Power Automate
+3. **Expression Language** - Full Power Automate expression evaluation using Jint.net
 4. **Automatic Triggering** - Flows automatically trigger on Create/Update/Delete operations when `UsePipelineSimulation = true`
 5. **Manual Triggering** - Manually simulate flow execution with `SimulateTrigger`
 6. **Built-in Dataverse Connector** - Full CRUD support (Create, Retrieve, Update, Delete, ListRecords, Relate, Unrelate, ExecuteAction)
@@ -48,7 +47,7 @@ The Cloud Flow simulation feature provides:
 
 ## API Usage
 
-### Expression Language Support ✅ **NEW**
+### Expression Language Support
 
 Fake4Dataverse now supports Power Automate expression language for dynamic values in flow actions:
 
@@ -90,8 +89,8 @@ flowSimulator.RegisterFlow(flowDefinition);
 - Collection: `first()`, `last()`, `take()`, `skip()`, `join()`, `reverse()`, `createArray()`, `flatten()`
 - Date/Time: `utcNow()`, `addDays()`, `addHours()`, `formatDateTime()`, `startOfDay()`, `getPastTime()`, `getFutureTime()`
 - Math: `add()`, `sub()`, `mul()`, `div()`, `min()`, `max()`
-- Type Checking: `isInt()`, `isFloat()`, `isString()`, `isArray()`, `isObject()` ✅ **NEW**
-- URI: `uriComponent()`, `uriHost()`, `uriPath()`, `uriQuery()`, `uriScheme()` ✅ **NEW**
+- Type Checking: `isInt()`, `isFloat()`, `isString()`, `isArray()`, `isObject()`
+- URI: `uriComponent()`, `uriHost()`, `uriPath()`, `uriQuery()`, `uriScheme()`
 
 **Total: 80+ functions implemented**
 
@@ -159,7 +158,7 @@ flowSimulator.UnregisterFlow("notify_on_contact_create");
 flowSimulator.ClearAllFlows();
 ```
 
-#### Register a Flow from JSON ✅ **NEW**
+#### Register a Flow from JSON
 
 You can import real Cloud Flow definitions exported from Power Automate:
 
@@ -233,11 +232,11 @@ flowSimulator.AssertFlowTriggered("notify_on_contact_create");
 - **Trigger Scopes:** Organization, BusinessUnit, ParentChildBusinessUnits, User
 - **Filtered Attributes:** Update triggers with specific attribute filtering
 - **Actions:** Dataverse actions (CreateRecord, UpdateRecord, DeleteRecord, GetItem, ListRecords)
-- **Control Flow:** Condition (If), Switch, Foreach (Apply to Each), Until (Do Until) ✅ **NEW**
-- **Data Operations:** Compose ✅ **NEW**
+- **Control Flow:** Condition (If), Switch, Foreach (Apply to Each), Until (Do Until)
+- **Data Operations:** Compose
 - **Action Parameters:** Entity names, attributes, filters, ordering, top
-- **Expression Language:** Full Power Automate expression evaluation ✅ **NEW**
-- **OData Type Conversion:** Automatic conversion of OData/REST API types to SDK types ✅ **NEW**
+- **Expression Language:** Full Power Automate expression evaluation
+- **OData Type Conversion:** Automatic conversion of OData/REST API types to SDK types
 
 **Limitations:**
 - Non-Dataverse connectors require custom handlers via `RegisterConnectorActionHandler`
@@ -436,10 +435,10 @@ Assert.Single(contacts);
 - `Relate` - Associate records (many-to-many or one-to-many)
 - `Unrelate` - Disassociate records
 - `ExecuteAction` - Execute custom actions or custom APIs
-- `UploadFile` - Upload files or images to entity columns ✅ **NEW**
-- `DownloadFile` - Download files or images from entity columns ✅ **NEW**
+- `UploadFile` - Upload files or images to entity columns
+- `DownloadFile` - Download files or images from entity columns
 
-#### File Operations (UploadFile & DownloadFile) ✅ **NEW**
+#### File Operations (UploadFile & DownloadFile)
 
 The `UploadFile` and `DownloadFile` actions simulate file and image column operations in Dataverse. These are commonly used for uploading contact photos, document attachments, or any binary data.
 
@@ -802,7 +801,7 @@ foreach (var result in results)
 }
 ```
 
-### Control Flow Actions ✅ **NEW**
+### Control Flow Actions
 
 The Cloud Flow simulator now supports all major control flow actions for conditional logic, branching, and loops.
 
@@ -1157,7 +1156,7 @@ Assert.Contains("External service unavailable", results[0].Errors[0]);
 
 ## Action Types
 
-### Compose Action ✅ **NEW**
+### Compose Action
 
 The Compose action allows you to create data transformations and compose new objects or values from expressions.
 
@@ -1225,7 +1224,7 @@ var compose2 = new ComposeAction
 };
 ```
 
-### Apply to Each Action ✅ **NEW**
+### Apply to Each Action
 
 The Apply to Each action iterates over a collection and executes a set of actions for each item.
 
@@ -1508,7 +1507,6 @@ Assert.Equal(1, flowSimulator.GetFlowExecutionCount("log_account_update")); // S
 
 ## Implementation Status
 
-**Current Status:** ✅ **Completed** (October 12, 2025)
 
 All core phases have been implemented and tested. The Cloud Flow simulation feature is fully functional for testing Dataverse-triggered flows with comprehensive expression language support, safe navigation, path separators, Compose actions, and Apply to Each loops.
 
@@ -1531,7 +1529,7 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 - ✅ `IConnectorActionHandler` interface
 - ✅ Connector action handler registration
 - ✅ Built-in Dataverse connector
-- ✅ Built-in Compose action handler ✅ **NEW**
+- ✅ Built-in Compose action handler
 - ✅ Extensibility for custom connectors
 
 ### Phase 4: Verification APIs ✅ **COMPLETED**
@@ -1544,23 +1542,23 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 ### Phase 5: Expression Language ✅ **COMPLETED**
 - ✅ Full expression language implementation using Jint 4.2.0
 - ✅ 80+ Power Automate functions
-- ✅ Safe navigation operator (?) for null-safe access ✅ **NEW**
-- ✅ Path separator (/) for nested property access ✅ **NEW**
+- ✅ Safe navigation operator (?) for null-safe access
+- ✅ Path separator (/) for nested property access
 - ✅ All reference functions (triggerBody, outputs, body, variables, item)
 - ✅ String, math, logical, date/time, collection, and conversion functions
 - ✅ Type preservation (int, double, string, bool)
 
 ### Phase 6: Advanced Action Types ✅ **COMPLETED**
-- ✅ Compose actions for data transformation ✅ **NEW**
-- ✅ Apply to Each (loops) with `@item()` function ✅ **NEW**
-- ✅ Nested loop support via stack-based item tracking ✅ **NEW**
-- ✅ Recursive expression evaluation in composed objects ✅ **NEW**
+- ✅ Compose actions for data transformation
+- ✅ Apply to Each (loops) with `@item()` function
+- ✅ Nested loop support via stack-based item tracking
+- ✅ Recursive expression evaluation in composed objects
 
 ### Phase 7: Control Flow Actions ✅ **COMPLETED** (October 12, 2025)
-- ✅ Condition actions (if/then/else branching) ✅ **NEW**
-- ✅ Switch actions (multi-case branching) ✅ **NEW**
-- ✅ Parallel branches (parallel execution paths) ✅ **NEW**
-- ✅ Do Until loops (loop with exit condition) ✅ **NEW**
+- ✅ Condition actions (if/then/else branching)
+- ✅ Switch actions (multi-case branching)
+- ✅ Parallel branches (parallel execution paths)
+- ✅ Do Until loops (loop with exit condition)
 
 ### Phase 8: Future Enhancements
 - ⏳ Error handling and retry logic (Scope, Try/Catch)
@@ -1570,48 +1568,11 @@ All core phases have been implemented and tested. The Cloud Flow simulation feat
 
 **Test Coverage:** 157 unit tests, all passing ✅
 - 57 tests for expression evaluator
-- 7 tests for safe navigation and path separators ✅ **NEW**
-- 7 tests for Compose and Apply to Each actions ✅ **NEW**
-- 13 tests for control flow actions (Condition, Switch, Parallel, Do Until) ✅ **NEW**
-- 6 tests for JSON import of control flow actions ✅ **NEW**
+- 7 tests for safe navigation and path separators
+- 7 tests for Compose and Apply to Each actions
+- 13 tests for control flow actions (Condition, Switch, Parallel, Do Until)
+- 6 tests for JSON import of control flow actions
 - 67 tests for simulator, Dataverse actions, and triggering
-
-## Key Differences from FakeXrmEasy v2
-
-**Important**: The Cloud Flow simulation feature in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
-
-### API Design Differences
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse |
-|---------|----------------|----------------|
-| **Flow Registration** | Unknown | Explicit registration with `RegisterFlow` |
-| **Automatic Triggering** | Unknown | Requires `UsePipelineSimulation = true` |
-| **Connector Handlers** | Unknown | Extensibility-first with `IConnectorActionHandler` |
-| **JSON Import** | Unknown | Planned for future release |
-| **Expression Engine** | Unknown | Basic support, full expressions planned |
-
-### Setup Differences
-
-**Fake4Dataverse:**
-```csharp
-// Explicit registration with automatic triggering
-var context = XrmFakedContextFactory.New();
-context.UsePipelineSimulation = true; // Required for automatic triggering
-var flowSimulator = context.CloudFlowSimulator;
-
-flowSimulator.RegisterFlow(new CloudFlowDefinition
-{
-    Name = "my_flow",
-    Trigger = new DataverseTrigger { /* ... */ },
-    Actions = new List<IFlowAction> { /* ... */ }
-});
-
-// Flows trigger automatically on CRUD operations
-service.Create(entity);
-```
-
-**FakeXrmEasy v2+ (reference):**
-Specific implementation details for FakeXrmEasy v2+ are not publicly documented. Consult FakeXrmEasy v2+ documentation for comparison.
 
 ## Related Documentation
 

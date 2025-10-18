@@ -554,28 +554,6 @@ public void Plugin_Should_Use_Calculated_Field()
 }
 ```
 
-## Key Differences from FakeXrmEasy v2
-
-**Important**: The calculated fields implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
-
-1. **Registration Approach**: 
-   - **FakeXrmEasy v2+**: Calculated fields may be registered via metadata
-   - **Fake4Dataverse v4**: Calculated fields are registered directly via `CalculatedFieldEvaluator.RegisterCalculatedField()`
-
-2. **Formula Syntax**:
-   - Both versions use square brackets for field references: `[fieldname]`
-   - Both support similar function names and operators
-
-3. **Evaluation Timing**:
-   - Both evaluate on retrieve and update operations
-   - Fake4Dataverse uses explicit evaluator calls in the pipeline
-
-4. **Function Support**:
-   - Fake4Dataverse implements functions verified from Microsoft documentation
-   - Function names are case-insensitive
-
-**Migration Tip**: When migrating from FakeXrmEasy v2+, replace metadata-based calculated field setup with direct `RegisterCalculatedField()` calls in your test arrangement.
-
 ## Limitations
 
 Current limitations in Fake4Dataverse calculated fields:

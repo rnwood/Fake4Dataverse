@@ -238,53 +238,6 @@ public void Initialize_Should_Skip_Validation_For_Test_Data()
 }
 ```
 
-## Key Differences from FakeXrmEasy v2
-
-**Important:** Fake4Dataverse v4.0.0+ implements attribute metadata validation that was not present in FakeXrmEasy v2.0.1 (the fork basis).
-
-| Feature | FakeXrmEasy v2.0.1 | Fake4Dataverse v4.0.0+ |
-|---------|-------------------|------------------------|
-| **IsValidForCreate validation** | ❌ Not enforced | ✅ Enforced by default |
-| **IsValidForUpdate validation** | ❌ Not enforced | ✅ Enforced by default |
-| **statecode during Create** | ⚠️ Hardcoded check only | ✅ Metadata-based validation |
-| **Metadata requirement** | Optional | Required when validation enabled |
-| **Validation toggle** | N/A | `IntegrityOptions.ValidateAttributeTypes` |
-
-### Migration Impact
-
-If you're migrating from FakeXrmEasy v2 and have tests that:
-
-1. **Set statecode/statuscode during Create**: Update tests to use Update or disable validation
-2. **Don't initialize metadata**: Add `context.InitializeMetadata()` calls
-3. **Need flexible test setup**: Use `context.Initialize()` for test data
-
-**Example migration:**
-
-```csharp
-// FakeXrmEasy v2 - Worked without validation
-var account = new Entity("account")
-{
-    ["name"] = "Test",
-    ["statecode"] = new OptionSetValue(1)
-};
-service.Create(account); // Succeeded
-
-// Fake4Dataverse v4 - Option 1: Disable validation
-var context = XrmFakedContextFactory.New(new IntegrityOptions
-{
-    ValidateAttributeTypes = false
-});
-
-// Fake4Dataverse v4 - Option 2: Use Initialize for test setup
-var account = new Entity("account")
-{
-    Id = Guid.NewGuid(),
-    ["name"] = "Test",
-    ["statecode"] = new OptionSetValue(1)
-};
-context.Initialize(account); // Bypasses validation
-```
-
 ## Configuration Options
 
 ### Enable/Disable Validation

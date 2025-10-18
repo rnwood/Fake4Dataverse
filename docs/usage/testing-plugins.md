@@ -17,9 +17,9 @@ Plugin testing is one of the primary use cases for Fake4Dataverse. This guide sh
   - [Message-Specific Image Availability](#message-specific-image-availability)
 - [Testing Plugin Steps](#testing-plugin-steps)
 - [Async Plugins](#async-plugins)
-- [Plugin Pipeline Simulator](#plugin-pipeline-simulator) **NEW**
-- [Plugin Auto-Discovery from Assemblies](#plugin-auto-discovery-from-assemblies) **NEW**
-- [Custom Action and Custom API Plugin Support](#custom-action-and-custom-api-plugin-support) **NEW**
+- [Plugin Pipeline Simulator](#plugin-pipeline-simulator)
+- [Plugin Auto-Discovery from Assemblies](#plugin-auto-discovery-from-assemblies)
+- [Custom Action and Custom API Plugin Support](#custom-action-and-custom-api-plugin-support)
 - [Best Practices](#best-practices)
 
 ## Quick Start
@@ -413,7 +413,7 @@ public void Should_ProcessRelatedAccount_When_ContactCreated()
 
 ## Testing Plugin Images
 
-**New in v4.x (2025-10-11)**: Comprehensive pre/post image support with automatic image creation and SPKL attribute auto-discovery.
+Fake4Dataverse provides comprehensive pre/post image support with automatic image creation and SPKL attribute auto-discovery.
 
 Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/image-entities
 
@@ -491,7 +491,7 @@ public void Should_AutomaticallyCreateImages_WhenRegistered()
 
 ### SPKL Image Attribute Auto-Discovery
 
-**New in v4.x (2025-10-11)**: Use SPKL `CrmPluginRegistrationImage` attributes for automatic image registration.
+Use SPKL `CrmPluginRegistrationImage` attributes for automatic image registration.
 
 ```csharp
 using SparkleXrm.Tasks;
@@ -834,7 +834,7 @@ public void Should_Execute_PreAndPost_Steps()
 
 ## Async Plugins
 
-**New in v4.x (2025-10-11)**: Fake4Dataverse now includes comprehensive async plugin support with a simulated system job queue that mirrors Dataverse's asyncoperation entity.
+Fake4Dataverse includes comprehensive async plugin support with a simulated system job queue that mirrors Dataverse's asyncoperation entity.
 
 Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/asynchronous-service
 
@@ -1212,13 +1212,13 @@ public void Should_CleanupCompletedOperations()
 
 ## Plugin Pipeline Simulator
 
-**New in v4.x (2025-10-10)**: Fake4Dataverse now includes comprehensive plugin pipeline simulation with support for multiple plugins per message/entity/stage combination.
+Fake4Dataverse includes comprehensive plugin pipeline simulation with support for multiple plugins per message/entity/stage combination.
 
 Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/event-framework
 
-### Key Differences from FakeXrmEasy v2
+### Pipeline Features
 
-**Important**: The plugin pipeline implementation in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
+The plugin pipeline implementation provides:
 
 1. **Explicit Registration**: Plugins must be explicitly registered using `PluginPipelineSimulator.RegisterPluginStep()`. There is no automatic plugin discovery from assemblies (though you can use `DiscoverAndRegisterPlugins()` for SPKL-style auto-discovery).
 
@@ -1559,34 +1559,18 @@ public void Should_UnregisterPlugin()
 }
 ```
 
-### Migration Notes
+### Pipeline Configuration
 
-**From FakeXrmEasy v2.x**: The plugin pipeline simulation in Fake4Dataverse may have different setup compared to commercial FakeXrmEasy v2+:
+The plugin pipeline provides flexible configuration options:
 
-1. **Explicit Registration**: Plugins must be explicitly registered via `PluginPipelineSimulator.RegisterPluginStep()` 
-2. **Direct Control**: You have full control over when pipeline stages execute
-3. **Configuration**: Plugin configuration is passed directly in the registration
-4. **Auto-Execution**: Enable `UsePipelineSimulation = true` for automatic plugin execution during CRUD operations (similar to v2 behavior)
-
-**Comparison Table:**
-
-| Feature | FakeXrmEasy v2+ | Fake4Dataverse v4 |
-|---------|----------------|-------------------|
-| Plugin Discovery | Automatic from assemblies | Via `DiscoverAndRegisterPlugins()` |
-| Pipeline Execution | Automatic during CRUD | Opt-in via `UsePipelineSimulation = true` |
-| Configuration | External config files | Inline in registration |
-| Manual Execution | Limited | Full control via `ExecutePipelineStage()` |
-| Multiple Plugins | ✅ Yes | ✅ Yes |
-| Execution Order | ✅ Yes | ✅ Yes |
-| Filtering Attributes | ✅ Yes | ✅ Yes |
-| Depth Tracking | ✅ Yes | ✅ Yes |
-| Auto-Discovery | ✅ Yes | ✅ Yes (SPKL + custom attributes) |
+1. **Explicit Registration**: Register plugins explicitly via `PluginPipelineSimulator.RegisterPluginStep()` 
+2. **Direct Control**: Full control over when pipeline stages execute
+3. **Configuration**: Plugin configuration passed directly in the registration
+4. **Auto-Execution**: Enable `UsePipelineSimulation = true` for automatic plugin execution during CRUD operations
 
 ## Plugin Auto-Discovery from Assemblies
 
-**New in v4.x (2025-10-11)**: Automatically discover and register plugins from assemblies with support for SPKL and XrmTools.Meta attributes.
-
-**Updated (2025-10-16)**: Added support for XrmTools.Meta attributes alongside existing SPKL support.
+Fake4Dataverse can automatically discover and register plugins from assemblies with support for SPKL and XrmTools.Meta attributes.
 
 ### Auto-Discovery with SPKL Attributes
 
@@ -1678,8 +1662,6 @@ public class AccountAuditPlugin : IPlugin
 - Registers all discovered steps in the pipeline simulator
 
 ### Auto-Discovery with XrmTools.Meta Attributes
-
-**New in v4.x (2025-10-16)**: Support for XrmTools.Meta attributes for plugin registration.
 
 Fake4Dataverse also supports XrmTools.Meta `StepAttribute` and `ImageAttribute` (without requiring a reference to the package):
 
@@ -1918,7 +1900,7 @@ public void Should_UseCustomAttributeConverter()
 
 ## Custom Action and Custom API Plugin Support
 
-**New in v4.x (2025-10-11)**: Register and execute plugins for Custom Actions and Custom APIs.
+Fake4Dataverse supports registering and executing plugins for Custom Actions and Custom APIs.
 
 Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/custom-api
 
