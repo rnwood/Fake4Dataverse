@@ -461,27 +461,27 @@ flowSimulator.AssertFlowTriggered("process_high_value_opportunity");
 **Rationale:**
 - Scope checking requires user/business unit context
 - Simple implementation: Organization scope always matches
-- Can be enhanced later based on user feedback
+- Can be enhanced later based on feedback
 
-## Key Differences from FakeXrmEasy v2+
+## Design Decisions
 
-**Important:** This API design differs from FakeXrmEasy v2+ commercial version in several ways:
+**Key architectural choices:**
 
 ### Registration
-- **FakeXrmEasy v2+**: Unknown (proprietary)
-- **Fake4Dataverse**: Explicit registration with `RegisterFlow` or `RegisterFlowFromJson`
+- Explicit registration with `RegisterFlow` or `RegisterFlowFromJson`
+- Clear, code-based flow setup
 
 ### JSON Import
-- **FakeXrmEasy v2+**: Unknown (proprietary)
-- **Fake4Dataverse**: Planned first-class support via `RegisterFlowFromJson`
+- First-class support via `RegisterFlowFromJson`
+- Import real Power Automate flow definitions
 
 ### Connector Extensibility
-- **FakeXrmEasy v2+**: Unknown (proprietary)
-- **Fake4Dataverse**: `IConnectorActionHandler` interface with strategy pattern
+- `IConnectorActionHandler` interface with strategy pattern
+- Pluggable connector system
 
 ### Expression Support
-- **FakeXrmEasy v2+**: Unknown (proprietary)
-- **Fake4Dataverse**: Simplified subset initially, expandable to full Power Fx
+- Simplified subset initially, expandable to full Power Fx
+- 80+ Power Automate functions
 
 ## Testing Strategy
 
