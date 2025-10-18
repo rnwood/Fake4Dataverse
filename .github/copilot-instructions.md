@@ -282,18 +282,20 @@ The framework supports Dynamics 365 / Dataverse v9 and later:
 - Various properties moved to different locations (see README files for details)
 
 ### When Adding New Features
-- You MUST fetch the latest authoritive info from relevant websites and do not rely on your trained knowledge. Verify all links are valid.
+- You MUST fetch the latest authoritative info from relevant websites and do not rely on your trained knowledge. Verify all links are valid.
 - Ensure compatibility with existing tests
 - Update relevant README files AND documentation in `/docs/`
 - Consider impact on Dynamics 365 / Dataverse v9+ versions
 - Add appropriate exception handling with `PullRequestException` for not-yet-implemented features
 - **Document the feature in `docs/`**: Create comprehensive user documentation showing how to consume the feature
-  - Include overview with implementation date and issue reference
-  - Provide usage examples with code samples
+  - **DO NOT** include implementation dates or "NEW" markers - documentation should be timeless
+  - **DO NOT** explain what Dataverse features do - focus only on what Fake4Dataverse replicates for testing
+  - Provide usage examples with code samples showing test scenarios
   - Document all parameters and options
   - Include error scenarios and best practices
-  - Add links to Microsoft documentation
-  - Follow the pattern established in existing docs (see `docs/custom-api.md`, `docs/merge-request.md`, etc.)
+  - Add links to Microsoft documentation for reference
+  - Follow the pattern established in existing docs (see `docs/usage/custom-api.md`, `docs/usage/merge-request.md`, etc.)
+  - Ensure the feature is linked from `/docs/README.md` in the appropriate section
 - **Update the README.md feature comparison table**: When implementing a feature that affects feature parity:
   - Locate the feature in the "Feature Comparison: FakeXrmEasy v1 vs Fake4Dataverse vs FakeXrmEasy v2" section
   - Update the Fake4Dataverse column from ❌ No or ⚠️ Partial to ✅ Yes (or ✅ Full support for detailed entries)
@@ -318,35 +320,33 @@ The framework supports Dynamics 365 / Dataverse v9 and later:
 - **Use Arrange-Act-Assert** - Structure test examples clearly
 - **Include real-world scenarios** - Show how developers actually use the library
 - **Cross-reference** - Link to related documentation
-- **Keep it practical** - Focus on how to use features, not just what they are
+- **Keep it practical** - Focus on testing capabilities and replication level
+- **Avoid temporal markers** - No "NEW", implementation dates, or "recently added" language
+- **Focus on testing** - Describe what Fake4Dataverse replicates for testing, not what Dataverse features do
+- **Be conversational** - Write naturally, avoiding formal or AI-like phrasing
 
-### Documenting Differences from FakeXrmEasy v2
+### Documentation Style Guidelines
 
-**IMPORTANT**: When implementing features that exist in FakeXrmEasy v2+ (commercial version), ALWAYS document how the Fake4Dataverse implementation differs:
+**DO:**
+- Focus on what Fake4Dataverse replicates for testing
+- Use phrases like "Fake4Dataverse supports...", "Fake4Dataverse replicates...", "Fake4Dataverse simulates..."
+- Describe test capabilities and replication level
+- Write in natural, conversational language
+- Link all documentation from `/docs/README.md`
 
-1. **In ALL relevant documentation** - Not just migration guides
-   - Include a "Key Differences from FakeXrmEasy v2" section in feature documentation
-   - Use comparison tables when multiple differences exist
-   - Be specific about setup steps, configuration, and behavior differences
+**DON'T:**
+- Add temporal markers (NEW, ✅, 🆕, implementation dates)
+- Explain what Dataverse features do - users can read Microsoft docs for that
+- Use phrases like "Feature X in Dataverse allows...", "In Dataverse, feature Y lets you..."
+- Write formal or AI-like descriptions
+- Compare to FakeXrmEasy v2+ in usage guides (only in migration guides and FAQ where relevant)
 
-2. **In feature usage guides** (`/docs/usage/*.md`)
-   - Show both the Fake4Dataverse way AND explain how it differs from v2
-   - Include examples that highlight the differences
-   - Document any additional steps required in Fake4Dataverse
+### Documenting for Migration
 
-3. **In migration guides** (`/docs/migration/*.md`)
-   - Provide detailed migration instructions
-   - Include before/after code examples
-   - Explain the rationale for differences when helpful
-
-4. **Example pattern for documenting differences:**
-   ```markdown
-   ### Key Differences from FakeXrmEasy v2
-
-   **Important**: The [feature name] in Fake4Dataverse differs from FakeXrmEasy v2+ in several ways:
-
-   1. **[Difference category]**: [Description of what's different]
-   2. **[Another category]**: [Description]
+When features are relevant for migration from FakeXrmEasy v1 or v3:
+1. **In migration guides** (`/docs/migration/*.md`) - Document differences and migration steps
+2. **In FAQ** (`/docs/getting-started/faq.md`) - Answer comparison questions
+3. **NOT in usage guides** - Keep usage guides focused on how to use Fake4Dataverse
 
    **Comparison Table:**
 

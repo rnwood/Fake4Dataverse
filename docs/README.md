@@ -20,6 +20,8 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [CRUD Operations](./usage/crud-operations.md) - Create, Read, Update, Delete operations
 - [Querying Data](./usage/querying-data.md) - LINQ and FetchXML queries
 - [Testing Workflows](./usage/testing-workflows.md) - Custom workflow activity testing
+- [Auditing](./usage/auditing.md) - Testing audit functionality and change tracking
+- [Business Rules](./usage/business-rules.md) - Testing business rule execution
 - [Security Model](./usage/security-model.md) - Complete Dataverse security implementation
 - [Security and Permissions](./usage/security-permissions.md) - Testing security roles and access
 - [Impersonation](./usage/impersonation.md) - Perform operations on behalf of other users
@@ -50,7 +52,6 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Testing Guide](./TESTING_GUIDE.md) - How to run all tests in the repository
 - [Cloud Flow API Design](./API_DESIGN_CLOUD_FLOWS.md) - Technical design for Cloud Flow simulation
 - [Cloud Flow Architecture](./CLOUD_FLOW_ARCHITECTURE.md) - Architecture diagrams and patterns
-- [Cloud Flow JSON Import](./CLOUD_FLOW_JSON_IMPORT_SUMMARY.md) - JSON flow definition import
 - [Async Plugin Implementation](./async-plugin-implementation.md) - Async plugin execution design
 - [Documentation Overview](./DOCUMENTATION_OVERVIEW.md) - This documentation structure
 - [Known Gaps & Limitations](./GAPS.md) - Comprehensive list of unsupported features
@@ -61,6 +62,7 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - [Association Messages](./messages/associations.md) - Associate, Disassociate
 - [Metadata Messages](./messages/metadata.md) - Retrieve entity/attribute metadata
 - [Security Messages](./messages/security.md) - Grant/Revoke access, sharing
+- [Audit Messages](./messages/audit.md) - Audit data retrieval and management
 - [Business Process Messages](./messages/business-process.md) - Win/Lose opportunity, Close incident, etc.
 - [Queue Messages](./messages/queues.md) - Queue operations
 - [Team Messages](./messages/teams.md) - Team membership management
@@ -82,6 +84,8 @@ Welcome to the Fake4Dataverse documentation! This testing framework allows you t
 - **Write my first test**: Start with [Quick Start](./getting-started/quickstart.md)
 - **Test a plugin**: See [Testing Plugins](./usage/testing-plugins.md)
 - **Query test data**: Check [Querying Data](./usage/querying-data.md)
+- **Test auditing**: See [Auditing](./usage/auditing.md)
+- **Test business rules**: See [Business Rules](./usage/business-rules.md)
 - **Use auto number fields**: See [Auto Number Fields](./usage/auto-number-fields.md)
 - **Use standard entity schemas**: See [CDM Import](./cdm-import.md)
 - **Query metadata as data**: See [Metadata Persistence](./metadata-persistence.md)
