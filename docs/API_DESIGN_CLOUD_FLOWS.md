@@ -335,7 +335,7 @@ Assert.Single(emailHandler.SentEmails);
 Assert.Equal("test@example.com", emailHandler.SentEmails[0].To);
 ```
 
-### JSON Import (Real Cloud Flow Definitions) ✅ NEW
+### JSON Import (Real Cloud Flow Definitions) 
 
 Import and test real Cloud Flow definitions exported from Power Automate:
 
