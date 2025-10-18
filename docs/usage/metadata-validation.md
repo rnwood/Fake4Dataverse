@@ -4,7 +4,6 @@ Fake4Dataverse v4.0.0+ enforces attribute metadata validation using `IsValidForC
 
 ## Overview
 
-**Implemented:** October 2025 (Issue #84)
 
 Microsoft Dataverse validates attribute operations based on metadata properties. Fake4Dataverse now replicates this behavior to provide more accurate testing and catch potential runtime issues before deployment.
 

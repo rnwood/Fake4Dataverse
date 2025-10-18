@@ -2,7 +2,6 @@
 
 This document lists all audit-related message executors supported in Fake4Dataverse.
 
-**Implementation Date:** October 2025
 
 **Reference:** [Dataverse Auditing](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/auditing/overview) - Microsoft documentation on audit operations and messages in Dataverse.
 

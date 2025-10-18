@@ -1,6 +1,5 @@
 # Auto Number Fields
 
-**Implementation Date:** October 2025  
 **Issue:** [Support auto number fields](https://github.com/rnwood/Fake4Dataverse/issues/...)
 
 ## Overview
