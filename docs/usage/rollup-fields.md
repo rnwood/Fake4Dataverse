@@ -2,32 +2,25 @@
 
 ## Overview
 
-Rollup fields (also known as rollup columns) automatically aggregate data from related child records using functions such as SUM, COUNT, MIN, MAX, and AVG. Fake4Dataverse simulates Dataverse rollup field evaluation, allowing you to test business logic that depends on aggregated values from related entities.
-
+Fake4Dataverse simulates rollup field evaluation for testing business logic that depends on aggregated values from related entities.
 
 ## Microsoft Documentation
 
 Official references:
 - [Define Rollup Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-rollup-fields) - Main documentation for rollup columns
-- [Types of Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/types-of-fields) - Field types in Dataverse
+- [Types of Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/types-of-fields) - Field types
 
-## What are Rollup Fields?
+## Replicated Behavior
 
-Rollup fields allow you to:
-- Automatically aggregate values from related child records
-- Use aggregate functions: SUM, COUNT, MIN, MAX, AVG
-- Apply filters to restrict which records are included
-- Calculate values across one-to-many relationships
-- Support hierarchical rollups (entire entity hierarchy)
+Fake4Dataverse replicates rollup field capabilities:
+- Aggregate functions: SUM, COUNT, MIN, MAX, AVG
+- Filters to restrict which records are included
+- Calculations across one-to-many relationships
+- Hierarchical rollups (entire entity hierarchy)
 
-### When Rollup Fields are Evaluated
+### Evaluation Timing
 
-According to Microsoft documentation, rollup fields are evaluated:
-- **Asynchronously** - By scheduled system jobs in the background
-- **On-demand** - Using the CalculateRollupField message
-- **After related record changes** - When child records are created, updated, or deleted
-
-In Fake4Dataverse, rollup fields can be evaluated:
+Fake4Dataverse evaluates rollup fields:
 - **Manually** - Using `EvaluateRollupFields(entity)` or `TriggerRollupCalculation(entityLogicalName, recordId)`
 - **Automatically** - When related records are created, updated, or deleted (automatic refresh)
 

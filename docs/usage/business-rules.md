@@ -6,14 +6,12 @@ Business rules give you a simple way to implement and maintain data validation a
 
 ## Overview
 
-Business rules in Dataverse let administrators:
-- Validate data and show error messages
-- Set or clear field values automatically
-- Show/hide or enable/disable fields (client-side)
-- Set business requirements and recommendations
-- Control field requirements
-
-Fake4Dataverse simulates business rule execution during Create and Update operations, so you can test business logic without a live CRM instance.
+Fake4Dataverse simulates business rule execution during Create and Update operations. Supported capabilities:
+- Data validation with error messages
+- Automatic field value setting and clearing
+- Client-side actions (show/hide, enable/disable fields) - tracked but not enforced in tests
+- Business requirements and recommendations
+- Field requirement control
 
 ## Quick Start
 

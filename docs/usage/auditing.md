@@ -30,15 +30,15 @@ Testing audit functionality helps ensure your Dataverse applications properly tr
 
 ## Overview
 
-Dataverse auditing tracks changes to records over time, capturing:
+Fake4Dataverse simulates audit tracking for record changes. Captured audit data includes:
 
-- **Create operations**: When records are created
-- **Update operations**: When records are modified, including old and new attribute values
-- **Delete operations**: When records are deleted
-- **User information**: Which user performed each operation
-- **Timestamps**: When each operation occurred
+- **Create operations**: Record creation events
+- **Update operations**: Field modifications with old and new values
+- **Delete operations**: Record deletion events
+- **User information**: User who performed each operation
+- **Timestamps**: Operation timestamps
 
-In Dataverse, auditing must be explicitly enabled at both the organization and entity level. In Fake4Dataverse, auditing is disabled by default to match this behavior.
+Auditing is disabled by default and must be explicitly enabled at organization and entity levels, matching Dataverse behavior.
 
 ## Enabling Auditing
 

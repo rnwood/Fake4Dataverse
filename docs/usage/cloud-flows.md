@@ -22,13 +22,12 @@ Official references:
 - [Trigger Conditions](https://learn.microsoft.com/en-us/power-automate/triggers-introduction)
 - [Flow Definition Schema](https://learn.microsoft.com/en-us/azure/logic-apps/logic-apps-workflow-definition-language)
 
-## What are Cloud Flows?
+## Replicated Behavior
 
-Cloud Flows let you:
-- Automate business processes triggered by Dataverse events
-- Integrate Dataverse with external systems (Outlook, Teams, SharePoint, custom APIs)
-- Execute complex multi-step workflows with branching logic
-- Transform and manipulate data across systems
+Fake4Dataverse replicates Cloud Flow execution for testing:
+- Business process automation triggered by Dataverse events
+- Multi-step workflows with branching logic
+- Data transformation and manipulation
 
 ## Capabilities
 

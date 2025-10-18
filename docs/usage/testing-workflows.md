@@ -16,13 +16,13 @@ Custom workflow activities extend Dataverse workflows with custom business logic
 
 ## Overview
 
-Custom workflow activities in Dataverse inherit from `CodeActivity` and use workflow-specific services and context. Testing them requires:
+Fake4Dataverse supports testing custom workflow activities that inherit from `CodeActivity`. Test setup includes:
 1. Creating a workflow execution context
 2. Setting input parameters
 3. Executing the activity
 4. Verifying output parameters and side effects
 
-**Reference:** [Custom Workflow Activities](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/workflow/workflow-extensions) - Microsoft documentation on creating and using custom workflow activities in Dataverse.
+**Reference:** [Custom Workflow Activities](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/workflow/workflow-extensions) - Microsoft documentation on creating and using custom workflow activities.
 
 ## Workflow Activity Basics
 

@@ -838,7 +838,7 @@ Fake4Dataverse includes comprehensive async plugin support with a simulated syst
 
 Reference: https://learn.microsoft.com/en-us/power-apps/developer/data-platform/asynchronous-service
 
-In Dataverse, asynchronous plugins (Mode = 1) are queued as asyncoperation records and execute after the main transaction completes. Fake4Dataverse simulates this behavior by:
+Fake4Dataverse replicates async plugin behavior:
 - Queueing async plugins instead of executing them immediately
 - Providing APIs to monitor, execute, and wait for async jobs
 - Tracking async operation status (Ready, InProgress, Succeeded, Failed)

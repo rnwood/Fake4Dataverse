@@ -2,25 +2,22 @@
 
 ## Overview
 
-Calculated fields (also known as calculated columns) are fields whose values are automatically computed based on formulas. Fake4Dataverse simulates Dataverse calculated field evaluation using the NCalc expression engine, supporting arithmetic operations, string manipulation, date/time functions, and logical operators.
+Fake4Dataverse simulates calculated field evaluation using the NCalc expression engine. Supported features:
+- Arithmetic operations
+- String manipulation
+- Date/time functions
+- Logical operators
+- Field references within the same entity or related entities
 
 ## Microsoft Documentation
 
 Official references:
 - [Define Calculated Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/define-calculated-fields) - Main documentation for calculated columns
-- [Types of Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/types-of-fields) - Field types in Dataverse
+- [Types of Fields](https://learn.microsoft.com/en-us/power-apps/maker/data-platform/types-of-fields) - Field types
 
-## What are Calculated Fields?
+## Evaluation Behavior
 
-Calculated fields let you:
-- Automatically compute field values based on formulas
-- Reference other fields in the same entity or related entities
-- Use built-in functions for string manipulation, date math, and logical operations
-- Update values in real-time when dependencies change
-
-### When Calculated Fields are Evaluated
-
-According to Microsoft documentation, calculated fields are evaluated:
+Fake4Dataverse evaluates calculated fields:
 - **On entity retrieve** - Calculated in real-time when the entity is retrieved
 - **On entity update** - Re-calculated when dependent field values change
 

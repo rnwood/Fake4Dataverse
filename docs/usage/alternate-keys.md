@@ -1,16 +1,15 @@
 # Alternate Keys
 
-Fake4Dataverse supports alternate keys for testing scenarios where records are identified by attributes other than their primary GUID. This feature allows you to test code that uses alternate keys for record references, updates, and retrievals.
+Fake4Dataverse supports alternate keys for testing scenarios where records are identified by attributes other than their primary GUID.
 
 ## Overview
 
 **Reference:** https://learn.microsoft.com/en-us/power-apps/developer/data-platform/define-alternate-keys-entity
 
-Alternate keys in Dataverse allow you to uniquely identify records using one or more attributes instead of the primary GUID. This is particularly useful for:
-
-- Integration scenarios where external systems use natural keys
-- Improving performance by avoiding additional lookups
-- Creating more readable and maintainable code
+Fake4Dataverse replicates alternate key functionality for:
+- Record identification using natural keys instead of GUIDs
+- Testing integration scenarios with external systems
+- Testing code that uses alternate keys for references, updates, and retrievals
 
 ## How Alternate Keys Work
 

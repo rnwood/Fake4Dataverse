@@ -2,8 +2,7 @@
 
 ## Overview
 
-Custom APIs are the modern way to create custom messages in Dataverse, replacing the legacy Custom Actions approach. They provide strongly-typed request/response parameters and better integration with the Power Platform.
-
+Fake4Dataverse supports Custom API testing, enabling you to test custom message implementations.
 
 ## Microsoft Documentation
 
@@ -12,12 +11,12 @@ Official references:
 - [Custom API Tables](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customapi-tables)
 - [Parameter Data Types](https://learn.microsoft.com/en-us/power-apps/developer/data-platform/customapi-tables#parameter-data-types)
 
-## What are Custom APIs?
+## Testing Custom APIs
 
-Custom APIs allow you to:
-- Define custom business logic with strongly-typed parameters
-- Create both Functions (read operations) and Actions (write operations)
-- Integrate with Power Automate and Power Apps
+Fake4Dataverse replicates Custom API execution for testing:
+- Custom business logic with strongly-typed parameters
+- Both Functions (read operations) and Actions (write operations)
+- Integration with plugin pipeline simulation
 - Build reusable business logic across the Power Platform
 
 ## Usage

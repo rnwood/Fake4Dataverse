@@ -11,7 +11,7 @@ Learn how to test batch operations using ExecuteMultiple and ExecuteTransaction 
 
 ## ExecuteMultiple
 
-`ExecuteMultiple` allows you to batch multiple requests into a single call. This is useful for bulk operations.
+Fake4Dataverse supports `ExecuteMultiple` for testing bulk operations with batched requests.
 
 ### Basic ExecuteMultiple
 
