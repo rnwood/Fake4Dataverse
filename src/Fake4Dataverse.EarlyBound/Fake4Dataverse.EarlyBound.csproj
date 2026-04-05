@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <RootNamespace>Fake4Dataverse.EarlyBound</RootNamespace>
+    <AssemblyName>Fake4Dataverse.EarlyBound</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <PackageId>Fake4Dataverse.EarlyBound</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Fake4Dataverse Contributors</Authors>
+    <Description>Early-bound entity generator integration for Fake4Dataverse. Automatically registers metadata from early-bound entity types.</Description>
+    <PackageTags>dataverse;dynamics365;testing;fake;earlybound;xrm</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fake4Dataverse\Fake4Dataverse.csproj" />
+  </ItemGroup>
+
+</Project>
