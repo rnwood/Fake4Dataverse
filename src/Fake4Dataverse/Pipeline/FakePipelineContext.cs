@@ -95,7 +95,7 @@ namespace Fake4Dataverse.Pipeline
         public int IsolationMode => 1; // Sandbox
 
         /// <inheritdoc />
-        public int Mode => 0; // Synchronous
+        public int Mode { get; internal set; }
 
         // ── IPluginExecutionContext ──────────────────────────────────────────
 

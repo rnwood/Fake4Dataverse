@@ -516,6 +516,100 @@ namespace Fake4Dataverse.Tests
             Assert.Contains("Step1", firedSteps);
             Assert.Contains("Step2", firedSteps);
         }
+
+        // ── Plugin Images ────────────────────────────────────────────────────
+
+        [Fact]
+        public void Pipeline_PreImage_AvailableInPreOperation()
+        {
+            var service = new FakeOrganizationService();
+            var id = service.Create(new Entity("account") { ["name"] = "Original" });
+
+            Entity? preImage = null;
+            var step = service.Pipeline.RegisterPreOperation("Update", "account", ctx =>
+            {
+                if (ctx.PreEntityImages.Contains("preimage"))
+                    preImage = ctx.PreEntityImages["preimage"];
+            });
+            step.AddPreImage("preimage", "name");
+
+            service.Update(new Entity("account", id) { ["name"] = "Updated" });
+
+            Assert.NotNull(preImage);
+            Assert.Equal("Original", preImage!.GetAttributeValue<string>("name"));
+        }
+
+        [Fact]
+        public void Pipeline_PostImage_AvailableInPostOperation()
+        {
+            var service = new FakeOrganizationService();
+            var id = service.Create(new Entity("account") { ["name"] = "Original" });
+
+            Entity? postImage = null;
+            var step = service.Pipeline.RegisterPostOperation("Update", "account", ctx =>
+            {
+                if (ctx.PostEntityImages.Contains("postimage"))
+                    postImage = ctx.PostEntityImages["postimage"];
+            });
+            step.AddPostImage("postimage", "name");
+
+            service.Update(new Entity("account", id) { ["name"] = "Updated" });
+
+            Assert.NotNull(postImage);
+            Assert.Equal("Updated", postImage!.GetAttributeValue<string>("name"));
+        }
+
+        [Fact]
+        public void Pipeline_DeleteTarget_AccessibleInPostOperation()
+        {
+            var service = new FakeOrganizationService();
+            var id = service.Create(new Entity("account") { ["name"] = "ToDelete" });
+
+            EntityReference? deletedRef = null;
+            service.Pipeline.RegisterPostOperation("Delete", "account", ctx =>
+            {
+                deletedRef = ctx.InputParameters["Target"] as EntityReference;
+            });
+
+            service.Delete("account", id);
+
+            Assert.NotNull(deletedRef);
+            Assert.Equal(id, deletedRef!.Id);
+            Assert.Equal("account", deletedRef.LogicalName);
+        }
+
+        // ── Sync / Async Mode ────────────────────────────────────────────────
+
+        [Fact]
+        public void Pipeline_AsyncStep_HasCorrectMode()
+        {
+            var service = new FakeOrganizationService();
+            int? capturedMode = null;
+            var step = service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
+            {
+                capturedMode = ctx.Mode;
+            });
+            step.SetAsynchronous();
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.Equal(1, capturedMode);
+        }
+
+        [Fact]
+        public void Pipeline_SyncStep_HasModeZero()
+        {
+            var service = new FakeOrganizationService();
+            int? capturedMode = null;
+            service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
+            {
+                capturedMode = ctx.Mode;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.Equal(0, capturedMode);
+        }
     }
 }
 

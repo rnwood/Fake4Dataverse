@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using Fake4Dataverse.Metadata;
@@ -133,7 +134,8 @@ namespace Fake4Dataverse
             _queryEvaluator = new QueryExpressionEvaluator();
             _fetchXmlEvaluator = new FetchXmlEvaluator(_queryEvaluator);
             _handlerRegistry = new OrganizationRequestHandlerRegistry();
-            Pipeline = new Pipeline.PipelineManager(_ => this);
+            Pipeline = new Pipeline.PipelineManager(_ => this, (entityName, id) =>
+                _store.Exists(entityName, id) ? _store.Retrieve(entityName, id, new ColumnSet(true)) : null);
             RegisterBuiltInHandlers();
         }
 
@@ -234,6 +236,7 @@ namespace Fake4Dataverse
             if (CalculatedFields.HasFields)
                 CalculatedFields.ApplyCalculatedFields(entity, _store);
             PopulateEntityReferenceNames(entity);
+            PopulateFormattedValues(entity);
             if (Options.EnableOperationLog)
                 OperationLog.Add(new OperationRecord("Retrieve", entityName, id, Clock.UtcNow, null, null));
             return entity;
@@ -247,6 +250,8 @@ namespace Fake4Dataverse
             var entity = _store.RetrieveByAlternateKey(entityName, keyAttributes, columnSet, MetadataStore);
             if (CalculatedFields.HasFields)
                 CalculatedFields.ApplyCalculatedFields(entity, _store);
+            PopulateEntityReferenceNames(entity);
+            PopulateFormattedValues(entity);
             return entity;
         }
 
@@ -283,7 +288,10 @@ namespace Fake4Dataverse
             }
 
             foreach (var entity in result.Entities)
+            {
                 PopulateEntityReferenceNames(entity);
+                PopulateFormattedValues(entity);
+            }
 
             var queryEntityName = (query as QueryExpression)?.EntityName ?? (query as QueryByAttribute)?.EntityName;
             if (Options.EnableOperationLog)
@@ -908,6 +916,28 @@ namespace Fake4Dataverse
             _handlerRegistry.Register(new Handlers.RetrieveVersionRequestHandler());
             _handlerRegistry.Register(new Handlers.FetchXmlToQueryExpressionRequestHandler());
             _handlerRegistry.Register(new Handlers.IsValidStateTransitionRequestHandler());
+            _handlerRegistry.Register(new Handlers.MergeRequestHandler());
+            _handlerRegistry.Register(new Handlers.UpsertMultipleRequestHandler());
+            _handlerRegistry.Register(new Handlers.BulkDeleteRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveCurrentOrganizationRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveOptionSetRequestHandler());
+            _handlerRegistry.Register(new Handlers.InsertOptionValueRequestHandler());
+            _handlerRegistry.Register(new Handlers.DownloadBlockRequestHandler());
+            _handlerRegistry.Register(new Handlers.DeleteFileRequestHandler());
+            _handlerRegistry.Register(new Handlers.QualifyLeadRequestHandler());
+            _handlerRegistry.Register(new Handlers.CloseIncidentRequestHandler());
+            _handlerRegistry.Register(new Handlers.CloseQuoteRequestHandler());
+            _handlerRegistry.Register(new Handlers.ReviseQuoteRequestHandler());
+            _handlerRegistry.Register(new Handlers.WinOpportunityRequestHandler());
+            _handlerRegistry.Register(new Handlers.LoseOpportunityRequestHandler());
+            _handlerRegistry.Register(new Handlers.PublishXmlRequestHandler());
+            _handlerRegistry.Register(new Handlers.AddToQueueRequestHandler());
+            _handlerRegistry.Register(new Handlers.RemoveFromQueueRequestHandler());
+            _handlerRegistry.Register(new Handlers.InstantiateTemplateRequestHandler());
+            _handlerRegistry.Register(new Handlers.SendEmailFromTemplateRequestHandler());
+            _handlerRegistry.Register(new Handlers.SendFaxRequestHandler());
+            _handlerRegistry.Register(new Handlers.SendTemplateRequestHandler());
+            _handlerRegistry.Register(new Handlers.ExportPdfDocumentRequestHandler());
             _handlerRegistry.Register(new Handlers.GenericCreateRequestHandler());
         }
 
@@ -1041,6 +1071,31 @@ namespace Fake4Dataverse
                         if (related.Contains(primaryNameAttr))
                             er.Name = related.GetAttributeValue<string>(primaryNameAttr);
                     }
+                }
+            }
+        }
+
+        private static void PopulateFormattedValues(Entity entity)
+        {
+            foreach (var attr in entity.Attributes)
+            {
+                if (entity.FormattedValues.ContainsKey(attr.Key))
+                    continue;
+
+                switch (attr.Value)
+                {
+                    case OptionSetValue osv:
+                        entity.FormattedValues[attr.Key] = osv.Value.ToString(CultureInfo.InvariantCulture);
+                        break;
+                    case Money money:
+                        entity.FormattedValues[attr.Key] = money.Value.ToString("N2", CultureInfo.InvariantCulture);
+                        break;
+                    case bool b:
+                        entity.FormattedValues[attr.Key] = b ? "Yes" : "No";
+                        break;
+                    case DateTime dt:
+                        entity.FormattedValues[attr.Key] = dt.ToString("M/d/yyyy h:mm tt", CultureInfo.InvariantCulture);
+                        break;
                 }
             }
         }

@@ -16,6 +16,7 @@ namespace Fake4Dataverse.Pipeline
         private readonly object _lock = new object();
         private readonly List<StepEntry> _steps = new List<StepEntry>();
         private readonly Func<Guid?, IOrganizationService>? _serviceFactory;
+        private readonly Func<string, Guid, Entity?>? _entityRetriever;
         private readonly FakeTracingService _tracingService = new FakeTracingService();
 
         /// <summary>
@@ -31,7 +32,7 @@ namespace Fake4Dataverse.Pipeline
         /// Registering <see cref="IPlugin"/> steps requires using the factory-enabled overload
         /// (done automatically when the pipeline is created by <see cref="FakeOrganizationService"/>).
         /// </summary>
-        public PipelineManager() : this(null) { }
+        public PipelineManager() : this(null, null) { }
 
         /// <summary>
         /// Initializes a <see cref="PipelineManager"/> with a service factory used to supply
@@ -41,9 +42,14 @@ namespace Fake4Dataverse.Pipeline
         /// Factory delegate invoked with an optional user ID; return the <see cref="IOrganizationService"/>
         /// that plugin code should use.
         /// </param>
-        internal PipelineManager(Func<Guid?, IOrganizationService>? serviceFactory)
+        /// <param name="entityRetriever">
+        /// Optional delegate that retrieves an entity by logical name and ID for image capture.
+        /// Returns <c>null</c> if the entity does not exist.
+        /// </param>
+        internal PipelineManager(Func<Guid?, IOrganizationService>? serviceFactory, Func<string, Guid, Entity?>? entityRetriever = null)
         {
             _serviceFactory = serviceFactory;
+            _entityRetriever = entityRetriever;
         }
 
         // ── RegisterStep (callback) ──────────────────────────────────────────
@@ -80,9 +86,11 @@ namespace Fake4Dataverse.Pipeline
             if (messageName == null) throw new ArgumentNullException(nameof(messageName));
             if (callback == null) throw new ArgumentNullException(nameof(callback));
 
-            var entry = new StepEntry(messageName, stage, entityName, callback);
+            var entry = new StepEntry(messageName, stage, entityName, callback, null!);
+            var registration = new PipelineStepRegistration(() => { lock (_lock) { _steps.Remove(entry); } });
+            entry.Registration = registration;
             lock (_lock) { _steps.Add(entry); }
-            return new PipelineStepRegistration(() => { lock (_lock) { _steps.Remove(entry); } });
+            return registration;
         }
 
         // ── RegisterStep (IPlugin) ───────────────────────────────────────────
@@ -185,19 +193,34 @@ namespace Fake4Dataverse.Pipeline
                 userId, initiatingUserId, businessUnitId,
                 organizationId, organizationName, operationCreatedOn);
 
+            // Capture pre-image snapshot (entity state before core operation)
+            Entity? preImageSnapshot = null;
+            var targetId = GetTargetEntityId(inputParams);
+            if (targetId != Guid.Empty && _entityRetriever != null)
+                preImageSnapshot = _entityRetriever(entityName, targetId);
+
             // Pre-validation
-            FireStage(context, PipelineStage.PreValidation);
+            FireStage(context, PipelineStage.PreValidation, preImageSnapshot, null);
 
             // Pre-operation
-            FireStage(context, PipelineStage.PreOperation);
+            FireStage(context, PipelineStage.PreOperation, preImageSnapshot, null);
 
             // Core operation
             var outputParams = coreOperation(context);
             foreach (var kvp in outputParams)
                 context.OutputParameters[kvp.Key] = kvp.Value;
 
+            // Capture post-image snapshot (entity state after core operation)
+            Entity? postImageSnapshot = null;
+            var postTargetId = targetId;
+            if (postTargetId == Guid.Empty && context.OutputParameters.ContainsKey("id"))
+                postTargetId = (Guid)context.OutputParameters["id"];
+            if (postTargetId != Guid.Empty && _entityRetriever != null
+                && !string.Equals(messageName, "Delete", StringComparison.OrdinalIgnoreCase))
+                postImageSnapshot = _entityRetriever(entityName, postTargetId);
+
             // Post-operation
-            FireStage(context, PipelineStage.PostOperation);
+            FireStage(context, PipelineStage.PostOperation, preImageSnapshot, postImageSnapshot);
 
             return context;
         }
@@ -207,7 +230,7 @@ namespace Fake4Dataverse.Pipeline
             get { lock (_lock) { return _steps.Count > 0; } }
         }
 
-        private void FireStage(FakePipelineContext context, PipelineStage stage)
+        private void FireStage(FakePipelineContext context, PipelineStage stage, Entity? preImageSnapshot, Entity? postImageSnapshot)
         {
             context.Stage = (int)stage;
             List<StepEntry> matching;
@@ -221,7 +244,54 @@ namespace Fake4Dataverse.Pipeline
                     .ToList();
             }
             foreach (var step in matching)
+            {
+                // Populate images and mode for this step
+                context.PreEntityImages.Clear();
+                context.PostEntityImages.Clear();
+                context.Mode = step.Registration.Mode;
+
+                if (preImageSnapshot != null)
+                {
+                    foreach (var def in step.Registration.PreImageDefinitions)
+                        context.PreEntityImages[def.Name] = ProjectImage(preImageSnapshot, def.Attributes);
+                }
+
+                if (postImageSnapshot != null)
+                {
+                    foreach (var def in step.Registration.PostImageDefinitions)
+                        context.PostEntityImages[def.Name] = ProjectImage(postImageSnapshot, def.Attributes);
+                }
+
                 step.Callback(context);
+            }
+        }
+
+        private static Guid GetTargetEntityId(ParameterCollection inputParams)
+        {
+            if (!inputParams.ContainsKey("Target")) return Guid.Empty;
+            var target = inputParams["Target"];
+            if (target is Entity e) return e.Id;
+            if (target is EntityReference er) return er.Id;
+            return Guid.Empty;
+        }
+
+        private static Entity ProjectImage(Entity snapshot, string[] attributes)
+        {
+            var image = new Entity(snapshot.LogicalName, snapshot.Id);
+            if (attributes.Length == 0)
+            {
+                foreach (var attr in snapshot.Attributes)
+                    image[attr.Key] = attr.Value;
+            }
+            else
+            {
+                foreach (var attr in attributes)
+                {
+                    if (snapshot.Contains(attr))
+                        image[attr] = snapshot[attr];
+                }
+            }
+            return image;
         }
 
         private sealed class StepEntry
@@ -230,13 +300,15 @@ namespace Fake4Dataverse.Pipeline
             public PipelineStage Stage { get; }
             public string? EntityName { get; }
             public Action<IPluginExecutionContext> Callback { get; }
+            public PipelineStepRegistration Registration { get; set; }
 
-            public StepEntry(string messageName, PipelineStage stage, string? entityName, Action<IPluginExecutionContext> callback)
+            public StepEntry(string messageName, PipelineStage stage, string? entityName, Action<IPluginExecutionContext> callback, PipelineStepRegistration registration)
             {
                 MessageName = messageName;
                 Stage = stage;
                 EntityName = entityName;
                 Callback = callback;
+                Registration = registration;
             }
         }
     }
