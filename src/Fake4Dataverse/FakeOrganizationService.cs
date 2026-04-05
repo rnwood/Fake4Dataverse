@@ -939,6 +939,68 @@ namespace Fake4Dataverse
             _handlerRegistry.Register(new Handlers.SendTemplateRequestHandler());
             _handlerRegistry.Register(new Handlers.ExportPdfDocumentRequestHandler());
             _handlerRegistry.Register(new Handlers.GenericCreateRequestHandler());
+
+            // Metadata entity CRUD
+            _handlerRegistry.Register(new Handlers.CreateEntityRequestHandler());
+            _handlerRegistry.Register(new Handlers.UpdateEntityRequestHandler());
+            _handlerRegistry.Register(new Handlers.DeleteEntityRequestHandler());
+
+            // Metadata attribute CRUD
+            _handlerRegistry.Register(new Handlers.CreateAttributeRequestHandler());
+            _handlerRegistry.Register(new Handlers.UpdateAttributeRequestHandler());
+            _handlerRegistry.Register(new Handlers.DeleteAttributeRequestHandler());
+
+            // Relationship CRUD
+            _handlerRegistry.Register(new Handlers.CreateOneToManyRequestHandler());
+            _handlerRegistry.Register(new Handlers.CreateManyToManyRequestHandler());
+            _handlerRegistry.Register(new Handlers.DeleteRelationshipRequestHandler());
+            _handlerRegistry.Register(new Handlers.UpdateRelationshipRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveRelationshipRequestHandler());
+
+            // Entity key CRUD
+            _handlerRegistry.Register(new Handlers.CreateEntityKeyRequestHandler());
+            _handlerRegistry.Register(new Handlers.DeleteEntityKeyRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveEntityKeyRequestHandler());
+            _handlerRegistry.Register(new Handlers.ReactivateEntityKeyRequestHandler());
+
+            // OptionSet CRUD
+            _handlerRegistry.Register(new Handlers.CreateOptionSetRequestHandler());
+            _handlerRegistry.Register(new Handlers.UpdateOptionSetRequestHandler());
+            _handlerRegistry.Register(new Handlers.DeleteOptionSetRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveAllOptionSetsRequestHandler());
+
+            // Option value manipulation
+            _handlerRegistry.Register(new Handlers.InsertStatusValueRequestHandler());
+            _handlerRegistry.Register(new Handlers.DeleteOptionValueRequestHandler());
+            _handlerRegistry.Register(new Handlers.UpdateOptionValueRequestHandler());
+            _handlerRegistry.Register(new Handlers.OrderOptionRequestHandler());
+            _handlerRegistry.Register(new Handlers.UpdateStateValueRequestHandler());
+
+            // Relationship validation
+            _handlerRegistry.Register(new Handlers.CanBeReferencedRequestHandler());
+            _handlerRegistry.Register(new Handlers.CanBeReferencingRequestHandler());
+            _handlerRegistry.Register(new Handlers.CanManyToManyRequestHandler());
+            _handlerRegistry.Register(new Handlers.GetValidManyToManyRequestHandler());
+            _handlerRegistry.Register(new Handlers.GetValidReferencedEntitiesRequestHandler());
+            _handlerRegistry.Register(new Handlers.GetValidReferencingEntitiesRequestHandler());
+            _handlerRegistry.Register(new Handlers.CreateCustomerRelationshipsRequestHandler());
+
+            // Metadata query / utility
+            _handlerRegistry.Register(new Handlers.RetrieveMetadataChangesRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveTimestampRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveAllManagedPropertiesRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveManagedPropertyRequestHandler());
+
+            // Data encryption
+            _handlerRegistry.Register(new Handlers.IsDataEncryptionActiveRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveDataEncryptionKeyRequestHandler());
+            _handlerRegistry.Register(new Handlers.SetDataEncryptionKeyRequestHandler());
+
+            // Misc
+            _handlerRegistry.Register(new Handlers.ConvertDateAndTimeBehaviorRequestHandler());
+            _handlerRegistry.Register(new Handlers.ExecuteAsyncRequestHandler());
+            _handlerRegistry.Register(new Handlers.RetrieveEntityChangesRequestHandler());
+            _handlerRegistry.Register(new Handlers.CreateAsyncJobToRevokeInheritedAccessRequestHandler());
         }
 
         /// <summary>

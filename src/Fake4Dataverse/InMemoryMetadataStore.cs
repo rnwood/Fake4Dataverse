@@ -406,5 +406,266 @@ namespace Fake4Dataverse
                 default: return null;
             }
         }
+
+        // ── Internal mutation methods for metadata request handlers ──
+
+        internal void CreateEntityMetadata(EntityMetadataInfo entity)
+        {
+            lock (_lock)
+            {
+                if (_entities.ContainsKey(entity.LogicalName))
+                    throw DataverseFault.Create(DataverseFault.DuplicateRecord,
+                        $"Entity '{entity.LogicalName}' metadata already exists.");
+                _entities[entity.LogicalName] = entity;
+            }
+        }
+
+        internal void UpdateEntityMetadata(EntityMetadataInfo entity)
+        {
+            lock (_lock)
+            {
+                if (!_entities.ContainsKey(entity.LogicalName))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Entity '{entity.LogicalName}' metadata does not exist.");
+                // Merge: update mutable properties but keep existing attributes/keys
+                var existing = _entities[entity.LogicalName];
+                if (entity.SchemaName != null) existing.SchemaName = entity.SchemaName;
+                if (entity.PrimaryIdAttribute != null) existing.PrimaryIdAttribute = entity.PrimaryIdAttribute;
+                if (entity.PrimaryNameAttribute != null) existing.PrimaryNameAttribute = entity.PrimaryNameAttribute;
+                if (entity.ObjectTypeCode.HasValue) existing.ObjectTypeCode = entity.ObjectTypeCode;
+            }
+        }
+
+        internal void DeleteEntityMetadata(string logicalName)
+        {
+            lock (_lock)
+            {
+                if (!_entities.Remove(logicalName))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Entity '{logicalName}' metadata does not exist.");
+            }
+        }
+
+        internal void CreateAttributeMetadata(string entityLogicalName, AttributeMetadataInfo attribute)
+        {
+            lock (_lock)
+            {
+                if (!_entities.TryGetValue(entityLogicalName, out var entity))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Entity '{entityLogicalName}' metadata does not exist.");
+                if (entity.Attributes.ContainsKey(attribute.LogicalName))
+                    throw DataverseFault.Create(DataverseFault.DuplicateRecord,
+                        $"Attribute '{attribute.LogicalName}' already exists on entity '{entityLogicalName}'.");
+                entity.Attributes[attribute.LogicalName] = attribute;
+            }
+        }
+
+        internal void UpdateAttributeMetadata(string entityLogicalName, AttributeMetadataInfo attribute)
+        {
+            lock (_lock)
+            {
+                if (!_entities.TryGetValue(entityLogicalName, out var entity))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Entity '{entityLogicalName}' metadata does not exist.");
+                if (!entity.Attributes.ContainsKey(attribute.LogicalName))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Attribute '{attribute.LogicalName}' does not exist on entity '{entityLogicalName}'.");
+                entity.Attributes[attribute.LogicalName] = attribute;
+            }
+        }
+
+        internal void DeleteAttributeMetadata(string entityLogicalName, string attributeLogicalName)
+        {
+            lock (_lock)
+            {
+                if (!_entities.TryGetValue(entityLogicalName, out var entity))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Entity '{entityLogicalName}' metadata does not exist.");
+                if (!entity.Attributes.Remove(attributeLogicalName))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Attribute '{attributeLogicalName}' does not exist on entity '{entityLogicalName}'.");
+            }
+        }
+
+        internal OneToManyRelationshipInfo? GetOneToManyRelationship(string schemaName)
+        {
+            lock (_lock)
+            {
+                _oneToManyRelationships.TryGetValue(schemaName, out var rel);
+                return rel;
+            }
+        }
+
+        internal ManyToManyRelationshipInfo? GetManyToManyRelationship(string schemaName)
+        {
+            lock (_lock)
+            {
+                _manyToManyRelationships.TryGetValue(schemaName, out var rel);
+                return rel;
+            }
+        }
+
+        internal void CreateOneToManyRelationshipInternal(OneToManyRelationshipInfo rel)
+        {
+            lock (_lock)
+            {
+                if (_oneToManyRelationships.ContainsKey(rel.SchemaName))
+                    throw DataverseFault.Create(DataverseFault.DuplicateRecord,
+                        $"Relationship '{rel.SchemaName}' already exists.");
+                _oneToManyRelationships[rel.SchemaName] = rel;
+            }
+        }
+
+        internal void CreateManyToManyRelationshipInternal(ManyToManyRelationshipInfo rel)
+        {
+            lock (_lock)
+            {
+                if (_manyToManyRelationships.ContainsKey(rel.SchemaName))
+                    throw DataverseFault.Create(DataverseFault.DuplicateRecord,
+                        $"Relationship '{rel.SchemaName}' already exists.");
+                _manyToManyRelationships[rel.SchemaName] = rel;
+            }
+        }
+
+        internal void UpdateOneToManyRelationship(OneToManyRelationshipInfo rel)
+        {
+            lock (_lock)
+            {
+                if (!_oneToManyRelationships.ContainsKey(rel.SchemaName))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Relationship '{rel.SchemaName}' does not exist.");
+                _oneToManyRelationships[rel.SchemaName] = rel;
+            }
+        }
+
+        internal void UpdateManyToManyRelationship(ManyToManyRelationshipInfo rel)
+        {
+            lock (_lock)
+            {
+                if (!_manyToManyRelationships.ContainsKey(rel.SchemaName))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Relationship '{rel.SchemaName}' does not exist.");
+                _manyToManyRelationships[rel.SchemaName] = rel;
+            }
+        }
+
+        internal void DeleteRelationshipInternal(string schemaName)
+        {
+            lock (_lock)
+            {
+                if (!_oneToManyRelationships.Remove(schemaName) && !_manyToManyRelationships.Remove(schemaName))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Relationship '{schemaName}' does not exist.");
+            }
+        }
+
+        internal AlternateKeyInfo? GetAlternateKey(string entityLogicalName, string keyName)
+        {
+            lock (_lock)
+            {
+                if (!_entities.TryGetValue(entityLogicalName, out var entity))
+                    return null;
+                return entity.AlternateKeys.Find(k => string.Equals(k.Name, keyName, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        internal void CreateAlternateKey(string entityLogicalName, AlternateKeyInfo key)
+        {
+            lock (_lock)
+            {
+                if (!_entities.TryGetValue(entityLogicalName, out var entity))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Entity '{entityLogicalName}' metadata does not exist.");
+                if (entity.AlternateKeys.Exists(k => string.Equals(k.Name, key.Name, StringComparison.OrdinalIgnoreCase)))
+                    throw DataverseFault.Create(DataverseFault.DuplicateRecord,
+                        $"Alternate key '{key.Name}' already exists on entity '{entityLogicalName}'.");
+                entity.AlternateKeys.Add(key);
+            }
+        }
+
+        internal void DeleteAlternateKey(string entityLogicalName, string keyName)
+        {
+            lock (_lock)
+            {
+                if (!_entities.TryGetValue(entityLogicalName, out var entity))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Entity '{entityLogicalName}' metadata does not exist.");
+                var removed = entity.AlternateKeys.RemoveAll(
+                    k => string.Equals(k.Name, keyName, StringComparison.OrdinalIgnoreCase));
+                if (removed == 0)
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Alternate key '{keyName}' does not exist on entity '{entityLogicalName}'.");
+            }
+        }
+
+        private readonly Dictionary<string, GlobalOptionSetInfo> _globalOptionSets =
+            new Dictionary<string, GlobalOptionSetInfo>(StringComparer.OrdinalIgnoreCase);
+
+        internal void CreateGlobalOptionSet(GlobalOptionSetInfo optionSet)
+        {
+            lock (_lock)
+            {
+                if (_globalOptionSets.ContainsKey(optionSet.Name))
+                    throw DataverseFault.Create(DataverseFault.DuplicateRecord,
+                        $"Global option set '{optionSet.Name}' already exists.");
+                _globalOptionSets[optionSet.Name] = optionSet;
+            }
+        }
+
+        internal GlobalOptionSetInfo? GetGlobalOptionSet(string name)
+        {
+            lock (_lock)
+            {
+                _globalOptionSets.TryGetValue(name, out var os);
+                return os;
+            }
+        }
+
+        internal IReadOnlyList<GlobalOptionSetInfo> GetAllGlobalOptionSets()
+        {
+            lock (_lock)
+            {
+                return _globalOptionSets.Values.ToList();
+            }
+        }
+
+        internal void UpdateGlobalOptionSet(GlobalOptionSetInfo optionSet)
+        {
+            lock (_lock)
+            {
+                if (!_globalOptionSets.ContainsKey(optionSet.Name))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Global option set '{optionSet.Name}' does not exist.");
+                _globalOptionSets[optionSet.Name] = optionSet;
+            }
+        }
+
+        internal void DeleteGlobalOptionSet(string name)
+        {
+            lock (_lock)
+            {
+                if (!_globalOptionSets.Remove(name))
+                    throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                        $"Global option set '{name}' does not exist.");
+            }
+        }
+
+        private long _metadataTimestamp = 1;
+
+        internal long GetMetadataTimestamp()
+        {
+            lock (_lock)
+            {
+                return _metadataTimestamp;
+            }
+        }
+
+        internal void IncrementMetadataTimestamp()
+        {
+            lock (_lock)
+            {
+                _metadataTimestamp++;
+            }
+        }
     }
 }

@@ -99,9 +99,11 @@ namespace Fake4Dataverse.Tests
         public void RetrieveOptionSet_ReturnsResponse()
         {
             var service = new FakeOrganizationService();
-            var request = new OrganizationRequest("RetrieveOptionSet");
-            request["Name"] = "account_category";
-            request["MetadataId"] = Guid.Empty;
+            var request = new RetrieveOptionSetRequest
+            {
+                Name = "account_category",
+                MetadataId = Guid.Empty
+            };
 
             var response = service.Execute(request);
             Assert.NotNull(response);
@@ -111,28 +113,32 @@ namespace Fake4Dataverse.Tests
         public void InsertOptionValue_ReturnsNewValue()
         {
             var service = new FakeOrganizationService();
-            var request = new OrganizationRequest("InsertOptionValue");
-            request["OptionSetName"] = "account_category";
-            request["Label"] = new Label("Test Option", 1033);
-            request["Value"] = 999;
+            var request = new InsertOptionValueRequest
+            {
+                OptionSetName = "account_category",
+                Label = new Label("Test Option", 1033),
+                Value = 999
+            };
 
-            var response = service.Execute(request);
-            Assert.Equal(999, (int)response["NewOptionValue"]);
+            var response = (InsertOptionValueResponse)service.Execute(request);
+            Assert.Equal(999, response.NewOptionValue);
         }
 
         [Fact]
         public void InsertStatusValue_ReturnsNewValue()
         {
             var service = new FakeOrganizationService();
-            var request = new OrganizationRequest("InsertStatusValue");
-            request["EntityLogicalName"] = "incident";
-            request["AttributeLogicalName"] = "statuscode";
-            request["Label"] = new Label("Custom Status", 1033);
-            request["Value"] = 100000;
-            request["StateCode"] = 0;
+            var request = new InsertStatusValueRequest
+            {
+                EntityLogicalName = "incident",
+                AttributeLogicalName = "statuscode",
+                Label = new Label("Custom Status", 1033),
+                Value = 100000,
+                StateCode = 0
+            };
 
-            var response = service.Execute(request);
-            Assert.Equal(100000, (int)response["NewOptionValue"]);
+            var response = (InsertStatusValueResponse)service.Execute(request);
+            Assert.Equal(100000, response.NewOptionValue);
         }
 
         [Fact]

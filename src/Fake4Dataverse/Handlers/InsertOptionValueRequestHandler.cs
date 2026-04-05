@@ -1,23 +1,40 @@
 using System;
+using Fake4Dataverse.Metadata;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
 
 namespace Fake4Dataverse.Handlers
 {
     /// <summary>
-    /// Handles InsertOptionValue and InsertStatusValue requests by returning the specified or generated option value.
+    /// Handles InsertOptionValue requests by adding an option to the global option set in the store.
     /// </summary>
     internal sealed class InsertOptionValueRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) =>
-            string.Equals(request.RequestName, "InsertOptionValue", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(request.RequestName, "InsertStatusValue", StringComparison.OrdinalIgnoreCase);
+        public bool CanHandle(OrganizationRequest request) => request is InsertOptionValueRequest;
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var newValue = request.Parameters.ContainsKey("Value") ? (int)request["Value"] : new Random().Next(100000, 999999);
+            var insertRequest = (InsertOptionValueRequest)request;
+            var fakeService = (FakeOrganizationService)service;
+            var store = fakeService.MetadataStore;
 
-            var response = new OrganizationResponse { ResponseName = request.RequestName };
-            response["NewOptionValue"] = newValue;
+            var newValue = insertRequest.Value ?? new Random().Next(100000, 999999);
+            var label = insertRequest.Label?.UserLocalizedLabel?.Label;
+
+            // If OptionSetName is given, add to global option set
+            if (!string.IsNullOrEmpty(insertRequest.OptionSetName))
+            {
+                var optionSet = store.GetGlobalOptionSet(insertRequest.OptionSetName);
+                if (optionSet != null)
+                {
+                    optionSet.Options.Add(new OptionInfo(newValue, label));
+                }
+            }
+
+            store.IncrementMetadataTimestamp();
+
+            var response = new InsertOptionValueResponse();
+            response.Results["NewOptionValue"] = newValue;
             return response;
         }
     }
