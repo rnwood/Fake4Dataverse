@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FakeItEasy" Version="8.*" />
+    <PackageReference Include="FakeItEasy" Version="9.*" />
   </ItemGroup>
 
   <ItemGroup>
