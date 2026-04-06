@@ -5,11 +5,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class DeleteAttributeRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is DeleteAttributeRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "DeleteAttribute", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var deleteRequest = (DeleteAttributeRequest)request;
+            var deleteRequest = OrganizationRequestTypeAdapter.AsTyped<DeleteAttributeRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

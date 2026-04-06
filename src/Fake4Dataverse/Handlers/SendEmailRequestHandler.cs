@@ -9,11 +9,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class SendEmailRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is SendEmailRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "SendEmail", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var sendRequest = (SendEmailRequest)request;
+            var sendRequest = OrganizationRequestTypeAdapter.AsTyped<SendEmailRequest>(request);
             var emailId = sendRequest.EmailId;
 
             // Mark the email entity as sent

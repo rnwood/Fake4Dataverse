@@ -5,7 +5,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class IsDataEncryptionActiveRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is IsDataEncryptionActiveRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "IsDataEncryptionActive", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

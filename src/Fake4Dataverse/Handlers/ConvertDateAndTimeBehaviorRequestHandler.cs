@@ -5,7 +5,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class ConvertDateAndTimeBehaviorRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is ConvertDateAndTimeBehaviorRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "ConvertDateAndTimeBehavior", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

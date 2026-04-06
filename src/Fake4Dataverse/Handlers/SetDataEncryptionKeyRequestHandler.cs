@@ -5,7 +5,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class SetDataEncryptionKeyRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is SetDataEncryptionKeyRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "SetDataEncryptionKey", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

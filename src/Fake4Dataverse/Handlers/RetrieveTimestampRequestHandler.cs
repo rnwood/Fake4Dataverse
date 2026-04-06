@@ -5,7 +5,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class RetrieveTimestampRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is RetrieveTimestampRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RetrieveTimestamp", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

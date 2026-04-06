@@ -8,11 +8,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class CreateOptionSetRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CreateOptionSetRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "CreateOptionSet", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var createRequest = (CreateOptionSetRequest)request;
+            var createRequest = OrganizationRequestTypeAdapter.AsTyped<CreateOptionSetRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

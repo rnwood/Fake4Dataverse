@@ -5,11 +5,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class CanBeReferencedRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CanBeReferencedRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "CanBeReferenced", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var canRequest = (CanBeReferencedRequest)request;
+            var canRequest = OrganizationRequestTypeAdapter.AsTyped<CanBeReferencedRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

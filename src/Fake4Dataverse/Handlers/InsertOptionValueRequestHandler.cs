@@ -10,11 +10,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class InsertOptionValueRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is InsertOptionValueRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "InsertOptionValue", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var insertRequest = (InsertOptionValueRequest)request;
+            var insertRequest = OrganizationRequestTypeAdapter.AsTyped<InsertOptionValueRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

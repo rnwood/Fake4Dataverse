@@ -5,35 +5,53 @@ using Microsoft.Xrm.Sdk;
 namespace Fake4Dataverse.Handlers
 {
     /// <summary>
-    /// Handles <see cref="WhoAmIRequest"/> by returning a configurable fake user/org/business unit.
+    /// Handles <see cref="WhoAmIRequest"/> by returning identity information from the
+    /// calling <see cref="FakeOrganizationService"/> session.
+    /// When the <see cref="UserId"/>, <see cref="OrganizationId"/>, or <see cref="BusinessUnitId"/>
+    /// properties are explicitly set, those values take precedence over the session defaults.
     /// </summary>
     public sealed class WhoAmIRequestHandler : IOrganizationRequestHandler
     {
         /// <summary>
-        /// The user id returned by WhoAmI. Defaults to a deterministic GUID.
+        /// Explicitly configured user id. When <c>null</c>, the value is read from the calling
+        /// <see cref="FakeOrganizationService.CallerId"/>.
         /// </summary>
-        public Guid UserId { get; set; } = new Guid("00000000-0000-0000-0000-000000000001");
+        public Guid? UserId { get; set; }
 
         /// <summary>
-        /// The organization id returned by WhoAmI.
+        /// Explicitly configured organization id. When <c>null</c>, the value is read from
+        /// <see cref="FakeDataverseEnvironment.OrganizationId"/>.
         /// </summary>
-        public Guid OrganizationId { get; set; } = new Guid("00000000-0000-0000-0000-000000000002");
+        public Guid? OrganizationId { get; set; }
 
         /// <summary>
-        /// The business unit id returned by WhoAmI.
+        /// Explicitly configured business unit id. When <c>null</c>, the value is read from
+        /// <see cref="FakeOrganizationService.BusinessUnitId"/>.
         /// </summary>
-        public Guid BusinessUnitId { get; set; } = new Guid("00000000-0000-0000-0000-000000000003");
+        public Guid? BusinessUnitId { get; set; }
 
         /// <inheritdoc />
-        public bool CanHandle(OrganizationRequest request) => request is WhoAmIRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "WhoAmI", System.StringComparison.OrdinalIgnoreCase);
 
         /// <inheritdoc />
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
             var response = new WhoAmIResponse();
-            response.Results["UserId"] = UserId;
-            response.Results["OrganizationId"] = OrganizationId;
-            response.Results["BusinessUnitId"] = BusinessUnitId;
+
+            if (service is FakeOrganizationService fake)
+            {
+                response.Results["UserId"] = UserId ?? fake.CallerId;
+                response.Results["OrganizationId"] = OrganizationId ?? fake.Environment.OrganizationId;
+                response.Results["BusinessUnitId"] = BusinessUnitId ?? fake.BusinessUnitId;
+            }
+            else
+            {
+                response.Results["UserId"] = UserId ?? new Guid("00000000-0000-0000-0000-000000000001");
+                response.Results["OrganizationId"] = OrganizationId ?? new Guid("00000000-0000-0000-0000-000000000002");
+                response.Results["BusinessUnitId"] = BusinessUnitId ?? new Guid("00000000-0000-0000-0000-000000000003");
+            }
+
             return response;
         }
     }

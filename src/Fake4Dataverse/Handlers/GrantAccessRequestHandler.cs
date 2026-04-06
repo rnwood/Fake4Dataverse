@@ -15,11 +15,12 @@ namespace Fake4Dataverse.Handlers
             _security = security;
         }
 
-        public bool CanHandle(OrganizationRequest request) => request is GrantAccessRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "GrantAccess", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var grantRequest = (GrantAccessRequest)request;
+            var grantRequest = OrganizationRequestTypeAdapter.AsTyped<GrantAccessRequest>(request);
             var target = grantRequest.Target;
             var principalAccess = grantRequest.PrincipalAccess;
 

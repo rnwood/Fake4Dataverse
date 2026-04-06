@@ -20,11 +20,12 @@ namespace Fake4Dataverse.Handlers
             _store = store;
         }
 
-        public bool CanHandle(OrganizationRequest request) => request is RetrievePrincipalAccessRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RetrievePrincipalAccess", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var retrieveRequest = (RetrievePrincipalAccessRequest)request;
+            var retrieveRequest = OrganizationRequestTypeAdapter.AsTyped<RetrievePrincipalAccessRequest>(request);
             var target = retrieveRequest.Target;
             var principalId = retrieveRequest.Principal.Id;
 

@@ -10,11 +10,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class CommitFileBlocksUploadRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CommitFileBlocksUploadRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "CommitFileBlocksUpload", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var commitRequest = (CommitFileBlocksUploadRequest)request;
+            var commitRequest = OrganizationRequestTypeAdapter.AsTyped<CommitFileBlocksUploadRequest>(request);
             var fakeService = service as FakeOrganizationService
                 ?? throw new InvalidOperationException("CommitFileBlocksUploadRequestHandler requires FakeOrganizationService.");
 

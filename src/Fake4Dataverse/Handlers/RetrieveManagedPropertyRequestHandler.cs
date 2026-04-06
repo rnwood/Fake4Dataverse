@@ -5,7 +5,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class RetrieveManagedPropertyRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is RetrieveManagedPropertyRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RetrieveManagedProperty", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

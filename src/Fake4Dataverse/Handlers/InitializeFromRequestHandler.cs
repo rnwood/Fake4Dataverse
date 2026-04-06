@@ -11,11 +11,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class InitializeFromRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is InitializeFromRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "InitializeFrom", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var initRequest = (InitializeFromRequest)request;
+            var initRequest = OrganizationRequestTypeAdapter.AsTyped<InitializeFromRequest>(request);
             var entityMoniker = initRequest.EntityMoniker;
             var targetEntityName = initRequest.TargetEntityName;
 

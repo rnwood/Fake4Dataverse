@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Xml.Linq;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
@@ -23,9 +26,17 @@ namespace Fake4Dataverse.Handlers
                 throw new ArgumentException("FetchXml is required.");
 
             var doc = XDocument.Parse(fetchXml);
-            var entityElement = doc.Root?.Element("entity");
+            var fetchEl = doc.Root;
+            if (fetchEl == null || fetchEl.Name.LocalName != "fetch")
+                throw new InvalidOperationException("FetchXml must have a <fetch> root element.");
+
+            var entityElement = fetchEl.Element("entity");
             if (entityElement == null)
                 throw new InvalidOperationException("FetchXml must contain an entity element.");
+
+            // Aggregates cannot be represented in QueryExpression
+            if (string.Equals(Attr(fetchEl, "aggregate"), "true", StringComparison.OrdinalIgnoreCase))
+                throw new NotSupportedException("Aggregate FetchXml cannot be converted to QueryExpression.");
 
             var entityName = entityElement.Attribute("name")?.Value
                 ?? throw new InvalidOperationException("Entity name is required.");
@@ -59,24 +70,42 @@ namespace Fake4Dataverse.Handlers
                     query.AddOrder(attrName, descending ? OrderType.Descending : OrderType.Ascending);
             }
 
-            // Parse top/count
-            var topAttr = doc.Root?.Attribute("top");
+            // Parse top
+            var topAttr = fetchEl.Attribute("top");
             if (topAttr != null && int.TryParse(topAttr.Value, out var topVal))
                 query.TopCount = topVal;
 
-            var countAttr = doc.Root?.Attribute("count");
-            if (countAttr != null && int.TryParse(countAttr.Value, out var count))
-                query.TopCount = count;
+            // Parse paging (count + page)
+            var countAttr = fetchEl.Attribute("count");
+            if (countAttr != null && int.TryParse(countAttr.Value, out var count) && count > 0)
+            {
+                var pageAttr = fetchEl.Attribute("page");
+                int page = 1;
+                if (pageAttr != null && int.TryParse(pageAttr.Value, out var parsedPage) && parsedPage > 0)
+                    page = parsedPage;
 
-            var distinctAttr = doc.Root?.Attribute("distinct");
+                query.PageInfo = new PagingInfo
+                {
+                    Count = count,
+                    PageNumber = page
+                };
+            }
+
+            // Parse distinct
+            var distinctAttr = fetchEl.Attribute("distinct");
             if (distinctAttr != null && string.Equals(distinctAttr.Value, "true", StringComparison.OrdinalIgnoreCase))
                 query.Distinct = true;
+
+            // Parse no-lock
+            var noLockAttr = fetchEl.Attribute("no-lock");
+            if (noLockAttr != null && string.Equals(noLockAttr.Value, "true", StringComparison.OrdinalIgnoreCase))
+                query.NoLock = true;
 
             // Parse link-entities
             foreach (var linkEl in entityElement.Elements("link-entity"))
                 ParseLinkEntity(linkEl, query.LinkEntities, entityName);
 
-            var response = new OrganizationResponse { ResponseName = "FetchXmlToQueryExpression" };
+            var response = new FetchXmlToQueryExpressionResponse();
             response["Query"] = query;
             return response;
         }
@@ -92,29 +121,37 @@ namespace Fake4Dataverse.Handlers
             {
                 var attribute = condition.Attribute("attribute")?.Value;
                 var operatorStr = condition.Attribute("operator")?.Value;
-                var value = condition.Attribute("value")?.Value;
+                var valueStr = condition.Attribute("value")?.Value;
+                var entityname = condition.Attribute("entityname")?.Value;
 
                 if (string.IsNullOrEmpty(attribute) || string.IsNullOrEmpty(operatorStr))
                     continue;
 
                 var op = ParseOperator(operatorStr!);
 
-                if (value != null)
+                var cond = new ConditionExpression();
+                cond.AttributeName = attribute!;
+                cond.Operator = op;
+
+                if (!string.IsNullOrEmpty(entityname))
+                    cond.EntityName = entityname;
+
+                if (valueStr != null)
                 {
-                    filter.AddCondition(attribute, op, value);
+                    cond.Values.Add(ParseTypedValue(valueStr));
                 }
                 else
                 {
                     // Check for child <value> elements (for In, Between, etc.)
-                    var childValues = new List<object>();
-                    foreach (var v in condition.Elements("value"))
-                        childValues.Add(v.Value);
-
-                    if (childValues.Count > 0)
-                        filter.AddCondition(attribute, op, childValues.ToArray());
-                    else
-                        filter.AddCondition(attribute, op);
+                    var childValues = condition.Elements("value").Select(v => ParseTypedValue(v.Value)).ToArray();
+                    if (childValues.Length > 0)
+                    {
+                        foreach (var cv in childValues)
+                            cond.Values.Add(cv);
+                    }
                 }
+
+                filter.AddCondition(cond);
             }
 
             foreach (var subFilter in filterElement.Elements("filter"))
@@ -133,9 +170,7 @@ namespace Fake4Dataverse.Handlers
             var linkTypeStr = linkEl.Attribute("link-type")?.Value;
             var alias = linkEl.Attribute("alias")?.Value;
 
-            var joinOp = string.Equals(linkTypeStr, "outer", StringComparison.OrdinalIgnoreCase)
-                ? JoinOperator.LeftOuter
-                : JoinOperator.Inner;
+            var joinOp = ParseJoinOperator(linkTypeStr);
 
             var link = new LinkEntity
             {
@@ -165,11 +200,53 @@ namespace Fake4Dataverse.Handlers
             if (filterElement != null)
                 ParseFilter(filterElement, link.LinkCriteria);
 
+            // Parse order
+            foreach (var order in linkEl.Elements("order"))
+            {
+                var attrName = order.Attribute("attribute")?.Value;
+                var descending = string.Equals(order.Attribute("descending")?.Value, "true", StringComparison.OrdinalIgnoreCase);
+                if (!string.IsNullOrEmpty(attrName))
+                    link.Orders.Add(new OrderExpression(attrName, descending ? OrderType.Descending : OrderType.Ascending));
+            }
+
             // Nested link entities
             foreach (var nestedLink in linkEl.Elements("link-entity"))
                 ParseLinkEntity(nestedLink, link.LinkEntities, linkToEntity);
 
             linkEntities.Add(link);
+        }
+
+        private static JoinOperator ParseJoinOperator(string? linkType)
+        {
+            if (string.IsNullOrEmpty(linkType))
+                return JoinOperator.Inner;
+
+            switch (linkType!.ToLowerInvariant())
+            {
+                case "inner": return JoinOperator.Inner;
+                case "outer": return JoinOperator.LeftOuter;
+                case "exists": return JoinOperator.Exists;
+                case "in": return JoinOperator.In;
+                case "any": return JoinOperator.Any;
+                case "not-any": return JoinOperator.NotAny;
+                case "not-all": return JoinOperator.NotAll;
+                case "natural": return JoinOperator.Natural;
+                default:
+                    throw new NotSupportedException($"FetchXml link-type '{linkType}' is not supported.");
+            }
+        }
+
+        private static object ParseTypedValue(string valueStr)
+        {
+            if (int.TryParse(valueStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intVal))
+                return intVal;
+            if (decimal.TryParse(valueStr, NumberStyles.Number, CultureInfo.InvariantCulture, out var decVal))
+                return decVal;
+            if (DateTime.TryParse(valueStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dtVal))
+                return dtVal;
+            if (Guid.TryParse(valueStr, out var guidVal))
+                return guidVal;
+            return valueStr;
         }
 
         private static ConditionOperator ParseOperator(string op)
@@ -192,10 +269,57 @@ namespace Fake4Dataverse.Handlers
                 case "not-begin-with": return ConditionOperator.DoesNotBeginWith;
                 case "ends-with": return ConditionOperator.EndsWith;
                 case "not-end-with": return ConditionOperator.DoesNotEndWith;
-                case "contains": return ConditionOperator.Contains;
+                case "contain": case "contains": return ConditionOperator.Contains;
                 case "not-contain": return ConditionOperator.DoesNotContain;
-                default: return ConditionOperator.Equal;
+                case "between": return ConditionOperator.Between;
+                case "not-between": return ConditionOperator.NotBetween;
+                case "on": return ConditionOperator.On;
+                case "on-or-before": return ConditionOperator.OnOrBefore;
+                case "on-or-after": return ConditionOperator.OnOrAfter;
+                case "yesterday": return ConditionOperator.Yesterday;
+                case "today": return ConditionOperator.Today;
+                case "tomorrow": return ConditionOperator.Tomorrow;
+                case "last-seven-days": return ConditionOperator.Last7Days;
+                case "next-seven-days": return ConditionOperator.Next7Days;
+                case "last-x-days": return ConditionOperator.LastXDays;
+                case "next-x-days": return ConditionOperator.NextXDays;
+                case "last-x-hours": return ConditionOperator.LastXHours;
+                case "next-x-hours": return ConditionOperator.NextXHours;
+                case "last-x-weeks": return ConditionOperator.LastXWeeks;
+                case "next-x-weeks": return ConditionOperator.NextXWeeks;
+                case "last-x-months": return ConditionOperator.LastXMonths;
+                case "next-x-months": return ConditionOperator.NextXMonths;
+                case "last-x-years": return ConditionOperator.LastXYears;
+                case "next-x-years": return ConditionOperator.NextXYears;
+                case "this-week": return ConditionOperator.ThisWeek;
+                case "last-week": return ConditionOperator.LastWeek;
+                case "next-week": return ConditionOperator.NextWeek;
+                case "this-month": return ConditionOperator.ThisMonth;
+                case "last-month": return ConditionOperator.LastMonth;
+                case "next-month": return ConditionOperator.NextMonth;
+                case "this-year": return ConditionOperator.ThisYear;
+                case "last-year": return ConditionOperator.LastYear;
+                case "next-year": return ConditionOperator.NextYear;
+                case "older-than-x-minutes": return ConditionOperator.OlderThanXMinutes;
+                case "older-than-x-hours": return ConditionOperator.OlderThanXHours;
+                case "older-than-x-days": return ConditionOperator.OlderThanXDays;
+                case "older-than-x-weeks": return ConditionOperator.OlderThanXWeeks;
+                case "older-than-x-months": return ConditionOperator.OlderThanXMonths;
+                case "older-than-x-years": return ConditionOperator.OlderThanXYears;
+                case "eq-userid": return ConditionOperator.EqualUserId;
+                case "ne-userid": return ConditionOperator.NotEqualUserId;
+                case "eq-businessid": return ConditionOperator.EqualBusinessId;
+                case "ne-businessid": return ConditionOperator.NotEqualBusinessId;
+                case "contain-values": return ConditionOperator.ContainValues;
+                case "not-contain-values": return ConditionOperator.DoesNotContainValues;
+                default:
+                    throw new NotSupportedException($"FetchXml condition operator '{op}' is not supported.");
             }
+        }
+
+        private static string? Attr(XElement el, string name)
+        {
+            return el.Attribute(name)?.Value;
         }
     }
 }

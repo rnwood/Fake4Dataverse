@@ -5,16 +5,17 @@ using Microsoft.Xrm.Sdk.Messages;
 namespace Fake4Dataverse.Handlers
 {
     /// <summary>
-    /// Handles <see cref="ExecuteMultipleRequest"/> by executing each request in the collection.
-    /// Supports ContinueOnError and ReturnResponses settings.
+    /// Handles <see cref="ExecuteMultipleRequest"/> by executing each request in the collection
+    /// sequentially. Supports ContinueOnError and ReturnResponses settings.
     /// </summary>
     internal sealed class ExecuteMultipleRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is ExecuteMultipleRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "ExecuteMultiple", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var emRequest = (ExecuteMultipleRequest)request;
+            var emRequest = OrganizationRequestTypeAdapter.AsTyped<ExecuteMultipleRequest>(request);
             var settings = emRequest.Settings ?? new ExecuteMultipleSettings
             {
                 ContinueOnError = false,

@@ -10,11 +10,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class CalculateRollupFieldRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CalculateRollupFieldRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "CalculateRollupField", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var calcRequest = (CalculateRollupFieldRequest)request;
+            var calcRequest = OrganizationRequestTypeAdapter.AsTyped<CalculateRollupFieldRequest>(request);
             var target = calcRequest.Target;
             var fieldName = calcRequest.FieldName;
 

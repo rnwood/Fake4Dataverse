@@ -8,11 +8,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class CreateManyToManyRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CreateManyToManyRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "CreateManyToMany", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var createRequest = (CreateManyToManyRequest)request;
+            var createRequest = OrganizationRequestTypeAdapter.AsTyped<CreateManyToManyRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

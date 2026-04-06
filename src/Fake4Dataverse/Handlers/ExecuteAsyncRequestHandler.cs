@@ -6,11 +6,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class ExecuteAsyncRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is ExecuteAsyncRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "ExecuteAsync", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var asyncRequest = (ExecuteAsyncRequest)request;
+            var asyncRequest = OrganizationRequestTypeAdapter.AsTyped<ExecuteAsyncRequest>(request);
 
             // Execute the inner request synchronously in the fake
             if (asyncRequest.Request != null)

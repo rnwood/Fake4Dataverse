@@ -9,11 +9,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class InitializeFileBlocksUploadRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is InitializeFileBlocksUploadRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "InitializeFileBlocksUpload", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var initRequest = (InitializeFileBlocksUploadRequest)request;
+            var initRequest = OrganizationRequestTypeAdapter.AsTyped<InitializeFileBlocksUploadRequest>(request);
             var fakeService = service as FakeOrganizationService
                 ?? throw new InvalidOperationException("InitializeFileBlocksUploadRequestHandler requires FakeOrganizationService.");
 

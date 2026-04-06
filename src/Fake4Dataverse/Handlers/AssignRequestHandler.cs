@@ -8,11 +8,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class AssignRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is AssignRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "Assign", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var assignRequest = (AssignRequest)request;
+            var assignRequest = OrganizationRequestTypeAdapter.AsTyped<AssignRequest>(request);
             var target = assignRequest.Target;
             var update = new Entity(target.LogicalName, target.Id)
             {

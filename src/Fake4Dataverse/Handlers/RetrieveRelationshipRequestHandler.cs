@@ -7,11 +7,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class RetrieveRelationshipRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is RetrieveRelationshipRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RetrieveRelationship", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var retrieveRequest = (RetrieveRelationshipRequest)request;
+            var retrieveRequest = OrganizationRequestTypeAdapter.AsTyped<RetrieveRelationshipRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

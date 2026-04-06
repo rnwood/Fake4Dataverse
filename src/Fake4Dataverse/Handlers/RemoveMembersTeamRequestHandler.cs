@@ -11,11 +11,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class RemoveMembersTeamRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is RemoveMembersTeamRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RemoveMembersTeam", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var removeRequest = (RemoveMembersTeamRequest)request;
+            var removeRequest = OrganizationRequestTypeAdapter.AsTyped<RemoveMembersTeamRequest>(request);
             var teamId = removeRequest.TeamId;
             var memberIds = removeRequest.MemberIds;
 

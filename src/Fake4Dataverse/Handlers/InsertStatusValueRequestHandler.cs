@@ -7,11 +7,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class InsertStatusValueRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is InsertStatusValueRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "InsertStatusValue", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var insertRequest = (InsertStatusValueRequest)request;
+            var insertRequest = OrganizationRequestTypeAdapter.AsTyped<InsertStatusValueRequest>(request);
             var newValue = insertRequest.Value ?? new Random().Next(100000, 999999);
 
             var fakeService = (FakeOrganizationService)service;

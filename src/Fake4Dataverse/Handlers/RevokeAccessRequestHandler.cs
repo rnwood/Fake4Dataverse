@@ -15,11 +15,12 @@ namespace Fake4Dataverse.Handlers
             _security = security;
         }
 
-        public bool CanHandle(OrganizationRequest request) => request is RevokeAccessRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RevokeAccess", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var revokeRequest = (RevokeAccessRequest)request;
+            var revokeRequest = OrganizationRequestTypeAdapter.AsTyped<RevokeAccessRequest>(request);
             var target = revokeRequest.Target;
             var revokee = revokeRequest.Revokee;
 

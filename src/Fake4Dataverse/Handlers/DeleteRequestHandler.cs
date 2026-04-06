@@ -6,11 +6,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class DeleteRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is DeleteRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "Delete", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var deleteRequest = (DeleteRequest)request;
+            var deleteRequest = OrganizationRequestTypeAdapter.AsTyped<DeleteRequest>(request);
             var target = deleteRequest.Target;
 
             Guid id = target.Id;

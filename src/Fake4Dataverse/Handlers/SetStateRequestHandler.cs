@@ -10,11 +10,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class SetStateRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is SetStateRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "SetState", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var setStateRequest = (SetStateRequest)request;
+            var setStateRequest = OrganizationRequestTypeAdapter.AsTyped<SetStateRequest>(request);
             var target = setStateRequest.EntityMoniker;
 
             if (service is FakeOrganizationService fakeService)

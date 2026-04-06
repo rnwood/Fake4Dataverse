@@ -12,11 +12,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class UpsertRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is UpsertRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "Upsert", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var upsertRequest = (UpsertRequest)request;
+            var upsertRequest = OrganizationRequestTypeAdapter.AsTyped<UpsertRequest>(request);
             var target = upsertRequest.Target;
 
             if (target == null)

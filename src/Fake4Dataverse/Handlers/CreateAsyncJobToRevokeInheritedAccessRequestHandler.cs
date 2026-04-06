@@ -6,7 +6,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class CreateAsyncJobToRevokeInheritedAccessRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CreateAsyncJobToRevokeInheritedAccessRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "CreateAsyncJobToRevokeInheritedAccess", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

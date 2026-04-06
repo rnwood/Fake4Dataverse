@@ -7,7 +7,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class GetValidReferencingEntitiesRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is GetValidReferencingEntitiesRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "GetValidReferencingEntities", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

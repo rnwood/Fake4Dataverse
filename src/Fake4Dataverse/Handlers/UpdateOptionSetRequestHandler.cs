@@ -7,11 +7,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class UpdateOptionSetRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is UpdateOptionSetRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "UpdateOptionSet", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var updateRequest = (UpdateOptionSetRequest)request;
+            var updateRequest = OrganizationRequestTypeAdapter.AsTyped<UpdateOptionSetRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

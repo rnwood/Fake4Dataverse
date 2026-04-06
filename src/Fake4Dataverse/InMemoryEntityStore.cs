@@ -29,6 +29,8 @@ namespace Fake4Dataverse
 
             var id = entity.Id == Guid.Empty ? Guid.NewGuid() : entity.Id;
 
+            entity.Id = id;
+
             var clone = CloneEntity(entity);
             clone.Id = id;
             clone[entity.LogicalName + "id"] = id;
@@ -91,7 +93,15 @@ namespace Fake4Dataverse
 
                 foreach (var attr in entity.Attributes)
                 {
-                    existing[attr.Key] = attr.Value;
+                    if (attr.Value == null)
+                    {
+                        // In Dataverse, updating an attribute to null removes it from the record
+                        existing.Attributes.Remove(attr.Key);
+                    }
+                    else
+                    {
+                        existing[attr.Key] = attr.Value;
+                    }
                 }
             }
             finally

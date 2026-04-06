@@ -5,11 +5,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class CanManyToManyRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CanManyToManyRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "CanManyToMany", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var canRequest = (CanManyToManyRequest)request;
+            var canRequest = OrganizationRequestTypeAdapter.AsTyped<CanManyToManyRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

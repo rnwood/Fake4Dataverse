@@ -10,11 +10,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class RetrieveEntityKeyRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is RetrieveEntityKeyRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RetrieveEntityKey", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var retrieveRequest = (RetrieveEntityKeyRequest)request;
+            var retrieveRequest = OrganizationRequestTypeAdapter.AsTyped<RetrieveEntityKeyRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

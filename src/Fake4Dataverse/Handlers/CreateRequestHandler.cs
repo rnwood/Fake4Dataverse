@@ -6,11 +6,12 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class CreateRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is CreateRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "Create", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var createRequest = (CreateRequest)request;
+            var createRequest = OrganizationRequestTypeAdapter.AsTyped<CreateRequest>(request);
             var id = service.Create(createRequest.Target);
             return new CreateResponse { Results = { ["id"] = id } };
         }

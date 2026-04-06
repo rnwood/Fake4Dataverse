@@ -9,11 +9,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class UploadBlockRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is UploadBlockRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "UploadBlock", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var uploadRequest = (UploadBlockRequest)request;
+            var uploadRequest = OrganizationRequestTypeAdapter.AsTyped<UploadBlockRequest>(request);
             var fakeService = service as FakeOrganizationService
                 ?? throw new InvalidOperationException("UploadBlockRequestHandler requires FakeOrganizationService.");
 

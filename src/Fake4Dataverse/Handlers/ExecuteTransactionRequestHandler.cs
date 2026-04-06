@@ -10,11 +10,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class ExecuteTransactionRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is ExecuteTransactionRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "ExecuteTransaction", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var txRequest = (ExecuteTransactionRequest)request;
+            var txRequest = OrganizationRequestTypeAdapter.AsTyped<ExecuteTransactionRequest>(request);
             var requests = txRequest.Requests;
             if (requests == null)
                 throw DataverseFault.InvalidArgumentFault("ExecuteTransactionRequest.Requests must not be null.");

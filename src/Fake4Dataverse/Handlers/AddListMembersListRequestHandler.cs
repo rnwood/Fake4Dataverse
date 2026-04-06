@@ -9,11 +9,12 @@ namespace Fake4Dataverse.Handlers
     /// </summary>
     internal sealed class AddListMembersListRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is AddListMembersListRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "AddListMembersList", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
-            var addRequest = (AddListMembersListRequest)request;
+            var addRequest = OrganizationRequestTypeAdapter.AsTyped<AddListMembersListRequest>(request);
             var listId = addRequest.ListId;
             var memberIds = addRequest.MemberIds;
 

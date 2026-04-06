@@ -121,7 +121,14 @@ namespace Fake4Dataverse
             switch (condition.Operator)
             {
                 case ConditionOperator.Equal:
-                    return NormalizedEquals(value, condition.Values.FirstOrDefault());
+                {
+                    var condVal = condition.Values.FirstOrDefault();
+                    // Empty-string equality also matches null values because
+                    // Dataverse normalises empty strings to null on storage.
+                    if (condVal is string s && s.Length == 0 && value == null)
+                        return true;
+                    return NormalizedEquals(value, condVal);
+                }
                 case ConditionOperator.NotEqual:
                     return !NormalizedEquals(value, condition.Values.FirstOrDefault());
                 case ConditionOperator.Null:
@@ -322,30 +329,59 @@ namespace Fake4Dataverse
         {
             if (value == null || pattern == null) return false;
 
-            var parts = pattern.Split('%');
-            if (parts.Length == 1)
-                return string.Equals(value, pattern, StringComparison.OrdinalIgnoreCase);
+            // Convert LIKE pattern (with % and _ wildcards) to a simple regex-like match.
+            // '%' matches zero or more characters; '_' matches exactly one character.
+            return MatchLikePattern(value, 0, pattern, 0);
+        }
 
-            int index = 0;
-            for (int i = 0; i < parts.Length; i++)
+        /// <summary>
+        /// Recursive matching of a LIKE pattern with '%' (zero or more chars)
+        /// and '_' (exactly one char) wildcards against a value string.
+        /// </summary>
+        private static bool MatchLikePattern(string value, int vi, string pattern, int pi)
+        {
+            while (pi < pattern.Length)
             {
-                if (string.IsNullOrEmpty(parts[i])) continue;
+                char pc = pattern[pi];
 
-                var found = value.IndexOf(parts[i], index, StringComparison.OrdinalIgnoreCase);
-                if (found < 0) return false;
-                if (i == 0 && found != 0) return false;
+                if (pc == '%')
+                {
+                    // Skip consecutive '%' characters
+                    while (pi < pattern.Length && pattern[pi] == '%')
+                        pi++;
 
-                index = found + parts[i].Length;
+                    if (pi == pattern.Length)
+                        return true; // trailing % matches everything
+
+                    // Try matching the rest of the pattern from every position in value
+                    for (int i = vi; i <= value.Length; i++)
+                    {
+                        if (MatchLikePattern(value, i, pattern, pi))
+                            return true;
+                    }
+                    return false;
+                }
+
+                if (vi >= value.Length)
+                    return false;
+
+                if (pc == '_')
+                {
+                    // '_' matches exactly one character
+                    vi++;
+                    pi++;
+                    continue;
+                }
+
+                // Literal character comparison (case-insensitive)
+                if (char.ToUpperInvariant(pc) != char.ToUpperInvariant(value[vi]))
+                    return false;
+
+                vi++;
+                pi++;
             }
 
-            if (!pattern.EndsWith("%") && parts.Length > 0)
-            {
-                var lastPart = parts[parts.Length - 1];
-                if (!string.IsNullOrEmpty(lastPart))
-                    return value.EndsWith(lastPart, StringComparison.OrdinalIgnoreCase);
-            }
-
-            return true;
+            return vi == value.Length;
         }
 
         private static bool EvaluateBetween(object? value, DataCollection<object> condValues, bool inclusive)

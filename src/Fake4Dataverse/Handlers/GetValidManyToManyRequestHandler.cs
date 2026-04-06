@@ -7,7 +7,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class GetValidManyToManyRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is GetValidManyToManyRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "GetValidManyToMany", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {

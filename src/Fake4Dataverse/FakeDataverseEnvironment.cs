@@ -528,6 +528,7 @@ namespace Fake4Dataverse
             HandlerRegistry.Register(new Handlers.UpdateMultipleRequestHandler());
             HandlerRegistry.Register(new Handlers.RetrieveVersionRequestHandler());
             HandlerRegistry.Register(new Handlers.FetchXmlToQueryExpressionRequestHandler());
+            HandlerRegistry.Register(new Handlers.QueryExpressionToFetchXmlRequestHandler());
             HandlerRegistry.Register(new Handlers.IsValidStateTransitionRequestHandler());
             HandlerRegistry.Register(new Handlers.MergeRequestHandler());
             HandlerRegistry.Register(new Handlers.UpsertMultipleRequestHandler());

@@ -5,12 +5,13 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class ReactivateEntityKeyRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is ReactivateEntityKeyRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "ReactivateEntityKey", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
             // In the fake, keys are always active. This is a no-op that validates the key exists.
-            var reactivateRequest = (ReactivateEntityKeyRequest)request;
+            var reactivateRequest = OrganizationRequestTypeAdapter.AsTyped<ReactivateEntityKeyRequest>(request);
             var fakeService = (FakeOrganizationService)service;
             var store = fakeService.Environment.MetadataStore;
 

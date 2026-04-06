@@ -8,7 +8,8 @@ namespace Fake4Dataverse.Handlers
 {
     internal sealed class RetrieveAllOptionSetsRequestHandler : IOrganizationRequestHandler
     {
-        public bool CanHandle(OrganizationRequest request) => request is RetrieveAllOptionSetsRequest;
+        public bool CanHandle(OrganizationRequest request) =>
+            string.Equals(request.RequestName, "RetrieveAllOptionSets", System.StringComparison.OrdinalIgnoreCase);
 
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
