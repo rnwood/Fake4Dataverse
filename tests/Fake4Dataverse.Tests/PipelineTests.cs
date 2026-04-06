@@ -610,6 +610,227 @@ namespace Fake4Dataverse.Tests
 
             Assert.Equal(0, capturedMode);
         }
+
+        // ── IPluginExecutionContext v2–v7 properties ──────────────────────────
+
+        [Fact]
+        public void Pipeline_Context_V2_DefaultsToEmptyGuidsAndFalse()
+        {
+            var service = new FakeOrganizationService();
+            IPluginExecutionContext2? ctx2 = null;
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                ctx2 = ctx as IPluginExecutionContext2;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.NotNull(ctx2);
+            Assert.Equal(Guid.Empty, ctx2!.InitiatingUserApplicationId);
+            Assert.Equal(Guid.Empty, ctx2.InitiatingUserAzureActiveDirectoryObjectId);
+            Assert.False(ctx2.IsPortalsClientCall);
+            Assert.Equal(Guid.Empty, ctx2.PortalsContactId);
+            Assert.Equal(Guid.Empty, ctx2.UserAzureActiveDirectoryObjectId);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V2_ServicePropertiesFlowIntoContext()
+        {
+            var service = new FakeOrganizationService();
+            var appId = Guid.NewGuid();
+            var aadObjectId = Guid.NewGuid();
+            var contactId = Guid.NewGuid();
+            var userAadId = Guid.NewGuid();
+            service.InitiatingUserApplicationId = appId;
+            service.InitiatingUserAzureActiveDirectoryObjectId = aadObjectId;
+            service.IsPortalsClientCall = true;
+            service.PortalsContactId = contactId;
+            service.UserAzureActiveDirectoryObjectId = userAadId;
+
+            IPluginExecutionContext2? ctx2 = null;
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                ctx2 = ctx as IPluginExecutionContext2;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.NotNull(ctx2);
+            Assert.Equal(appId, ctx2!.InitiatingUserApplicationId);
+            Assert.Equal(aadObjectId, ctx2.InitiatingUserAzureActiveDirectoryObjectId);
+            Assert.True(ctx2.IsPortalsClientCall);
+            Assert.Equal(contactId, ctx2.PortalsContactId);
+            Assert.Equal(userAadId, ctx2.UserAzureActiveDirectoryObjectId);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V3_AuthenticatedUserIdDefaultsToCallerId()
+        {
+            var service = new FakeOrganizationService();
+            var customCaller = Guid.NewGuid();
+            service.CallerId = customCaller;
+
+            IPluginExecutionContext3? ctx3 = null;
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                ctx3 = ctx as IPluginExecutionContext3;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.NotNull(ctx3);
+            Assert.Equal(customCaller, ctx3!.AuthenticatedUserId);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V4_ImagesCollectionsWrapSingleCollections()
+        {
+            var service = new FakeOrganizationService();
+            var id = service.Create(new Entity("account") { ["name"] = "Original" });
+
+            EntityImageCollection[]? preCollections = null;
+            EntityImageCollection[]? postCollections = null;
+
+            var step = service.Pipeline.RegisterPostOperation("Update", "account", ctx =>
+            {
+                var ctx4 = ctx as IPluginExecutionContext4;
+                preCollections = ctx4?.PreEntityImagesCollection;
+                postCollections = ctx4?.PostEntityImagesCollection;
+            });
+            step.AddPreImage("preimage", "name");
+            step.AddPostImage("postimage", "name");
+
+            service.Update(new Entity("account", id) { ["name"] = "Updated" });
+
+            Assert.NotNull(preCollections);
+            Assert.NotNull(postCollections);
+            Assert.Single(preCollections!);
+            Assert.Single(postCollections!);
+            Assert.True(preCollections[0].Contains("preimage"));
+            Assert.True(postCollections[0].Contains("postimage"));
+        }
+
+        [Fact]
+        public void Pipeline_Context_V5_InitiatingUserAgentDefault()
+        {
+            var service = new FakeOrganizationService();
+            string? userAgent = null;
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                userAgent = (ctx as IPluginExecutionContext5)?.InitiatingUserAgent;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.Equal("Fake4Dataverse", userAgent);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V5_InitiatingUserAgentIsConfigurable()
+        {
+            var service = new FakeOrganizationService();
+            service.InitiatingUserAgent = "MyClient/2.0";
+            string? userAgent = null;
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                userAgent = (ctx as IPluginExecutionContext5)?.InitiatingUserAgent;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.Equal("MyClient/2.0", userAgent);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V6_EnvironmentIdAndTenantIdAreConfigurable()
+        {
+            var service = new FakeOrganizationService();
+            service.EnvironmentId = "unq12345abcde";
+            service.TenantId = new Guid("aaaabbbb-0000-0000-0000-ccccdddd0001");
+
+            string? envId = null;
+            Guid tenantId = Guid.Empty;
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                var ctx6 = ctx as IPluginExecutionContext6;
+                envId = ctx6?.EnvironmentId;
+                tenantId = ctx6?.TenantId ?? Guid.Empty;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.Equal("unq12345abcde", envId);
+            Assert.Equal(new Guid("aaaabbbb-0000-0000-0000-ccccdddd0001"), tenantId);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V6_EnvironmentIdDefaultsToEmpty()
+        {
+            var service = new FakeOrganizationService();
+            string? envId = "not-set";
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                envId = (ctx as IPluginExecutionContext6)?.EnvironmentId;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.Equal(string.Empty, envId);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V7_IsApplicationUserDefaultsFalse()
+        {
+            var service = new FakeOrganizationService();
+            bool? isAppUser = null;
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                isAppUser = (ctx as IPluginExecutionContext7)?.IsApplicationUser;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.False(isAppUser);
+        }
+
+        [Fact]
+        public void Pipeline_Context_V7_IsApplicationUserIsConfigurable()
+        {
+            var service = new FakeOrganizationService();
+            service.IsApplicationUser = true;
+            bool? isAppUser = null;
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                isAppUser = (ctx as IPluginExecutionContext7)?.IsApplicationUser;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.True(isAppUser);
+        }
+
+        [Fact]
+        public void Pipeline_Context_ImplmentsIPluginExecutionContext7()
+        {
+            var service = new FakeOrganizationService();
+            bool isCtx7 = false;
+
+            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            {
+                isCtx7 = ctx is IPluginExecutionContext7;
+            });
+
+            service.Create(new Entity("account") { ["name"] = "Test" });
+
+            Assert.True(isCtx7);
+        }
     }
 }
 

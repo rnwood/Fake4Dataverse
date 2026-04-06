@@ -1,12 +1,13 @@
 using System;
+using Fake4Dataverse.Samples.AccountService;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Xunit;
 
-namespace Fake4Dataverse.Samples
+namespace Fake4Dataverse.Samples.AccountService.Tests
 {
     /// <summary>
-    /// Sample tests demonstrating how to use Fake4Dataverse in realistic plugin/service testing scenarios.
+    /// Sample tests demonstrating how to use Fake4Dataverse with a service layer class.
     /// </summary>
     public class AccountServiceTests
     {
@@ -26,7 +27,6 @@ namespace Fake4Dataverse.Samples
             Assert.Equal("Contoso Ltd", account["name"]);
             Assert.Equal(5000000m, ((Money)account["revenue"]).Value);
 
-            // Fluent assertion
             service.Should().HaveCreated("account", id);
         }
 

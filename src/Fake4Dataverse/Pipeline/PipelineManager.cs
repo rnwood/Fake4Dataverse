@@ -186,12 +186,14 @@ namespace Fake4Dataverse.Pipeline
             Guid businessUnitId,
             Guid organizationId,
             string organizationName,
-            DateTime operationCreatedOn)
+            DateTime operationCreatedOn,
+            FakePipelineContextSettings settings = default)
         {
             var context = new FakePipelineContext(
                 messageName, entityName, inputParams,
                 userId, initiatingUserId, businessUnitId,
-                organizationId, organizationName, operationCreatedOn);
+                organizationId, organizationName, operationCreatedOn,
+                depth: 1, settings: settings);
 
             // Capture pre-image snapshot (entity state before core operation)
             Entity? preImageSnapshot = null;

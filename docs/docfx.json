@@ -28,7 +28,7 @@
     "template": ["default", "modern"],
     "globalMetadata": {
       "_appTitle": "Fake4Dataverse",
-      "_appFooter": "Fake4Dataverse - In-Memory Fake IOrganizationService for Dataverse Testing",
+      "_appFooter": "Fake4Dataverse - In-Memory Fake IOrganizationService + IOrganizationServiceAsync2 for Dataverse Testing",
       "_enableSearch": true
     }
   }

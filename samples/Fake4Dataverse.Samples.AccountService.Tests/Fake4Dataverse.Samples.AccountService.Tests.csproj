@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net462;net10.0</TargetFrameworks>
-    <RootNamespace>Fake4Dataverse.Samples</RootNamespace>
+    <RootNamespace>Fake4Dataverse.Samples.AccountService.Tests</RootNamespace>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Fake4Dataverse\Fake4Dataverse.csproj" />
+    <ProjectReference Include="..\Fake4Dataverse.Samples.AccountService\Fake4Dataverse.Samples.AccountService.csproj" />
   </ItemGroup>
 
 </Project>

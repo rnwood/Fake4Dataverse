@@ -1,10 +1,12 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Fake4Dataverse/Fake4Dataverse.csproj" />
-    <Project Path="src/Fake4Dataverse.Moq/Fake4Dataverse.Moq.csproj" />
+    <Project Path="src/Fake4Dataverse.AwesomeAssertions/Fake4Dataverse.AwesomeAssertions.csproj" />
+    <Project Path="src/Fake4Dataverse.FakeItEasy/Fake4Dataverse.FakeItEasy.csproj" />
     <Project Path="src/Fake4Dataverse.FluentAssertions/Fake4Dataverse.FluentAssertions.csproj" />
-    <Project Path="src/Fake4Dataverse.EarlyBound/Fake4Dataverse.EarlyBound.csproj" />
-    <Project Path="src/Fake4Dataverse.DataProviders/Fake4Dataverse.DataProviders.csproj" />
+    <Project Path="src/Fake4Dataverse.Moq/Fake4Dataverse.Moq.csproj" />
+    <Project Path="src/Fake4Dataverse.Spkl/Fake4Dataverse.Spkl.csproj" />
+    <Project Path="src/Fake4Dataverse.Shouldly/Fake4Dataverse.Shouldly.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Fake4Dataverse.Tests/Fake4Dataverse.Tests.csproj" />
@@ -13,6 +15,9 @@
     <Project Path="benchmarks/Fake4Dataverse.Benchmarks/Fake4Dataverse.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/samples/">
-    <Project Path="samples/Fake4Dataverse.Samples/Fake4Dataverse.Samples.csproj" />
+    <Project Path="samples/Fake4Dataverse.Samples.AccountService/Fake4Dataverse.Samples.AccountService.csproj" />
+    <Project Path="samples/Fake4Dataverse.Samples.AccountService.Tests/Fake4Dataverse.Samples.AccountService.Tests.csproj" />
+    <Project Path="samples/Fake4Dataverse.Samples.Plugin/Fake4Dataverse.Samples.Plugin.csproj" />
+    <Project Path="samples/Fake4Dataverse.Samples.Plugin.Tests/Fake4Dataverse.Samples.Plugin.Tests.csproj" />
   </Folder>
 </Solution>

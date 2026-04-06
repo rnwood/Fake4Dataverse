@@ -1,6 +1,6 @@
 # Fake4Dataverse — AI Agent Instructions
 
-In-memory fake `IOrganizationService` for unit testing Dataverse / Dynamics 365 applications without a live connection.
+In-memory fake `IOrganizationService` and `IOrganizationServiceAsync2` for unit testing Dataverse / Dynamics 365 applications without a live connection.
 
 ---
 
@@ -28,7 +28,7 @@ Tests run against both `net462` and `net10.0`. All tests must pass on both frame
 
 ```
 src/Fake4Dataverse/           # Core library
-  FakeOrganizationService.cs  # Public entry point — implements IOrganizationService
+  FakeOrganizationService.cs  # Public entry point — implements IOrganizationService + IOrganizationServiceAsync2
   FakeOrganizationServiceOptions.cs  # Configuration (Strict/Lenient presets)
   InMemoryEntityStore.cs      # Thread-safe entity storage (ReaderWriterLockSlim)
   InMemoryMetadataStore.cs    # Entity/attribute metadata with validation

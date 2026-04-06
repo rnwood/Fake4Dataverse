@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Xrm.Sdk;
 
-namespace Fake4Dataverse.Samples
+namespace Fake4Dataverse.Samples.AccountService
 {
     /// <summary>
     /// A realistic service class that uses IOrganizationService to manage accounts.

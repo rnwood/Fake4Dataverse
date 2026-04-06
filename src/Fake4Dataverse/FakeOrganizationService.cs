@@ -2,20 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.Json;
 using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Pipeline;
 using Fake4Dataverse.Security;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
 namespace Fake4Dataverse
 {
     /// <summary>
-    /// An in-memory fake implementation of <see cref="IOrganizationService"/> for unit testing
+    /// An in-memory fake implementation of <see cref="IOrganizationService"/> and
+    /// <see cref="IOrganizationServiceAsync2"/> for unit testing
     /// Dataverse / Dynamics 365 applications without a live connection.
     /// </summary>
-    public sealed class FakeOrganizationService : IOrganizationService
+    public sealed class FakeOrganizationService : IOrganizationService, IOrganizationServiceAsync2
     {
         private readonly InMemoryEntityStore _store = new InMemoryEntityStore();
         private readonly AttributeIndex _attributeIndex = new AttributeIndex();
@@ -76,6 +80,58 @@ namespace Fake4Dataverse
         /// Gets or sets the organization name surfaced to plugins via <see cref="IPluginExecutionContext"/>.
         /// </summary>
         public string OrganizationName { get; set; } = "FakeOrganization";
+
+        /// <summary>
+        /// Gets or sets the Power Platform environment ID surfaced to plugins via <see cref="IPluginExecutionContext6"/>.
+        /// </summary>
+        public string EnvironmentId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the Azure AD / Entra tenant ID surfaced to plugins via <see cref="IPluginExecutionContext6"/>.
+        /// </summary>
+        public Guid TenantId { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the current user (<see cref="CallerId"/>) is an Application User,
+        /// surfaced to plugins via <see cref="IPluginExecutionContext7"/>.
+        /// </summary>
+        public bool IsApplicationUser { get; set; }
+
+        /// <summary>
+        /// Gets or sets the HTTP user-agent string of the caller, surfaced to plugins via
+        /// <see cref="IPluginExecutionContext5"/>. Defaults to <c>"Fake4Dataverse"</c>.
+        /// </summary>
+        public string InitiatingUserAgent { get; set; } = "Fake4Dataverse";
+
+        /// <summary>
+        /// Gets or sets whether the call should be treated as originating from Power Pages / portals,
+        /// surfaced to plugins via <see cref="IPluginExecutionContext2"/>.
+        /// </summary>
+        public bool IsPortalsClientCall { get; set; }
+
+        /// <summary>
+        /// Gets or sets the portals contact ID, surfaced to plugins via <see cref="IPluginExecutionContext2"/>.
+        /// Only relevant when <see cref="IsPortalsClientCall"/> is <c>true</c>.
+        /// </summary>
+        public Guid PortalsContactId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Azure Active Directory object ID of the calling user (<see cref="CallerId"/>),
+        /// surfaced to plugins via <see cref="IPluginExecutionContext2"/>.
+        /// </summary>
+        public Guid UserAzureActiveDirectoryObjectId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Azure Active Directory object ID of the initiating user (<see cref="InitiatingUserId"/>),
+        /// surfaced to plugins via <see cref="IPluginExecutionContext2"/>.
+        /// </summary>
+        public Guid InitiatingUserAzureActiveDirectoryObjectId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Application ID of the initiating user, surfaced to plugins via
+        /// <see cref="IPluginExecutionContext2"/>. Empty when not an application user.
+        /// </summary>
+        public Guid InitiatingUserApplicationId { get; set; }
 
         /// <summary>
         /// Gets the security manager for configuring roles, privileges, and record sharing.
@@ -139,6 +195,21 @@ namespace Fake4Dataverse
             RegisterBuiltInHandlers();
         }
 
+        private Pipeline.FakePipelineContextSettings BuildPipelineContextSettings() =>
+            new Pipeline.FakePipelineContextSettings
+            {
+                EnvironmentId = EnvironmentId,
+                TenantId = TenantId,
+                IsApplicationUser = IsApplicationUser,
+                InitiatingUserAgent = InitiatingUserAgent,
+                IsPortalsClientCall = IsPortalsClientCall,
+                PortalsContactId = PortalsContactId,
+                UserAzureActiveDirectoryObjectId = UserAzureActiveDirectoryObjectId,
+                InitiatingUserAzureActiveDirectoryObjectId = InitiatingUserAzureActiveDirectoryObjectId,
+                InitiatingUserApplicationId = InitiatingUserApplicationId,
+                AuthenticatedUserId = CallerId,
+            };
+
         /// <inheritdoc />
         public Guid Create(Entity entity)
         {
@@ -158,7 +229,8 @@ namespace Fake4Dataverse
                     var target = (Entity)ctx.InputParameters["Target"];
                     var resultId = CreateCore(target);
                     return new ParameterCollection { { "id", resultId } };
-                }, CallerId, InitiatingUserId, BusinessUnitId, OrganizationId, OrganizationName, Clock.UtcNow);
+                }, CallerId, InitiatingUserId, BusinessUnitId, OrganizationId, OrganizationName, Clock.UtcNow,
+                    BuildPipelineContextSettings());
                 id = (Guid)context.OutputParameters["id"];
             }
             if (Options.EnableOperationLog)
@@ -318,7 +390,8 @@ namespace Fake4Dataverse
                     var target = (Entity)ctx.InputParameters["Target"];
                     UpdateCore(target);
                     return new ParameterCollection();
-                }, CallerId, InitiatingUserId, BusinessUnitId, OrganizationId, OrganizationName, Clock.UtcNow);
+                }, CallerId, InitiatingUserId, BusinessUnitId, OrganizationId, OrganizationName, Clock.UtcNow,
+                    BuildPipelineContextSettings());
             }
             if (Options.EnableOperationLog)
                 OperationLog.Add(new OperationRecord("Update", entity.LogicalName, entity.Id, Clock.UtcNow, InMemoryEntityStore.CloneEntity(entity), null));
@@ -380,7 +453,8 @@ namespace Fake4Dataverse
                     var target = (EntityReference)ctx.InputParameters["Target"];
                     _store.Delete(target.LogicalName, target.Id);
                     return new ParameterCollection();
-                }, CallerId, InitiatingUserId, BusinessUnitId, OrganizationId, OrganizationName, Clock.UtcNow);
+                }, CallerId, InitiatingUserId, BusinessUnitId, OrganizationId, OrganizationName, Clock.UtcNow,
+                    BuildPipelineContextSettings());
             }
             if (Options.EnableOperationLog)
                 OperationLog.Add(new OperationRecord("Delete", entityName, id, Clock.UtcNow, null, null));
@@ -455,6 +529,122 @@ namespace Fake4Dataverse
             if (Options.EnableOperationLog)
                 OperationLog.Add(new OperationRecord("Execute", null, null, Clock.UtcNow, null, request));
             return response;
+        }
+
+        /// <inheritdoc />
+        public Task<Guid> CreateAsync(Entity entity)
+        {
+            return CreateAsync(entity, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task<Entity> RetrieveAsync(string entityName, Guid id, ColumnSet columnSet)
+        {
+            return RetrieveAsync(entityName, id, columnSet, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task<EntityCollection> RetrieveMultipleAsync(QueryBase query)
+        {
+            return RetrieveMultipleAsync(query, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task UpdateAsync(Entity entity)
+        {
+            return UpdateAsync(entity, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task DeleteAsync(string entityName, Guid id)
+        {
+            return DeleteAsync(entityName, id, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task AssociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
+        {
+            return AssociateAsync(entityName, entityId, relationship, relatedEntities, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task DisassociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
+        {
+            return DisassociateAsync(entityName, entityId, relationship, relatedEntities, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task<OrganizationResponse> ExecuteAsync(OrganizationRequest request)
+        {
+            return ExecuteAsync(request, CancellationToken.None);
+        }
+
+        /// <inheritdoc />
+        public Task<Guid> CreateAsync(Entity entity, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(Create(entity));
+        }
+
+        /// <inheritdoc />
+        public Task<Entity> CreateAndReturnAsync(Entity entity, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var id = Create(entity);
+            return Task.FromResult(Retrieve(entity.LogicalName, id, new ColumnSet(true)));
+        }
+
+        /// <inheritdoc />
+        public Task<Entity> RetrieveAsync(string entityName, Guid id, ColumnSet columnSet, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(Retrieve(entityName, id, columnSet));
+        }
+
+        /// <inheritdoc />
+        public Task<EntityCollection> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(RetrieveMultiple(query));
+        }
+
+        /// <inheritdoc />
+        public Task UpdateAsync(Entity entity, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Update(entity);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Delete(entityName, id);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task AssociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Associate(entityName, entityId, relationship, relatedEntities);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task DisassociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Disassociate(entityName, entityId, relationship, relatedEntities);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc />
+        public Task<OrganizationResponse> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(Execute(request));
         }
 
         /// <summary>

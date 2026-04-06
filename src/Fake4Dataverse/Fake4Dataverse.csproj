@@ -10,7 +10,7 @@
     <PackageId>Fake4Dataverse</PackageId>
     <Version>0.1.0</Version>
     <Authors>Fake4Dataverse Contributors</Authors>
-    <Description>An in-memory fake IOrganizationService for testing Dataverse applications without a live connection. Supports CRUD, QueryExpression, FetchXml, pipeline hooks, metadata validation, security roles, and more.</Description>
+    <Description>An in-memory fake IOrganizationService and IOrganizationServiceAsync2 for testing Dataverse applications without a live connection. Supports CRUD, QueryExpression, FetchXml, pipeline hooks, metadata validation, security roles, and more.</Description>
     <PackageTags>dataverse;dynamics365;crm;testing;fake;mock;xrm;unit-test;power-platform</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -34,6 +34,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.*" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.*" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.*" PrivateAssets="All" />
     <PackageReference Include="System.Text.Json" Version="9.*" />
   </ItemGroup>

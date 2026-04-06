@@ -2,6 +2,8 @@
 
 This guide helps you migrate existing tests from [FakeXrmEasy](https://github.com/jordimontana82/fake-xrm-easy) to Fake4Dataverse.
 
+For a detailed feature comparison, see [Feature Comparison](../reference/comparison.md).
+
 ## Why Migrate?
 
 | Feature | FakeXrmEasy | Fake4Dataverse |
@@ -33,6 +35,72 @@ var service = new FakeOrganizationService();
 // Everything is on the service directly — no separate context object.
 ```
 
+### Optional Companion Packages (Moq / FakeItEasy / Assertions)
+
+If your existing tests assert interactions with a mocking framework, you can keep that style
+and still run behavior through the in-memory Fake4Dataverse engine.
+
+Install one adapter package as needed:
+
+```bash
+// Moq adapter
+dotnet add package Fake4Dataverse.Moq
+
+// FakeItEasy adapter
+dotnet add package Fake4Dataverse.FakeItEasy
+
+// AwesomeAssertions adapter
+dotnet add package Fake4Dataverse.AwesomeAssertions
+
+// Shouldly adapter
+dotnet add package Fake4Dataverse.Shouldly
+```
+
+**Moq bridge:**
+
+```csharp
+using Fake4Dataverse.Moq;
+
+var service = new FakeOrganizationService();
+var mock = service.AsMock();
+
+// Pass mock.Object to production code
+```
+
+**FakeItEasy bridge:**
+
+```csharp
+using Fake4Dataverse.FakeItEasy;
+
+var service = new FakeOrganizationService();
+var fake = service.AsFake();
+
+// Pass fake to production code
+```
+
+**AwesomeAssertions operation-log assertions:**
+
+```csharp
+using AwesomeAssertions;
+using Fake4Dataverse.AwesomeAssertions;
+
+var service = new FakeOrganizationService();
+var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
+
+service.Should().HaveCreated("account", id);
+```
+
+**Shouldly operation-log assertions:**
+
+```csharp
+using Fake4Dataverse.Shouldly;
+
+var service = new FakeOrganizationService();
+var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
+
+service.ShouldHaveCreated("account", id);
+```
+
 ### Initializing Entity Data
 
 **FakeXrmEasy:**
@@ -54,7 +122,25 @@ service.Seed(
 );
 ```
 
+### File-Based Seeding Helpers
+
+If you use JSON/CSV files for test data setup, file-based seed helpers are included in
+the core package (no separate DataProviders package required):
+
+```csharp
+using Fake4Dataverse.DataProviders;
+
+var service = new FakeOrganizationService();
+service.SeedFromJsonFile("seed-data.json");
+service.SeedFromCsvFile("seed-data.csv");
+```
+
 ### Plugin Tests
+
+Need a runnable end-to-end example? See:
+
+- `samples/Fake4Dataverse.Samples.Plugin/AccountPrimaryContactPlugin.cs`
+- `samples/Fake4Dataverse.Samples.Plugin.Tests/AccountPrimaryContactPluginTests.cs`
 
 **FakeXrmEasy:**
 ```csharp
@@ -95,6 +181,19 @@ service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
 });
 ```
 
+> **Spkl users:** If your plugins are decorated with `[CrmPluginRegistration]` attributes
+> (the SPKL convention), install the `Fake4Dataverse.Spkl` adapter and auto-register all
+> decorated steps from an assembly:
+>
+> ```csharp
+> using Fake4Dataverse.Spkl;
+>
+> var service = new FakeOrganizationService();
+> using var result = service.RegisterSpklPluginsFromAssembly(typeof(MyPlugin).Assembly);
+> // result.Registrations — steps that were registered
+> // result.SkippedRegistrations — unsupported forms (workflow, custom API)
+> ```
+
 ### Querying
 
 **FakeXrmEasy:** Uses the same `QueryExpression` / `FetchExpression` — no change needed.
@@ -112,10 +211,13 @@ context.InitializeMetadata(entityMetadata);
 
 **Fake4Dataverse:**
 ```csharp
+using Fake4Dataverse.EarlyBound;
+
 service.MetadataStore.AddEntity("account", "accountid", "name");
 service.MetadataStore.AddAttribute("account", "name", attributeType: "String", maxLength: 100);
 
-// Or with the EarlyBound companion:
+// Early-bound metadata registration is built into Fake4Dataverse:
+// (No separate Fake4Dataverse.EarlyBound package is required.)
 service.RegisterEarlyBoundEntities(typeof(Account).Assembly);
 ```
 
@@ -151,15 +253,21 @@ service.RegisterCustomApi("my_CustomAction", (req, svc) =>
 | `new XrmFakedContext()` | `new FakeOrganizationService()` |
 | `context.GetOrganizationService()` | `service` (direct use) |
 | `context.Initialize(entities)` | `service.Seed(entities)` |
+| file-based custom seeding helpers | `service.SeedFromJsonFile(...)` / `service.SeedFromCsvFile(...)` |
 | `using FakeXrmEasy;` | `using Fake4Dataverse;` |
 | `context.CallerProperties.CallerId` | `service.CallerId` |
+| `context.InitializeMetadata(typeof(Account).Assembly)` | `service.RegisterEarlyBoundEntities(typeof(Account).Assembly)` |
 
 ## Step-by-Step Migration
 
 1. **Replace NuGet package**: Remove `FakeXrmEasy.*` packages, add `Fake4Dataverse`.
-2. **Update usings**: Replace `using FakeXrmEasy;` with `using Fake4Dataverse;`.
-3. **Replace context creation**: Replace `new XrmFakedContext()` + `GetOrganizationService()` with `new FakeOrganizationService()`.
-4. **Replace `Initialize`**: Replace `context.Initialize(entities)` with `service.Seed(entities)`.
-5. **Update metadata setup**: Replace `InitializeMetadata` calls with `MetadataStore.AddEntity` / `AddAttribute`.
-6. **Update assertions**: Replace any FakeXrmEasy assertion helpers with `service.Should().HaveCreated(...)` fluent assertions.
-7. **Run tests**: All standard `IOrganizationService` calls should work as-is.
+2. **Optional companion package**: If you use interaction-based mocks/assertions, add `Fake4Dataverse.Moq`, `Fake4Dataverse.FakeItEasy`, `Fake4Dataverse.AwesomeAssertions`, or `Fake4Dataverse.Shouldly`.
+3. **Update usings**: Replace `using FakeXrmEasy;` with `using Fake4Dataverse;`.
+4. **Replace context creation**: Replace `new XrmFakedContext()` + `GetOrganizationService()` with `new FakeOrganizationService()`.
+5. **Replace `Initialize`**: Replace `context.Initialize(entities)` with `service.Seed(entities)`.
+6. **Update metadata setup**: Replace `InitializeMetadata` calls with `MetadataStore.AddEntity` / `AddAttribute`, or use built-in early-bound registration via `service.RegisterEarlyBoundEntities(...)`.
+7. **Adopt file-based seeding helpers (optional)**: Use built-in `Fake4Dataverse.DataProviders` extension methods (`SeedFromJsonFile`, `SeedFromCsvFile`) if your tests rely on seed files.
+8. **Update assertions**: Replace any FakeXrmEasy assertion helpers with operation log assertions or an assertion companion package (FluentAssertions/AwesomeAssertions/Shouldly).
+9. **Migrate framework adapters**: Replace direct framework fakes with `service.AsMock()` or `service.AsFake()` where needed.
+10. **Migrate Spkl plugin registrations (optional)**: If your plugins use `[CrmPluginRegistration]` attributes, add `Fake4Dataverse.Spkl` and call `service.RegisterSpklPluginsFromAssembly(assembly)` instead of manual pipeline step registration.
+11. **Run tests**: All standard `IOrganizationService` calls should work as-is.
