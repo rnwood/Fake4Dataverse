@@ -14,7 +14,7 @@ namespace Fake4Dataverse.Handlers
         {
             var createRequest = (CreateManyToManyRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var rel = createRequest.ManyToManyRelationship;
             if (rel == null || string.IsNullOrEmpty(rel.SchemaName))

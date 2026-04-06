@@ -12,7 +12,7 @@ namespace Fake4Dataverse.Handlers
             // In the fake, keys are always active. This is a no-op that validates the key exists.
             var reactivateRequest = (ReactivateEntityKeyRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var entityName = reactivateRequest.Parameters.ContainsKey("EntityLogicalName") ? (string)reactivateRequest.Parameters["EntityLogicalName"] : null;
             var keyName = reactivateRequest.Parameters.ContainsKey("EntityKeyLogicalName") ? (string)reactivateRequest.Parameters["EntityKeyLogicalName"] : null;

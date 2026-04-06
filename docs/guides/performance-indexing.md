@@ -9,10 +9,11 @@ Fake4Dataverse uses in-memory evaluation for all queries. Most test scenarios ar
 Add an equality index on a frequently-queried attribute to accelerate `ConditionOperator.Equal` filters:
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 // Create an index on account.name
-service.AddIndex("account", "name");
+env.AddIndex("account", "name");
 ```
 
 ### How It Works
@@ -25,8 +26,9 @@ service.AddIndex("account", "name");
 ### Example
 
 ```csharp
-var service = new FakeOrganizationService();
-service.AddIndex("contact", "lastname");
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+env.AddIndex("contact", "lastname");
 
 // Seed 10,000 contacts
 for (int i = 0; i < 10_000; i++)
@@ -96,7 +98,8 @@ var active = all.Entities.Where(e => e.GetAttributeValue<int>("statecode") == 0)
 
 ```csharp
 // Maximum performance — all automatic behaviors off
-var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+var service = env.CreateOrganizationService();
 ```
 
 Or selectively disable specific features:
@@ -111,7 +114,8 @@ var options = new FakeOrganizationServiceOptions
     AutoSetVersionNumber = false,  // Skip versionnumber increment
     ValidateWithMetadata = false,  // Skip metadata validation
 };
-var service = new FakeOrganizationService(options);
+var env = new FakeDataverseEnvironment(options);
+var service = env.CreateOrganizationService();
 ```
 
 | Option                 | Impact When Disabled                        |

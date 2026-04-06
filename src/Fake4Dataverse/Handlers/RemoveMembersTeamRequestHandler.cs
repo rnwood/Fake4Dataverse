@@ -22,7 +22,7 @@ namespace Fake4Dataverse.Handlers
             var fakeService = service as FakeOrganizationService
                 ?? throw new InvalidOperationException("RemoveMembersTeamRequestHandler requires FakeOrganizationService.");
 
-            var allMemberships = fakeService.Store.GetAll("teammembership");
+            var allMemberships = fakeService.Environment.Store.GetAll("teammembership");
             foreach (var memberId in memberIds)
             {
                 var match = allMemberships.FirstOrDefault(e =>

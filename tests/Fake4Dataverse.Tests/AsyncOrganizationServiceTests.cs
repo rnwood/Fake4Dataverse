@@ -14,7 +14,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void FakeOrganizationService_Implements_IOrganizationServiceAsync2()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.IsAssignableFrom<IOrganizationServiceAsync2>(service);
             Assert.IsAssignableFrom<IOrganizationServiceAsync>(service);
@@ -23,7 +24,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task IOrganizationServiceAsync_CreateAsync_WithoutCancellationToken_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync)service;
 
             var id = await asyncService.CreateAsync(new Entity("account") { ["name"] = "Contoso" });
@@ -34,7 +36,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task CreateAsync_WithValidEntity_ReturnsIdAndStoresEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
 
             var id = await asyncService.CreateAsync(new Entity("account") { ["name"] = "Contoso" }, CancellationToken.None);
@@ -47,7 +50,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task CreateAndReturnAsync_WithValidEntity_ReturnsPersistedEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
 
             var created = await asyncService.CreateAndReturnAsync(new Entity("account") { ["name"] = "Contoso" }, CancellationToken.None);
@@ -61,7 +65,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task RetrieveAsync_WithExistingRecord_ReturnsEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -74,7 +79,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task RetrieveMultipleAsync_WithQueryExpression_ReturnsMatchingEntities()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -87,7 +93,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task UpdateAsync_WithExistingRecord_UpdatesEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -100,7 +107,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task DeleteAsync_WithExistingRecord_RemovesEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -113,7 +121,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task AssociateAsync_And_DisassociateAsync_MaintainRelationshipRecords()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
@@ -142,7 +151,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task ExecuteAsync_WithWhoAmIRequest_ReturnsResponse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
 
             var response = await asyncService.ExecuteAsync(new WhoAmIRequest(), CancellationToken.None);
@@ -154,7 +164,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task AsyncMethods_WithCanceledToken_ThrowOperationCanceledException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var asyncService = (IOrganizationServiceAsync2)service;
             var canceled = new CancellationToken(canceled: true);
 

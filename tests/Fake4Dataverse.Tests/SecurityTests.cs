@@ -17,14 +17,16 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CallerId_DefaultIsNotEmpty()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             Assert.NotEqual(Guid.Empty, service.CallerId);
         }
 
         [Fact]
         public void CallerId_UsedForCreatedByModifiedBy()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var userId = Guid.NewGuid();
             service.CallerId = userId;
 
@@ -38,14 +40,16 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InitiatingUserId_DefaultsToCallerId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             Assert.Equal(service.CallerId, service.InitiatingUserId);
         }
 
         [Fact]
         public void InitiatingUserId_CanDifferFromCallerId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var impersonator = Guid.NewGuid();
             var actualUser = Guid.NewGuid();
 
@@ -60,21 +64,24 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void BusinessUnitId_HasDefault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             Assert.NotEqual(Guid.Empty, service.BusinessUnitId);
         }
 
         [Fact]
         public void OrganizationId_HasDefault()
         {
-            var service = new FakeOrganizationService();
-            Assert.NotEqual(Guid.Empty, service.OrganizationId);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            Assert.NotEqual(Guid.Empty, env.OrganizationId);
         }
 
         [Fact]
         public void BusinessUnitId_IsConfigurable()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var buId = Guid.NewGuid();
             service.BusinessUnitId = buId;
             Assert.Equal(buId, service.BusinessUnitId);
@@ -83,10 +90,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void OrganizationId_IsConfigurable()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var orgId = Guid.NewGuid();
-            service.OrganizationId = orgId;
-            Assert.Equal(orgId, service.OrganizationId);
+            env.OrganizationId = orgId;
+            Assert.Equal(orgId, env.OrganizationId);
         }
 
         // ── 7.2 Security Roles & Privileges ──────────────────────────
@@ -94,14 +102,16 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SecurityEnforcement_DisabledByDefault()
         {
-            var service = new FakeOrganizationService();
-            Assert.False(service.Security.EnforceSecurityRoles);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            Assert.False(env.Security.EnforceSecurityRoles);
         }
 
         [Fact]
         public void Create_WithoutRole_SucceedsWhenEnforcementDisabled()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             // No roles, enforcement off — should work
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             Assert.NotEqual(Guid.Empty, id);
@@ -110,8 +120,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithoutRole_ThrowsWhenEnforcementEnabled()
         {
-            var service = new FakeOrganizationService();
-            service.Security.EnforceSecurityRoles = true;
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Security.EnforceSecurityRoles = true;
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Create(new Entity("account") { ["name"] = "Test" }));
@@ -124,14 +135,15 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithRole_SucceedsWhenEnforcementEnabled()
         {
-            var service = new FakeOrganizationService();
-            service.Security.EnforceSecurityRoles = true;
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Security.EnforceSecurityRoles = true;
 
             var role = new SecurityRole("Salesperson")
                 .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization)
                 .AddPrivilege("account", PrivilegeType.Read, PrivilegeDepth.Organization);
 
-            service.Security.AssignRole(service.CallerId, role);
+            env.Security.AssignRole(service.CallerId, role);
 
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             Assert.NotEqual(Guid.Empty, id);
@@ -140,12 +152,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_WithoutRole_ThrowsWhenEnforcementEnabled()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             // Create before enabling enforcement
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
-            service.Security.EnforceSecurityRoles = true;
+            env.Security.EnforceSecurityRoles = true;
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Retrieve("account", id, new ColumnSet(true)));
@@ -157,13 +170,14 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_WithoutRole_ThrowsWhenEnforcementEnabled()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
-            service.Security.EnforceSecurityRoles = true;
+            env.Security.EnforceSecurityRoles = true;
             var role = new SecurityRole("Reader")
                 .AddPrivilege("account", PrivilegeType.Read, PrivilegeDepth.Organization);
-            service.Security.AssignRole(service.CallerId, role);
+            env.Security.AssignRole(service.CallerId, role);
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Update(new Entity("account", id) { ["name"] = "Updated" }));
@@ -175,10 +189,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Delete_WithoutRole_ThrowsWhenEnforcementEnabled()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
-            service.Security.EnforceSecurityRoles = true;
+            env.Security.EnforceSecurityRoles = true;
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Delete("account", id));
@@ -190,8 +205,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CrudWithFullRole_AllOperationsSucceed()
         {
-            var service = new FakeOrganizationService();
-            service.Security.EnforceSecurityRoles = true;
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Security.EnforceSecurityRoles = true;
 
             var role = new SecurityRole("System Administrator")
                 .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization)
@@ -199,7 +215,7 @@ namespace Fake4Dataverse.Tests
                 .AddPrivilege("account", PrivilegeType.Write, PrivilegeDepth.Organization)
                 .AddPrivilege("account", PrivilegeType.Delete, PrivilegeDepth.Organization);
 
-            service.Security.AssignRole(service.CallerId, role);
+            env.Security.AssignRole(service.CallerId, role);
 
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
@@ -235,17 +251,18 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ClearRoles_RemovesAllRoles()
         {
-            var service = new FakeOrganizationService();
-            service.Security.EnforceSecurityRoles = true;
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Security.EnforceSecurityRoles = true;
 
             var role = new SecurityRole("Admin")
                 .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization);
-            service.Security.AssignRole(service.CallerId, role);
+            env.Security.AssignRole(service.CallerId, role);
 
             // Should work
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
-            service.Security.ClearRoles(service.CallerId);
+            env.Security.ClearRoles(service.CallerId);
 
             // Should fail now
             Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
@@ -255,8 +272,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void MultipleRoles_CombinePrivileges()
         {
-            var service = new FakeOrganizationService();
-            service.Security.EnforceSecurityRoles = true;
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Security.EnforceSecurityRoles = true;
 
             var readerRole = new SecurityRole("Reader")
                 .AddPrivilege("account", PrivilegeType.Read, PrivilegeDepth.Organization);
@@ -264,8 +282,8 @@ namespace Fake4Dataverse.Tests
                 .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization)
                 .AddPrivilege("account", PrivilegeType.Write, PrivilegeDepth.Organization);
 
-            service.Security.AssignRole(service.CallerId, readerRole);
-            service.Security.AssignRole(service.CallerId, writerRole);
+            env.Security.AssignRole(service.CallerId, readerRole);
+            env.Security.AssignRole(service.CallerId, writerRole);
 
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
@@ -277,7 +295,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_AutoSetsOwnerId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var userId = Guid.NewGuid();
             service.CallerId = userId;
 
@@ -293,7 +312,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_ExplicitOwnerId_IsPreserved()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var teamId = Guid.NewGuid();
 
             var id = service.Create(new Entity("account")
@@ -311,7 +331,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GrantAccessRequest_SharesRecord()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var ownerId = service.CallerId;
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
@@ -341,7 +362,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ModifyAccessRequest_ReplacesAccess()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             var otherUser = Guid.NewGuid();
 
@@ -380,7 +402,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RevokeAccessRequest_RemovesAccess()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             var otherUser = Guid.NewGuid();
 
@@ -414,7 +437,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrievePrincipalAccess_OwnerHasFullAccess()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var ownerId = service.CallerId;
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
@@ -434,7 +458,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrievePrincipalAccess_NonOwnerNoSharing_HasNoAccess()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             var otherUser = Guid.NewGuid();
 
@@ -450,7 +475,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GrantAccess_Cumulative()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             var otherUser = Guid.NewGuid();
 
@@ -489,13 +515,14 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrievePrincipalAccess_RoleBasedAccess_IncludedInResult()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
             var otherUser = Guid.NewGuid();
 
             var role = new SecurityRole("Reader")
                 .AddPrivilege("account", PrivilegeType.Read, PrivilegeDepth.Organization);
-            service.Security.AssignRole(otherUser, role);
+            env.Security.AssignRole(otherUser, role);
 
             var response = (RetrievePrincipalAccessResponse)service.Execute(new RetrievePrincipalAccessRequest
             {
@@ -510,7 +537,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Assign_ChangesOwner()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var newOwner = Guid.NewGuid();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
@@ -529,7 +557,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void TeamMember_InheritsTeamRole_CanPerformOperation()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+            var service = env.CreateOrganizationService();
             var teamId = Guid.NewGuid();
             var userId = service.CallerId;
 
@@ -539,8 +568,8 @@ namespace Fake4Dataverse.Tests
                 .AddPrivilege("account", PrivilegeType.Read, PrivilegeDepth.Organization);
 
             // Assign role to team, add user to team
-            service.Security.AssignTeamRole(teamId, role);
-            service.Security.AddTeamMember(teamId, userId);
+            env.Security.AssignTeamRole(teamId, role);
+            env.Security.AddTeamMember(teamId, userId);
 
             // User should be able to create via team role
             var id = service.Create(new Entity("account") { ["name"] = "TeamCreated" });
@@ -550,12 +579,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void TeamMember_WithoutTeamRole_CannotPerformOperation()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+            var service = env.CreateOrganizationService();
             var teamId = Guid.NewGuid();
             var userId = service.CallerId;
 
             // Team has no roles
-            service.Security.AddTeamMember(teamId, userId);
+            env.Security.AddTeamMember(teamId, userId);
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Create(new Entity("account") { ["name"] = "NoRoleTeam" }));
@@ -564,7 +594,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AccessTeam_GrantsRecordAccess_ToTeamMembers()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+            var service = env.CreateOrganizationService();
             var ownerId = Guid.NewGuid();
             var teamId = Guid.NewGuid();
             var userId = service.CallerId;
@@ -573,22 +604,22 @@ namespace Fake4Dataverse.Tests
             var ownerRole = new SecurityRole("Owner")
                 .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization)
                 .AddPrivilege("account", PrivilegeType.Read, PrivilegeDepth.Organization);
-            service.Security.AssignRole(ownerId, ownerRole);
+            env.Security.AssignRole(ownerId, ownerRole);
 
             // Give user minimal read through team
             var readRole = new SecurityRole("Reader")
                 .AddPrivilege("account", PrivilegeType.Read, PrivilegeDepth.Organization);
-            service.Security.AssignRole(userId, readRole);
+            env.Security.AssignRole(userId, readRole);
 
             // Add user to access team
-            service.Security.AddTeamMember(teamId, userId);
+            env.Security.AddTeamMember(teamId, userId);
 
             // Create entity as owner
             service.CallerId = ownerId;
             var id = service.Create(new Entity("account") { ["name"] = "SharedViaTeam" });
 
             // Grant team access
-            service.Security.GrantTeamAccess("account", id, teamId, AccessRights.ReadAccess);
+            env.Security.GrantTeamAccess("account", id, teamId, AccessRights.ReadAccess);
 
             // Switch to user, should be able to read
             service.CallerId = userId;
@@ -599,17 +630,18 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RemoveTeamMember_LosesTeamRole()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+            var service = env.CreateOrganizationService();
             var teamId = Guid.NewGuid();
             var userId = service.CallerId;
 
             var role = new SecurityRole("TeamRole")
                 .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization);
-            service.Security.AssignTeamRole(teamId, role);
-            service.Security.AddTeamMember(teamId, userId);
+            env.Security.AssignTeamRole(teamId, role);
+            env.Security.AddTeamMember(teamId, userId);
 
             // Remove from team
-            service.Security.RemoveTeamMember(teamId, userId);
+            env.Security.RemoveTeamMember(teamId, userId);
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Create(new Entity("account") { ["name"] = "ShouldFail" }));
@@ -620,7 +652,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UseSystemContext_BypassesSecurityChecks()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+            var service = env.CreateOrganizationService();
             // No roles assigned, but system context bypasses checks
             service.UseSystemContext = true;
 
@@ -634,7 +667,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UseSystemContext_False_EnforcesSecurityChecks()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+            var service = env.CreateOrganizationService();
             service.UseSystemContext = false;
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(() =>

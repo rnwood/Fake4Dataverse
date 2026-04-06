@@ -11,9 +11,10 @@ namespace Fake4Dataverse.Tests
         public void AdvanceTime_WithFakeClock_AdvancesTime()
         {
             var clock = new FakeClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            env.Clock = clock;
 
-            service.AdvanceTime(TimeSpan.FromHours(2));
+            env.AdvanceTime(TimeSpan.FromHours(2));
 
             Assert.Equal(new DateTime(2026, 1, 1, 2, 0, 0, DateTimeKind.Utc), clock.UtcNow);
         }
@@ -21,19 +22,21 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AdvanceTime_WithSystemClock_Throws()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
 
-            Assert.Throws<InvalidOperationException>(() => service.AdvanceTime(TimeSpan.FromHours(1)));
+            Assert.Throws<InvalidOperationException>(() => env.AdvanceTime(TimeSpan.FromHours(1)));
         }
 
         [Fact]
         public void AdvanceTime_AffectsCreatedOn()
         {
             var clock = new FakeClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Clock = clock;
 
             var id1 = service.Create(new Entity("account") { ["name"] = "First" });
-            service.AdvanceTime(TimeSpan.FromDays(1));
+            env.AdvanceTime(TimeSpan.FromDays(1));
             var id2 = service.Create(new Entity("account") { ["name"] = "Second" });
 
             var e1 = service.Retrieve("account", id1, new ColumnSet("createdon"));
@@ -47,10 +50,12 @@ namespace Fake4Dataverse.Tests
         public void AdvanceTime_AffectsModifiedOn()
         {
             var clock = new FakeClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Clock = clock;
 
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
-            service.AdvanceTime(TimeSpan.FromHours(6));
+            env.AdvanceTime(TimeSpan.FromHours(6));
             service.Update(new Entity("account", id) { ["name"] = "Updated" });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet("createdon", "modifiedon"));
@@ -62,10 +67,12 @@ namespace Fake4Dataverse.Tests
         public void AdvanceTime_AffectsDateFiltering()
         {
             var clock = new FakeClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Clock = clock;
 
             service.Create(new Entity("account") { ["name"] = "Old" });
-            service.AdvanceTime(TimeSpan.FromDays(7));
+            env.AdvanceTime(TimeSpan.FromDays(7));
             service.Create(new Entity("account") { ["name"] = "New" });
 
             var query = new QueryExpression("account")
@@ -105,11 +112,12 @@ namespace Fake4Dataverse.Tests
         public void AdvanceTime_MultipleAdvances_Accumulate()
         {
             var clock = new FakeClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            env.Clock = clock;
 
-            service.AdvanceTime(TimeSpan.FromHours(1));
-            service.AdvanceTime(TimeSpan.FromHours(2));
-            service.AdvanceTime(TimeSpan.FromMinutes(30));
+            env.AdvanceTime(TimeSpan.FromHours(1));
+            env.AdvanceTime(TimeSpan.FromHours(2));
+            env.AdvanceTime(TimeSpan.FromMinutes(30));
 
             Assert.Equal(new DateTime(2026, 1, 1, 3, 30, 0, DateTimeKind.Utc), clock.UtcNow);
         }

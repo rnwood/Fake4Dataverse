@@ -10,10 +10,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromCsv_BasicData_CreatesEntities()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var csv = "logicalName,name,telephone1\naccount,Contoso,555-1234\naccount,Fabrikam,555-5678";
 
-            service.SeedFromCsv(csv);
+            env.SeedFromCsv(csv);
 
             var result = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Equal(2, result.Entities.Count);
@@ -22,11 +23,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromCsv_WithIdColumn_SetsEntityId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = Guid.NewGuid();
             var csv = $"logicalName,id,name\naccount,{id},Contoso";
 
-            service.SeedFromCsv(csv);
+            env.SeedFromCsv(csv);
 
             var entity = service.Retrieve("account", id, new ColumnSet("name"));
             Assert.Equal("Contoso", entity.GetAttributeValue<string>("name"));
@@ -35,10 +37,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromCsv_QuotedFields_HandlesCommasInValues()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var csv = "logicalName,name,description\naccount,\"Contoso, Ltd.\",\"A large company\"";
 
-            service.SeedFromCsv(csv);
+            env.SeedFromCsv(csv);
 
             var result = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Single(result.Entities);
@@ -48,10 +51,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromCsv_EmptyLines_SkipsBlankRows()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var csv = "logicalName,name\naccount,Contoso\n\naccount,Fabrikam\n";
 
-            service.SeedFromCsv(csv);
+            env.SeedFromCsv(csv);
 
             var result = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Equal(2, result.Entities.Count);
@@ -60,31 +64,32 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromCsv_NullInput_ThrowsArgumentNullException()
         {
-            var service = new FakeOrganizationService();
-            Assert.Throws<ArgumentNullException>(() => service.SeedFromCsv(null!));
+            var env = new FakeDataverseEnvironment();
+            Assert.Throws<ArgumentNullException>(() => env.SeedFromCsv(null!));
         }
 
         [Fact]
         public void SeedFromCsv_HeaderOnly_NoError()
         {
-            var service = new FakeOrganizationService();
-            Assert.Throws<ArgumentException>(() => service.SeedFromCsv("logicalName,name"));
+            var env = new FakeDataverseEnvironment();
+            Assert.Throws<ArgumentException>(() => env.SeedFromCsv("logicalName,name"));
         }
 
         [Fact]
         public void SeedFromCsv_MissingLogicalNameHeader_ThrowsArgumentException()
         {
-            var service = new FakeOrganizationService();
-            Assert.Throws<ArgumentException>(() => service.SeedFromCsv("name,phone\nContoso,555"));
+            var env = new FakeDataverseEnvironment();
+            Assert.Throws<ArgumentException>(() => env.SeedFromCsv("name,phone\nContoso,555"));
         }
 
         [Fact]
         public void SeedFromCsv_EmptyFieldsSkipped()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var csv = "logicalName,name,phone\naccount,Contoso,\naccount,,555";
 
-            service.SeedFromCsv(csv);
+            env.SeedFromCsv(csv);
 
             var result = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Equal(2, result.Entities.Count);

@@ -12,11 +12,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Seed_SingleEntity_CanBeRetrieved()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = Guid.NewGuid();
             var entity = new Entity("account", id) { ["name"] = "Contoso" };
 
-            service.Seed(entity);
+            env.Seed(entity);
 
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
             Assert.Equal("Contoso", retrieved.GetAttributeValue<string>("name"));
@@ -25,11 +26,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Seed_MultipleEntities()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id1 = Guid.NewGuid();
             var id2 = Guid.NewGuid();
 
-            service.Seed(
+            env.Seed(
                 new Entity("account", id1) { ["name"] = "Contoso" },
                 new Entity("account", id2) { ["name"] = "Fabrikam" }
             );
@@ -41,12 +43,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Seed_DoesNotTriggerPipeline()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool pipelineCalled = false;
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, ctx => pipelineCalled = true);
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, ctx => pipelineCalled = true);
 
             var id = Guid.NewGuid();
-            service.Seed(new Entity("account", id) { ["name"] = "Contoso" });
+            env.Seed(new Entity("account", id) { ["name"] = "Contoso" });
 
             Assert.False(pipelineCalled);
         }
@@ -54,9 +57,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Seed_DoesNotSetAutoFields()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = Guid.NewGuid();
-            service.Seed(new Entity("account", id) { ["name"] = "Contoso" });
+            env.Seed(new Entity("account", id) { ["name"] = "Contoso" });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
             Assert.False(retrieved.Contains("createdon"));
@@ -68,8 +72,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Seed_DoesNotLogToOperationLog()
         {
-            var service = new FakeOrganizationService();
-            service.Seed(new Entity("account", Guid.NewGuid()) { ["name"] = "Contoso" });
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Seed(new Entity("account", Guid.NewGuid()) { ["name"] = "Contoso" });
 
             Assert.Empty(service.OperationLog.Records);
         }
@@ -77,10 +82,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Seed_WithGeneratedId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Contoso" };
 
-            service.Seed(entity);
+            env.Seed(entity);
 
             var result = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Single(result.Entities);
@@ -90,14 +96,15 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Seed_IEnumerable_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entities = new List<Entity>
             {
                 new Entity("account", Guid.NewGuid()) { ["name"] = "A" },
                 new Entity("account", Guid.NewGuid()) { ["name"] = "B" }
             };
 
-            service.Seed(entities);
+            env.Seed(entities);
 
             var result = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Equal(2, result.Entities.Count);
@@ -106,11 +113,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromJson_BasicFormat()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = Guid.NewGuid();
             var json = $@"[{{""logicalName"": ""account"", ""id"": ""{id}"", ""attributes"": {{""name"": ""Contoso""}}}}]";
 
-            service.SeedFromJson(json);
+            env.SeedFromJson(json);
 
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
             Assert.Equal("Contoso", retrieved.GetAttributeValue<string>("name"));
@@ -119,7 +127,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromJson_MultipleEntities()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id1 = Guid.NewGuid();
             var id2 = Guid.NewGuid();
             var json = $@"[
@@ -127,7 +136,7 @@ namespace Fake4Dataverse.Tests
                 {{""logicalName"": ""contact"", ""id"": ""{id2}"", ""attributes"": {{""lastname"": ""Doe""}}}}
             ]";
 
-            service.SeedFromJson(json);
+            env.SeedFromJson(json);
 
             Assert.Equal("Contoso", service.Retrieve("account", id1, new ColumnSet(true)).GetAttributeValue<string>("name"));
             Assert.Equal("Doe", service.Retrieve("contact", id2, new ColumnSet(true)).GetAttributeValue<string>("lastname"));
@@ -136,11 +145,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromJson_NumericAttributes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = Guid.NewGuid();
             var json = $@"[{{""logicalName"": ""account"", ""id"": ""{id}"", ""attributes"": {{""employeecount"": 42, ""revenue"": 1000.50}}}}]";
 
-            service.SeedFromJson(json);
+            env.SeedFromJson(json);
 
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
             Assert.Equal(42, retrieved.GetAttributeValue<int>("employeecount"));
@@ -150,11 +160,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromJson_BooleanAttribute()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = Guid.NewGuid();
             var json = $@"[{{""logicalName"": ""account"", ""id"": ""{id}"", ""attributes"": {{""active"": true}}}}]";
 
-            service.SeedFromJson(json);
+            env.SeedFromJson(json);
 
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
             Assert.True(retrieved.GetAttributeValue<bool>("active"));
@@ -163,10 +174,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromJson_WithoutId_GeneratesId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var json = @"[{""logicalName"": ""account"", ""attributes"": {""name"": ""Contoso""}}]";
 
-            service.SeedFromJson(json);
+            env.SeedFromJson(json);
 
             var result = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Single(result.Entities);
@@ -233,10 +245,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EntityBuilder_IntegratesWithSeed()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = Guid.NewGuid();
 
-            service.Seed(
+            env.Seed(
                 new EntityBuilder("account")
                     .WithId(id)
                     .WithName("Contoso")

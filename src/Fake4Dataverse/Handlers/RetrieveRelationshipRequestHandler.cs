@@ -13,7 +13,7 @@ namespace Fake4Dataverse.Handlers
         {
             var retrieveRequest = (RetrieveRelationshipRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             if (string.IsNullOrEmpty(retrieveRequest.Name))
                 throw DataverseFault.InvalidArgumentFault("Relationship name is required.");

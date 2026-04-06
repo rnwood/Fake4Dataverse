@@ -56,35 +56,36 @@ namespace Fake4Dataverse.Tests
         public void OptionsConstructor_SetsValidateWithMetadata()
         {
             var options = FakeOrganizationServiceOptions.Strict;
-            var service = new FakeOrganizationService(options);
+            var env = new FakeDataverseEnvironment(options);
 
-            Assert.True(service.ValidateWithMetadata);
-            Assert.Same(options, service.Options);
+            Assert.True(env.Options.ValidateWithMetadata);
+            Assert.Same(options, env.Options);
         }
 
         [Fact]
         public void OptionsConstructor_SetsEnforceSecurityRoles()
         {
             var options = new FakeOrganizationServiceOptions { EnforceSecurityRoles = true };
-            var service = new FakeOrganizationService(options);
+            var env = new FakeDataverseEnvironment(options);
 
-            Assert.True(service.Security.EnforceSecurityRoles);
+            Assert.True(env.Security.EnforceSecurityRoles);
         }
 
         [Fact]
         public void DefaultConstructor_UsesDefaultOptions()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
 
-            Assert.NotNull(service.Options);
-            Assert.True(service.Options.AutoSetTimestamps);
-            Assert.True(service.Options.EnableOperationLog);
+            Assert.NotNull(env.Options);
+            Assert.True(env.Options.AutoSetTimestamps);
+            Assert.True(env.Options.EnableOperationLog);
         }
 
         [Fact]
         public void Lenient_Create_DoesNotAutoSetTimestamps()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
 
             var id = service.Create(entity);
@@ -97,7 +98,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Lenient_Create_DoesNotAutoSetOwner()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
 
             var id = service.Create(entity);
@@ -111,7 +113,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Lenient_Create_DoesNotAutoSetStateCode()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
 
             var id = service.Create(entity);
@@ -124,7 +127,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Lenient_Create_DoesNotAutoSetVersionNumber()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
 
             var id = service.Create(entity);
@@ -136,7 +140,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Lenient_Update_DoesNotAutoSetFields()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
             var id = service.Create(entity);
 
@@ -152,7 +157,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Lenient_DisablesOperationLog()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Test" });
 
             Assert.Empty(service.OperationLog.Records);
@@ -161,7 +167,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EnableOperationLog_True_RecordsOperations()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Test" });
 
             Assert.Single(service.OperationLog.Records);
@@ -171,7 +178,8 @@ namespace Fake4Dataverse.Tests
         public void Default_Create_StillAutoSetsAllFields()
         {
             // Ensure default behavior is unchanged
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
             var id = service.Create(entity);
 
@@ -191,7 +199,8 @@ namespace Fake4Dataverse.Tests
         public void IndividualOption_AutoSetTimestamps_CanBeToggledAlone()
         {
             var options = new FakeOrganizationServiceOptions { AutoSetTimestamps = false };
-            var service = new FakeOrganizationService(options);
+            var env = new FakeDataverseEnvironment(options);
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
             var id = service.Create(entity);
 
@@ -207,9 +216,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Lenient_Pipeline_NotTriggered()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             bool pipelineFired = false;
-            service.Pipeline.RegisterStep("Create", Pipeline.PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", Pipeline.PipelineStage.PreOperation, ctx =>
             {
                 pipelineFired = true;
             });
@@ -222,9 +232,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Default_Pipeline_StillTriggered()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool pipelineFired = false;
-            service.Pipeline.RegisterStep("Create", Pipeline.PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", Pipeline.PipelineStage.PreOperation, ctx =>
             {
                 pipelineFired = true;
             });
@@ -237,10 +248,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Strict_EnablesValidation()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
 
-            Assert.True(service.ValidateWithMetadata);
-            Assert.True(service.Security.EnforceSecurityRoles);
+            Assert.True(env.Options.ValidateWithMetadata);
+            Assert.True(env.Security.EnforceSecurityRoles);
         }
     }
 }

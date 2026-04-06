@@ -14,7 +14,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ParallelCreates_AllSucceed()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             const int count = 500;
             var ids = new Guid[count];
 
@@ -31,7 +32,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task ParallelReads_WhileWriting_NoExceptions()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             const int seedCount = 100;
             var seedIds = new List<Guid>();
             for (int i = 0; i < seedCount; i++)
@@ -78,7 +80,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ParallelUpdates_SameEntity_AllApply()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Original", ["counter"] = 0 });
 
             const int count = 100;
@@ -97,7 +100,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ParallelCreateAndDelete_NoDeadlocks()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             const int iterations = 200;
             var created = new System.Collections.Concurrent.ConcurrentBag<Guid>();
 
@@ -121,7 +125,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task ParallelHandlerRegistration_AndExecution_ThreadSafe()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             const int count = 50;
             var barrier = new Barrier(count + 1);
 
@@ -129,7 +134,7 @@ namespace Fake4Dataverse.Tests
             var registrations = Enumerable.Range(0, count).Select(i => Task.Run(() =>
             {
                 barrier.SignalAndWait();
-                service.HandlerRegistry.Register(new Handlers.WhoAmIRequestHandler
+                env.HandlerRegistry.Register(new Handlers.WhoAmIRequestHandler
                 {
                     UserId = Guid.NewGuid()
                 });

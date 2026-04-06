@@ -16,8 +16,9 @@ namespace Fake4Dataverse.Samples.Plugin.Tests
         public void CreateAccount_ExecutesPlugin_AndCreatesRelatedContact()
         {
             // Arrange
-            var service = new FakeOrganizationService();
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
 
             // Act
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -41,22 +42,24 @@ namespace Fake4Dataverse.Samples.Plugin.Tests
         public void CreateAccount_ExecutesPlugin_AndCapturesTrace()
         {
             // Arrange
-            var service = new FakeOrganizationService();
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
 
             // Act
             service.Create(new Entity("account") { ["name"] = "Fabrikam" });
 
             // Assert
-            Assert.Contains(service.Pipeline.Traces, trace => trace.IndexOf("Created primary contact for account", StringComparison.Ordinal) >= 0);
+            Assert.Contains(env.Pipeline.Traces, trace => trace.IndexOf("Created primary contact for account", StringComparison.Ordinal) >= 0);
         }
 
         [Fact]
         public void CreateAccount_WithoutName_DoesNotCreateContact()
         {
             // Arrange
-            var service = new FakeOrganizationService();
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
 
             // Act
             service.Create(new Entity("account"));

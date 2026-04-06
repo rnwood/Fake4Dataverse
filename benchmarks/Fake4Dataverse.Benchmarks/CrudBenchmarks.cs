@@ -26,6 +26,7 @@ namespace Fake4Dataverse.Benchmarks
     public class CrudBenchmarks
     {
         private FakeOrganizationService _f4d = null!;
+        private FakeDataverseEnvironment _f4dEnv = null!;
         private Guid _f4dPreseededId;
 
 #if NET462
@@ -39,7 +40,8 @@ namespace Fake4Dataverse.Benchmarks
         [GlobalSetup]
         public void Setup()
         {
-            _f4d = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            _f4dEnv = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            _f4d = _f4dEnv.CreateOrganizationService();
             _f4dPreseededId = _f4d.Create(new Entity("account") { ["name"] = "Preset" });
 
 #if NET462

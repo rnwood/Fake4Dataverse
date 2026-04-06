@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_ReturnsAllEntities()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam" });
 
@@ -24,7 +25,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithEqualFilter_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam" });
 
@@ -40,7 +42,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithLikeFilter_MatchesWildcard()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
 
@@ -55,7 +58,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithInFilter_MatchesMultipleValues()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["statecode"] = new OptionSetValue(0) });
             service.Create(new Entity("account") { ["statecode"] = new OptionSetValue(1) });
             service.Create(new Entity("account") { ["statecode"] = new OptionSetValue(2) });
@@ -71,7 +75,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithNullFilter_MatchesNullAttributes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account")); // no name attribute
 
@@ -86,7 +91,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithTopCount_LimitsResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             for (int i = 0; i < 10; i++)
                 service.Create(new Entity("account") { ["name"] = $"Account {i}" });
 
@@ -99,7 +105,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithOrdering_SortsResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Charlie" });
             service.Create(new Entity("account") { ["name"] = "Alice" });
             service.Create(new Entity("account") { ["name"] = "Bob" });
@@ -117,7 +124,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_OnlyReturnsMatchingEntityType()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
@@ -131,7 +139,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithColumnSet_ProjectsColumns()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso", ["revenue"] = new Money(1000m) });
 
             var query = new QueryExpression("account") { ColumnSet = new ColumnSet("name") };
@@ -144,7 +153,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_Distinct_DeduplicatesJoinedResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var parentId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", parentId) });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", parentId) });
@@ -159,7 +169,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithoutDistinct_AllowsDuplicateJoinedResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var parentId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", parentId) });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", parentId) });
@@ -174,7 +185,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_TotalRecordCount_SetCorrectlyWhenNoMoreRecords()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "B" });
 
@@ -188,7 +200,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_TotalRecordCount_NegativeOneWhenMoreRecords()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             for (int i = 0; i < 5; i++)
                 service.Create(new Entity("account") { ["name"] = $"Acct{i}" });
 
@@ -203,7 +216,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_EqualFilter_CaseInsensitive()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var query = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
@@ -216,7 +230,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_NullOrCombination_ReturnsRecordsMatchingEitherCondition()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso", ["city"] = "Seattle" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam" }); // city is null
             service.Create(new Entity("account") { ["city"] = "Portland" }); // name is null
@@ -234,7 +249,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_NullAndCombination_ReturnsRecordsMatchingBothConditions()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso", ["city"] = "Seattle" });
             service.Create(new Entity("account") { ["name"] = "Contoso" }); // city is null
             service.Create(new Entity("account") { ["name"] = "Fabrikam", ["city"] = "Portland" });
@@ -252,7 +268,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_EntityReferenceName_PopulatedFromRelatedEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact")
             {

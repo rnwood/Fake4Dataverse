@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void QualifyLead_CreatesAccountContactOpportunity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var leadId = service.Create(new Entity("lead")
             {
                 ["firstname"] = "John",
@@ -39,7 +40,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CloseIncident_ResolvesCase()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var incidentId = service.Create(new Entity("incident") { ["title"] = "Test Case" });
 
             var resolution = new Entity("incidentresolution");
@@ -60,7 +62,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void WinOpportunity_ClosesAsWon()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var oppId = service.Create(new Entity("opportunity") { ["name"] = "Big Deal" });
 
             var oppClose = new Entity("opportunityclose");
@@ -80,7 +83,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void LoseOpportunity_ClosesAsLost()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var oppId = service.Create(new Entity("opportunity") { ["name"] = "Lost Deal" });
 
             var oppClose = new Entity("opportunityclose");
@@ -100,7 +104,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CloseQuote_ClosesQuote()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var quoteId = service.Create(new Entity("quote") { ["name"] = "Test Quote" });
 
             var quoteClose = new Entity("quoteclose");
@@ -120,7 +125,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ReviseQuote_CreatesNewDraftCopy()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var quoteId = service.Create(new Entity("quote") { ["name"] = "Original Quote", ["description"] = "Test" });
 
             var request = new OrganizationRequest("ReviseQuote");
@@ -138,7 +144,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AddToQueue_CreatesQueueItem()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var caseId = service.Create(new Entity("incident") { ["title"] = "Queue Case" });
             var queueId = service.Create(new Entity("queue") { ["name"] = "Support Queue" });
 
@@ -157,7 +164,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RemoveFromQueue_DeletesQueueItem()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var caseId = service.Create(new Entity("incident") { ["title"] = "Queue Case" });
             var queueId = service.Create(new Entity("queue") { ["name"] = "Support Queue" });
 

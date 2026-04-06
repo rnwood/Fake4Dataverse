@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromJsonFile_LoadsEntitiesFromDisk()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var tempPath = Path.GetTempFileName();
 
             try
@@ -19,7 +20,7 @@ namespace Fake4Dataverse.Tests
                 File.WriteAllText(tempPath,
                     "[{\"logicalname\":\"account\",\"name\":\"Contoso\",\"numberofemployees\":42}]");
 
-                service.SeedFromJsonFile(tempPath);
+                env.SeedFromJsonFile(tempPath);
 
                 var accounts = service.RetrieveMultiple(new QueryExpression("account")
                 {
@@ -40,7 +41,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SeedFromCsvFile_LoadsEntitiesFromDisk()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var tempPath = Path.GetTempFileName();
 
             try
@@ -50,7 +52,7 @@ namespace Fake4Dataverse.Tests
                     "account,Contoso,1000" + Environment.NewLine +
                     "account,Fabrikam,2000");
 
-                service.SeedFromCsvFile(tempPath);
+                env.SeedFromCsvFile(tempPath);
 
                 var accounts = service.RetrieveMultiple(new QueryExpression("account")
                 {

@@ -13,7 +13,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_ReturnsNewGuid()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Contoso" };
 
             var id = service.Create(entity);
@@ -24,7 +25,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithExplicitId_UsesProvidedId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var expectedId = Guid.NewGuid();
             var entity = new Entity("account", expectedId) { ["name"] = "Contoso" };
 
@@ -36,7 +38,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_ReturnsCreatedEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Contoso" };
             var id = service.Create(entity);
 
@@ -49,7 +52,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_WithColumnSet_ReturnsOnlyRequestedColumns()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Contoso", ["revenue"] = new Money(1000m) };
             var id = service.Create(entity);
 
@@ -62,7 +66,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_NonExistent_ThrowsFaultException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Retrieve("account", Guid.NewGuid(), new ColumnSet(true)));
@@ -72,7 +77,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_ModifiesExistingEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             service.Update(new Entity("account", id) { ["name"] = "Fabrikam" });
@@ -84,7 +90,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Delete_RemovesEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             service.Delete("account", id);
@@ -96,7 +103,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Delete_NonExistent_ThrowsFaultException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Delete("account", Guid.NewGuid()));
@@ -106,11 +114,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Reset_ClearsAllData()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
-            service.Reset();
+            env.Reset();
 
             var accounts = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
             Assert.Empty(accounts.Entities);
@@ -119,7 +128,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_DuplicateId_ThrowsFaultException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
@@ -130,7 +140,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_EmptyString_StoredAsNull()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("lead") { ["subject"] = string.Empty });
 
             var retrieved = service.Retrieve("lead", id, new ColumnSet("subject"));
@@ -140,7 +151,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_EmptyString_StoredAsNull()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("lead") { ["subject"] = "nonemptystring" });
 
             service.Update(new Entity("lead", id) { ["subject"] = string.Empty });
@@ -152,7 +164,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithCreateRequest_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("contact") { ["firstname"] = "John" };
             var req = new CreateRequest { Target = entity };
 
@@ -166,7 +179,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_WithUpdateRequest_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("contact") { ["firstname"] = "John" });
             var update = new Entity("contact", id) { ["firstname"] = "Jane" };
 
@@ -179,7 +193,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Delete_WithDeleteRequest_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "ToDelete" });
 
             service.Execute(new DeleteRequest
@@ -194,7 +209,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_NullColumnSet_ReturnsAllAttributes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso", ["revenue"] = new Money(1000m) });
 
             // null ColumnSet should behave like AllColumns=true
@@ -207,7 +223,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_AlwaysIncludesId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             // Request only "name" column — Id should still be present
@@ -219,7 +236,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_WithEmptyColumnSet_StillReturnsId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet(false));
@@ -231,7 +249,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_NonExistentAttribute_SilentlyOmitted()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet("name", "nonexistent_field_xyz"));
@@ -243,7 +262,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_PartialAttributes_OnlyUpdatesProvided()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso", ["revenue"] = new Money(1000m) });
 
             // Update only name — revenue should remain unchanged
@@ -257,7 +277,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_NonExistent_ThrowsFaultException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Update(new Entity("account", Guid.NewGuid()) { ["name"] = "Ghost" }));
@@ -267,35 +288,40 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_NullEntity_ThrowsArgumentException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             Assert.Throws<ArgumentNullException>(() => service.Create(null!));
         }
 
         [Fact]
         public void Update_NullEntity_ThrowsArgumentException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             Assert.Throws<ArgumentNullException>(() => service.Update(null!));
         }
 
         [Fact]
         public void Create_EmptyEntityName_ThrowsArgumentException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             Assert.Throws<ArgumentException>(() => service.Create(new Entity("")));
         }
 
         [Fact]
         public void Update_EmptyId_ThrowsArgumentException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             Assert.Throws<ArgumentException>(() => service.Update(new Entity("account") { ["name"] = "X" }));
         }
 
         [Fact]
         public void Create_SetsPrimaryIdAttribute()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet(true));
@@ -307,7 +333,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_WithRetrieveRequest_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "TestReq" });
 
             var resp = (RetrieveResponse)service.Execute(new RetrieveRequest
@@ -322,7 +349,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_MultipleEntities_EachGetsUniqueId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var ids = new List<Guid>();
             for (int i = 0; i < 100; i++)
             {
@@ -335,7 +363,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_OverriddenCreatedOn_UsesBackdatedTimestamp()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var backdated = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             var entity = new Entity("account")
             {
@@ -352,7 +381,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithGenericOrganizationRequest_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("contact") { ["firstname"] = "Generic" };
             var request = new OrganizationRequest("Create");
             request["Target"] = entity;
@@ -368,7 +398,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_FormattedValuesPreserved_OnRetrieve()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Test" };
             entity.FormattedValues["statecode"] = "Active";
             var id = service.Create(entity);

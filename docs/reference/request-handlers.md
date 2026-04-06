@@ -25,10 +25,10 @@ You can register additional handlers at any time:
 
 ```csharp
 // Full handler class
-service.HandlerRegistry.Register(myHandler);
+env.HandlerRegistry.Register(myHandler);
 
 // Simple lambda shorthand for custom APIs
-service.RegisterCustomApi("my_Action", (req, svc) => new OrganizationResponse());
+env.RegisterCustomApi("my_Action", (req, svc) => new OrganizationResponse());
 ```
 
 Because later registrations take priority, a custom handler automatically
@@ -221,9 +221,10 @@ overrides any built-in handler for the same request type.
 Use `RegisterCustomApi` when you need a quick handler matched by request name:
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
-service.RegisterCustomApi("myorg_ApproveOrder", (request, svc) =>
+env.RegisterCustomApi("myorg_ApproveOrder", (request, svc) =>
 {
     var orderId = (Guid)request["Target"];
     var order = svc.Retrieve("salesorder", orderId, new ColumnSet("statecode"));
@@ -260,8 +261,9 @@ public class ApproveOrderRequestHandler : IOrganizationRequestHandler
 }
 
 // Register it
-var service = new FakeOrganizationService();
-service.HandlerRegistry.Register(new ApproveOrderRequestHandler());
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+env.HandlerRegistry.Register(new ApproveOrderRequestHandler());
 ```
 
 Later registrations take priority — register a custom handler to override any

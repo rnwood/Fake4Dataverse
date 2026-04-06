@@ -20,7 +20,7 @@ namespace Fake4Dataverse.Handlers
             var token = uploadRequest.FileContinuationToken;
             var blockData = uploadRequest.BlockData;
 
-            fakeService.AppendUploadBlock(token, blockData);
+            fakeService.Environment.AppendUploadBlock(token, blockData);
 
             return new UploadBlockResponse();
         }

@@ -10,7 +10,10 @@ namespace Fake4Dataverse.Tests
         private FakeOrganizationService CreateServiceWithClock(DateTime utcNow)
         {
             var clock = new FakeClock(utcNow);
-            return new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Clock = clock;
+            return service;
         }
 
         #region Comparison Operators
@@ -18,7 +21,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GreaterThan_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["revenue"] = new Money(100m) });
             service.Create(new Entity("account") { ["revenue"] = new Money(200m) });
             service.Create(new Entity("account") { ["revenue"] = new Money(300m) });
@@ -33,7 +37,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GreaterEqual_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["revenue"] = new Money(100m) });
             service.Create(new Entity("account") { ["revenue"] = new Money(200m) });
 
@@ -47,7 +52,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void LessThan_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["revenue"] = new Money(100m) });
             service.Create(new Entity("account") { ["revenue"] = new Money(200m) });
             service.Create(new Entity("account") { ["revenue"] = new Money(300m) });
@@ -62,7 +68,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void LessEqual_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["revenue"] = new Money(100m) });
             service.Create(new Entity("account") { ["revenue"] = new Money(200m) });
 
@@ -80,7 +87,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void BeginsWith_CaseInsensitive()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
 
@@ -93,7 +101,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EndsWith_CaseInsensitive()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
 
@@ -106,7 +115,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Contains_CaseInsensitive()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
 
@@ -119,7 +129,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DoesNotContain_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
 
@@ -132,7 +143,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotLike_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
 
@@ -149,7 +161,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Between_IntRange()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["employees"] = 50 });
             service.Create(new Entity("account") { ["employees"] = 150 });
             service.Create(new Entity("account") { ["employees"] = 250 });
@@ -163,7 +176,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotBetween_IntRange()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["employees"] = 50 });
             service.Create(new Entity("account") { ["employees"] = 150 });
             service.Create(new Entity("account") { ["employees"] = 250 });
@@ -177,7 +191,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Between_DateRange()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 10) });
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 20) });
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 30) });
@@ -497,7 +512,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void On_MatchesExactDate()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 15, 10, 30, 0) });
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 16, 10, 30, 0) });
 
@@ -510,7 +526,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void OnOrBefore_MatchesDateAndEarlier()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 14, 10, 0, 0) });
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 15, 23, 59, 0) });
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 16, 0, 1, 0) });
@@ -524,7 +541,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void OnOrAfter_MatchesDateAndLater()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 14, 23, 0, 0) });
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 15, 0, 0, 0) });
             service.Create(new Entity("task") { ["due"] = new DateTime(2026, 3, 16, 10, 0, 0) });
@@ -624,7 +642,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EqualUserId_MatchesCallerId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var callerId = service.CallerId;
             var otherId = Guid.NewGuid();
             service.Create(new Entity("task") { ["ownerid"] = new EntityReference("systemuser", callerId) });
@@ -639,7 +658,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotEqualUserId_ExcludesCallerId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var callerId = service.CallerId;
             service.Create(new Entity("task") { ["ownerid"] = new EntityReference("systemuser", callerId) });
             service.Create(new Entity("task") { ["ownerid"] = new EntityReference("systemuser", Guid.NewGuid()) });
@@ -657,7 +677,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotNull_FiltersNullValues()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account")); // no name
 
@@ -670,7 +691,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotEqual_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam" });
 
@@ -683,7 +705,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotIn_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "B" });
             service.Create(new Entity("account") { ["name"] = "C" });
@@ -697,7 +720,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DoesNotBeginWith_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam" });
 
@@ -712,7 +736,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DoesNotEndWith_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
 
@@ -727,7 +752,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void In_WithEmptyArray_ReturnsNoMatches()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var query = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
@@ -740,7 +766,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotIn_WithEmptyArray_ReturnsAll()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "B" });
 
@@ -754,7 +781,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotEqual_WithNull_ReturnsNonNullRecords()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account")); // no name
 
@@ -769,7 +797,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GreaterThan_WithNullValue_DoesNotMatch()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["revenue"] = new Money(100m) });
             service.Create(new Entity("account")); // no revenue
 
@@ -783,7 +812,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Equal_OnEntityReference_MatchesById()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var targetId = Guid.NewGuid();
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", targetId) });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", Guid.NewGuid()) });
@@ -798,7 +828,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Equal_OnOptionSetValue_MatchesByInt()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["statecode"] = new OptionSetValue(0) });
             service.Create(new Entity("account") { ["statecode"] = new OptionSetValue(1) });
 
@@ -816,7 +847,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Descending_Order()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Alice" });
             service.Create(new Entity("account") { ["name"] = "Charlie" });
             service.Create(new Entity("account") { ["name"] = "Bob" });
@@ -833,7 +865,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void MultiFieldOrdering()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("contact") { ["lastname"] = "Smith", ["firstname"] = "Bob" });
             service.Create(new Entity("contact") { ["lastname"] = "Smith", ["firstname"] = "Alice" });
             service.Create(new Entity("contact") { ["lastname"] = "Jones", ["firstname"] = "Charlie" });
@@ -855,7 +888,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Equal_OnInt_MatchesByValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["employeecount"] = 100 });
             service.Create(new Entity("account") { ["employeecount"] = 200 });
 
@@ -869,7 +903,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Equal_OnGuid_MatchesByValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var targetGuid = Guid.NewGuid();
             var otherGuid = Guid.NewGuid();
             service.Create(new Entity("account") { ["parentid"] = targetGuid });
@@ -885,7 +920,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Equal_OnDateTime_MatchesByValue()
         {
-            var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+            var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            var service = env.CreateOrganizationService();
             var date1 = new DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc);
             var date2 = new DateTime(2024, 6, 15, 12, 0, 0, DateTimeKind.Utc);
             service.Create(new Entity("task") { ["scheduledend"] = date1 });
@@ -901,7 +937,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Equal_OnMoney_MatchesByDecimalValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["revenue"] = new Money(1000m) });
             service.Create(new Entity("account") { ["revenue"] = new Money(2000m) });
 

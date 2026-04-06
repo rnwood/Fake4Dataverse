@@ -16,7 +16,7 @@ namespace Fake4Dataverse.Handlers
         {
             var retrieveRequest = (RetrieveEntityKeyRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var entityName = retrieveRequest.Parameters.ContainsKey("EntityLogicalName") ? (string)retrieveRequest.Parameters["EntityLogicalName"] : null;
             var keyName = retrieveRequest.Parameters.ContainsKey("LogicalName") ? (string)retrieveRequest.Parameters["LogicalName"] : null;

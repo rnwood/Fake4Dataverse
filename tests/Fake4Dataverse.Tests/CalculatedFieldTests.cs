@@ -11,8 +11,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CalculatedField_ComputedOnRetrieve()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterCalculatedField("contact", "fullname",
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterCalculatedField("contact", "fullname",
                 e => $"{e.GetAttributeValue<string>("firstname")} {e.GetAttributeValue<string>("lastname")}");
 
             var id = service.Create(new Entity("contact")
@@ -29,8 +30,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CalculatedField_ComputedOnRetrieveMultiple()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterCalculatedField("contact", "fullname",
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterCalculatedField("contact", "fullname",
                 e => $"{e.GetAttributeValue<string>("firstname")} {e.GetAttributeValue<string>("lastname")}");
 
             service.Create(new Entity("contact") { ["firstname"] = "John", ["lastname"] = "Doe" });
@@ -47,8 +49,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CalculatedField_NumericFormula()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterCalculatedField("opportunity", "totalvalue",
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterCalculatedField("opportunity", "totalvalue",
                 e =>
                 {
                     var price = e.GetAttributeValue<Money>("price");
@@ -72,8 +75,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RollupField_SumOfRelatedEntities()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterRollupField(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterRollupField(
                 "account", "totalrevenue",
                 "opportunity", "revenue",
                 "parentaccountid",
@@ -100,8 +104,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RollupField_CountOfRelatedEntities()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterRollupField(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterRollupField(
                 "account", "opportunitycount",
                 "opportunity", "opportunityid",
                 "parentaccountid",
@@ -133,8 +138,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RollupField_AvgOfRelatedEntities()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterRollupField(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterRollupField(
                 "account", "avgrevenue",
                 "opportunity", "revenue",
                 "parentaccountid",
@@ -161,12 +167,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RollupField_WithFilter()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var filter = new FilterExpression(LogicalOperator.And);
             filter.AddCondition("statecode", ConditionOperator.Equal, 0);
 
-            service.CalculatedFields.RegisterRollupField(
+            env.CalculatedFields.RegisterRollupField(
                 "account", "activerevenue",
                 "opportunity", "revenue",
                 "parentaccountid",
@@ -196,8 +203,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RollupField_NoRelatedRecords_ReturnsNull()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterRollupField(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterRollupField(
                 "account", "totalrevenue",
                 "opportunity", "revenue",
                 "parentaccountid",
@@ -213,13 +221,14 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RollupField_MinMax()
         {
-            var service = new FakeOrganizationService();
-            service.CalculatedFields.RegisterRollupField(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.CalculatedFields.RegisterRollupField(
                 "account", "minrevenue",
                 "opportunity", "revenue",
                 "parentaccountid",
                 RollupType.Min);
-            service.CalculatedFields.RegisterRollupField(
+            env.CalculatedFields.RegisterRollupField(
                 "account", "maxrevenue",
                 "opportunity", "revenue",
                 "parentaccountid",

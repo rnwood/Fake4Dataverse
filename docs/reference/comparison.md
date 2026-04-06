@@ -15,7 +15,7 @@ This guide provides a fair, comprehensive comparison to help you choose the righ
 | **.NET Targets** | `net462` + `net10.0`                    | v2: `net462` + `netcoreapp3.1`; v3: `netcoreapp3.1`+ | `net462`+                                |
 | **GitHub**       | [nicknow/Fake4Dataverse][gh-f4d]        | [DynamicsValue/fake-xrm-easy][gh-fxe]       | [delegateas/XrmMockup][gh-xm]                   |
 | **NuGet**        | `Fake4Dataverse`                        | `FakeXrmEasy.*` (split packages)             | `XrmMockup365`                                  |
-| **Min Setup**    | `new FakeOrganizationService()`         | `XrmFakedContext` + middleware builder        | Metadata XML files + `XrmMockup365` instance    |
+| **Min Setup**    | `new FakeDataverseEnvironment()` + `env.CreateOrganizationService()` | `XrmFakedContext` + middleware builder        | Metadata XML files + `XrmMockup365` instance    |
 
 [gh-f4d]: https://github.com/nicknow/Fake4Dataverse
 [gh-fxe]: https://github.com/DynamicsValue/fake-xrm-easy
@@ -99,7 +99,7 @@ This guide provides a fair, comprehensive comparison to help you choose the righ
 | **Thread Safety**              | ✅ `ReaderWriterLockSlim` | ⚠️ Limited      | ✅                   |
 | **Deep Cloning**               | ✅ Always            | ✅                   | ✅                   |
 | **Snapshot / Restore**         | ✅ `TakeSnapshot` / `RestoreSnapshot` | ❌  | ✅ File-based        |
-| **Scope (Auto-Rollback)**      | ✅ `service.Scope()` | ❌                  | ❌                   |
+| **Scope (Auto-Rollback)**      | ✅ `env.Scope()` | ❌                  | ❌                   |
 | **Time Control**               | ✅ `FakeClock` + `AdvanceTime` | ⚠️ Optional | ✅                  |
 | **Operation Log**              | ✅ Built-in          | ❌                   | ❌                   |
 | **Fluent Assertions**          | ✅ Built-in + 3 adapters | ❌              | ❌                   |
@@ -135,7 +135,7 @@ FakeXrmEasy v1 remains MIT-licensed but targets .NET Framework only and is no lo
 - You want a **modern, MIT-licensed** solution with no commercial restrictions.
 - **Test isolation** matters — `Scope()` for automatic rollback and `TakeSnapshot()` / `RestoreSnapshot()` for save-points.
 - You need **rich assertion support** via built-in extensions plus adapters for AwesomeAssertions, FluentAssertions, and Shouldly.
-- You value a **simple, one-line setup**: `new FakeOrganizationService()`.
+- You value an **environment + session model**: `new FakeDataverseEnvironment()` + `env.CreateOrganizationService()` for multi-user testing out of the box.
 - You want **deterministic time** with `FakeClock` and `AdvanceTime`.
 - You need an **operation log** for verifying what service calls were made.
 - You need **sync + async service interface parity** (`IOrganizationService` and `IOrganizationServiceAsync2`).

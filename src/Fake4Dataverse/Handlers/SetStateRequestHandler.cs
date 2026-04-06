@@ -25,7 +25,7 @@ namespace Fake4Dataverse.Handlers
                 var toState = setStateRequest.State.Value;
                 var toStatus = setStateRequest.Status.Value;
 
-                if (!fakeService.IsValidTransition(target.LogicalName, fromState, fromStatus, toState, toStatus))
+                if (!fakeService.Environment.IsValidTransition(target.LogicalName, fromState, fromStatus, toState, toStatus))
                 {
                     throw new FaultException<OrganizationServiceFault>(
                         new OrganizationServiceFault { Message = $"The status transition from state {fromState}/status {fromStatus} to state {toState}/status {toStatus} is not valid for entity '{target.LogicalName}'." },

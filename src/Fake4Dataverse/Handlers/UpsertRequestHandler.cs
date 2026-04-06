@@ -42,7 +42,7 @@ namespace Fake4Dataverse.Handlers
             }
             else if (existingId != Guid.Empty && fakeService != null)
             {
-                exists = fakeService.Store.Exists(target.LogicalName, existingId);
+                exists = fakeService.Environment.Store.Exists(target.LogicalName, existingId);
             }
 
             var response = new UpsertResponse();

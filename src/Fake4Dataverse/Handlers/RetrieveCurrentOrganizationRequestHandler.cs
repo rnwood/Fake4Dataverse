@@ -15,9 +15,9 @@ namespace Fake4Dataverse.Handlers
         {
             var fakeService = service as FakeOrganizationService;
             var detail = new Entity("organization");
-            detail["organizationid"] = fakeService?.OrganizationId ?? Guid.Empty;
-            detail["name"] = fakeService?.OrganizationName ?? "FakeOrganization";
-            detail["uniquename"] = fakeService?.OrganizationName ?? "FakeOrganization";
+            detail["organizationid"] = fakeService?.Environment.OrganizationId ?? Guid.Empty;
+            detail["name"] = fakeService?.Environment.OrganizationName ?? "FakeOrganization";
+            detail["uniquename"] = fakeService?.Environment.OrganizationName ?? "FakeOrganization";
 
             var response = new OrganizationResponse { ResponseName = "RetrieveCurrentOrganization" };
             response["Detail"] = detail;

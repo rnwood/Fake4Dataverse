@@ -156,7 +156,7 @@ query.Criteria.AddCondition("ownerid", ConditionOperator.EqualUserId);
 
 ## Notes
 
-- **Date operators use the service's Clock for "now"** — inject a `FakeClock` for deterministic testing of relative date filters.
+- **Date operators use the environment's Clock for "now"** — inject a `FakeClock` via `env.Clock` for deterministic testing of relative date filters.
 - **String operators are case-insensitive**, matching Dataverse behavior.
 - **`In` / `NotIn`** accept arrays of any comparable type (int, string, Guid, etc.).
 - **`Between` / `NotBetween`** require exactly two values and the comparison is inclusive.

@@ -18,7 +18,7 @@ namespace Fake4Dataverse.Handlers
         {
             var retrieveRequest = (RetrieveOptionSetRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var name = retrieveRequest.Name;
             OptionSetMetadataBase? sdkOptionSet = null;

@@ -5,26 +5,29 @@ Fake4Dataverse can optionally validate Create and Update operations against regi
 ## Overview
 
 - Metadata validation is **off by default** — entities and attributes work without any metadata registered.
-- Enable validation with the `ValidateWithMetadata` property or the `Strict` preset.
-- All metadata lives in `service.MetadataStore`, an `InMemoryMetadataStore`.
+- Enable validation with the `ValidateWithMetadata` option or the `Strict` preset.
+- All metadata lives in `env.MetadataStore`, an `InMemoryMetadataStore`.
 - **Auto-discovery mode** (`AutoDiscoverMetadata = true`) infers attribute types from entity data on the first Create.
 
 ## Enabling Validation
 
 ```csharp
 // Option 1: Use the Strict preset (also enables security, pipeline, etc.)
-var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+var service = env.CreateOrganizationService();
 
-// Option 2: Enable validation on an existing instance
-var service = new FakeOrganizationService();
-service.ValidateWithMetadata = true;
+// Option 2: Enable validation on an existing environment
+var env = new FakeDataverseEnvironment();
+env.Options.ValidateWithMetadata = true;
+var service = env.CreateOrganizationService();
 ```
 
 With validation off (the default), any attribute name and value is accepted:
 
 ```csharp
-var service = new FakeOrganizationService();
-service.MetadataStore.AddEntity("account")
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+env.MetadataStore.AddEntity("account")
     .WithStringAttribute("name", maxLength: 5);
 
 // Succeeds despite violating maxLength — validation is off.
@@ -36,7 +39,7 @@ service.Create(new Entity("account") { ["name"] = "VeryLongName" });
 Use the fluent `EntityMetadataBuilder` returned by `AddEntity`:
 
 ```csharp
-service.MetadataStore.AddEntity("account")
+env.MetadataStore.AddEntity("account")
     .WithPrimaryIdAttribute("accountid")
     .WithPrimaryNameAttribute("name")
     .WithSchemaName("Account")
@@ -50,7 +53,7 @@ Calling `AddEntity` with an existing logical name returns the existing builder, 
 The builder provides typed methods for every common Dataverse attribute type:
 
 ```csharp
-service.MetadataStore.AddEntity("account")
+env.MetadataStore.AddEntity("account")
     // Strings — optional maxLength
     .WithStringAttribute("name", maxLength: 200)
     .WithStringAttribute("description")
@@ -91,8 +94,10 @@ The `AttributeRequiredLevel` enum controls whether a field must be present:
 | `Recommended` | No enforcement (advisory only). |
 
 ```csharp
-var service = new FakeOrganizationService { ValidateWithMetadata = true };
-service.MetadataStore.AddEntity("contact")
+var env = new FakeDataverseEnvironment();
+env.Options.ValidateWithMetadata = true;
+var service = env.CreateOrganizationService();
+env.MetadataStore.AddEntity("contact")
     .WithStringAttribute("lastname", requiredLevel: AttributeRequiredLevel.SystemRequired);
 
 // Throws — lastname is missing
@@ -124,8 +129,10 @@ When `ValidateWithMetadata = true` and metadata is registered for the entity:
 All validation failures throw `FaultException<OrganizationServiceFault>` with a descriptive message:
 
 ```csharp
-var service = new FakeOrganizationService { ValidateWithMetadata = true };
-service.MetadataStore.AddEntity("account")
+var env = new FakeDataverseEnvironment();
+env.Options.ValidateWithMetadata = true;
+var service = env.CreateOrganizationService();
+env.MetadataStore.AddEntity("account")
     .WithIntegerAttribute("numberofemployees", minValue: 0, maxValue: 1000)
     .WithOptionSetAttribute("industrycode", validValues: new[] { 1, 2, 3 })
     .WithLookupAttribute("primarycontactid", targetEntityTypes: new[] { "contact" });
@@ -151,7 +158,7 @@ service.Create(new Entity("account")
 ### 1:N Relationships
 
 ```csharp
-service.MetadataStore.AddOneToManyRelationship(
+env.MetadataStore.AddOneToManyRelationship(
     schemaName: "account_contacts",
     referencedEntity: "account",
     referencedAttribute: "accountid",
@@ -162,7 +169,7 @@ service.MetadataStore.AddOneToManyRelationship(
 Or use the fluent builder:
 
 ```csharp
-service.MetadataStore.AddEntity("account")
+env.MetadataStore.AddEntity("account")
     .WithOneToManyRelationship(
         "account_contacts",
         "account", "accountid",
@@ -172,7 +179,7 @@ service.MetadataStore.AddEntity("account")
 ### N:N Relationships
 
 ```csharp
-service.MetadataStore.AddManyToManyRelationship(
+env.MetadataStore.AddManyToManyRelationship(
     schemaName: "account_contact_nn",
     entity1LogicalName: "account",
     entity2LogicalName: "contact",
@@ -182,7 +189,7 @@ service.MetadataStore.AddManyToManyRelationship(
 Or via the fluent builder:
 
 ```csharp
-service.MetadataStore.AddEntity("account")
+env.MetadataStore.AddEntity("account")
     .WithManyToManyRelationship("account_contact_nn", "account", "contact");
 ```
 
@@ -193,7 +200,7 @@ Attach a `CascadeConfiguration` to a 1:N relationship to control what happens to
 ```csharp
 using Fake4Dataverse.Metadata;
 
-service.MetadataStore.AddOneToManyRelationship(
+env.MetadataStore.AddOneToManyRelationship(
     "account_contacts",
     "account", "accountid",
     "contact", "parentcustomerid",
@@ -220,8 +227,9 @@ service.MetadataStore.AddOneToManyRelationship(
 
 ```csharp
 // With Restrict — deleting a parent with children throws
-var service = new FakeOrganizationService();
-service.MetadataStore.AddOneToManyRelationship(
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+env.MetadataStore.AddOneToManyRelationship(
     "account_contacts", "account", "accountid", "contact", "parentcustomerid",
     new CascadeConfiguration { Delete = CascadeType.Restrict });
 
@@ -237,11 +245,11 @@ service.Delete("account", parentId);
 Define alternate keys to enable Retrieve and Upsert by `KeyAttributeCollection`:
 
 ```csharp
-service.MetadataStore.AddEntity("account")
+env.MetadataStore.AddEntity("account")
     .WithAlternateKey("ak_accountnumber", "accountnumber");
 
 // Composite keys
-service.MetadataStore.AddEntity("contact")
+env.MetadataStore.AddEntity("contact")
     .WithAlternateKey("ak_name", "firstname", "lastname");
 ```
 
@@ -264,10 +272,10 @@ Instead of manually registering every attribute, scan your early-bound classes:
 using Fake4Dataverse.EarlyBound;
 
 // Register all entities from an assembly
-service.RegisterEarlyBoundEntities(typeof(Account).Assembly);
+env.RegisterEarlyBoundEntities(typeof(Account).Assembly);
 
 // Or register a single entity type
-service.RegisterEarlyBoundEntity<Account>();
+env.RegisterEarlyBoundEntity<Account>();
 ```
 
 This scans `[EntityLogicalName]` and `[AttributeLogicalName]` attributes on the class and its properties, and automatically:
@@ -308,8 +316,9 @@ Assert.Contains(response.EntityMetadata.Attributes,
 When `AutoDiscoverMetadata` is enabled, the store infers attribute types from the values in the first Create call:
 
 ```csharp
-var service = new FakeOrganizationService();
-service.MetadataStore.AutoDiscoverMetadata = true;
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+env.MetadataStore.AutoDiscoverMetadata = true;
 
 service.Create(new Entity("account")
 {
@@ -328,8 +337,8 @@ Assert.Contains(response.EntityMetadata.Attributes, a => a.LogicalName == "name"
 Auto-discovery does **not** overwrite explicitly registered metadata — you can combine both approaches:
 
 ```csharp
-service.MetadataStore.AutoDiscoverMetadata = true;
-service.MetadataStore.AddEntity("account")
+env.MetadataStore.AutoDiscoverMetadata = true;
+env.MetadataStore.AddEntity("account")
     .WithStringAttribute("name", maxLength: 100);
 
 // "name" retains its explicit maxLength; "phone" is auto-discovered

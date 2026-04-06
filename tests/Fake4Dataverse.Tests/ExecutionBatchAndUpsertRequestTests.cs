@@ -12,7 +12,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteMultipleRequest_ProcessesAllRequests()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var requests = new OrganizationRequestCollection
             {
                 new CreateRequest { Target = new Entity("account") { ["name"] = "A" } },
@@ -33,7 +34,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteMultipleRequest_ContinueOnError_False_StopsOnFirstError()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var existingId = Guid.NewGuid();
             service.Create(new Entity("account", existingId) { ["name"] = "Existing" });
 
@@ -58,7 +60,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteMultipleRequest_ContinueOnError_True_CollectsErrors()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var existingId = Guid.NewGuid();
             service.Create(new Entity("account", existingId) { ["name"] = "Existing" });
 
@@ -84,7 +87,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteTransactionRequest_ExecutesAll()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var requests = new OrganizationRequestCollection
             {
                 new CreateRequest { Target = new Entity("account") { ["name"] = "A" } },
@@ -102,7 +106,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteTransactionRequest_FailsOnError()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var existingId = Guid.NewGuid();
             service.Create(new Entity("account", existingId) { ["name"] = "Existing" });
 
@@ -122,7 +127,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpsertRequest_CreatesWhenNew()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (UpsertResponse)service.Execute(new UpsertRequest
             {
@@ -140,7 +146,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpsertRequest_UpdatesWhenExisting()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Original" });
 
             var response = (UpsertResponse)service.Execute(new UpsertRequest

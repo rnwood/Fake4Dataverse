@@ -15,7 +15,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateEntityRequest_WithValidEntity_Succeeds()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entityMetadata = new EntityMetadata();
             entityMetadata.LogicalName = "new_custom";
             entityMetadata.SchemaName = "new_Custom";
@@ -29,7 +30,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateEntityRequest_ThenRetrieve_ReturnsEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entityMetadata = new EntityMetadata();
             entityMetadata.LogicalName = "new_custom";
             entityMetadata.SchemaName = "new_Custom";
@@ -46,7 +48,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateEntityRequest_DuplicateEntity_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entityMetadata = new EntityMetadata();
             entityMetadata.LogicalName = "new_custom";
 
@@ -63,7 +66,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateEntityRequest_UpdatesSchemaName()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entityMetadata = new EntityMetadata();
             entityMetadata.LogicalName = "new_custom";
             entityMetadata.SchemaName = "OldName";
@@ -82,7 +86,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateEntityRequest_EntityNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entityMetadata = new EntityMetadata();
             entityMetadata.LogicalName = "nonexistent";
 
@@ -97,7 +102,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteEntityRequest_RemovesEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entityMetadata = new EntityMetadata();
             entityMetadata.LogicalName = "new_custom";
             service.Execute(new CreateEntityRequest { Entity = entityMetadata });
@@ -111,7 +117,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteEntityRequest_EntityNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new DeleteEntityRequest { LogicalName = "nonexistent" }));
@@ -124,8 +131,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateAttributeRequest_AddsAttribute()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var attr = new StringAttributeMetadata { LogicalName = "new_field" };
             var request = new CreateAttributeRequest();
@@ -148,7 +156,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateAttributeRequest_EntityNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var attr = new StringAttributeMetadata { LogicalName = "new_field" };
             var request = new CreateAttributeRequest();
             request.Parameters["EntityName"] = "nonexistent";
@@ -161,8 +170,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateAttributeRequest_DuplicateAttribute_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account").WithStringAttribute("name");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account").WithStringAttribute("name");
 
             var attr = new StringAttributeMetadata { LogicalName = "name" };
             var request = new CreateAttributeRequest();
@@ -180,8 +190,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateAttributeRequest_UpdatesAttribute()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account").WithStringAttribute("name");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account").WithStringAttribute("name");
 
             var attr = new IntegerAttributeMetadata { LogicalName = "name" };
             var request = new UpdateAttributeRequest();
@@ -202,8 +213,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateAttributeRequest_AttributeNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var attr = new StringAttributeMetadata { LogicalName = "nonexistent" };
             var request = new UpdateAttributeRequest();
@@ -221,8 +233,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteAttributeRequest_RemovesAttribute()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account").WithStringAttribute("name");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account").WithStringAttribute("name");
 
             service.Execute(new DeleteAttributeRequest
             {
@@ -241,8 +254,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteAttributeRequest_AttributeNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new DeleteAttributeRequest
@@ -259,9 +273,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateOneToManyRequest_CreatesRelationship()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
-            service.MetadataStore.AddEntity("contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
+            env.MetadataStore.AddEntity("contact");
 
             var rel = new OneToManyRelationshipMetadata
             {
@@ -281,7 +296,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateOneToManyRequest_ThenRetrieve_ReturnsRelationship()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var rel = new OneToManyRelationshipMetadata
             {
@@ -305,7 +321,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateOneToManyRequest_Duplicate_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var rel = new OneToManyRelationshipMetadata
             {
                 SchemaName = "account_contacts",
@@ -328,7 +345,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateManyToManyRequest_CreatesRelationship()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var rel = new ManyToManyRelationshipMetadata
             {
@@ -347,7 +365,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateManyToManyRequest_ThenRetrieve_ReturnsManyToMany()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var rel = new ManyToManyRelationshipMetadata
             {
                 SchemaName = "account_contact_nn",
@@ -373,8 +392,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateRelationshipRequest_UpdatesOneToMany()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddOneToManyRelationship(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddOneToManyRelationship(
                 "account_contacts", "account", "accountid", "contact", "parentcustomerid");
 
             var updated = new OneToManyRelationshipMetadata
@@ -398,7 +418,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateRelationshipRequest_NotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var rel = new OneToManyRelationshipMetadata
             {
                 SchemaName = "nonexistent",
@@ -419,8 +440,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteRelationshipRequest_RemovesRelationship()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddOneToManyRelationship(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddOneToManyRelationship(
                 "account_contacts", "account", "accountid", "contact", "parentcustomerid");
 
             service.Execute(new DeleteRelationshipRequest { Name = "account_contacts" });
@@ -432,7 +454,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteRelationshipRequest_NotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new DeleteRelationshipRequest { Name = "nonexistent" }));
@@ -445,8 +468,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveRelationshipRequest_OneToMany_ReturnsCorrectType()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddOneToManyRelationship(
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddOneToManyRelationship(
                 "account_contacts", "account", "accountid", "contact", "parentcustomerid");
 
             var response = (RetrieveRelationshipResponse)service.Execute(
@@ -458,8 +482,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveRelationshipRequest_ManyToMany_ReturnsCorrectType()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddManyToManyRelationship("account_contact_nn", "account", "contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddManyToManyRelationship("account_contact_nn", "account", "contact");
 
             var response = (RetrieveRelationshipResponse)service.Execute(
                 new RetrieveRelationshipRequest { Name = "account_contact_nn" });
@@ -470,7 +495,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveRelationshipRequest_NotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new RetrieveRelationshipRequest { Name = "nonexistent" }));
@@ -483,8 +509,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateEntityKeyRequest_CreatesKey()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var key = new EntityKeyMetadata();
             key.LogicalName = "account_number_key";
@@ -502,8 +529,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateEntityKeyRequest_ThenRetrieve_ReturnsKey()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var key = new EntityKeyMetadata();
             key.LogicalName = "account_number_key";
@@ -526,8 +554,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateEntityKeyRequest_DuplicateKey_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var key = new EntityKeyMetadata();
             key.LogicalName = "account_number_key";
@@ -550,8 +579,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteEntityKeyRequest_RemovesKey()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithAlternateKey("account_number_key", "accountnumber");
 
             service.Execute(new DeleteEntityKeyRequest
@@ -571,8 +601,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteEntityKeyRequest_NotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new DeleteEntityKeyRequest
@@ -589,8 +620,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ReactivateEntityKeyRequest_ExistingKey_Succeeds()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithAlternateKey("account_number_key", "accountnumber");
 
             var request = new ReactivateEntityKeyRequest();
@@ -603,8 +635,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ReactivateEntityKeyRequest_KeyNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var request = new ReactivateEntityKeyRequest();
             request.Parameters["EntityLogicalName"] = "account";
@@ -621,7 +654,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateOptionSetRequest_CreatesGlobalOptionSet()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata();
             optionSet.Name = "new_colors";
             optionSet.Options.Add(new OptionMetadata(new Label("Red", 1033), 1));
@@ -636,7 +670,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateOptionSetRequest_ThenRetrieve_ReturnsOptionSet()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata();
             optionSet.Name = "new_colors";
             optionSet.Options.Add(new OptionMetadata(new Label("Red", 1033), 1));
@@ -654,7 +689,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateOptionSetRequest_Duplicate_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "new_colors" };
 
             service.Execute(new CreateOptionSetRequest { OptionSet = optionSet });
@@ -670,7 +706,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateOptionSetRequest_UpdatesGlobalOptionSet()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "new_colors" };
             optionSet.Options.Add(new OptionMetadata(new Label("Red", 1033), 1));
             service.Execute(new CreateOptionSetRequest { OptionSet = optionSet });
@@ -689,7 +726,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateOptionSetRequest_NotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "nonexistent" };
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
@@ -703,7 +741,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteOptionSetRequest_RemovesGlobalOptionSet()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "new_colors" };
             service.Execute(new CreateOptionSetRequest { OptionSet = optionSet });
 
@@ -717,7 +756,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteOptionSetRequest_NotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new DeleteOptionSetRequest { Name = "nonexistent" }));
@@ -730,7 +770,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAllOptionSetsRequest_ReturnsAllGlobalOptionSets()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Execute(new CreateOptionSetRequest
             {
                 OptionSet = new OptionSetMetadata { Name = "new_colors" }
@@ -749,7 +790,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAllOptionSetsRequest_Empty_ReturnsEmpty()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (RetrieveAllOptionSetsResponse)service.Execute(
                 new RetrieveAllOptionSetsRequest());
@@ -764,7 +806,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InsertOptionValueRequest_AddsToGlobalOptionSet()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "new_colors" };
             optionSet.Options.Add(new OptionMetadata(new Label("Red", 1033), 1));
             service.Execute(new CreateOptionSetRequest { OptionSet = optionSet });
@@ -783,7 +826,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InsertOptionValueRequest_WithoutValue_GeneratesValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (InsertOptionValueResponse)service.Execute(
                 new InsertOptionValueRequest { OptionSetName = "any" });
@@ -798,7 +842,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InsertStatusValueRequest_ReturnsNewValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (InsertStatusValueResponse)service.Execute(
                 new InsertStatusValueRequest
@@ -814,7 +859,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InsertStatusValueRequest_WithoutValue_GeneratesValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (InsertStatusValueResponse)service.Execute(
                 new InsertStatusValueRequest
@@ -833,7 +879,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteOptionValueRequest_RemovesFromGlobalOptionSet()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "new_colors" };
             optionSet.Options.Add(new OptionMetadata(new Label("Red", 1033), 1));
             optionSet.Options.Add(new OptionMetadata(new Label("Blue", 1033), 2));
@@ -859,7 +906,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateOptionValueRequest_UpdatesLabel()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "new_colors" };
             optionSet.Options.Add(new OptionMetadata(new Label("Red", 1033), 1));
             service.Execute(new CreateOptionSetRequest { OptionSet = optionSet });
@@ -885,7 +933,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void OrderOptionRequest_ReordersOptions()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var optionSet = new OptionSetMetadata { Name = "new_colors" };
             optionSet.Options.Add(new OptionMetadata(new Label("Red", 1033), 1));
             optionSet.Options.Add(new OptionMetadata(new Label("Blue", 1033), 2));
@@ -913,7 +962,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateStateValueRequest_Succeeds()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             // Should not throw — it's a no-op
             service.Execute(new UpdateStateValueRequest
@@ -931,8 +981,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CanBeReferencedRequest_RegisteredEntity_ReturnsTrue()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var response = (CanBeReferencedResponse)service.Execute(
                 new CanBeReferencedRequest { EntityName = "account" });
@@ -943,7 +994,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CanBeReferencedRequest_UnregisteredEntity_ReturnsFalse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (CanBeReferencedResponse)service.Execute(
                 new CanBeReferencedRequest { EntityName = "nonexistent" });
@@ -958,8 +1010,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CanBeReferencingRequest_RegisteredEntity_ReturnsTrue()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("contact");
 
             var response = (CanBeReferencingResponse)service.Execute(
                 new CanBeReferencingRequest { EntityName = "contact" });
@@ -970,7 +1023,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CanBeReferencingRequest_UnregisteredEntity_ReturnsFalse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (CanBeReferencingResponse)service.Execute(
                 new CanBeReferencingRequest { EntityName = "nonexistent" });
@@ -985,8 +1039,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CanManyToManyRequest_RegisteredEntity_ReturnsTrue()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             var response = (CanManyToManyResponse)service.Execute(
                 new CanManyToManyRequest { EntityName = "account" });
@@ -997,7 +1052,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CanManyToManyRequest_UnregisteredEntity_ReturnsFalse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (CanManyToManyResponse)service.Execute(
                 new CanManyToManyRequest { EntityName = "nonexistent" });
@@ -1012,9 +1068,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GetValidManyToManyRequest_ReturnsAllRegisteredEntities()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
-            service.MetadataStore.AddEntity("contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
+            env.MetadataStore.AddEntity("contact");
 
             var response = (GetValidManyToManyResponse)service.Execute(
                 new GetValidManyToManyRequest());
@@ -1030,9 +1087,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GetValidReferencedEntitiesRequest_ReturnsEntityNames()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
-            service.MetadataStore.AddEntity("contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
+            env.MetadataStore.AddEntity("contact");
 
             var response = (GetValidReferencedEntitiesResponse)service.Execute(
                 new GetValidReferencedEntitiesRequest { ReferencingEntityName = "contact" });
@@ -1048,9 +1106,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GetValidReferencingEntitiesRequest_ReturnsEntityNames()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
-            service.MetadataStore.AddEntity("contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
+            env.MetadataStore.AddEntity("contact");
 
             var response = (GetValidReferencingEntitiesResponse)service.Execute(
                 new GetValidReferencingEntitiesRequest { ReferencedEntityName = "account" });
@@ -1065,7 +1124,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateCustomerRelationshipsRequest_CreatesRelationships()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var lookup = new LookupAttributeMetadata { LogicalName = "customerid" };
             var rels = new[]
@@ -1109,9 +1169,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMetadataChangesRequest_ReturnsEntitiesAndTimestamp()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
-            service.MetadataStore.AddEntity("contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
+            env.MetadataStore.AddEntity("contact");
 
             var response = (RetrieveMetadataChangesResponse)service.Execute(
                 new RetrieveMetadataChangesRequest());
@@ -1127,7 +1188,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveTimestampRequest_ReturnsTimestamp()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (RetrieveTimestampResponse)service.Execute(
                 new RetrieveTimestampRequest());
@@ -1138,7 +1200,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveTimestampRequest_IncreasesAfterMetadataChange()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var before = (RetrieveTimestampResponse)service.Execute(
                 new RetrieveTimestampRequest());
@@ -1160,7 +1223,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAllManagedPropertiesRequest_ReturnsResponse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (RetrieveAllManagedPropertiesResponse)service.Execute(
                 new RetrieveAllManagedPropertiesRequest());
@@ -1175,7 +1239,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveManagedPropertyRequest_ReturnsResponse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (RetrieveManagedPropertyResponse)service.Execute(
                 new RetrieveManagedPropertyRequest { MetadataId = Guid.NewGuid() });
@@ -1190,7 +1255,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void IsDataEncryptionActiveRequest_ReturnsFalse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (IsDataEncryptionActiveResponse)service.Execute(
                 new IsDataEncryptionActiveRequest());
@@ -1205,7 +1271,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveDataEncryptionKeyRequest_ReturnsResponse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (RetrieveDataEncryptionKeyResponse)service.Execute(
                 new RetrieveDataEncryptionKeyRequest());
@@ -1220,7 +1287,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SetDataEncryptionKeyRequest_Succeeds()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Execute(new SetDataEncryptionKeyRequest()); // Should not throw
         }
@@ -1232,7 +1300,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ConvertDateAndTimeBehaviorRequest_ReturnsJobId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (ConvertDateAndTimeBehaviorResponse)service.Execute(
                 new ConvertDateAndTimeBehaviorRequest());
@@ -1247,7 +1316,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteAsyncRequest_ExecutesInnerRequest()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var innerRequest = new CreateRequest
             {
@@ -1272,7 +1342,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveEntityChangesRequest_ReturnsResponse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (RetrieveEntityChangesResponse)service.Execute(
                 new RetrieveEntityChangesRequest { EntityName = "account" });
@@ -1287,7 +1358,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateAsyncJobToRevokeInheritedAccessRequest_ReturnsJobId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (CreateAsyncJobToRevokeInheritedAccessResponse)service.Execute(
                 new CreateAsyncJobToRevokeInheritedAccessRequest

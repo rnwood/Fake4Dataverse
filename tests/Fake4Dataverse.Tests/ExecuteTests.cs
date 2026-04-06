@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Execute_WhoAmI_ReturnsDefaultIds()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (WhoAmIResponse)service.Execute(new WhoAmIRequest());
 
@@ -22,9 +23,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Execute_CustomHandler_OverridesBuiltIn()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var customUserId = Guid.NewGuid();
-            service.HandlerRegistry.Register(new Handlers.WhoAmIRequestHandler
+            env.HandlerRegistry.Register(new Handlers.WhoAmIRequestHandler
             {
                 UserId = customUserId
             });
@@ -37,7 +39,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Execute_UnregisteredRequest_Throws()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var unknownRequest = new OrganizationRequest("SomeCustomAction");
 
             Assert.Throws<NotSupportedException>(() => service.Execute(unknownRequest));

@@ -11,7 +11,7 @@ namespace Fake4Dataverse.Handlers
         {
             var deleteRequest = (DeleteOptionSetRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             if (string.IsNullOrEmpty(deleteRequest.Name))
                 throw DataverseFault.InvalidArgumentFault("Option set name is required.");

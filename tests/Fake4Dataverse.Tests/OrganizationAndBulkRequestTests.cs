@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Merge_CopiesAttributesAndDeactivatesSubordinate()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var targetId = service.Create(new Entity("account") { ["name"] = "Target", ["city"] = "Seattle" });
             var subordinateId = service.Create(new Entity("account") { ["name"] = "Subordinate", ["revenue"] = new Money(500m) });
 
@@ -33,7 +34,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpsertMultiple_CreatesAndUpdatesRecords()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var existingId = service.Create(new Entity("account") { ["name"] = "Existing" });
 
             var targets = new EntityCollection();
@@ -55,7 +57,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void BulkDelete_DeletesMatchingRecords()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Delete1" });
             service.Create(new Entity("account") { ["name"] = "Delete2" });
             service.Create(new Entity("account") { ["name"] = "Keep" });
@@ -83,19 +86,21 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveCurrentOrganization_ReturnsOrgDetails()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = service.Execute(new OrganizationRequest("RetrieveCurrentOrganization"));
             var detail = (Entity)response["Detail"];
 
             Assert.NotNull(detail);
-            Assert.Equal(service.OrganizationId, detail.GetAttributeValue<Guid>("organizationid"));
+            Assert.Equal(env.OrganizationId, detail.GetAttributeValue<Guid>("organizationid"));
         }
 
         [Fact]
         public void RetrieveOptionSet_ReturnsResponse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new RetrieveOptionSetRequest
             {
                 Name = "account_category",
@@ -109,7 +114,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InsertOptionValue_ReturnsNewValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new InsertOptionValueRequest
             {
                 OptionSetName = "account_category",
@@ -124,7 +130,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InsertStatusValue_ReturnsNewValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new InsertStatusValueRequest
             {
                 EntityLogicalName = "incident",
@@ -141,7 +148,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void PublishXml_ExecutesWithoutError()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new OrganizationRequest("PublishXml");
             request["ParameterXml"] = "<importexportxml></importexportxml>";
 
@@ -152,7 +160,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExportPdfDocument_ReturnsPdfBytes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new OrganizationRequest("ExportPdfDocument");
             request["EntityTypeCode"] = 1;
             request["SelectedRecords"] = "[]";

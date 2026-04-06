@@ -14,7 +14,7 @@ namespace Fake4Dataverse.Handlers
         {
             var createRequest = (CreateEntityRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var sdkEntity = createRequest.Entity;
             if (sdkEntity == null || string.IsNullOrEmpty(sdkEntity.LogicalName))

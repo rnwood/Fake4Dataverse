@@ -12,7 +12,7 @@ namespace Fake4Dataverse.Handlers
         {
             var retrieveRequest = (RetrieveEntityRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var entityInfo = store.GetEntityMetadataInfo(retrieveRequest.LogicalName);
             if (entityInfo == null)

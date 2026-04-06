@@ -13,7 +13,7 @@ namespace Fake4Dataverse.Handlers
         {
             var updateRequest = (UpdateOptionValueRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var value = updateRequest.Value;
             var newLabel = updateRequest.Label?.UserLocalizedLabel?.Label

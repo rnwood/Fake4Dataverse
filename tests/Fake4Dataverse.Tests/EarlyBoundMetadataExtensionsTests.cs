@@ -124,9 +124,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RegisterEarlyBoundEntity_RegistersPrimaryIdNameAndAttributes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.RegisterEarlyBoundEntity<EarlyBoundMetadataAccount>();
+            env.RegisterEarlyBoundEntity<EarlyBoundMetadataAccount>();
 
             var metadata = RetrieveEntityMetadata(service, EarlyBoundMetadataAccount.EntityLogicalName);
 
@@ -141,9 +142,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RegisterEarlyBoundEntity_MapsCommonClrTypesToMetadataTypes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.RegisterEarlyBoundEntity<EarlyBoundMetadataAccount>();
+            env.RegisterEarlyBoundEntity<EarlyBoundMetadataAccount>();
 
             Assert.IsType<StringAttributeMetadata>(RetrieveAttributeMetadata(service, "eb_account", "name"));
             Assert.IsType<MoneyAttributeMetadata>(RetrieveAttributeMetadata(service, "eb_account", "revenue"));
@@ -174,9 +176,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RegisterEarlyBoundEntities_RegistersAllEntityTypesInAssembly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.RegisterEarlyBoundEntities(typeof(EarlyBoundMetadataExtensionsTests).Assembly);
+            env.RegisterEarlyBoundEntities(typeof(EarlyBoundMetadataExtensionsTests).Assembly);
 
             var accountMetadata = RetrieveEntityMetadata(service, EarlyBoundMetadataAccount.EntityLogicalName);
             var contactMetadata = RetrieveEntityMetadata(service, EarlyBoundMetadataContact.EntityLogicalName);
@@ -190,9 +193,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RegisterEarlyBoundEntities_IgnoresDecoratedTypesThatDoNotInheritEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.RegisterEarlyBoundEntities(typeof(EarlyBoundMetadataExtensionsTests).Assembly);
+            env.RegisterEarlyBoundEntities(typeof(EarlyBoundMetadataExtensionsTests).Assembly);
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
                 service.Execute(new RetrieveEntityRequest { LogicalName = "eb_ignored" }));
@@ -201,17 +205,19 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RegisterEarlyBoundEntity_MissingEntityLogicalName_ThrowsArgumentException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            Assert.Throws<ArgumentException>(() => service.RegisterEarlyBoundEntity<MissingEntityLogicalNameTestEntity>());
+            Assert.Throws<ArgumentException>(() => env.RegisterEarlyBoundEntity<MissingEntityLogicalNameTestEntity>());
         }
 
         [Fact]
         public void RegisterEarlyBoundEntity_UsesFallbackPrimaryIdWhenMissingSpecificIdProperty()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.RegisterEarlyBoundEntity<EarlyBoundWithoutPrimaryIdProperty>();
+            env.RegisterEarlyBoundEntity<EarlyBoundWithoutPrimaryIdProperty>();
 
             var metadata = RetrieveEntityMetadata(service, EarlyBoundWithoutPrimaryIdProperty.EntityLogicalName);
             Assert.Equal("eb_noteid", metadata.PrimaryIdAttribute);

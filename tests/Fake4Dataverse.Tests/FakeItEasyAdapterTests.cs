@@ -17,7 +17,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AsFake_DelegatesOrganizationServiceOperations()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var fake = service.AsFake();
 
             var id = fake.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -39,7 +40,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AsFakeFactory_ReturnsServiceBackedOrganizationService()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var fakeFactory = service.AsFakeFactory();
 
             var organizationService = fakeFactory.CreateOrganizationService(Guid.NewGuid());
@@ -54,7 +56,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task AsFakeAsync_DelegatesAsyncOperations_ForAsyncAndAsync2Overloads()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var fakeAsync = service.AsFakeAsync();
             IOrganizationServiceAsync2 asyncService = fakeAsync;
 

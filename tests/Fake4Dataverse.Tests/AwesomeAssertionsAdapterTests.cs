@@ -12,7 +12,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveCreatedUpdatedAndExecuted_Passes_WhenOperationsWereRecorded()
         {
-            var service = new Fake4Dataverse.FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Update(new Entity("account", id) { ["name"] = "Fabrikam" });
             service.Execute(new WhoAmIRequest());
@@ -26,7 +27,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveDeleted_Throws_WhenDeleteWasNotRecorded()
         {
-            var service = new Fake4Dataverse.FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Action act = () => service.Should().HaveDeleted("account", id);

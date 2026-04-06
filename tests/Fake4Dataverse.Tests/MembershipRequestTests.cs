@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AddMembersTeamRequest_AddsTeamMemberships()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var teamId = service.Create(new Entity("team") { ["name"] = "TestTeam" });
             var userId1 = Guid.NewGuid();
             var userId2 = Guid.NewGuid();
@@ -29,7 +30,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RemoveMembersTeamRequest_RemovesTeamMemberships()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var teamId = service.Create(new Entity("team") { ["name"] = "TestTeam" });
             var userId1 = Guid.NewGuid();
             var userId2 = Guid.NewGuid();
@@ -53,7 +55,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AddListMembersListRequest_AddsListMembers()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var listId = service.Create(new Entity("list") { ["listname"] = "TestList" });
             var memberId1 = Guid.NewGuid();
             var memberId2 = Guid.NewGuid();
@@ -71,7 +74,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RemoveMemberListRequest_RemovesListMember()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var listId = service.Create(new Entity("list") { ["listname"] = "TestList" });
             var memberId = Guid.NewGuid();
 

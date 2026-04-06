@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_CreatesRelationshipRecord()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
@@ -27,7 +28,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Disassociate_RemovesRelationshipRecord()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
@@ -47,7 +49,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_MultipleRelatedEntities_CreatesAll()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contact1 = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
             var contact2 = service.Create(new Entity("contact") { ["lastname"] = "Smith" });
@@ -68,7 +71,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_NullRelationship_ThrowsArgumentNullException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
@@ -81,7 +85,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_NullRelatedEntities_ThrowsArgumentNullException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -93,7 +98,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_SourceAndTargetPreservedCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
@@ -117,7 +123,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Disassociate_NonExistentAssociation_DoesNotThrow()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
@@ -130,7 +137,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Disassociate_OnlyRemovesSpecifiedTarget()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contact1 = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
             var contact2 = service.Create(new Entity("contact") { ["lastname"] = "Smith" });
@@ -156,7 +164,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_NonExistingSource_ThrowsFaultException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Smith" });
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
@@ -169,7 +178,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_NonExistingTarget_ThrowsFaultException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var ex = Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
@@ -182,7 +192,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_DuplicateAssociation_ThrowsFaultException()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Smith" });
 
@@ -200,7 +211,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_NToN_TwoWayRetrieval()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Smith" });
 
@@ -224,7 +236,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Disassociate_NToN_RemovesAssociationRecord()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Smith" });
 
@@ -244,7 +257,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_N1_SetsLookupField()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Smith" });
 

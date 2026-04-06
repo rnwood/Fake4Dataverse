@@ -28,6 +28,7 @@ An in-memory fake `IOrganizationService` and `IOrganizationServiceAsync2` for un
 | **Time control** | `FakeClock` for deterministic date/time testing |
 | **Operation log** | Records all service calls for post-hoc assertions |
 | **Configuration** | `FakeOrganizationServiceOptions` with Strict/Lenient presets |
+| **Multi-user** | Multiple `FakeOrganizationService` sessions against the same `FakeDataverseEnvironment` |
 | **Multi-target** | .NET Framework 4.6.2 and .NET 10 |
 
 ## Installation
@@ -41,7 +42,8 @@ dotnet add package Fake4Dataverse
 ### Basic CRUD
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -58,7 +60,8 @@ service.Delete("account", id);
 using Microsoft.PowerPlatform.Dataverse.Client;
 using System.Threading;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 var asyncService = (IOrganizationServiceAsync2)service;
 
 var id = await asyncService.CreateAsync(
@@ -76,8 +79,9 @@ var account = await asyncService.RetrieveAsync(
 [Fact]
 public void Create_ExecutesRegisteredPlugin()
 {
-    var service = new FakeOrganizationService();
-    service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", new PrefixNamePlugin());
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", new PrefixNamePlugin());
 
     var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
     var account = service.Retrieve("account", id, new ColumnSet("name"));
@@ -102,8 +106,10 @@ private sealed class PrefixNamePlugin : IPlugin
 Use built-in presets for common setups:
 
 ```csharp
-var strict  = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);   // metadata validation + security on
-var lenient = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);   // everything off — full manual control
+var strict  = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);   // metadata validation + security on
+var lenient = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);   // everything off — full manual control
+var strictService  = strict.CreateOrganizationService();
+var lenientService = lenient.CreateOrganizationService();
 ```
 
 See the [Configuration Reference](docs/reference/configuration.md) for all options.

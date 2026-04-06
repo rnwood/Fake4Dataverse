@@ -2,7 +2,7 @@
 
 Fake4Dataverse includes a `CurrencyManager` that auto-computes `_base` fields for Money attributes when an entity has a `transactioncurrencyid` lookup. This mirrors the Dataverse behavior where base-currency amounts are maintained alongside transaction-currency amounts.
 
-Access the manager via `service.Currency`.
+Access the manager via `env.Currency`.
 
 ---
 
@@ -11,19 +11,20 @@ Access the manager via `service.Currency`.
 Set the organization's base currency and register exchange rates for other currencies:
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 var usdId = Guid.NewGuid();
 var eurId = Guid.NewGuid();
 
 // Set the organization base currency (USD)
-service.Currency.BaseCurrencyId = usdId;
+env.Currency.BaseCurrencyId = usdId;
 
 // EUR costs 0.85 USD (i.e., 1 EUR = 1/0.85 USD)
-service.Currency.SetExchangeRate(eurId, 0.85m);
+env.Currency.SetExchangeRate(eurId, 0.85m);
 
 // Retrieve a rate (returns 1.0 for unknown currencies)
-decimal rate = service.Currency.GetExchangeRate(eurId); // 0.85m
+decimal rate = env.Currency.GetExchangeRate(eurId); // 0.85m
 ```
 
 - **`BaseCurrencyId`** — the GUID of the organization's base currency record.
@@ -49,14 +50,15 @@ This only applies when the entity has a `transactioncurrencyid` lookup attribute
 ## Complete Example
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 var usdId = Guid.NewGuid();
 var eurId = Guid.NewGuid();
 
 // Configure: USD is base currency, EUR rate is 0.85
-service.Currency.BaseCurrencyId = usdId;
-service.Currency.SetExchangeRate(eurId, 0.85m);
+env.Currency.BaseCurrencyId = usdId;
+env.Currency.SetExchangeRate(eurId, 0.85m);
 
 // Create an opportunity in EUR
 var id = service.Create(new Entity("opportunity")

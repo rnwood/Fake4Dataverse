@@ -28,7 +28,8 @@ Tests run against both `net462` and `net10.0`. All tests must pass on both frame
 
 ```
 src/Fake4Dataverse/           # Core library
-  FakeOrganizationService.cs  # Public entry point — implements IOrganizationService + IOrganizationServiceAsync2
+  FakeDataverseEnvironment.cs # Shared backend — owns store, metadata, pipeline, security, clock
+  FakeOrganizationService.cs  # Session — implements IOrganizationService + IOrganizationServiceAsync2
   FakeOrganizationServiceOptions.cs  # Configuration (Strict/Lenient presets)
   InMemoryEntityStore.cs      # Thread-safe entity storage (ReaderWriterLockSlim)
   InMemoryMetadataStore.cs    # Entity/attribute metadata with validation
@@ -52,6 +53,7 @@ tests/Fake4Dataverse.Tests/   # xUnit test project, mirrors library features
 
 ## Architecture
 
+- **Environment + session model**: `FakeDataverseEnvironment` owns all shared state (store, metadata, pipeline, security, clock, options). `FakeOrganizationService` is a lightweight session created via `env.CreateOrganizationService()` — it owns only per-caller state (`CallerId`, `InitiatingUserId`, `BusinessUnitId`, `UseSystemContext`, per-session `OperationLog`).
 - **Handler registry pattern**: Every `OrganizationRequest` variant is dispatched through `OrganizationRequestHandlerRegistry` to a matching `IOrganizationRequestHandler`.
 - **Handler interface** — implement to add support for a new request type:
   ```csharp
@@ -62,6 +64,7 @@ tests/Fake4Dataverse.Tests/   # xUnit test project, mirrors library features
   }
   ```
   Handlers are `internal sealed class`, placed in `Handlers/`, named `<RequestType>RequestHandler`.
+- **Multi-user testing**: Multiple sessions can be created against the same environment with different caller IDs, enabling concurrent-user and impersonation scenarios.
 - **Thread safety**: `InMemoryEntityStore` uses `ReaderWriterLockSlim` + `ConcurrentDictionary`. All write paths must hold the write lock.
 - **Deep cloning**: Entities are always deep-cloned on store and retrieve to prevent aliasing bugs.
 
@@ -81,11 +84,11 @@ tests/Fake4Dataverse.Tests/   # xUnit test project, mirrors library features
 ## Test Patterns
 
 - Framework: **xUnit** (`[Fact]` attributes; no shared base class).
-- Tests directly instantiate `FakeOrganizationService` — no mocking framework.
+- Tests instantiate `FakeDataverseEnvironment` then create one or more `FakeOrganizationService` sessions — no mocking framework.
 - Tests are organized by feature area (one file per area, e.g., `CrudTests.cs`, `FetchXmlTests.cs`).
-- Use `TakeSnapshot()` / `RestoreSnapshot()` / `Scope()` for test isolation when shared state is needed.
-- Use `FakeClock` for deterministic date/time scenarios.
-- Use `OperationLog` assertions to verify what calls were made.
+- Use `env.TakeSnapshot()` / `env.RestoreSnapshot()` / `env.Scope()` for test isolation when shared state is needed.
+- Use `FakeClock` (set via `env.Clock`) for deterministic date/time scenarios.
+- Use `service.OperationLog` (per-session) or `env.OperationLog` (global) for assertions on what calls were made.
 
 Typical test skeleton:
 
@@ -93,7 +96,8 @@ Typical test skeleton:
 [Fact]
 public void Create_WithValidEntity_ReturnsNewGuid()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
     Assert.NotEqual(Guid.Empty, id);
 }
@@ -103,7 +107,7 @@ public void Create_WithValidEntity_ReturnsNewGuid()
 
 ## Key Configuration
 
-`FakeOrganizationServiceOptions` controls all automatic behaviors (all `bool`):
+`FakeOrganizationServiceOptions` controls all automatic behaviors (all `bool`), passed to `FakeDataverseEnvironment` at construction:
 
 | Option | Default | Notes |
 |---|---|---|
@@ -117,6 +121,8 @@ public void Create_WithValidEntity_ReturnsNewGuid()
 | `EnableOperationLog` | `true` | Call recording |
 
 Use `FakeOrganizationServiceOptions.Strict` (metadata + security on) or `FakeOrganizationServiceOptions.Lenient` (all features off) as presets.
+
+Options are environment-level only — no per-session override.
 
 ---
 
@@ -146,3 +152,4 @@ Use `FakeOrganizationServiceOptions.Strict` (metadata + security on) or `FakeOrg
 2. Implement `IOrganizationRequestHandler.CanHandle` and `Handle`.
 3. Register it in `OrganizationRequestHandlerRegistry`.
 4. Add tests in `tests/Fake4Dataverse.Tests/<Name>Tests.cs` (or extend an existing file if closely related).
+5. In tests, use `var env = new FakeDataverseEnvironment(); var service = env.CreateOrganizationService();` — configure the environment, then exercise the handler via the session.

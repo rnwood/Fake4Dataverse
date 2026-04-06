@@ -2,7 +2,7 @@
 
 ## FakeOrganizationServiceOptions
 
-All behavior of `FakeOrganizationService` is controlled through `FakeOrganizationServiceOptions`, passed at construction time.
+All behavior of `FakeDataverseEnvironment` is controlled through `FakeOrganizationServiceOptions`, passed at construction time.
 
 ### Presets
 
@@ -14,13 +14,16 @@ All behavior of `FakeOrganizationService` is controlled through `FakeOrganizatio
 
 ```csharp
 // Default — recommended starting point
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 // Strict — mirrors real Dataverse validation
-var strict = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+var service = env.CreateOrganizationService();
 
 // Lenient — bare-bones, nothing automatic
-var lenient = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
+var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+var service = env.CreateOrganizationService();
 ```
 
 ### All Options
@@ -47,7 +50,8 @@ var options = new FakeOrganizationServiceOptions
     ValidateWithMetadata = true,
     EnforceSecurityRoles = false,
 };
-var service = new FakeOrganizationService(options);
+var env = new FakeDataverseEnvironment(options);
+var service = env.CreateOrganizationService();
 ```
 
 **From a JSON string (`FromJson`):**
@@ -55,7 +59,8 @@ var service = new FakeOrganizationService(options);
 ```csharp
 var json = """{"AutoSetTimestamps": false, "ValidateWithMetadata": true}""";
 var options = FakeOrganizationServiceOptions.FromJson(json);
-var service = new FakeOrganizationService(options);
+var env = new FakeDataverseEnvironment(options);
+var service = env.CreateOrganizationService();
 ```
 
 Unspecified properties keep their default values. Property names are case-insensitive.
@@ -64,7 +69,8 @@ Unspecified properties keep their default values. Property names are case-insens
 
 ```csharp
 var options = FakeOrganizationServiceOptions.FromJsonFile("fake4dataverse.json");
-var service = new FakeOrganizationService(options);
+var env = new FakeDataverseEnvironment(options);
+var service = env.CreateOrganizationService();
 ```
 
 **From environment variables (`FromEnvironment`):**
@@ -72,40 +78,52 @@ var service = new FakeOrganizationService(options);
 ```csharp
 // Reads FAKE4DATAVERSE_AUTOSETTIMESTAMPS, FAKE4DATAVERSE_VALIDATEWITHMETADATA, etc.
 var options = FakeOrganizationServiceOptions.FromEnvironment();
-var service = new FakeOrganizationService(options);
+var env = new FakeDataverseEnvironment(options);
+var service = env.CreateOrganizationService();
 ```
 
 Environment variable names are `FAKE4DATAVERSE_` followed by the option name in uppercase. Only variables that are set override the defaults.
 
 ---
 
-## Service Properties
+## Properties
 
-These properties are available on `FakeOrganizationService` after construction.
+Properties are split between `FakeDataverseEnvironment` (shared state) and `FakeOrganizationService` (per-session state).
+
+### Environment Properties (`FakeDataverseEnvironment`)
 
 | Property | Type | Description |
 |----------|------|-------------|
 | `Options` | `FakeOrganizationServiceOptions` | Read-only configuration options |
-| `CallerId` | `Guid` | Current user ID (used for auto-set owner and security checks) |
-| `InitiatingUserId` | `Guid` | Initiating user (differs from `CallerId` in impersonation scenarios) |
-| `BusinessUnitId` | `Guid` | Current user's business unit |
+| `Clock` | `IClock` | Clock implementation (default: `SystemClock`) |
 | `OrganizationId` | `Guid` | Organization identifier |
 | `OrganizationName` | `string` | Organization name (surfaced to plugins) |
-| `Clock` | `IClock` | Clock implementation (default: `SystemClock`) |
-| `ValidateWithMetadata` | `bool` | Shortcut to toggle metadata validation at runtime |
-| `UseSystemContext` | `bool` | When `true`, all security checks are bypassed |
+| `EnvironmentId` | `string` | Simulated environment ID |
+| `TenantId` | `Guid` | Simulated tenant ID |
 | `MetadataStore` | `InMemoryMetadataStore` | Entity/attribute metadata store |
 | `Security` | `SecurityManager` | Security roles, privileges, and record sharing |
 | `Pipeline` | `PipelineManager` | Pre/post operation pipeline hooks |
 | `CalculatedFields` | `CalculatedFieldManager` | Calculated and rollup field evaluation |
 | `Currency` | `CurrencyManager` | Exchange rates and base currency computation |
-| `OperationLog` | `OperationLog` | Recorded operations for post-hoc assertions |
+| `OperationLog` | `OperationLog` | Global recorded operations for assertions |
 | `HandlerRegistry` | `OrganizationRequestHandlerRegistry` | Registry for custom request handlers |
 
+### Session Properties (`FakeOrganizationService`)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `CallerId` | `Guid` | Current user ID (used for auto-set owner and security checks) |
+| `InitiatingUserId` | `Guid` | Initiating user (differs from `CallerId` in impersonation scenarios) |
+| `BusinessUnitId` | `Guid` | Current user's business unit |
+| `UseSystemContext` | `bool` | When `true`, all security checks are bypassed |
+| `OperationLog` | `OperationLog` | Per-session recorded operations for assertions |
+
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+env.Clock = new FakeClock(new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+var service = env.CreateOrganizationService();
 service.CallerId = new Guid("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-service.Clock = new FakeClock(new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc));
 ```
 
 ---
@@ -121,7 +139,9 @@ Use `FakeClock` to control the time deterministically in tests:
 
 ```csharp
 var clock = new FakeClock(new DateTime(2025, 6, 15, 12, 0, 0, DateTimeKind.Utc));
-var service = new FakeOrganizationService { Clock = clock };
+var env = new FakeDataverseEnvironment();
+env.Clock = clock;
+var service = env.CreateOrganizationService();
 
 var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 var entity = service.Retrieve("account", id, new ColumnSet(true));

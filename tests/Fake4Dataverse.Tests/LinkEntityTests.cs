@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
     {
         private FakeOrganizationService CreateSeededService()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             // Accounts
             var acct1 = new Entity("account") { Id = Guid.NewGuid(), ["name"] = "Contoso" };
@@ -115,7 +116,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NestedLinkEntity_ThreeLevelJoin()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             // account -> contact -> phonecall
             var acctId = service.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -193,7 +195,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InnerJoin_NoMatchedLinkedRows_ReturnsEmpty()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Lonely Corp" });
 
             var query = new QueryExpression("account") { ColumnSet = new ColumnSet("name") };
@@ -207,7 +210,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void MultipleLinkEntities_OnSameParent()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var acctId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact")
@@ -243,7 +247,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Exists_ReturnsParentWithMatch()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId1 = service.Create(new Entity("account") { ["name"] = "HasContacts" });
             service.Create(new Entity("account") { ["name"] = "NoContacts" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId1), ["lastname"] = "Smith" });
@@ -259,7 +264,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Exists_DoesNotDuplicateParent()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId = service.Create(new Entity("account") { ["name"] = "MultipleContacts" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId), ["lastname"] = "Smith" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId), ["lastname"] = "Jones" });
@@ -274,7 +280,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Exists_DoesNotAddLinkedColumns()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId), ["lastname"] = "Smith" });
 
@@ -291,7 +298,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Any_BehavesSameAsExists()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId1 = service.Create(new Entity("account") { ["name"] = "HasContacts" });
             service.Create(new Entity("account") { ["name"] = "NoContacts" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId1), ["lastname"] = "Smith" });
@@ -307,7 +315,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void In_BehavesSameAsExists()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId1 = service.Create(new Entity("account") { ["name"] = "HasContacts" });
             service.Create(new Entity("account") { ["name"] = "NoContacts" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId1), ["lastname"] = "Smith" });
@@ -323,7 +332,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotAny_ReturnsParentWithoutMatch()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId1 = service.Create(new Entity("account") { ["name"] = "HasContacts" });
             service.Create(new Entity("account") { ["name"] = "NoContacts" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId1), ["lastname"] = "Smith" });
@@ -340,7 +350,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotAny_ReturnsAllParentsWhenNoChildren()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "B" });
 
@@ -355,7 +366,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Exists_WithLinkCriteria_FiltersChildren()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId1 = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var accId2 = service.Create(new Entity("account") { ["name"] = "Fabrikam" });
             service.Create(new Entity("contact") { ["parentcustomerid"] = new EntityReference("account", accId1), ["lastname"] = "Smith" });
@@ -373,7 +385,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NotAll_ReturnsParentWithNonMatchingChild()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accId1 = service.Create(new Entity("account") { ["name"] = "Mixed" });
             var accId2 = service.Create(new Entity("account") { ["name"] = "AllMatch" });
             service.Create(new Entity("account") { ["name"] = "NoChildren" });

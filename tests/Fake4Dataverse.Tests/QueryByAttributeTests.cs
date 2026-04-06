@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SingleAttribute_FiltersCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam" });
 
@@ -25,7 +26,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void MultipleAttributes_FiltersCombined()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso", ["city"] = "NYC" });
             service.Create(new Entity("account") { ["name"] = "Contoso", ["city"] = "LA" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam", ["city"] = "NYC" });
@@ -41,7 +43,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void WithOrdering()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "B" });
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "C" });
@@ -57,7 +60,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void WithTopCount()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             for (int i = 0; i < 10; i++)
                 service.Create(new Entity("account") { ["name"] = $"A{i}" });
 
@@ -74,7 +78,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NoMatch_ReturnsEmpty()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var qba = new QueryByAttribute("account") { ColumnSet = new ColumnSet(true) };

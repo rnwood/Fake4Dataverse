@@ -14,7 +14,7 @@ namespace Fake4Dataverse.Handlers
         {
             var createRequest = (CreateOptionSetRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var sdkOptionSet = createRequest.OptionSet;
             if (sdkOptionSet == null || string.IsNullOrEmpty(sdkOptionSet.Name))

@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveCreated_Passes_WhenEntityWasCreated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             service.Should().HaveCreated("account");
@@ -20,7 +21,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveCreated_Throws_WhenEntityWasNotCreated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FakeServiceAssertionException>(() =>
                 service.Should().HaveCreated("account"));
@@ -29,7 +31,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveCreated_WithId_Throws_WhenDifferentIdCreated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.Throws<FakeServiceAssertionException>(() =>
@@ -39,7 +42,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveUpdated_Passes_WhenEntityWasUpdated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Update(new Entity("account", id) { ["name"] = "Fabrikam" });
 
@@ -49,7 +53,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveUpdated_Throws_WhenEntityWasNotUpdated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.Throws<FakeServiceAssertionException>(() =>
@@ -59,7 +64,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveUpdated_WithAttributes_Passes_WhenMatchingAttributesUpdated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Update(new Entity("account", id) { ["name"] = "Fabrikam" });
 
@@ -69,7 +75,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveUpdated_WithAttributes_Throws_WhenAttributesMismatch()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Update(new Entity("account", id) { ["name"] = "Fabrikam" });
 
@@ -80,7 +87,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveDeleted_Passes_WhenEntityWasDeleted()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Delete("account", id);
 
@@ -90,7 +98,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveDeleted_Throws_WhenEntityWasNotDeleted()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.Throws<FakeServiceAssertionException>(() =>
@@ -100,7 +109,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveExecuted_Passes_WhenRequestWasExecuted()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Execute(new WhoAmIRequest());
 
             service.Should().HaveExecuted<WhoAmIRequest>();
@@ -109,7 +119,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveExecuted_Throws_WhenRequestWasNotExecuted()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FakeServiceAssertionException>(() =>
                 service.Should().HaveExecuted<WhoAmIRequest>());
@@ -118,7 +129,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_HaveExecuted_ByName_Passes_WhenRequestWasExecuted()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Execute(new WhoAmIRequest());
 
             service.Should().HaveExecuted("WhoAmI");
@@ -127,7 +139,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_NotHaveCreated_Passes_WhenNoCreate()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Should().NotHaveCreated("account");
         }
@@ -135,7 +148,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_NotHaveCreated_Throws_WhenCreateOccurred()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.Throws<FakeServiceAssertionException>(() =>
@@ -145,7 +159,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_NotHaveDeleted_Passes_WhenNoDelete()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Should().NotHaveDeleted("account", Guid.NewGuid());
         }
@@ -153,7 +168,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_NotHaveExecuted_Passes_WhenNoExecute()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Should().NotHaveExecuted<WhoAmIRequest>();
         }
@@ -161,7 +177,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Should_ChainedAssertions_AllPass()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Update(new Entity("account", id) { ["name"] = "Fabrikam" });
             service.Execute(new WhoAmIRequest());

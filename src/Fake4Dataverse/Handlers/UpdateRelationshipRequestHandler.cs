@@ -13,7 +13,7 @@ namespace Fake4Dataverse.Handlers
         {
             var updateRequest = (UpdateRelationshipRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var rel = updateRequest.Relationship;
             if (rel == null || string.IsNullOrEmpty(rel.SchemaName))

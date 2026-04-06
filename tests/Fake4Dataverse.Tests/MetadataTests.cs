@@ -15,8 +15,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AddEntity_StoresEntityMetadata()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithSchemaName("Account")
                 .WithPrimaryIdAttribute("accountid")
                 .WithPrimaryNameAttribute("name")
@@ -32,8 +33,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AddEntity_WithAttributes_StoresAttributes()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", maxLength: 200)
                 .WithIntegerAttribute("numberofemployees", minValue: 0, maxValue: 1000000);
 
@@ -50,8 +52,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_MissingRequiredField_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", requiredLevel: AttributeRequiredLevel.ApplicationRequired);
 
             var entity = new Entity("account");
@@ -64,8 +67,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_RequiredFieldPresent_Succeeds()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", requiredLevel: AttributeRequiredLevel.ApplicationRequired);
 
             var entity = new Entity("account") { ["name"] = "Contoso" };
@@ -77,8 +81,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_SystemRequiredFieldMissing_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("contact")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("contact")
                 .WithStringAttribute("lastname", requiredLevel: AttributeRequiredLevel.SystemRequired);
 
             var entity = new Entity("contact") { ["firstname"] = "John" };
@@ -91,8 +96,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_SetRequiredFieldToNull_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", requiredLevel: AttributeRequiredLevel.ApplicationRequired);
 
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -110,8 +116,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_StringExceedsMaxLength_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", maxLength: 5);
 
             var entity = new Entity("account") { ["name"] = "TooLongName" };
@@ -124,8 +131,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_StringWithinMaxLength_Succeeds()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", maxLength: 100);
 
             var entity = new Entity("account") { ["name"] = "Contoso" };
@@ -137,8 +145,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_StringExceedsMaxLength_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", maxLength: 5);
 
             var id = service.Create(new Entity("account") { ["name"] = "OK" });
@@ -156,8 +165,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_IntegerBelowMin_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithIntegerAttribute("numberofemployees", minValue: 0, maxValue: 1000);
 
             var entity = new Entity("account") { ["numberofemployees"] = -1 };
@@ -170,8 +180,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_IntegerAboveMax_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithIntegerAttribute("numberofemployees", minValue: 0, maxValue: 1000);
 
             var entity = new Entity("account") { ["numberofemployees"] = 2000 };
@@ -184,8 +195,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_IntegerInRange_Succeeds()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithIntegerAttribute("numberofemployees", minValue: 0, maxValue: 1000);
 
             var entity = new Entity("account") { ["numberofemployees"] = 500 };
@@ -197,8 +209,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_MoneyBelowMin_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithMoneyAttribute("revenue", minValue: 0, maxValue: 1000000);
 
             var entity = new Entity("account") { ["revenue"] = new Money(-100m) };
@@ -214,8 +227,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_InvalidOptionSetValue_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithOptionSetAttribute("industrycode", validValues: new[] { 1, 2, 3 });
 
             var entity = new Entity("account") { ["industrycode"] = new OptionSetValue(99) };
@@ -228,8 +242,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_ValidOptionSetValue_Succeeds()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithOptionSetAttribute("industrycode", validValues: new[] { 1, 2, 3 });
 
             var entity = new Entity("account") { ["industrycode"] = new OptionSetValue(2) };
@@ -245,8 +260,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_InvalidEntityReferenceTarget_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("contact")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("contact")
                 .WithLookupAttribute("parentcustomerid", targetEntityTypes: new[] { "account" });
 
             var entity = new Entity("contact")
@@ -262,8 +278,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_ValidEntityReferenceTarget_Succeeds()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("contact")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("contact")
                 .WithLookupAttribute("parentcustomerid", targetEntityTypes: new[] { "account" });
 
             var entity = new Entity("contact")
@@ -282,8 +299,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveEntityRequest_ReturnsEntityMetadata()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithSchemaName("Account")
                 .WithPrimaryIdAttribute("accountid")
                 .WithPrimaryNameAttribute("name")
@@ -302,7 +320,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveEntityRequest_EntityNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new RetrieveEntityRequest { LogicalName = "nonexistent" }));
@@ -311,9 +330,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAllEntitiesRequest_ReturnsAllEntities()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account").WithSchemaName("Account");
-            service.MetadataStore.AddEntity("contact").WithSchemaName("Contact");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account").WithSchemaName("Account");
+            env.MetadataStore.AddEntity("contact").WithSchemaName("Contact");
 
             var response = (RetrieveAllEntitiesResponse)service.Execute(
                 new RetrieveAllEntitiesRequest());
@@ -326,7 +346,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAllEntitiesRequest_Empty_ReturnsEmptyArray()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = (RetrieveAllEntitiesResponse)service.Execute(
                 new RetrieveAllEntitiesRequest());
@@ -337,8 +358,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAttributeRequest_ReturnsAttributeMetadata()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", maxLength: 200, requiredLevel: AttributeRequiredLevel.ApplicationRequired);
 
             var response = (RetrieveAttributeResponse)service.Execute(
@@ -357,8 +379,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAttributeRequest_AttributeNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account");
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new RetrieveAttributeRequest
@@ -371,7 +394,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAttributeRequest_EntityNotFound_ThrowsFault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(
                 () => service.Execute(new RetrieveAttributeRequest
@@ -388,8 +412,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ValidationOffByDefault_InvalidCreate_Succeeds()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", maxLength: 5, requiredLevel: AttributeRequiredLevel.ApplicationRequired);
 
             // No required field, string too long — should succeed because validation is OFF.
@@ -402,8 +427,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ValidateWithMetadata_DefaultIsFalse()
         {
-            var service = new FakeOrganizationService();
-            Assert.False(service.ValidateWithMetadata);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            Assert.False(env.Options.ValidateWithMetadata);
         }
 
         #endregion
@@ -413,8 +439,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AutoDiscover_InfersStringAttributeType()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AutoDiscoverMetadata = true;
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AutoDiscoverMetadata = true;
 
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -430,8 +457,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AutoDiscover_InfersMultipleAttributeTypes()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AutoDiscoverMetadata = true;
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AutoDiscoverMetadata = true;
 
             service.Create(new Entity("account")
             {
@@ -454,9 +482,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AutoDiscover_DoesNotOverwriteExistingMetadata()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AutoDiscoverMetadata = true;
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AutoDiscoverMetadata = true;
+            env.MetadataStore.AddEntity("account")
                 .WithStringAttribute("name", maxLength: 100);
 
             service.Create(new Entity("account") { ["name"] = "Contoso", ["phone"] = "555-1234" });
@@ -473,7 +502,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AutoDiscover_DisabledByDefault_NoMetadataCreated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -489,11 +519,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveEntityRequest_IncludesRelationships()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithManyToManyRelationship("account_contact", "account", "contact");
-            service.MetadataStore.AddEntity("contact");
-            service.MetadataStore.AddOneToManyRelationship(
+            env.MetadataStore.AddEntity("contact");
+            env.MetadataStore.AddOneToManyRelationship(
                 "account_contacts_1n", "account", "accountid", "contact", "parentcustomerid");
 
             var response = (RetrieveEntityResponse)service.Execute(
@@ -510,8 +541,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_ValidRelationship_Succeeds()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddManyToManyRelationship("account_contact", "account", "contact");
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddManyToManyRelationship("account_contact", "account", "contact");
 
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
@@ -526,8 +558,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_InvalidEntityType_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddManyToManyRelationship("account_contact", "account", "contact");
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddManyToManyRelationship("account_contact", "account", "contact");
 
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var leadId = service.Create(new Entity("lead") { ["subject"] = "Test" });
@@ -543,8 +576,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Disassociate_InvalidEntityType_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddManyToManyRelationship("account_contact", "account", "contact");
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddManyToManyRelationship("account_contact", "account", "contact");
 
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -559,7 +593,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_UndefinedRelationship_SkipsValidation()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
 
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
@@ -579,8 +614,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAttribute_IntegerAttribute_HasMinMaxValues()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithIntegerAttribute("numberofemployees", minValue: 0, maxValue: 100000);
 
             var response = (RetrieveAttributeResponse)service.Execute(
@@ -598,8 +634,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAttribute_PicklistAttribute_HasOptions()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("account")
                 .WithOptionSetAttribute("industrycode", validValues: new[] { 1, 2, 3 });
 
             var response = (RetrieveAttributeResponse)service.Execute(
@@ -617,8 +654,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveAttribute_LookupAttribute_HasTargets()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("contact")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("contact")
                 .WithLookupAttribute("parentcustomerid", targetEntityTypes: new[] { "account", "contact" });
 
             var response = (RetrieveAttributeResponse)service.Execute(
@@ -641,8 +679,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_DecimalBelowMin_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("product")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("product")
                 .WithDecimalAttribute("price", minValue: 0m, maxValue: 10000m);
 
             var entity = new Entity("product") { ["price"] = -5m };
@@ -654,8 +693,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_DoubleAboveMax_ThrowsFault()
         {
-            var service = new FakeOrganizationService { ValidateWithMetadata = true };
-            service.MetadataStore.AddEntity("sensor")
+            var env = new FakeDataverseEnvironment(new FakeOrganizationServiceOptions { ValidateWithMetadata = true });
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("sensor")
                 .WithDoubleAttribute("temperature", minValue: -50.0, maxValue: 100.0);
 
             var entity = new Entity("sensor") { ["temperature"] = 200.0 };

@@ -17,7 +17,7 @@ namespace Fake4Dataverse.Handlers
             if (id == Guid.Empty && target.KeyAttributes != null && target.KeyAttributes.Count > 0
                 && service is FakeOrganizationService fakeService)
             {
-                id = fakeService.Store.FindByAlternateKey(target.LogicalName, target.KeyAttributes, fakeService.MetadataStore);
+                id = fakeService.Environment.Store.FindByAlternateKey(target.LogicalName, target.KeyAttributes, fakeService.Environment.MetadataStore);
             }
 
             service.Delete(target.LogicalName, id);

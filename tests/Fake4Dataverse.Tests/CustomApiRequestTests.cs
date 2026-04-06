@@ -8,8 +8,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RegisterCustomApi_MatchesByRequestName()
         {
-            var service = new FakeOrganizationService();
-            service.RegisterCustomApi("myorg_CustomAction", (req, svc) =>
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.RegisterCustomApi("myorg_CustomAction", (req, svc) =>
             {
                 var response = new OrganizationResponse();
                 response.Results["Output"] = $"Hello, {req["Input"]}!";
@@ -26,8 +27,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RegisterCustomApi_CaseInsensitiveMatch()
         {
-            var service = new FakeOrganizationService();
-            service.RegisterCustomApi("myorg_Action", (req, svc) => new OrganizationResponse());
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.RegisterCustomApi("myorg_Action", (req, svc) => new OrganizationResponse());
 
             var request = new OrganizationRequest("MYORG_ACTION");
             service.Execute(request);

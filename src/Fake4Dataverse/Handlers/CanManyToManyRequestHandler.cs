@@ -11,7 +11,7 @@ namespace Fake4Dataverse.Handlers
         {
             var canRequest = (CanManyToManyRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             // In the fake, any registered entity can participate in N:N
             var entityInfo = store.GetEntityMetadataInfo(canRequest.EntityName);

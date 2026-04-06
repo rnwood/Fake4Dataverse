@@ -21,10 +21,10 @@ namespace Fake4Dataverse.Handlers
             var token = commitRequest.FileContinuationToken;
             var fileName = commitRequest.FileName;
 
-            fakeService.CommitUploadSession(token, fileName);
+            fakeService.Environment.CommitUploadSession(token, fileName);
 
             var response = new CommitFileBlocksUploadResponse();
-            response.Results["FileSizeInBytes"] = fakeService.GetCommittedFileSize(token);
+            response.Results["FileSizeInBytes"] = fakeService.Environment.GetCommittedFileSize(token);
             return response;
         }
     }

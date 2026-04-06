@@ -12,9 +12,10 @@ namespace Fake4Dataverse.Tests
         public void RegisterSpklPluginsFromAssembly_WithAttributedPlugins_RegistersAndExecutes()
         {
             AssemblyDiscoveryPlugin.Reset();
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            using var result = service.RegisterSpklPluginsFromAssembly(typeof(SpklPluginRegistrationExtensionsTests).Assembly);
+            using var result = env.RegisterSpklPluginsFromAssembly(typeof(SpklPluginRegistrationExtensionsTests).Assembly);
 
             var id = service.Create(new Entity("spkl_assemblyaccount") { ["name"] = "Original" });
             var created = service.Retrieve("spkl_assemblyaccount", id, new ColumnSet("name"));
@@ -28,9 +29,10 @@ namespace Fake4Dataverse.Tests
         public void RegisterSpklPlugins_MapsStageAndModeFromAttribute()
         {
             StageModePlugin.Reset();
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            using var result = service.RegisterSpklPlugins(typeof(StageModePlugin));
+            using var result = env.RegisterSpklPlugins(typeof(StageModePlugin));
 
             service.Create(new Entity("spkl_stageaccount") { ["name"] = "Contoso" });
 
@@ -43,7 +45,8 @@ namespace Fake4Dataverse.Tests
         public void RegisterSpklPlugins_MapsImages_PrePostAndBoth()
         {
             ImageCapturePlugin.Reset();
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("spkl_imageaccount")
             {
                 ["name"] = "Before",
@@ -51,7 +54,7 @@ namespace Fake4Dataverse.Tests
                 ["description"] = "Desc"
             });
 
-            using var result = service.RegisterSpklPlugins(typeof(ImageCapturePlugin));
+            using var result = env.RegisterSpklPlugins(typeof(ImageCapturePlugin));
 
             service.Update(new Entity("spkl_imageaccount", id)
             {
@@ -72,14 +75,15 @@ namespace Fake4Dataverse.Tests
         public void RegisterSpklPlugins_NormalizesFilteringAttributes_AndExecutesOnlyForMatches()
         {
             FilteringPlugin.Reset();
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("spkl_filteraccount")
             {
                 ["name"] = "Contoso",
                 ["accountnumber"] = "N-1"
             });
 
-            using var result = service.RegisterSpklPlugins(typeof(FilteringPlugin));
+            using var result = env.RegisterSpklPlugins(typeof(FilteringPlugin));
 
             // Does not match filtering attributes (name/accountnumber)
             service.Update(new Entity("spkl_filteraccount", id)
@@ -101,9 +105,10 @@ namespace Fake4Dataverse.Tests
         public void RegisterSpklPlugins_UnsupportedForms_AreSkippedPredictably()
         {
             UnsupportedFormsPlugin.Reset();
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            using var result = service.RegisterSpklPlugins(typeof(UnsupportedFormsPlugin));
+            using var result = env.RegisterSpklPlugins(typeof(UnsupportedFormsPlugin));
 
             service.Create(new Entity("spkl_unsupported") { ["name"] = "Ignored" });
 

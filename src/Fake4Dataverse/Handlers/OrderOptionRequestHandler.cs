@@ -14,7 +14,7 @@ namespace Fake4Dataverse.Handlers
         {
             var orderRequest = (OrderOptionRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             if (!string.IsNullOrEmpty(orderRequest.OptionSetName) && orderRequest.Values != null)
             {

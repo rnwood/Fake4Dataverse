@@ -12,7 +12,7 @@ namespace Fake4Dataverse.Handlers
         {
             var updateRequest = (UpdateEntityRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var sdkEntity = updateRequest.Entity;
             if (sdkEntity == null || string.IsNullOrEmpty(sdkEntity.LogicalName))

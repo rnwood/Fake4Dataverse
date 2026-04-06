@@ -11,10 +11,10 @@ namespace Fake4Dataverse.Tests
     {
         private FakeOrganizationService CreateServiceWithAlternateKey()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("account")
+            var env = new FakeDataverseEnvironment();
+            env.MetadataStore.AddEntity("account")
                 .WithAlternateKey("ak_accountnumber", "accountnumber");
-            return service;
+            return env.CreateOrganizationService();
         }
 
         [Fact]
@@ -117,8 +117,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_ByCompositeAlternateKey_ReturnsEntity()
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddEntity("contact")
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.MetadataStore.AddEntity("contact")
                 .WithAlternateKey("ak_name", "firstname", "lastname");
 
             var id = service.Create(new Entity("contact")

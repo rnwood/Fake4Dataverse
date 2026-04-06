@@ -28,7 +28,8 @@ using Fake4Dataverse;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 // Create
 var id = service.Create(new Entity("account")
@@ -56,7 +57,8 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System.Threading;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 var asyncService = (IOrganizationServiceAsync2)service;
 
 var id = await asyncService.CreateAsync(
@@ -82,7 +84,8 @@ public class AccountServiceTests
     public void CreateAccount_SetsNameAndRevenue()
     {
         // Arrange
-        var service = new FakeOrganizationService();
+        var env = new FakeDataverseEnvironment();
+        var service = env.CreateOrganizationService();
         var myService = new AccountService(service);
 
         // Act
@@ -100,9 +103,13 @@ public class AccountServiceTests
 Three presets cover common scenarios:
 
 ```csharp
-var service = new FakeOrganizationService();                                  // Default
-var strict  = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);  // Metadata + security on
-var lenient = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient); // All auto-behaviors off
+var env = new FakeDataverseEnvironment();                                         // Default
+var strict  = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);   // Metadata + security on
+var lenient = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);   // All auto-behaviors off
+
+var service = env.CreateOrganizationService();
+var strictService = strict.CreateOrganizationService();
+var lenientService = lenient.CreateOrganizationService();
 ```
 
 Options can also be loaded from JSON, a file, or environment variables:
@@ -119,7 +126,7 @@ See [Configuration Reference](../reference/configuration.md) for the full option
 Use `Seed()` to bulk-insert entities **without** triggering the pipeline:
 
 ```csharp
-service.Seed(
+env.Seed(
     new Entity("account") { ["name"] = "Contoso" },
     new Entity("account") { ["name"] = "Fabrikam" }
 );
@@ -128,10 +135,10 @@ service.Seed(
 Inline data strings and file-based seeding are also supported:
 
 ```csharp
-service.SeedFromJson(jsonString);
-service.SeedFromCsv(csvString);
-service.SeedFromJsonFile("testdata/accounts.json");
-service.SeedFromCsvFile("testdata/accounts.csv");
+env.SeedFromJson(jsonString);
+env.SeedFromCsv(csvString);
+env.SeedFromJsonFile("testdata/accounts.json");
+env.SeedFromCsvFile("testdata/accounts.csv");
 ```
 
 For complex entities, the fluent `EntityBuilder` keeps setup readable:
@@ -150,7 +157,7 @@ More patterns in the [Cookbook](cookbook.md).
 **Scoped auto-rollback** — all changes inside the `using` block are reverted on dispose:
 
 ```csharp
-using (service.Scope())
+using (env.Scope())
 {
     service.Create(new Entity("account") { ["name"] = "Temp" });
     // rolled back automatically
@@ -160,9 +167,9 @@ using (service.Scope())
 **Snapshot / Restore** — manual save-point for more control:
 
 ```csharp
-service.TakeSnapshot();
+env.TakeSnapshot();
 // ... make changes ...
-service.RestoreSnapshot(); // reverts to snapshot
+env.RestoreSnapshot(); // reverts to snapshot
 ```
 
 ## Time Control
@@ -170,12 +177,12 @@ service.RestoreSnapshot(); // reverts to snapshot
 Pin the clock for deterministic timestamps:
 
 ```csharp
-service.Clock = new FakeClock(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+env.Clock = new FakeClock(new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc));
 
 var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 // createdon == 2024-01-01
 
-service.AdvanceTime(TimeSpan.FromDays(30));
+env.AdvanceTime(TimeSpan.FromDays(30));
 // Now == 2024-01-31
 ```
 

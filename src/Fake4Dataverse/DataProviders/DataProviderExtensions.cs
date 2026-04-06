@@ -8,29 +8,29 @@ using Microsoft.Xrm.Sdk;
 namespace Fake4Dataverse.DataProviders
 {
     /// <summary>
-    /// Provides methods to seed a <see cref="FakeOrganizationService"/> from external data sources.
+    /// Provides methods to seed a <see cref="FakeDataverseEnvironment"/> from external data sources.
     /// </summary>
     public static class DataProviderExtensions
     {
         /// <summary>
-        /// Seeds the service from a JSON file containing an array of entity objects.
+        /// Seeds the environment from a JSON file containing an array of entity objects.
         /// Each object must have a <c>logicalname</c> property and optionally an <c>id</c> property.
         /// </summary>
-        public static void SeedFromJsonFile(this FakeOrganizationService service, string filePath)
+        public static void SeedFromJsonFile(this FakeDataverseEnvironment environment, string filePath)
         {
-            if (service == null) throw new ArgumentNullException(nameof(service));
+            if (environment == null) throw new ArgumentNullException(nameof(environment));
             if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 
             var json = File.ReadAllText(filePath);
-            SeedFromJsonString(service, json);
+            SeedFromJsonString(environment, json);
         }
 
         /// <summary>
-        /// Seeds the service from a JSON string containing an array of entity objects.
+        /// Seeds the environment from a JSON string containing an array of entity objects.
         /// </summary>
-        public static void SeedFromJsonString(this FakeOrganizationService service, string json)
+        public static void SeedFromJsonString(this FakeDataverseEnvironment environment, string json)
         {
-            if (service == null) throw new ArgumentNullException(nameof(service));
+            if (environment == null) throw new ArgumentNullException(nameof(environment));
             if (json == null) throw new ArgumentNullException(nameof(json));
 
             using (var doc = JsonDocument.Parse(json))
@@ -60,21 +60,21 @@ namespace Fake4Dataverse.DataProviders
                     entities.Add(entity);
                 }
 
-                service.Seed(entities.ToArray());
+                environment.Seed(entities.ToArray());
             }
         }
 
         /// <summary>
-        /// Seeds the service from a CSV file. The first row must be headers.
+        /// Seeds the environment from a CSV file. The first row must be headers.
         /// The first column must be <c>logicalname</c>.
         /// </summary>
-        public static void SeedFromCsvFile(this FakeOrganizationService service, string filePath)
+        public static void SeedFromCsvFile(this FakeDataverseEnvironment environment, string filePath)
         {
-            if (service == null) throw new ArgumentNullException(nameof(service));
+            if (environment == null) throw new ArgumentNullException(nameof(environment));
             if (filePath == null) throw new ArgumentNullException(nameof(filePath));
 
             var csv = File.ReadAllText(filePath);
-            service.SeedFromCsv(csv);
+            environment.SeedFromCsv(csv);
         }
 
         private static object? ConvertJsonValue(JsonElement element)

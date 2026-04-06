@@ -12,10 +12,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void PreValidation_FiresBeforeCreate()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var firedStages = new List<PipelineStage>();
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, ctx =>
             {
                 firedStages.Add((PipelineStage)ctx.Stage);
             });
@@ -29,12 +30,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_ExecutionOrder_PreValidation_PreOperation_PostOperation()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var order = new List<string>();
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, _ => order.Add("PreValidation"));
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => order.Add("PreOperation"));
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, _ => order.Add("PostOperation"));
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, _ => order.Add("PreValidation"));
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => order.Add("PreOperation"));
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, _ => order.Add("PostOperation"));
 
             service.Create(new Entity("account") { ["name"] = "Test" });
 
@@ -44,14 +46,15 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_PreValidation_ThrowsAbortsPipeline()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool postFired = false;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, _ =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, _ =>
             {
                 throw new InvalidPluginExecutionException("Blocked by plugin");
             });
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, _ =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, _ =>
             {
                 postFired = true;
             });
@@ -65,10 +68,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_EntityScoped_OnlyFiresForMatchingEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var firedFor = new List<string>();
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", ctx =>
             {
                 firedFor.Add(ctx.PrimaryEntityName);
             });
@@ -83,10 +87,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_HasCorrectProperties()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             IPluginExecutionContext? capturedContext = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 capturedContext = ctx;
             });
@@ -103,16 +108,17 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_ExposesSDKInterfaceProperties()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var orgId = Guid.NewGuid();
             var buId = Guid.NewGuid();
-            service.OrganizationId = orgId;
+            env.OrganizationId = orgId;
             service.BusinessUnitId = buId;
-            service.OrganizationName = "TestOrg";
+            env.OrganizationName = "TestOrg";
             FakePipelineContext? captured = null;
             int capturedStage = 0;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 captured = ctx as FakePipelineContext;
                 capturedStage = ctx.Stage; // capture stage value at callback time
@@ -131,10 +137,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_PostOperation_HasOutputParameters()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             IPluginExecutionContext? capturedContext = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, ctx =>
             {
                 capturedContext = ctx;
             });
@@ -149,12 +156,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Update_FiresSteps()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var order = new List<string>();
 
-            service.Pipeline.RegisterStep("Update", PipelineStage.PreOperation, _ => order.Add("PreOp"));
-            service.Pipeline.RegisterStep("Update", PipelineStage.PostOperation, _ => order.Add("PostOp"));
+            env.Pipeline.RegisterStep("Update", PipelineStage.PreOperation, _ => order.Add("PreOp"));
+            env.Pipeline.RegisterStep("Update", PipelineStage.PostOperation, _ => order.Add("PostOp"));
 
             service.Update(new Entity("account", id) { ["name"] = "Fabrikam" });
 
@@ -164,12 +172,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Delete_FiresSteps()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var order = new List<string>();
 
-            service.Pipeline.RegisterStep("Delete", PipelineStage.PreValidation, _ => order.Add("PreVal"));
-            service.Pipeline.RegisterStep("Delete", PipelineStage.PostOperation, _ => order.Add("PostOp"));
+            env.Pipeline.RegisterStep("Delete", PipelineStage.PreValidation, _ => order.Add("PreVal"));
+            env.Pipeline.RegisterStep("Delete", PipelineStage.PostOperation, _ => order.Add("PostOp"));
 
             service.Delete("account", id);
 
@@ -179,10 +188,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_PreOperation_ThrowsAborts_Update()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
-            service.Pipeline.RegisterStep("Update", PipelineStage.PreOperation, _ =>
+            env.Pipeline.RegisterStep("Update", PipelineStage.PreOperation, _ =>
             {
                 throw new InvalidPluginExecutionException("Cannot update");
             });
@@ -198,10 +208,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_StepRegistration_Dispose_Unregisters()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             int callCount = 0;
 
-            var registration = service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => callCount++);
+            var registration = env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => callCount++);
             service.Create(new Entity("account") { ["name"] = "Test1" });
             Assert.Equal(1, callCount);
 
@@ -213,12 +224,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_UserId_MatchesCallerId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var customCaller = Guid.NewGuid();
             service.CallerId = customCaller;
             IPluginExecutionContext? capturedContext = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreValidation, ctx =>
             {
                 capturedContext = ctx;
             });
@@ -234,10 +246,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_RegisterPreOperation_Convenience_Fires()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool fired = false;
 
-            service.Pipeline.RegisterPreOperation("Create", "account", _ => fired = true);
+            env.Pipeline.RegisterPreOperation("Create", "account", _ => fired = true);
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.True(fired);
@@ -246,10 +259,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_RegisterPostOperation_Convenience_Fires()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool fired = false;
 
-            service.Pipeline.RegisterPostOperation("Delete", _ => fired = true);
+            env.Pipeline.RegisterPostOperation("Delete", _ => fired = true);
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Delete("account", id);
 
@@ -259,10 +273,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_RegisterPreValidation_Convenience_Fires()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool fired = false;
 
-            service.Pipeline.RegisterPreValidation("Create", _ => fired = true);
+            env.Pipeline.RegisterPreValidation("Create", _ => fired = true);
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.True(fired);
@@ -273,10 +288,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_IPlugin_ExecuteIsCalled()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var plugin = new CapturingPlugin();
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", plugin);
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", plugin);
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.NotNull(plugin.CapturedContext);
@@ -287,7 +303,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_IPlugin_ServiceProviderProvidesContext()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             IPluginExecutionContext? pluginContext = null;
             IOrganizationServiceFactory? pluginFactory = null;
             ITracingService? pluginTracing = null;
@@ -299,7 +316,7 @@ namespace Fake4Dataverse.Tests
                 pluginTracing = (ITracingService)sp.GetService(typeof(ITracingService))!;
             });
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, plugin);
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, plugin);
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.NotNull(pluginContext);
@@ -310,7 +327,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_IPlugin_CanCreateRecordsViaFactory()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var plugin = new LambdaPlugin(sp =>
             {
@@ -326,7 +344,7 @@ namespace Fake4Dataverse.Tests
                 });
             });
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", plugin);
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", plugin);
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var contacts = service.RetrieveMultiple(new Microsoft.Xrm.Sdk.Query.QueryExpression("contact")
@@ -340,7 +358,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_IPlugin_TracingServiceCapturesMessages()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var plugin = new LambdaPlugin(sp =>
             {
@@ -349,20 +368,21 @@ namespace Fake4Dataverse.Tests
                 tracing.Trace("Done");
             });
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, plugin);
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, plugin);
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
-            Assert.Equal(2, service.Pipeline.Traces.Count);
-            Assert.Equal("Plugin executed for account", service.Pipeline.Traces[0]);
-            Assert.Equal("Done", service.Pipeline.Traces[1]);
+            Assert.Equal(2, env.Pipeline.Traces.Count);
+            Assert.Equal("Plugin executed for account", env.Pipeline.Traces[0]);
+            Assert.Equal("Done", env.Pipeline.Traces[1]);
         }
 
         [Fact]
         public void Pipeline_ClearTraces_ResetsCollection()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.Pipeline.RegisterPostOperation("Create", ctx =>
+            env.Pipeline.RegisterPostOperation("Create", ctx =>
             {
                 // no-op — traces come from IPlugin steps; ClearTraces just needs to empty the list
             });
@@ -370,24 +390,25 @@ namespace Fake4Dataverse.Tests
             {
                 ((ITracingService)sp.GetService(typeof(ITracingService))!).Trace("hello");
             });
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, plugin);
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, plugin);
 
             service.Create(new Entity("account") { ["name"] = "Contoso" });
-            Assert.NotEmpty(service.Pipeline.Traces);
+            Assert.NotEmpty(env.Pipeline.Traces);
 
-            service.Pipeline.ClearTraces();
-            Assert.Empty(service.Pipeline.Traces);
+            env.Pipeline.ClearTraces();
+            Assert.Empty(env.Pipeline.Traces);
         }
 
         [Fact]
         public void Pipeline_IPlugin_ThrowsAbortsPipeline()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool postFired = false;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation,
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation,
                 new LambdaPlugin(_ => throw new InvalidPluginExecutionException("plugin abort")));
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, _ => postFired = true);
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, _ => postFired = true);
 
             Assert.Throws<InvalidPluginExecutionException>(() =>
                 service.Create(new Entity("account") { ["name"] = "Test" }));
@@ -416,15 +437,16 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_SharedVariables_PropagateAcrossStages()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             string? captured = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 ctx.SharedVariables["key"] = "FromPreOp";
             });
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, ctx =>
             {
                 captured = ctx.SharedVariables.ContainsKey("key")
                     ? (string)ctx.SharedVariables["key"]
@@ -439,10 +461,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_Depth_IsOne()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             int depth = 0;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 depth = ctx.Depth;
             });
@@ -455,10 +478,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_Mode_IsSynchronous()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             int mode = -1;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 mode = ctx.Mode;
             });
@@ -471,10 +495,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_IsInTransaction_IsTrue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool inTransaction = false;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 inTransaction = ctx.IsInTransaction;
             });
@@ -487,9 +512,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_PreOperation_CanModifyTarget()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 var target = (Entity)ctx.InputParameters["Target"];
                 target["name"] = "ModifiedByPlugin";
@@ -504,11 +530,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_MultipleStepsInSameStage_AllFire()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var firedSteps = new List<string>();
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => firedSteps.Add("Step1"));
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => firedSteps.Add("Step2"));
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => firedSteps.Add("Step1"));
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, _ => firedSteps.Add("Step2"));
 
             service.Create(new Entity("account") { ["name"] = "Test" });
 
@@ -522,11 +549,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_PreImage_AvailableInPreOperation()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Original" });
 
             Entity? preImage = null;
-            var step = service.Pipeline.RegisterPreOperation("Update", "account", ctx =>
+            var step = env.Pipeline.RegisterPreOperation("Update", "account", ctx =>
             {
                 if (ctx.PreEntityImages.Contains("preimage"))
                     preImage = ctx.PreEntityImages["preimage"];
@@ -542,11 +570,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_PostImage_AvailableInPostOperation()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Original" });
 
             Entity? postImage = null;
-            var step = service.Pipeline.RegisterPostOperation("Update", "account", ctx =>
+            var step = env.Pipeline.RegisterPostOperation("Update", "account", ctx =>
             {
                 if (ctx.PostEntityImages.Contains("postimage"))
                     postImage = ctx.PostEntityImages["postimage"];
@@ -562,11 +591,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_DeleteTarget_AccessibleInPostOperation()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "ToDelete" });
 
             EntityReference? deletedRef = null;
-            service.Pipeline.RegisterPostOperation("Delete", "account", ctx =>
+            env.Pipeline.RegisterPostOperation("Delete", "account", ctx =>
             {
                 deletedRef = ctx.InputParameters["Target"] as EntityReference;
             });
@@ -583,9 +613,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_AsyncStep_HasCorrectMode()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             int? capturedMode = null;
-            var step = service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
+            var step = env.Pipeline.RegisterPostOperation("Create", "account", ctx =>
             {
                 capturedMode = ctx.Mode;
             });
@@ -599,9 +630,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_SyncStep_HasModeZero()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             int? capturedMode = null;
-            service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
+            env.Pipeline.RegisterPostOperation("Create", "account", ctx =>
             {
                 capturedMode = ctx.Mode;
             });
@@ -616,10 +648,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V2_DefaultsToEmptyGuidsAndFalse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             IPluginExecutionContext2? ctx2 = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 ctx2 = ctx as IPluginExecutionContext2;
             });
@@ -637,7 +670,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V2_ServicePropertiesFlowIntoContext()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var appId = Guid.NewGuid();
             var aadObjectId = Guid.NewGuid();
             var contactId = Guid.NewGuid();
@@ -649,7 +683,7 @@ namespace Fake4Dataverse.Tests
             service.UserAzureActiveDirectoryObjectId = userAadId;
 
             IPluginExecutionContext2? ctx2 = null;
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 ctx2 = ctx as IPluginExecutionContext2;
             });
@@ -667,12 +701,13 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V3_AuthenticatedUserIdDefaultsToCallerId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var customCaller = Guid.NewGuid();
             service.CallerId = customCaller;
 
             IPluginExecutionContext3? ctx3 = null;
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 ctx3 = ctx as IPluginExecutionContext3;
             });
@@ -686,13 +721,14 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V4_ImagesCollectionsWrapSingleCollections()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Original" });
 
             EntityImageCollection[]? preCollections = null;
             EntityImageCollection[]? postCollections = null;
 
-            var step = service.Pipeline.RegisterPostOperation("Update", "account", ctx =>
+            var step = env.Pipeline.RegisterPostOperation("Update", "account", ctx =>
             {
                 var ctx4 = ctx as IPluginExecutionContext4;
                 preCollections = ctx4?.PreEntityImagesCollection;
@@ -714,10 +750,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V5_InitiatingUserAgentDefault()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             string? userAgent = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 userAgent = (ctx as IPluginExecutionContext5)?.InitiatingUserAgent;
             });
@@ -730,11 +767,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V5_InitiatingUserAgentIsConfigurable()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.InitiatingUserAgent = "MyClient/2.0";
             string? userAgent = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 userAgent = (ctx as IPluginExecutionContext5)?.InitiatingUserAgent;
             });
@@ -747,14 +785,15 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V6_EnvironmentIdAndTenantIdAreConfigurable()
         {
-            var service = new FakeOrganizationService();
-            service.EnvironmentId = "unq12345abcde";
-            service.TenantId = new Guid("aaaabbbb-0000-0000-0000-ccccdddd0001");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.EnvironmentId = "unq12345abcde";
+            env.TenantId = new Guid("aaaabbbb-0000-0000-0000-ccccdddd0001");
 
             string? envId = null;
             Guid tenantId = Guid.Empty;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 var ctx6 = ctx as IPluginExecutionContext6;
                 envId = ctx6?.EnvironmentId;
@@ -770,10 +809,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V6_EnvironmentIdDefaultsToEmpty()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             string? envId = "not-set";
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 envId = (ctx as IPluginExecutionContext6)?.EnvironmentId;
             });
@@ -786,10 +826,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V7_IsApplicationUserDefaultsFalse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool? isAppUser = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 isAppUser = (ctx as IPluginExecutionContext7)?.IsApplicationUser;
             });
@@ -802,11 +843,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_V7_IsApplicationUserIsConfigurable()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.IsApplicationUser = true;
             bool? isAppUser = null;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 isAppUser = (ctx as IPluginExecutionContext7)?.IsApplicationUser;
             });
@@ -819,10 +861,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Pipeline_Context_ImplmentsIPluginExecutionContext7()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             bool isCtx7 = false;
 
-            service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+            env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
             {
                 isCtx7 = ctx is IPluginExecutionContext7;
             });

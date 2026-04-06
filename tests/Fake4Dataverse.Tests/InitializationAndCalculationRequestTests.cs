@@ -9,7 +9,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InitializeFromRequest_CopiesSourceAttributes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account")
             {
                 ["name"] = "Contoso",
@@ -34,9 +35,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CalculateRollupFieldRequest_TriggersRollupCalculation()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
-            service.CalculatedFields.RegisterRollupField(
+            env.CalculatedFields.RegisterRollupField(
                 "account", "totalrevenue",
                 "opportunity", "estimatedvalue", "parentaccountid",
                 RollupType.Sum);

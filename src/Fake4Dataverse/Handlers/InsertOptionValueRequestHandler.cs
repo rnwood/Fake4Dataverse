@@ -16,7 +16,7 @@ namespace Fake4Dataverse.Handlers
         {
             var insertRequest = (InsertOptionValueRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var newValue = insertRequest.Value ?? new Random().Next(100000, 999999);
             var label = insertRequest.Label?.UserLocalizedLabel?.Label;

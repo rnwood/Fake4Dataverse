@@ -4,42 +4,22 @@ Curated summary of the Fake4Dataverse public API surface.
 
 ---
 
-## FakeOrganizationService
+## FakeDataverseEnvironment
 
-Main entry point. Implements both `IOrganizationService` and `IOrganizationServiceAsync2`.
+Shared backend — owns the store, metadata, pipeline, security, clock, and configuration.
 
 ### Constructors
 
 ```csharp
-FakeOrganizationService()
-FakeOrganizationService(FakeOrganizationServiceOptions options)
+FakeDataverseEnvironment()
+FakeDataverseEnvironment(FakeOrganizationServiceOptions options)
 ```
 
-### IOrganizationService Methods
+### Session Creation
 
 ```csharp
-Guid Create(Entity entity)
-Entity Retrieve(string entityName, Guid id, ColumnSet columnSet)
-void Update(Entity entity)
-void Delete(string entityName, Guid id)
-EntityCollection RetrieveMultiple(QueryBase query)
-OrganizationResponse Execute(OrganizationRequest request)
-void Associate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
-void Disassociate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
-```
-
-### IOrganizationServiceAsync2 Methods
-
-```csharp
-Task<Guid> CreateAsync(Entity entity, CancellationToken cancellationToken)
-Task<Entity> CreateAndReturnAsync(Entity entity, CancellationToken cancellationToken)
-Task<Entity> RetrieveAsync(string entityName, Guid id, ColumnSet columnSet, CancellationToken cancellationToken)
-Task<EntityCollection> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken)
-Task UpdateAsync(Entity entity, CancellationToken cancellationToken)
-Task DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken)
-Task<OrganizationResponse> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken)
-Task AssociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
-Task DisassociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
+FakeOrganizationService CreateOrganizationService()
+FakeOrganizationService CreateOrganizationService(Guid callerId)
 ```
 
 ### Properties
@@ -52,16 +32,13 @@ Task DisassociateAsync(string entityName, Guid entityId, Relationship relationsh
 | `Pipeline` | `PipelineManager` | Pre/post-operation plugin hooks |
 | `CalculatedFields` | `CalculatedFieldManager` | Calculated and rollup field evaluation |
 | `Currency` | `CurrencyManager` | Exchange rates and base currency |
-| `OperationLog` | `OperationLog` | Recorded service calls for assertions |
+| `OperationLog` | `OperationLog` | Global recorded service calls for assertions |
 | `HandlerRegistry` | `OrganizationRequestHandlerRegistry` | Custom request handler registration |
 | `Clock` | `IClock` | Time provider (swap in `FakeClock` for deterministic tests) |
-| `CallerId` | `Guid` | Simulated calling user |
-| `InitiatingUserId` | `Guid` | Simulated initiating user |
-| `BusinessUnitId` | `Guid` | Simulated business unit |
 | `OrganizationId` | `Guid` | Simulated organization |
 | `OrganizationName` | `string` | Simulated organization name |
-| `ValidateWithMetadata` | `bool` | Require metadata registration for operations |
-| `UseSystemContext` | `bool` | Bypass security checks |
+| `EnvironmentId` | `string` | Simulated environment ID |
+| `TenantId` | `Guid` | Simulated tenant ID |
 
 ### Seeding
 
@@ -123,6 +100,53 @@ void AddIndex(string entityName, string attributeName)
 ```csharp
 void Reset()
 ```
+
+---
+
+## FakeOrganizationService
+
+Lightweight session — implements both `IOrganizationService` and `IOrganizationServiceAsync2`. Created via `env.CreateOrganizationService()`.
+
+### IOrganizationService Methods
+
+```csharp
+Guid Create(Entity entity)
+Entity Retrieve(string entityName, Guid id, ColumnSet columnSet)
+void Update(Entity entity)
+void Delete(string entityName, Guid id)
+EntityCollection RetrieveMultiple(QueryBase query)
+OrganizationResponse Execute(OrganizationRequest request)
+void Associate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
+void Disassociate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities)
+```
+
+### IOrganizationServiceAsync2 Methods
+
+```csharp
+Task<Guid> CreateAsync(Entity entity, CancellationToken cancellationToken)
+Task<Entity> CreateAndReturnAsync(Entity entity, CancellationToken cancellationToken)
+Task<Entity> RetrieveAsync(string entityName, Guid id, ColumnSet columnSet, CancellationToken cancellationToken)
+Task<EntityCollection> RetrieveMultipleAsync(QueryBase query, CancellationToken cancellationToken)
+Task UpdateAsync(Entity entity, CancellationToken cancellationToken)
+Task DeleteAsync(string entityName, Guid id, CancellationToken cancellationToken)
+Task<OrganizationResponse> ExecuteAsync(OrganizationRequest request, CancellationToken cancellationToken)
+Task AssociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
+Task DisassociateAsync(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities, CancellationToken cancellationToken)
+```
+
+### Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `CallerId` | `Guid` | Simulated calling user |
+| `InitiatingUserId` | `Guid` | Simulated initiating user |
+| `BusinessUnitId` | `Guid` | Simulated business unit |
+| `UseSystemContext` | `bool` | Bypass security checks |
+| `OperationLog` | `OperationLog` | Per-session recorded service calls for assertions |
+
+### Seeding
+
+_Seeding, binary, snapshot, time, custom API, status transition, indexing, and reset methods are on `FakeDataverseEnvironment` (see above)._
 
 ---
 

@@ -11,7 +11,7 @@ namespace Fake4Dataverse.Handlers
         {
             var canRequest = (CanBeReferencedRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             // In the fake, any registered entity can be a referenced entity
             var entityInfo = store.GetEntityMetadataInfo(canRequest.EntityName);

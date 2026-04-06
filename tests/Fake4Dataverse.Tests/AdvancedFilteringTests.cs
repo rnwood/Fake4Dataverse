@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeepNestedFilter_AndWithinOr()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A", ["city"] = "NYC", ["employees"] = 100 });
             service.Create(new Entity("account") { ["name"] = "B", ["city"] = "LA", ["employees"] = 200 });
             service.Create(new Entity("account") { ["name"] = "C", ["city"] = "NYC", ["employees"] = 50 });
@@ -37,7 +38,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ThreeLevelDeepNesting()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A", ["city"] = "NYC", ["employees"] = 100, ["active"] = true });
             service.Create(new Entity("account") { ["name"] = "B", ["city"] = "NYC", ["employees"] = 100, ["active"] = false });
             service.Create(new Entity("account") { ["name"] = "C", ["city"] = "NYC", ["employees"] = 50, ["active"] = true });
@@ -67,7 +69,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NullComparison_GreaterThan_NullReturnsFalse()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["employees"] = 100 });
             service.Create(new Entity("account")); // null employees
 
@@ -81,7 +84,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NullComparison_Equal_NullDoesNotMatchValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account")); // null name
 
@@ -94,7 +98,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void NullComparison_NotEqual_NullIncluded()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "B" });
             service.Create(new Entity("account")); // null name
@@ -110,7 +115,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EmptyFilter_ReturnsAll()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "B" });
 
@@ -123,7 +129,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void OrFilter_AtTopLevel()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("account") { ["name"] = "B" });
             service.Create(new Entity("account") { ["name"] = "C" });
@@ -139,7 +146,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Like_WildcardPatterns()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso Ltd" });
             service.Create(new Entity("account") { ["name"] = "Fabrikam Inc" });
             service.Create(new Entity("account") { ["name"] = "Contoso Corp" });

@@ -6,18 +6,19 @@ Fake4Dataverse supports storing and retrieving binary data (images and files) fo
 
 ## Direct Binary Storage
 
-The simplest approach uses the helper methods on `FakeOrganizationService`:
+The simplest approach uses the helper methods on `FakeDataverseEnvironment`:
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
 // Store a binary attribute (e.g., an entity image)
 byte[] imageData = File.ReadAllBytes("logo.png");
-service.SetBinaryAttribute("account", accountId, "entityimage", imageData);
+env.SetBinaryAttribute("account", accountId, "entityimage", imageData);
 
 // Retrieve the binary attribute
-byte[]? retrieved = service.GetBinaryAttribute("account", accountId, "entityimage");
+byte[]? retrieved = env.GetBinaryAttribute("account", accountId, "entityimage");
 
 Assert.NotNull(retrieved);
 Assert.Equal(imageData.Length, retrieved.Length);
@@ -26,7 +27,7 @@ Assert.Equal(imageData.Length, retrieved.Length);
 - **`SetBinaryAttribute(entityName, entityId, attributeName, byte[] data)`** — stores a copy of the data.
 - **`GetBinaryAttribute(entityName, entityId, attributeName)`** — returns a copy of the data, or `null` if not set.
 
-Data is deep-cloned on both store and retrieve to prevent aliasing bugs.
+Both methods are on `FakeDataverseEnvironment`. Data is deep-cloned on both store and retrieve to prevent aliasing bugs.
 
 ---
 
@@ -100,21 +101,22 @@ service.Execute(new OrganizationRequest("DeleteFile")
 ## Complete Example
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
 // Store binary data
 var original = new byte[] { 0x01, 0x02, 0x03, 0x04 };
-service.SetBinaryAttribute("account", id, "entityimage", original);
+env.SetBinaryAttribute("account", id, "entityimage", original);
 
 // Retrieve and verify
-var result = service.GetBinaryAttribute("account", id, "entityimage");
+var result = env.GetBinaryAttribute("account", id, "entityimage");
 Assert.Equal(original, result);
 
 // Overwrite
 var updated = new byte[] { 0xAA, 0xBB };
-service.SetBinaryAttribute("account", id, "entityimage", updated);
-result = service.GetBinaryAttribute("account", id, "entityimage");
+env.SetBinaryAttribute("account", id, "entityimage", updated);
+result = env.GetBinaryAttribute("account", id, "entityimage");
 Assert.Equal(updated, result);
 ```
 

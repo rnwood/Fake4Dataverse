@@ -13,7 +13,7 @@ namespace Fake4Dataverse.Handlers
         public OrganizationResponse Handle(OrganizationRequest request, IOrganizationService service)
         {
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             // Return all entities as the "changes" — simplified implementation
             var allEntities = store.GetAllEntityMetadataInfo();

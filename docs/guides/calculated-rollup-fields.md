@@ -2,7 +2,7 @@
 
 Fake4Dataverse includes a `CalculatedFieldManager` that evaluates calculated and rollup fields **on Retrieve**, not on write. This mirrors Dataverse behavior where calculated/rollup columns are computed when a record is read.
 
-Access the manager via `service.CalculatedFields`.
+Access the manager via `env.CalculatedFields`.
 
 ---
 
@@ -11,7 +11,7 @@ Access the manager via `service.CalculatedFields`.
 Use `RegisterCalculatedField` to define a formula that computes a field value from the entity's attributes:
 
 ```csharp
-service.CalculatedFields.RegisterCalculatedField(
+env.CalculatedFields.RegisterCalculatedField(
     entityName: "contact",
     attributeName: "fullname",
     formula: e => $"{e.GetAttributeValue<string>("firstname")} {e.GetAttributeValue<string>("lastname")}");
@@ -22,7 +22,10 @@ The formula receives the full `Entity` and returns the computed value. It runs e
 ### Numeric Calculation Example
 
 ```csharp
-service.CalculatedFields.RegisterCalculatedField(
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+
+env.CalculatedFields.RegisterCalculatedField(
     "orderdetail",
     "extendedamount",
     e =>
@@ -49,7 +52,7 @@ Assert.Equal(100m, record.GetAttributeValue<Money>("extendedamount").Value);
 Rollup fields aggregate values from related entities. Use `RegisterRollupField`:
 
 ```csharp
-service.CalculatedFields.RegisterRollupField(
+env.CalculatedFields.RegisterRollupField(
     entityName: "account",
     attributeName: "totalrevenue",
     relatedEntity: "opportunity",
@@ -63,10 +66,13 @@ The `RollupType` enum supports: `Sum`, `Count`, `Avg`, `Min`, `Max`.
 ### Count with Filter Example
 
 ```csharp
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+
 var filter = new FilterExpression();
 filter.AddCondition("statecode", ConditionOperator.Equal, 0); // active only
 
-service.CalculatedFields.RegisterRollupField(
+env.CalculatedFields.RegisterRollupField(
     entityName: "account",
     attributeName: "activecontactcount",
     relatedEntity: "contact",

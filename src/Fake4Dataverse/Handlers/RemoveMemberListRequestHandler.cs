@@ -21,7 +21,7 @@ namespace Fake4Dataverse.Handlers
             var fakeService = service as FakeOrganizationService
                 ?? throw new InvalidOperationException("RemoveMemberListRequestHandler requires FakeOrganizationService.");
 
-            var allMembers = fakeService.Store.GetAll("listmember");
+            var allMembers = fakeService.Environment.Store.GetAll("listmember");
             var match = allMembers.FirstOrDefault(e =>
             {
                 var list = e.GetAttributeValue<EntityReference>("listid");

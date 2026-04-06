@@ -81,7 +81,7 @@ namespace Fake4Dataverse.Spkl
 
     /// <summary>
     /// Extension methods for auto-registering plugins decorated with
-    /// <see cref="CrmPluginRegistrationAttribute"/> into <see cref="FakeOrganizationService.Pipeline"/>.
+    /// <see cref="CrmPluginRegistrationAttribute"/> into <see cref="FakeDataverseEnvironment.Pipeline"/>.
     /// </summary>
     public static class SpklPluginRegistrationExtensions
     {
@@ -90,12 +90,12 @@ namespace Fake4Dataverse.Spkl
         /// <see cref="CrmPluginRegistrationAttribute"/>, and registers supported plugin-step forms.
         /// Unsupported forms (workflow/custom API) are skipped and reported in the result.
         /// </summary>
-        /// <param name="service">Target fake organization service.</param>
+        /// <param name="environment">Target fake Dataverse environment.</param>
         /// <param name="assembly">Assembly to scan.</param>
         /// <returns>A disposable result containing successful and skipped registrations.</returns>
-        public static SpklAutoRegistrationResult RegisterSpklPluginsFromAssembly(this FakeOrganizationService service, Assembly assembly)
+        public static SpklAutoRegistrationResult RegisterSpklPluginsFromAssembly(this FakeDataverseEnvironment environment, Assembly assembly)
         {
-            if (service == null) throw new ArgumentNullException(nameof(service));
+            if (environment == null) throw new ArgumentNullException(nameof(environment));
             if (assembly == null) throw new ArgumentNullException(nameof(assembly));
 
             var pluginTypes = GetLoadableTypes(assembly)
@@ -105,34 +105,34 @@ namespace Fake4Dataverse.Spkl
                 .OrderBy(t => t.FullName, StringComparer.Ordinal)
                 .ToArray();
 
-            return RegisterSpklPlugins(service, pluginTypes);
+            return RegisterSpklPlugins(environment, pluginTypes);
         }
 
         /// <summary>
         /// Registers SPKL-decorated plugin types.
         /// Unsupported forms (workflow/custom API) are skipped and reported in the result.
         /// </summary>
-        /// <param name="service">Target fake organization service.</param>
+        /// <param name="environment">Target fake Dataverse environment.</param>
         /// <param name="pluginTypes">Plugin types to inspect.</param>
         /// <returns>A disposable result containing successful and skipped registrations.</returns>
-        public static SpklAutoRegistrationResult RegisterSpklPlugins(this FakeOrganizationService service, params Type[] pluginTypes)
+        public static SpklAutoRegistrationResult RegisterSpklPlugins(this FakeDataverseEnvironment environment, params Type[] pluginTypes)
         {
-            if (service == null) throw new ArgumentNullException(nameof(service));
+            if (environment == null) throw new ArgumentNullException(nameof(environment));
             if (pluginTypes == null) throw new ArgumentNullException(nameof(pluginTypes));
 
-            return RegisterSpklPlugins(service, (IEnumerable<Type>)pluginTypes);
+            return RegisterSpklPlugins(environment, (IEnumerable<Type>)pluginTypes);
         }
 
         /// <summary>
         /// Registers SPKL-decorated plugin types.
         /// Unsupported forms (workflow/custom API) are skipped and reported in the result.
         /// </summary>
-        /// <param name="service">Target fake organization service.</param>
+        /// <param name="environment">Target fake Dataverse environment.</param>
         /// <param name="pluginTypes">Plugin types to inspect.</param>
         /// <returns>A disposable result containing successful and skipped registrations.</returns>
-        public static SpklAutoRegistrationResult RegisterSpklPlugins(this FakeOrganizationService service, IEnumerable<Type> pluginTypes)
+        public static SpklAutoRegistrationResult RegisterSpklPlugins(this FakeDataverseEnvironment environment, IEnumerable<Type> pluginTypes)
         {
-            if (service == null) throw new ArgumentNullException(nameof(service));
+            if (environment == null) throw new ArgumentNullException(nameof(environment));
             if (pluginTypes == null) throw new ArgumentNullException(nameof(pluginTypes));
 
             var registrations = new List<PipelineStepRegistration>();
@@ -140,8 +140,14 @@ namespace Fake4Dataverse.Spkl
 
             foreach (var pluginType in pluginTypes.Where(t => t != null).OrderBy(t => t.FullName, StringComparer.Ordinal))
             {
+                // Match by full type name so that plugins that embedded the spkl
+                // content file directly (a different CLR type with the same name)
+                // are also discovered and mapped to our local CrmPluginRegistrationAttribute.
                 var attributes = pluginType
-                    .GetCustomAttributes(typeof(CrmPluginRegistrationAttribute), inherit: false)
+                    .GetCustomAttributes(inherit: false)
+                    .OfType<Attribute>()
+                    .Select(MapToCrmPluginRegistrationAttribute)
+                    .Where(a => a != null)
                     .Cast<CrmPluginRegistrationAttribute>()
                     .ToArray();
 
@@ -154,7 +160,7 @@ namespace Fake4Dataverse.Spkl
                 {
                     string reason;
                     PipelineStepRegistration? registration;
-                    if (!TryRegisterAttribute(service, pluginType, attribute, out registration, out reason))
+                    if (!TryRegisterAttribute(environment, pluginType, attribute, out registration, out reason))
                     {
                         skipped.Add(new SpklSkippedRegistration(pluginType, attribute, reason));
                         continue;
@@ -168,7 +174,7 @@ namespace Fake4Dataverse.Spkl
         }
 
         private static bool TryRegisterAttribute(
-            FakeOrganizationService service,
+            FakeDataverseEnvironment environment,
             Type pluginType,
             CrmPluginRegistrationAttribute attribute,
             out PipelineStepRegistration? registration,
@@ -222,7 +228,7 @@ namespace Fake4Dataverse.Spkl
             }
 
             var normalizedEntity = NormalizeEntityLogicalName(attribute.EntityLogicalName);
-            registration = service.Pipeline.RegisterStep(messageName, pipelineStage, normalizedEntity, plugin);
+            registration = environment.Pipeline.RegisterStep(messageName, pipelineStage, normalizedEntity, plugin);
 
             if (attribute.ExecutionMode == ExecutionModeEnum.Asynchronous)
             {
@@ -285,8 +291,96 @@ namespace Fake4Dataverse.Spkl
             return type.GetConstructor(Flags, binder: null, types: parameters, modifiers: null);
         }
 
-        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        // Returns our own CrmPluginRegistrationAttribute for:
+        //  - attributes that already ARE our type (same CLR type), and
+        //  - attributes from a foreign assembly whose type name is "CrmPluginRegistrationAttribute"
+        //    (i.e., the plugin embedded the spkl content file directly).
+        private static CrmPluginRegistrationAttribute? MapToCrmPluginRegistrationAttribute(Attribute attr)
         {
+            if (attr is CrmPluginRegistrationAttribute ours)
+            {
+                return ours;
+            }
+
+            var t = attr.GetType();
+            if (t.FullName != "CrmPluginRegistrationAttribute")
+            {
+                return null;
+            }
+
+            return MapForeignAttribute(t, attr);
+        }
+
+        // Reads all relevant properties from a foreign CrmPluginRegistrationAttribute via
+        // reflection and constructs an equivalent local instance.
+        private static CrmPluginRegistrationAttribute MapForeignAttribute(Type t, object attr)
+        {
+            var message = (string?)t.GetProperty("Message")?.GetValue(attr);
+            var name = (string?)t.GetProperty("Name")?.GetValue(attr);
+            var entityLogicalName = (string?)t.GetProperty("EntityLogicalName")?.GetValue(attr);
+            var stageRaw = t.GetProperty("Stage")?.GetValue(attr);
+            var execModeRaw = t.GetProperty("ExecutionMode")?.GetValue(attr);
+            var filteringAttributes = (string?)t.GetProperty("FilteringAttributes")?.GetValue(attr);
+            var executionOrder = Convert.ToInt32(t.GetProperty("ExecutionOrder")?.GetValue(attr) ?? 0);
+            var isoModeRaw = t.GetProperty("IsolationMode")?.GetValue(attr);
+
+            var isoMode = (IsolationModeEnum)Convert.ToInt32(isoModeRaw ?? IsolationModeEnum.Sandbox);
+
+            CrmPluginRegistrationAttribute result;
+            if (stageRaw != null)
+            {
+                // Plugin-step constructor form
+                result = new CrmPluginRegistrationAttribute(
+                    message ?? string.Empty,
+                    entityLogicalName ?? string.Empty,
+                    (StageEnum)Convert.ToInt32(stageRaw),
+                    (ExecutionModeEnum)Convert.ToInt32(execModeRaw ?? ExecutionModeEnum.Synchronous),
+                    filteringAttributes ?? string.Empty,
+                    name ?? string.Empty,
+                    executionOrder,
+                    isoMode);
+            }
+            else if (name == null)
+            {
+                // Custom API constructor form: CrmPluginRegistrationAttribute(string message)
+                result = new CrmPluginRegistrationAttribute(message ?? string.Empty);
+            }
+            else
+            {
+                // Workflow constructor form
+                var friendlyName = (string?)t.GetProperty("FriendlyName")?.GetValue(attr);
+                var description = (string?)t.GetProperty("Description")?.GetValue(attr);
+                var groupName = (string?)t.GetProperty("GroupName")?.GetValue(attr);
+                result = new CrmPluginRegistrationAttribute(
+                    name,
+                    friendlyName ?? string.Empty,
+                    description ?? string.Empty,
+                    groupName ?? string.Empty,
+                    isoMode);
+            }
+
+            result.Id = (string?)t.GetProperty("Id")?.GetValue(attr);
+            result.Image1Name = (string?)t.GetProperty("Image1Name")?.GetValue(attr);
+            result.Image1Attributes = (string?)t.GetProperty("Image1Attributes")?.GetValue(attr);
+            var image1TypeRaw = t.GetProperty("Image1Type")?.GetValue(attr);
+            if (image1TypeRaw != null) result.Image1Type = (ImageTypeEnum)Convert.ToInt32(image1TypeRaw);
+            result.Image2Name = (string?)t.GetProperty("Image2Name")?.GetValue(attr);
+            result.Image2Attributes = (string?)t.GetProperty("Image2Attributes")?.GetValue(attr);
+            var image2TypeRaw = t.GetProperty("Image2Type")?.GetValue(attr);
+            if (image2TypeRaw != null) result.Image2Type = (ImageTypeEnum)Convert.ToInt32(image2TypeRaw);
+            result.Description = (string?)t.GetProperty("Description")?.GetValue(attr);
+            result.DeleteAsyncOperation = (bool)(t.GetProperty("DeleteAsyncOperation")?.GetValue(attr) ?? false);
+            result.UnSecureConfiguration = (string?)t.GetProperty("UnSecureConfiguration")?.GetValue(attr);
+            result.SecureConfiguration = (string?)t.GetProperty("SecureConfiguration")?.GetValue(attr);
+            result.Offline = (bool)(t.GetProperty("Offline")?.GetValue(attr) ?? false);
+            result.Server = (bool)(t.GetProperty("Server")?.GetValue(attr) ?? true);
+            var actionRaw = t.GetProperty("Action")?.GetValue(attr);
+            if (actionRaw != null) result.Action = (PluginStepOperationEnum)Convert.ToInt32(actionRaw);
+
+            return result;
+        }
+
+        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)        {
             try
             {
                 return assembly.GetTypes();

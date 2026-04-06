@@ -15,7 +15,7 @@ namespace Fake4Dataverse.Handlers
             var newValue = insertRequest.Value ?? new Random().Next(100000, 999999);
 
             var fakeService = (FakeOrganizationService)service;
-            fakeService.MetadataStore.IncrementMetadataTimestamp();
+            fakeService.Environment.MetadataStore.IncrementMetadataTimestamp();
 
             var response = new InsertStatusValueResponse();
             response.Results["NewOptionValue"] = newValue;

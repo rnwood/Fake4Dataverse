@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
     {
         private FakeOrganizationService CreateSeededService(int count)
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             for (int i = 1; i <= count; i++)
             {
                 service.Create(new Entity("account") { ["name"] = $"Account{i:D3}", ["index"] = i });

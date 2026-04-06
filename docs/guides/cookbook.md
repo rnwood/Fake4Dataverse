@@ -21,8 +21,9 @@ and `ITracingService` all resolve automatically.
 [Fact]
 public void MyAccountPlugin_CreatesRelatedContact_OnCreate()
 {
-    var service = new FakeOrganizationService();
-    service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account",
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account",
         new MyAccountPlugin());
 
     var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -44,9 +45,10 @@ Test business logic without a full plugin class — useful for rapid prototyping
 [Fact]
 public void Lambda_CreatesRelatedContact_OnAccountCreate()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
 
-    service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
+    env.Pipeline.RegisterPostOperation("Create", "account", ctx =>
     {
         var target = (Entity)ctx.InputParameters["Target"];
         service.Create(new Entity("contact")
@@ -75,12 +77,13 @@ Traces written via `ITracingService` are captured in `Pipeline.Traces`.
 [Fact]
 public void Plugin_TracesAreCaptured()
 {
-    var service = new FakeOrganizationService();
-    service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, new MyLoggingPlugin());
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, new MyLoggingPlugin());
 
     service.Create(new Entity("account") { ["name"] = "Contoso" });
 
-    Assert.Contains(service.Pipeline.Traces, t => t.Contains("Processing account"));
+    Assert.Contains(env.Pipeline.Traces, t => t.Contains("Processing account"));
 }
 ```
 
@@ -93,8 +96,9 @@ are removed when the parent is deleted.
 [Fact]
 public void DeleteAccount_CascadeDeletesContacts()
 {
-    var service = new FakeOrganizationService();
-    service.MetadataStore.AddOneToManyRelationship(
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.MetadataStore.AddOneToManyRelationship(
         "account", "contact", "parentcustomerid",
         new Fake4Dataverse.Metadata.CascadeConfiguration
         {
@@ -125,7 +129,8 @@ Use `FakeClock` to control `UtcNow` and test time-dependent queries.
 public void Query_LastXDays_WithFakeClock()
 {
     var clock = new FakeClock(new DateTime(2024, 6, 15, 0, 0, 0, DateTimeKind.Utc));
-    var service = new FakeOrganizationService() { Clock = clock };
+    var env = new FakeDataverseEnvironment() { Clock = clock };
+    var service = env.CreateOrganizationService();
 
     clock.UtcNow = new DateTime(2024, 6, 10, 0, 0, 0, DateTimeKind.Utc);
     service.Create(new Entity("task") { ["subject"] = "Old task", ["createdon"] = clock.UtcNow });
@@ -150,7 +155,8 @@ Validates that `ContinueOnError` lets subsequent requests execute after a failur
 [Fact]
 public void ExecuteMultiple_ContinuesOnError()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
     var request = new ExecuteMultipleRequest
@@ -182,10 +188,11 @@ shared-service test fixtures.
 [Fact]
 public void ScopedTest_AutoRollback()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     service.Create(new Entity("account") { ["name"] = "Permanent" });
 
-    using (service.Scope())
+    using (env.Scope())
     {
         service.Create(new Entity("account") { ["name"] = "Temporary" });
         var all = service.RetrieveMultiple(
@@ -207,7 +214,8 @@ The built-in operation log records every call for post-hoc assertions.
 [Fact]
 public void OperationLog_RecordsAllCalls()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
     service.Update(new Entity("account", id) { ["name"] = "Updated" });
     service.Delete("account", id);
@@ -230,9 +238,10 @@ second call updates.
 [Fact]
 public void Upsert_ByAlternateKey_CreatesOrUpdates()
 {
-    var service = new FakeOrganizationService();
-    service.MetadataStore.AddEntity("account", "accountid", "name");
-    service.MetadataStore.AddAlternateKey("account", "ak_account_number", "accountnumber");
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.MetadataStore.AddEntity("account", "accountid", "name");
+    env.MetadataStore.AddAlternateKey("account", "ak_account_number", "accountnumber");
 
     var target = new Entity("account") { ["accountnumber"] = "ACC-001", ["name"] = "Contoso" };
     target.KeyAttributes["accountnumber"] = "ACC-001";
@@ -254,8 +263,9 @@ Load bulk test data in one call with inline CSV or from a file.
 [Fact]
 public void SeedFromCsv_LoadsTestData()
 {
-    var service = new FakeOrganizationService();
-    service.SeedFromCsv(@"logicalname,name,revenue
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.SeedFromCsv(@"logicalname,name,revenue
 account,Contoso,1000000
 account,Fabrikam,2000000
 account,Northwind,500000");
@@ -269,8 +279,8 @@ account,Northwind,500000");
 File-based seeding is also available:
 
 ```csharp
-service.SeedFromJsonFile("seed-data.json");
-service.SeedFromCsvFile("seed-data.csv");
+env.SeedFromJsonFile("seed-data.json");
+env.SeedFromCsvFile("seed-data.csv");
 ```
 
 ## 11. Associate / Disassociate (N:N Relationships)
@@ -282,7 +292,8 @@ Test many-to-many relationship operations. Associations are stored as queryable
 [Fact]
 public void Associate_And_Disassociate_ManyToMany()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
     var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
 
@@ -313,9 +324,10 @@ returned user/org/business-unit IDs.
 [Fact]
 public void WhoAmI_ReturnsConfiguredUser()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var customUserId = Guid.NewGuid();
-    service.HandlerRegistry.Register(new Handlers.WhoAmIRequestHandler
+    env.HandlerRegistry.Register(new Handlers.WhoAmIRequestHandler
     {
         UserId = customUserId
     });
@@ -335,7 +347,8 @@ Use `SetStateRequest` to change `statecode` and `statuscode`, then verify.
 [Fact]
 public void SetState_DeactivatesAndReactivates()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
     // Deactivate
@@ -371,7 +384,8 @@ public void SetState_DeactivatesAndReactivates()
 [Fact]
 public void Assign_ChangesRecordOwner()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
     var newOwner = new EntityReference("systemuser", Guid.NewGuid());
 
@@ -396,9 +410,10 @@ for full control.
 [Fact]
 public void CustomApi_ReturnsExpectedOutput()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
 
-    service.RegisterCustomApi("myorg_ApproveOrder", (request, svc) =>
+    env.RegisterCustomApi("myorg_ApproveOrder", (request, svc) =>
     {
         var orderId = (Guid)request["OrderId"];
         svc.Update(new Entity("salesorder", orderId) { ["statuscode"] = new OptionSetValue(100) });
@@ -440,7 +455,8 @@ public sealed class Account : Entity
 [Fact]
 public void EarlyBound_CreateAndRetrieve()
 {
-    var service = new FakeOrganizationService();
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
     var id = service.Create(new Account { Name = "Contoso" });
 
     var retrieved = service.Retrieve("account", id, new ColumnSet(true));
@@ -458,17 +474,18 @@ Verifies that a plugin fires **and** security is enforced in the same scenario.
 [Fact]
 public void Pipeline_And_Security_WorkTogether()
 {
-    var service = new FakeOrganizationService();
-    service.Security.EnforceSecurityRoles = true;
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.Security.EnforceSecurityRoles = true;
 
     // Grant the caller Create + Read on account
     var role = new Security.SecurityRole("Sales")
         .AddPrivilege("account", Security.PrivilegeType.Create, Security.PrivilegeDepth.Organization)
         .AddPrivilege("account", Security.PrivilegeType.Read, Security.PrivilegeDepth.Organization);
-    service.Security.AssignRole(service.CallerId, role);
+    env.Security.AssignRole(service.CallerId, role);
 
     // Register a post-operation plugin that stamps a field
-    service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
+    env.Pipeline.RegisterPostOperation("Create", "account", ctx =>
     {
         var target = (Entity)ctx.InputParameters["Target"];
         service.Update(new Entity("account", target.Id) { ["description"] = "Processed" });
@@ -484,9 +501,9 @@ public void Pipeline_And_Security_WorkTogether()
 
     // Without Create privilege, a different user is blocked
     var otherUser = Guid.NewGuid();
-    service.CallerId = otherUser;
+    var otherService = env.CreateOrganizationService(otherUser);
     Assert.Throws<System.ServiceModel.FaultException<OrganizationServiceFault>>(() =>
-        service.Create(new Entity("account") { ["name"] = "Blocked" }));
+        otherService.Create(new Entity("account") { ["name"] = "Blocked" }));
 }
 ```
 

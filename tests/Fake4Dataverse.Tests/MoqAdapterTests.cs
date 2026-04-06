@@ -16,7 +16,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AsMock_DelegatesOrganizationServiceOperations()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var mock = service.AsMock();
 
             var id = mock.Object.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -32,7 +33,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public async Task AsMockAsync_DelegatesAsyncOperations_ForAsyncAndAsync2Overloads()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var mockAsync = service.AsMockAsync();
             IOrganizationServiceAsync2 asyncService = mockAsync.Object;
 

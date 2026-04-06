@@ -12,7 +12,7 @@ namespace Fake4Dataverse.Handlers
             // UpdateStateValue updates the label/description of a State option value.
             // In the fake, this is a no-op that acknowledges the request.
             var fakeService = (FakeOrganizationService)service;
-            fakeService.MetadataStore.IncrementMetadataTimestamp();
+            fakeService.Environment.MetadataStore.IncrementMetadataTimestamp();
 
             return new UpdateStateValueResponse();
         }

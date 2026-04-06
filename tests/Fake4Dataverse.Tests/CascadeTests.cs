@@ -12,13 +12,13 @@ namespace Fake4Dataverse.Tests
     {
         private FakeOrganizationService CreateServiceWithRelationship(CascadeConfiguration cascade)
         {
-            var service = new FakeOrganizationService();
-            service.MetadataStore.AddOneToManyRelationship(
+            var env = new FakeDataverseEnvironment();
+            env.MetadataStore.AddOneToManyRelationship(
                 "account_contacts",
                 "account", "accountid",
                 "contact", "parentcustomerid",
                 cascade);
-            return service;
+            return env.CreateOrganizationService();
         }
 
         [Fact]
@@ -181,13 +181,14 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CascadeDelete_Cascade_MultiLevel_DeletesGrandchildren()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             // Set up two cascade relationships: account → contact → task
-            service.MetadataStore.AddOneToManyRelationship(
+            env.MetadataStore.AddOneToManyRelationship(
                 "account_contacts", "account", "accountid",
                 "contact", "parentcustomerid",
                 new CascadeConfiguration { Delete = CascadeType.Cascade });
-            service.MetadataStore.AddOneToManyRelationship(
+            env.MetadataStore.AddOneToManyRelationship(
                 "contact_tasks", "contact", "contactid",
                 "task", "regardingobjectid",
                 new CascadeConfiguration { Delete = CascadeType.Cascade });

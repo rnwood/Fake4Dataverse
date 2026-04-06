@@ -11,7 +11,7 @@ namespace Fake4Dataverse.Handlers
         {
             var deleteRequest = (DeleteEntityRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             if (string.IsNullOrEmpty(deleteRequest.LogicalName))
                 throw DataverseFault.InvalidArgumentFault("Entity logical name is required.");

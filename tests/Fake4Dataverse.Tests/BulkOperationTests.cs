@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateMultiple_CreatesAllEntities()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var targets = new EntityCollection();
             targets.Entities.Add(new Entity("account") { ["name"] = "A" });
             targets.Entities.Add(new Entity("account") { ["name"] = "B" });
@@ -35,7 +36,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateMultiple_ReturnsCorrectIds()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var targets = new EntityCollection();
             targets.Entities.Add(new Entity("account") { ["name"] = "First" });
             targets.Entities.Add(new Entity("account") { ["name"] = "Second" });
@@ -56,7 +58,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateMultiple_UpdatesAllEntities()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id1 = service.Create(new Entity("account") { ["name"] = "Original1" });
             var id2 = service.Create(new Entity("account") { ["name"] = "Original2" });
 
@@ -76,7 +79,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveVersion_ReturnsVersionString()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var response = service.Execute(new OrganizationRequest("RetrieveVersion"));
 
@@ -87,7 +91,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void CreateMultiple_EmptyTargets_ReturnsEmptyIds()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var targets = new EntityCollection();
 
             var request = new OrganizationRequest("CreateMultiple");
@@ -102,7 +107,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UpdateMultiple_EmptyTargets_Succeeds()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var targets = new EntityCollection();
 
             var request = new OrganizationRequest("UpdateMultiple");

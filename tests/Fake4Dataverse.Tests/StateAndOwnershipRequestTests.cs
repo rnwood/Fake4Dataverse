@@ -13,7 +13,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SetStateRequest_UpdatesStatecodeAndStatuscode()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             service.Execute(new SetStateRequest
@@ -31,7 +32,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AssignRequest_UpdatesOwnerid()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var newOwner = new EntityReference("systemuser", Guid.NewGuid());
 
@@ -49,7 +51,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_AutoSetsDefaultStateAndStatus()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet("statecode", "statuscode"));
@@ -60,7 +63,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_CanSetStatecodeDirectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
             service.Update(new Entity("account", id)
@@ -77,7 +81,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithExplicitState_RespectsProvidedValues()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account")
             {
                 ["name"] = "Inactive",
@@ -93,8 +98,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SetState_WithRegisteredTransition_AllowsValidTransition()
         {
-            var service = new FakeOrganizationService();
-            service.RegisterStatusTransition("incident", 0, 1, 1, 5);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.RegisterStatusTransition("incident", 0, 1, 1, 5);
             var id = service.Create(new Entity("incident") { ["title"] = "Test Case" });
 
             service.Execute(new SetStateRequest
@@ -112,8 +118,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SetState_WithRegisteredTransition_RejectsInvalidTransition()
         {
-            var service = new FakeOrganizationService();
-            service.RegisterStatusTransition("incident", 0, 1, 1, 5);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.RegisterStatusTransition("incident", 0, 1, 1, 5);
             var id = service.Create(new Entity("incident") { ["title"] = "Test Case" });
 
             Assert.Throws<FaultException<OrganizationServiceFault>>(() =>
@@ -128,8 +135,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void IsValidStateTransition_ReturnsTrue_ForValidTransition()
         {
-            var service = new FakeOrganizationService();
-            service.RegisterStatusTransition("incident", 0, 1, 1, 5);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.RegisterStatusTransition("incident", 0, 1, 1, 5);
             var id = service.Create(new Entity("incident") { ["title"] = "Test" });
 
             var request = new OrganizationRequest("IsValidStateTransition");
@@ -144,8 +152,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void IsValidStateTransition_ReturnsFalse_ForInvalidTransition()
         {
-            var service = new FakeOrganizationService();
-            service.RegisterStatusTransition("incident", 0, 1, 1, 5);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.RegisterStatusTransition("incident", 0, 1, 1, 5);
             var id = service.Create(new Entity("incident") { ["title"] = "Test" });
 
             var request = new OrganizationRequest("IsValidStateTransition");
@@ -160,8 +169,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithCustomDefaultStatusCode_UsesRegisteredDefaults()
         {
-            var service = new FakeOrganizationService();
-            service.RegisterDefaultStatusCode("opportunity", 0, 2);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.RegisterDefaultStatusCode("opportunity", 0, 2);
 
             var id = service.Create(new Entity("opportunity") { ["name"] = "Big Deal" });
 

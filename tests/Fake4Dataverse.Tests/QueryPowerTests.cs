@@ -58,7 +58,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ColumnSet_AddColumn_ProjectsAddedColumns()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso", ["revenue"] = new Money(5000m), ["city"] = "Seattle" });
 
             var query = new QueryExpression("account");
@@ -78,7 +79,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ColumnSet_AddColumns_ProjectsAllAdded()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso", ["revenue"] = new Money(100m), ["city"] = "Redmond" });
 
             var query = new QueryExpression("account");
@@ -96,7 +98,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void LinkEntity_AddColumn_ProjectsAliasedColumns()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var acctId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["fullname"] = "Alice", ["email"] = "alice@contoso.com", ["parentcustomerid"] = new EntityReference("account", acctId) });
 
@@ -117,7 +120,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void LinkEntity_AddColumns_ProjectsMultipleAliasedColumns()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var acctId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["fullname"] = "Alice", ["email"] = "alice@contoso.com", ["parentcustomerid"] = new EntityReference("account", acctId) });
 
@@ -141,7 +145,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_Create_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var account = new AccountEntity { Name = "Contoso", Revenue = new Money(10000m) };
 
             var id = service.Create(account);
@@ -152,7 +157,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_Retrieve_CanCastToEarlyBound()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var account = new AccountEntity { Name = "Contoso", Revenue = new Money(10000m) };
             var id = service.Create(account);
 
@@ -167,7 +173,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_Update_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var account = new AccountEntity { Name = "Contoso" };
             var id = service.Create(account);
 
@@ -182,7 +189,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_Delete_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var account = new AccountEntity { Name = "Contoso" };
             var id = service.Create(account);
 
@@ -195,7 +203,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_QueryExpression_RetrieveMultiple_CanCast()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new AccountEntity { Name = "Contoso", Revenue = new Money(5000m) });
             service.Create(new AccountEntity { Name = "Fabrikam", Revenue = new Money(3000m) });
 
@@ -213,7 +222,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_WithEntityReference_RoundTrips()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var contactId = service.Create(new ContactEntity { FullName = "Alice" });
 
             var account = new AccountEntity
@@ -231,7 +241,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_LinkEntity_CanCastResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var acctId = service.Create(new AccountEntity { Name = "Contoso" });
             service.Create(new ContactEntity
             {
@@ -259,7 +270,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void EarlyBound_FetchXml_CanCastResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new AccountEntity { Name = "Contoso", Revenue = new Money(7000m) });
 
             var fetchXml = @"<fetch><entity name='account'><all-attributes/></entity></fetch>";
@@ -276,7 +288,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void UserQuery_CanBeStoredAndRetrieved()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var fetchXml = @"<fetch><entity name='account'><all-attributes/>
                 <filter><condition attribute='name' operator='eq' value='Contoso'/></filter>
                 </entity></fetch>";
@@ -294,7 +307,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SavedQuery_CanBeStoredAndRetrieved()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var fetchXml = @"<fetch><entity name='contact'><all-attributes/></entity></fetch>";
             var queryId = service.Create(new Entity("savedquery")
             {
@@ -310,7 +324,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteSavedQuery_UserQuery_ReturnsFilteredResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             // Seed data
             service.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -337,7 +352,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteSavedQuery_SavedQuery_ReturnsResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Create(new Entity("contact") { ["fullname"] = "Alice" });
             service.Create(new Entity("contact") { ["fullname"] = "Bob" });
@@ -362,7 +378,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteSavedQuery_NonExistentId_Throws()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             Assert.Throws<System.ServiceModel.FaultException<OrganizationServiceFault>>(() =>
                 service.ExecuteSavedQuery(Guid.NewGuid()));
@@ -371,7 +388,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteSavedQuery_NoFetchXml_ThrowsInvalidOperation()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var queryId = service.Create(new Entity("userquery")
             {
@@ -386,7 +404,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ExecuteSavedQuery_WithLinkEntity_Works()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var acctId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact") { ["fullname"] = "Alice", ["parentcustomerid"] = new EntityReference("account", acctId) });

@@ -13,10 +13,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_WithCurrency_ComputesBaseField()
         {
-            var service = new FakeOrganizationService();
-            service.Currency.BaseCurrencyId = UsdCurrencyId;
-            service.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
-            service.Currency.SetExchangeRate(EurCurrencyId, 0.85m);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Currency.BaseCurrencyId = UsdCurrencyId;
+            env.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
+            env.Currency.SetExchangeRate(EurCurrencyId, 0.85m);
 
             var id = service.Create(new Entity("opportunity")
             {
@@ -35,9 +36,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_BaseCurrency_BaseEqualsOriginal()
         {
-            var service = new FakeOrganizationService();
-            service.Currency.BaseCurrencyId = UsdCurrencyId;
-            service.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Currency.BaseCurrencyId = UsdCurrencyId;
+            env.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
 
             var id = service.Create(new Entity("opportunity")
             {
@@ -55,10 +57,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_WithCurrency_RecomputesBaseField()
         {
-            var service = new FakeOrganizationService();
-            service.Currency.BaseCurrencyId = UsdCurrencyId;
-            service.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
-            service.Currency.SetExchangeRate(EurCurrencyId, 2.0m);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Currency.BaseCurrencyId = UsdCurrencyId;
+            env.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
+            env.Currency.SetExchangeRate(EurCurrencyId, 2.0m);
 
             var id = service.Create(new Entity("opportunity")
             {
@@ -81,9 +84,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_SetsExchangeRateOnEntity()
         {
-            var service = new FakeOrganizationService();
-            service.Currency.BaseCurrencyId = UsdCurrencyId;
-            service.Currency.SetExchangeRate(EurCurrencyId, 0.85m);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Currency.BaseCurrencyId = UsdCurrencyId;
+            env.Currency.SetExchangeRate(EurCurrencyId, 0.85m);
 
             var id = service.Create(new Entity("opportunity")
             {
@@ -99,9 +103,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_MultipleMoneyFields_AllGetBaseComputed()
         {
-            var service = new FakeOrganizationService();
-            service.Currency.BaseCurrencyId = UsdCurrencyId;
-            service.Currency.SetExchangeRate(EurCurrencyId, 2.0m);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Currency.BaseCurrencyId = UsdCurrencyId;
+            env.Currency.SetExchangeRate(EurCurrencyId, 2.0m);
 
             var id = service.Create(new Entity("opportunity")
             {
@@ -119,9 +124,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_NoCurrency_NoBaseFieldCreated()
         {
-            var service = new FakeOrganizationService();
-            service.Currency.BaseCurrencyId = UsdCurrencyId;
-            service.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Currency.BaseCurrencyId = UsdCurrencyId;
+            env.Currency.SetExchangeRate(UsdCurrencyId, 1.0m);
 
             var id = service.Create(new Entity("opportunity")
             {
@@ -136,17 +142,17 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GetExchangeRate_UnknownCurrency_ReturnsOne()
         {
-            var service = new FakeOrganizationService();
-            var rate = service.Currency.GetExchangeRate(Guid.NewGuid());
+            var env = new FakeDataverseEnvironment();
+            var rate = env.Currency.GetExchangeRate(Guid.NewGuid());
             Assert.Equal(1.0m, rate);
         }
 
         [Fact]
         public void SetExchangeRate_InvalidRate_Throws()
         {
-            var service = new FakeOrganizationService();
-            Assert.Throws<ArgumentOutOfRangeException>(() => service.Currency.SetExchangeRate(Guid.NewGuid(), 0m));
-            Assert.Throws<ArgumentOutOfRangeException>(() => service.Currency.SetExchangeRate(Guid.NewGuid(), -1m));
+            var env = new FakeDataverseEnvironment();
+            Assert.Throws<ArgumentOutOfRangeException>(() => env.Currency.SetExchangeRate(Guid.NewGuid(), 0m));
+            Assert.Throws<ArgumentOutOfRangeException>(() => env.Currency.SetExchangeRate(Guid.NewGuid(), -1m));
         }
     }
 }

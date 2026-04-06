@@ -12,7 +12,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_EmailWithActivityParties_StoresParties()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var from = new Entity("activityparty")
             {
@@ -49,7 +50,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_EmailWithMultipleToParties()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var to1 = new Entity("activityparty")
             {
@@ -79,7 +81,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_EmailWithCcBcc()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var cc = new Entity("activityparty")
             {
@@ -114,7 +117,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_PhoneCallWithParties()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var from = new Entity("activityparty")
             {
@@ -145,7 +149,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void ActivityPartyHasPartyId()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var contactId = Guid.NewGuid();
             var to = new Entity("activityparty")
@@ -175,7 +180,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_WithActivityParties()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             var to = new Entity("activityparty")
             {

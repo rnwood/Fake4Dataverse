@@ -14,7 +14,7 @@ namespace Fake4Dataverse.Handlers
         {
             var createRequest = (CreateCustomerRelationshipsRequest)request;
             var fakeService = (FakeOrganizationService)service;
-            var store = fakeService.MetadataStore;
+            var store = fakeService.Environment.MetadataStore;
 
             var lookup = createRequest.Lookup;
             if (lookup == null || string.IsNullOrEmpty(lookup.LogicalName))

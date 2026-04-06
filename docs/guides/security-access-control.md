@@ -4,7 +4,7 @@
 
 Fake4Dataverse includes a built-in security layer that mirrors the Dataverse security model — roles, privileges, record sharing, and teams. Security enforcement is **off by default**, so existing tests continue to work without configuration. Enable it when you need to verify that your code respects privilege checks.
 
-The `SecurityManager` is accessible via `service.Security`.
+The `SecurityManager` is accessible via `env.Security`.
 
 ```csharp
 using Fake4Dataverse;
@@ -17,11 +17,13 @@ Turn on enforcement explicitly or use the `Strict` preset (which also enables me
 
 ```csharp
 // Option 1: Strict preset (security + metadata validation)
-var service = new FakeOrganizationService(FakeOrganizationServiceOptions.Strict);
+var env = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Strict);
+var service = env.CreateOrganizationService();
 
-// Option 2: Enable security on an existing service
-var service = new FakeOrganizationService();
-service.Security.EnforceSecurityRoles = true;
+// Option 2: Enable security on an existing environment
+var env = new FakeDataverseEnvironment();
+env.Security.EnforceSecurityRoles = true;
+var service = env.CreateOrganizationService();
 ```
 
 When enforcement is enabled, every Create, Retrieve, Update, and Delete call checks whether the caller has the required privilege. If not, it throws a `FaultException<OrganizationServiceFault>` with error code `0x80040220` — exactly what Dataverse does.
@@ -72,10 +74,10 @@ PrivilegeDepth depth = salesRep.GetDepth("account", PrivilegeType.Delete);
 var userId = Guid.NewGuid();
 service.CallerId = userId;
 
-service.Security.AssignRole(userId, salesRep);
+env.Security.AssignRole(userId, salesRep);
 
 // Remove all roles from a user
-service.Security.ClearRoles(userId);
+env.Security.ClearRoles(userId);
 ```
 
 ## Privilege Enforcement
@@ -84,10 +86,10 @@ When security is enabled, the service automatically checks privileges on every o
 
 ```csharp
 // Throws FaultException<OrganizationServiceFault> if privilege is missing
-service.Security.CheckPrivilege(userId, "account", PrivilegeType.Create);
+env.Security.CheckPrivilege(userId, "account", PrivilegeType.Create);
 
 // Record-level check — considers ownership and sharing
-service.Security.CheckRecordPrivilege(
+env.Security.CheckRecordPrivilege(
     userId, "account", accountId, PrivilegeType.Write, ownerId);
 ```
 
@@ -99,8 +101,9 @@ Owners always have access to their own records regardless of role configuration.
 [Fact]
 public void Create_WithoutRole_Throws()
 {
-    var service = new FakeOrganizationService();
-    service.Security.EnforceSecurityRoles = true;
+    var env = new FakeDataverseEnvironment();
+    env.Security.EnforceSecurityRoles = true;
+    var service = env.CreateOrganizationService();
 
     var userId = Guid.NewGuid();
     service.CallerId = userId;
@@ -121,15 +124,16 @@ public void Create_WithoutRole_Throws()
 [Fact]
 public void Create_WithRole_Succeeds()
 {
-    var service = new FakeOrganizationService();
-    service.Security.EnforceSecurityRoles = true;
+    var env = new FakeDataverseEnvironment();
+    env.Security.EnforceSecurityRoles = true;
+    var service = env.CreateOrganizationService();
 
     var userId = Guid.NewGuid();
     service.CallerId = userId;
 
     var role = new SecurityRole("Account Creator")
         .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization);
-    service.Security.AssignRole(userId, role);
+    env.Security.AssignRole(userId, role);
 
     var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -145,18 +149,18 @@ Share individual records with specific users to grant access beyond their role p
 var recordId = service.Create(new Entity("account") { ["name"] = "Shared Inc." });
 
 // Grant read + write access to another user
-service.Security.GrantAccess("account", recordId, otherUserId,
+env.Security.GrantAccess("account", recordId, otherUserId,
     AccessRights.ReadAccess | AccessRights.WriteAccess);
 
 // Replace access rights entirely
-service.Security.ModifyAccess("account", recordId, otherUserId,
+env.Security.ModifyAccess("account", recordId, otherUserId,
     AccessRights.ReadAccess);
 
 // Remove all shared access
-service.Security.RevokeAccess("account", recordId, otherUserId);
+env.Security.RevokeAccess("account", recordId, otherUserId);
 
 // Query effective access (combines ownership, roles, and sharing)
-AccessRights rights = service.Security.RetrievePrincipalAccess(
+AccessRights rights = env.Security.RetrievePrincipalAccess(
     "account", recordId, otherUserId, ownerId: service.CallerId);
 ```
 
@@ -184,28 +188,28 @@ service.Execute(new GrantAccessRequest
 [Fact]
 public void SharedUser_CanReadRecord()
 {
-    var service = new FakeOrganizationService();
-    service.Security.EnforceSecurityRoles = true;
+    var env = new FakeDataverseEnvironment();
+    env.Security.EnforceSecurityRoles = true;
 
     var ownerId = Guid.NewGuid();
-    service.CallerId = ownerId;
+    var service = env.CreateOrganizationService(ownerId);
 
     // Owner has full access via a role
     var ownerRole = new SecurityRole("Owner Role")
         .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization)
         .AddPrivilege("account", PrivilegeType.Read,   PrivilegeDepth.Organization)
         .AddPrivilege("account", PrivilegeType.Share,  PrivilegeDepth.Organization);
-    service.Security.AssignRole(ownerId, ownerRole);
+    env.Security.AssignRole(ownerId, ownerRole);
 
     var accountId = service.Create(new Entity("account") { ["name"] = "Shared Corp" });
 
     // Share with a second user who has no roles
     var readerId = Guid.NewGuid();
-    service.Security.GrantAccess("account", accountId, readerId, AccessRights.ReadAccess);
+    env.Security.GrantAccess("account", accountId, readerId, AccessRights.ReadAccess);
 
-    // Switch caller — reader can now retrieve the shared record
-    service.CallerId = readerId;
-    var result = service.Retrieve("account", accountId, new ColumnSet("name"));
+    // Create a session for the reader — reader can now retrieve the shared record
+    var readerService = env.CreateOrganizationService(readerId);
+    var result = readerService.Retrieve("account", accountId, new ColumnSet("name"));
 
     Assert.Equal("Shared Corp", result["name"]);
 }
@@ -221,21 +225,21 @@ var memberA = Guid.NewGuid();
 var memberB = Guid.NewGuid();
 
 // Build the team
-service.Security.AddTeamMember(teamId, memberA);
-service.Security.AddTeamMember(teamId, memberB);
+env.Security.AddTeamMember(teamId, memberA);
+env.Security.AddTeamMember(teamId, memberB);
 
 // Assign a role to the team — both members inherit it
 var teamRole = new SecurityRole("Support Team")
     .AddPrivilege("incident", PrivilegeType.Read,  PrivilegeDepth.Organization)
     .AddPrivilege("incident", PrivilegeType.Write, PrivilegeDepth.BusinessUnit);
-service.Security.AssignTeamRole(teamId, teamRole);
+env.Security.AssignTeamRole(teamId, teamRole);
 
 // Grant record-level access to all team members at once
-service.Security.GrantTeamAccess("incident", caseId, teamId,
+env.Security.GrantTeamAccess("incident", caseId, teamId,
     AccessRights.ReadAccess | AccessRights.WriteAccess);
 
 // Remove a member
-service.Security.RemoveTeamMember(teamId, memberB);
+env.Security.RemoveTeamMember(teamId, memberB);
 ```
 
 ### Example: Team-Based Access
@@ -244,19 +248,19 @@ service.Security.RemoveTeamMember(teamId, memberB);
 [Fact]
 public void TeamMember_InheritsTeamRole()
 {
-    var service = new FakeOrganizationService();
-    service.Security.EnforceSecurityRoles = true;
+    var env = new FakeDataverseEnvironment();
+    env.Security.EnforceSecurityRoles = true;
 
     var teamId = Guid.NewGuid();
     var userId = Guid.NewGuid();
-    service.Security.AddTeamMember(teamId, userId);
+    env.Security.AddTeamMember(teamId, userId);
 
     var role = new SecurityRole("Case Handlers")
         .AddPrivilege("incident", PrivilegeType.Create, PrivilegeDepth.Organization)
         .AddPrivilege("incident", PrivilegeType.Read,   PrivilegeDepth.Organization);
-    service.Security.AssignTeamRole(teamId, role);
+    env.Security.AssignTeamRole(teamId, role);
 
-    service.CallerId = userId;
+    var service = env.CreateOrganizationService(userId);
     var id = service.Create(new Entity("incident") { ["title"] = "Broken widget" });
 
     Assert.NotEqual(Guid.Empty, id);
@@ -305,17 +309,17 @@ Confirm that code fails without the right privilege, then succeeds with it:
 [Fact]
 public void DeleteAccount_RequiresDeletePrivilege()
 {
-    var service = new FakeOrganizationService();
-    service.Security.EnforceSecurityRoles = true;
+    var env = new FakeDataverseEnvironment();
+    env.Security.EnforceSecurityRoles = true;
 
     var userId = Guid.NewGuid();
-    service.CallerId = userId;
+    var service = env.CreateOrganizationService(userId);
 
     // Read-only role — no delete
     var readOnly = new SecurityRole("Read Only")
         .AddPrivilege("account", PrivilegeType.Create, PrivilegeDepth.Organization)
         .AddPrivilege("account", PrivilegeType.Read,   PrivilegeDepth.Organization);
-    service.Security.AssignRole(userId, readOnly);
+    env.Security.AssignRole(userId, readOnly);
 
     var id = service.Create(new Entity("account") { ["name"] = "Test" });
 
@@ -332,11 +336,11 @@ Verify that adding a role dynamically grants access:
 [Fact]
 public void AddingRole_GrantsAccess()
 {
-    var service = new FakeOrganizationService();
-    service.Security.EnforceSecurityRoles = true;
+    var env = new FakeDataverseEnvironment();
+    env.Security.EnforceSecurityRoles = true;
 
     var userId = Guid.NewGuid();
-    service.CallerId = userId;
+    var service = env.CreateOrganizationService(userId);
 
     // Starts with no roles — denied
     Assert.Throws<FaultException<OrganizationServiceFault>>(
@@ -345,7 +349,7 @@ public void AddingRole_GrantsAccess()
     // Add a role — now allowed
     var role = new SecurityRole("Contact Manager")
         .AddPrivilege("contact", PrivilegeType.Create, PrivilegeDepth.User);
-    service.Security.AssignRole(userId, role);
+    env.Security.AssignRole(userId, role);
 
     var id = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
     Assert.NotEqual(Guid.Empty, id);

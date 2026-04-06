@@ -10,7 +10,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_OptionSetValue_HasFormattedValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["industrycode"] = new OptionSetValue(3) });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet("industrycode"));
@@ -22,7 +23,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_MoneyValue_HasFormattedValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["revenue"] = new Money(1234567.89m) });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet("revenue"));
@@ -34,7 +36,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_BooleanValue_HasFormattedValue()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["donotphone"] = true });
 
             var retrieved = service.Retrieve("account", id, new ColumnSet("donotphone"));
@@ -46,7 +49,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_FormattedValues_PopulatedOnResults()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["industrycode"] = new OptionSetValue(1), ["revenue"] = new Money(100m) });
 
             var query = new QueryExpression("account") { ColumnSet = new ColumnSet("industrycode", "revenue") };
@@ -59,7 +63,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_ExistingFormattedValue_NotOverridden()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["industrycode"] = new OptionSetValue(3) };
             entity.FormattedValues["industrycode"] = "Manufacturing";
             var id = service.Create(entity);
@@ -72,7 +77,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Money_CRUD_WorksCorrectly()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["revenue"] = new Money(1000m) });
 
             // Retrieve

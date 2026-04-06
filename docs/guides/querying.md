@@ -14,7 +14,8 @@ This guide covers every query feature the library supports.
 | `QueryByAttribute` | Simple equality filters |
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 // Seed data
 service.Create(new Entity("account") { ["name"] = "Contoso", ["revenue"] = new Money(500000m) });
@@ -430,7 +431,7 @@ var queryExpression = (QueryExpression)response["Query"];
 1. **Use `AttributeIndex`** for frequently filtered columns. Indexes turn full table scans into hash lookups.
 
    ```csharp
-   service.AddIndex("account", "statecode");
+   env.AddIndex("account", "statecode");
 
    // Queries filtering on account.statecode with ConditionOperator.Equal now use the index
    ```

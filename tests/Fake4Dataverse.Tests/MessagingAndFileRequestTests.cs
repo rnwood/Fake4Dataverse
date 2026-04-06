@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SendEmailRequest_MarksEmailAsSent()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var emailId = service.Create(new Entity("email")
             {
                 ["subject"] = "Test Email",
@@ -32,7 +33,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void InstantiateTemplate_CreatesEmailFromTemplate()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var templateId = service.Create(new Entity("template") { ["subject"] = "Welcome {!contact:fullname;}", ["body"] = "Hello!" });
             var contactId = service.Create(new Entity("contact") { ["fullname"] = "John Doe" });
 
@@ -50,7 +52,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SendEmailFromTemplate_CreatesEmail()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var templateId = service.Create(new Entity("template") { ["subject"] = "Welcome" });
             var contactId = service.Create(new Entity("contact") { ["fullname"] = "Test" });
 
@@ -67,7 +70,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void SendFax_ExecutesWithoutError()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var response = service.Execute(new OrganizationRequest("SendFax"));
             Assert.NotNull(response);
         }
@@ -75,7 +79,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DeleteFile_ExecutesWithoutError()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new OrganizationRequest("DeleteFile");
             request["FileId"] = Guid.NewGuid();
 
@@ -86,7 +91,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void DownloadBlock_ReturnsEmptyData()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new OrganizationRequest("DownloadBlock");
             request["FileContinuationToken"] = "token123";
 
@@ -97,7 +103,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void FileUpload_FullFlow_StoresBinaryData()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var recordId = service.Create(new Entity("annotation") { ["subject"] = "Test" });
 
             var initResponse = (InitializeFileBlocksUploadResponse)service.Execute(
@@ -134,7 +141,7 @@ namespace Fake4Dataverse.Tests
                 BlockList = new[] { "block1", "block2" }
             });
 
-            var stored = service.GetBinaryAttribute("annotation", recordId, "documentbody");
+            var stored = env.GetBinaryAttribute("annotation", recordId, "documentbody");
             Assert.NotNull(stored);
             Assert.Equal(10, stored!.Length);
             Assert.Equal(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, stored);

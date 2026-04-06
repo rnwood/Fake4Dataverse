@@ -24,6 +24,7 @@ namespace Fake4Dataverse.Benchmarks
     public class QueryBenchmarks
     {
         private FakeOrganizationService _f4d = null!;
+        private FakeDataverseEnvironment _f4dEnv = null!;
 
 #if NET462
         private IOrganizationService _v1 = null!;
@@ -50,8 +51,9 @@ namespace Fake4Dataverse.Benchmarks
                 };
             }
 
-            _f4d = new FakeOrganizationService(FakeOrganizationServiceOptions.Lenient);
-            _f4d.Seed(entities);
+            _f4dEnv = new FakeDataverseEnvironment(FakeOrganizationServiceOptions.Lenient);
+            _f4d = _f4dEnv.CreateOrganizationService();
+            _f4dEnv.Seed(entities);
 
 #if NET462
             var v1ctx = new XrmFakedContext();

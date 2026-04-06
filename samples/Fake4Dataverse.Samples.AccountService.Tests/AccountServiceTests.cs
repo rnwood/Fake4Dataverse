@@ -15,7 +15,8 @@ namespace Fake4Dataverse.Samples.AccountService.Tests
         public void CreateAccount_ReturnsNewId_AndSetsAttributes()
         {
             // Arrange
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountService = new AccountService(service);
 
             // Act
@@ -34,7 +35,8 @@ namespace Fake4Dataverse.Samples.AccountService.Tests
         public void DeactivateAccount_SetsStateCodes()
         {
             // Arrange
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var accountService = new AccountService(service);
 
@@ -51,7 +53,8 @@ namespace Fake4Dataverse.Samples.AccountService.Tests
         public void TransferAccount_UpdatesOwner()
         {
             // Arrange
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var newOwner = Guid.NewGuid();
             var accountService = new AccountService(service);
@@ -71,10 +74,11 @@ namespace Fake4Dataverse.Samples.AccountService.Tests
         [Fact]
         public void ScopedTest_ChangesAreRolledBack()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Permanent" });
 
-            using (service.Scope())
+            using (env.Scope())
             {
                 service.Create(new Entity("account") { ["name"] = "Temporary" });
                 var all = service.RetrieveMultiple(new QueryExpression("account") { ColumnSet = new ColumnSet(true) });
@@ -89,7 +93,8 @@ namespace Fake4Dataverse.Samples.AccountService.Tests
         [Fact]
         public void QueryWithLinkEntity_JoinsRelatedData()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.Create(new Entity("contact")
             {

@@ -21,9 +21,9 @@ namespace Fake4Dataverse.Handlers
             // Retrieve the entity to apply rollup calculation
             var entity = service.Retrieve(target.LogicalName, target.Id, new ColumnSet(true));
 
-            if (service is FakeOrganizationService fakeService && fakeService.CalculatedFields.HasFields)
+            if (service is FakeOrganizationService fakeService && fakeService.Environment.CalculatedFields.HasFields)
             {
-                fakeService.CalculatedFields.ApplyCalculatedFields(entity, fakeService.Store);
+                fakeService.Environment.CalculatedFields.ApplyCalculatedFields(entity, fakeService.Environment.Store);
             }
 
             var response = new CalculateRollupFieldResponse();

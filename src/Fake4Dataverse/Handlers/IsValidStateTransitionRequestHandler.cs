@@ -27,7 +27,7 @@ namespace Fake4Dataverse.Handlers
 
             int newStateInt = int.TryParse(newState, out var s) ? s : 0;
 
-            var isValid = fakeService.IsValidTransition(entityRef.LogicalName, currentState, currentStatus, newStateInt, newStatus);
+            var isValid = fakeService.Environment.IsValidTransition(entityRef.LogicalName, currentState, currentStatus, newStateInt, newStatus);
 
             var response = new OrganizationResponse { ResponseName = "IsValidStateTransition" };
             response["IsValid"] = isValid;

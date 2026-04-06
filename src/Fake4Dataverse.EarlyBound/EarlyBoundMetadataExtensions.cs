@@ -7,7 +7,7 @@ using Microsoft.Xrm.Sdk.Metadata;
 namespace Fake4Dataverse.EarlyBound
 {
     /// <summary>
-    /// Extension methods for registering early-bound entity metadata with <see cref="FakeDataverseEnvironment"/>.
+    /// Extension methods for registering early-bound entity metadata with <see cref="FakeOrganizationService"/>.
     /// </summary>
     public static class EarlyBoundMetadataExtensions
     {
@@ -16,28 +16,28 @@ namespace Fake4Dataverse.EarlyBound
         /// and registers entity metadata for each one, including attribute logical names from
         /// <see cref="AttributeLogicalNameAttribute"/> properties.
         /// </summary>
-        public static void RegisterEarlyBoundEntities(this FakeDataverseEnvironment environment, Assembly assembly)
+        public static void RegisterEarlyBoundEntities(this FakeOrganizationService service, Assembly assembly)
         {
-            if (environment == null) throw new ArgumentNullException(nameof(environment));
+            if (service == null) throw new ArgumentNullException(nameof(service));
             if (assembly == null) throw new ArgumentNullException(nameof(assembly));
 
             foreach (var type in assembly.GetTypes())
             {
-                RegisterEarlyBoundType(environment, type, throwOnMissingEntityAttribute: false);
+                RegisterEarlyBoundType(service, type, throwOnMissingEntityAttribute: false);
             }
         }
 
         /// <summary>
         /// Registers metadata for a single early-bound entity type.
         /// </summary>
-        public static void RegisterEarlyBoundEntity<TEntity>(this FakeDataverseEnvironment environment) where TEntity : Entity
+        public static void RegisterEarlyBoundEntity<TEntity>(this FakeOrganizationService service) where TEntity : Entity
         {
-            if (environment == null) throw new ArgumentNullException(nameof(environment));
+            if (service == null) throw new ArgumentNullException(nameof(service));
 
-            RegisterEarlyBoundType(environment, typeof(TEntity), throwOnMissingEntityAttribute: true);
+            RegisterEarlyBoundType(service, typeof(TEntity), throwOnMissingEntityAttribute: true);
         }
 
-        private static void RegisterEarlyBoundType(FakeDataverseEnvironment environment, Type type, bool throwOnMissingEntityAttribute)
+        private static void RegisterEarlyBoundType(FakeOrganizationService service, Type type, bool throwOnMissingEntityAttribute)
         {
             if (!typeof(Entity).IsAssignableFrom(type) || type.IsAbstract)
                 return;
@@ -55,7 +55,7 @@ namespace Fake4Dataverse.EarlyBound
             string? primaryIdAttribute = null;
             string? primaryNameAttribute = null;
 
-            var builder = environment.MetadataStore.AddEntity(entityName);
+            var builder = service.MetadataStore.AddEntity(entityName);
 
             foreach (var prop in properties)
             {

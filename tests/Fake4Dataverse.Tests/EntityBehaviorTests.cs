@@ -11,7 +11,9 @@ namespace Fake4Dataverse.Tests
         public void Create_SetsCreatedOnAndModifiedOn()
         {
             var clock = new FakeClock(new DateTime(2026, 3, 15, 10, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Clock = clock;
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var entity = service.Retrieve("account", id, new ColumnSet(true));
@@ -22,7 +24,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_SetsCreatedByAndModifiedBy()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var entity = service.Retrieve("account", id, new ColumnSet(true));
@@ -38,7 +41,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_SetsDefaultStateCodeAndStatusCode()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var entity = service.Retrieve("account", id, new ColumnSet(true));
@@ -49,7 +53,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_DoesNotOverrideExplicitStateCode()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account")
             {
                 ["name"] = "Contoso",
@@ -65,7 +70,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_SetsVersionNumber()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id1 = service.Create(new Entity("account") { ["name"] = "A" });
             var id2 = service.Create(new Entity("account") { ["name"] = "B" });
 
@@ -80,7 +86,9 @@ namespace Fake4Dataverse.Tests
         public void Update_SetsModifiedOnAndVersionNumber()
         {
             var clock = new FakeClock(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Clock = clock;
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             clock.Advance(TimeSpan.FromHours(1));
@@ -94,7 +102,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_SetsModifiedBy()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var newCaller = Guid.NewGuid();
@@ -108,7 +117,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_SetsPrimaryIdAttribute()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var entity = service.Retrieve("account", id, new ColumnSet(true));
@@ -128,7 +138,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrievedEntity_IsClone_NotReference()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             var r1 = service.Retrieve("account", id, new ColumnSet(true));

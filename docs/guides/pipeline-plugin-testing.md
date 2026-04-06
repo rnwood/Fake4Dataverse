@@ -10,7 +10,7 @@ Fake4Dataverse includes a full plugin-like execution pipeline that mirrors the D
 | **PreOperation** | `PipelineStage.PreOperation` | 20 | Modify fields before the record is saved |
 | **PostOperation** | `PipelineStage.PostOperation` | 40 | React to the completed operation (create related records, send notifications) |
 
-The pipeline is enabled by default (`FakeOrganizationServiceOptions.EnablePipeline = true`) and is accessible through `service.Pipeline`.
+The pipeline is enabled by default (`FakeOrganizationServiceOptions.EnablePipeline = true`) and is accessible through `env.Pipeline`.
 
 ```csharp
 using Fake4Dataverse;
@@ -27,17 +27,18 @@ using Microsoft.Xrm.Sdk;
 Register a lambda that receives `IPluginExecutionContext`. You can scope to all entities or a specific entity:
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
 // All entities — fires on every Create
-service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
+env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, ctx =>
 {
     var target = (Entity)ctx.InputParameters["Target"];
     target["modifiedby_custom"] = "pipeline";
 });
 
 // Entity-scoped — fires only on account Create
-service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", ctx =>
+env.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", ctx =>
 {
     var target = (Entity)ctx.InputParameters["Target"];
     target["accountnumber"] = "AUTO-" + Guid.NewGuid().ToString("N").Substring(0, 8);
@@ -49,9 +50,9 @@ service.Pipeline.RegisterStep("Create", PipelineStage.PreOperation, "account", c
 Shorthand helpers avoid repeating the `PipelineStage` enum:
 
 ```csharp
-service.Pipeline.RegisterPreValidation("Create", ctx => { /* stage 10 */ });
-service.Pipeline.RegisterPreOperation("Update", "account", ctx => { /* stage 20 */ });
-service.Pipeline.RegisterPostOperation("Delete", ctx => { /* stage 40 */ });
+env.Pipeline.RegisterPreValidation("Create", ctx => { /* stage 10 */ });
+env.Pipeline.RegisterPreOperation("Update", "account", ctx => { /* stage 20 */ });
+env.Pipeline.RegisterPostOperation("Delete", ctx => { /* stage 40 */ });
 ```
 
 ### Disposable Registration
@@ -59,7 +60,7 @@ service.Pipeline.RegisterPostOperation("Delete", ctx => { /* stage 40 */ });
 Every `RegisterStep` call returns a `PipelineStepRegistration` that implements `IDisposable`. Dispose it to unregister:
 
 ```csharp
-PipelineStepRegistration reg = service.Pipeline.RegisterPostOperation("Create", ctx => { });
+PipelineStepRegistration reg = env.Pipeline.RegisterPostOperation("Create", ctx => { });
 
 // Later, unregister:
 reg.Dispose();
@@ -73,7 +74,7 @@ The most powerful feature: register a real `IPlugin` class and the fake service 
 
 - **`IPluginExecutionContext`** — full context with message name, entity, parameters, images
 - **`IOrganizationServiceFactory`** — backed by the same `FakeOrganizationService`, so plugin CRUD calls hit the in-memory store
-- **`ITracingService`** — captures trace messages readable via `service.Pipeline.Traces`
+- **`ITracingService`** — captures trace messages readable via `env.Pipeline.Traces`
 
 ### Complete Example
 
@@ -101,8 +102,9 @@ Test it end-to-end:
 [Fact]
 public void Create_WithPlugin_SetsAccountNumber()
 {
-    var service = new FakeOrganizationService();
-    service.Pipeline.RegisterStep(
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.Pipeline.RegisterStep(
         "Create", PipelineStage.PreOperation, "account",
         new SetAccountNumberPlugin());
 
@@ -121,8 +123,9 @@ Plugins registered at PostOperation can call back into the service to create rel
 [Fact]
 public void CreateAccount_PluginCreatesContact()
 {
-    var service = new FakeOrganizationService();
-    service.Pipeline.RegisterStep(
+    var env = new FakeDataverseEnvironment();
+    var service = env.CreateOrganizationService();
+    env.Pipeline.RegisterStep(
         "Create", PipelineStage.PostOperation, "account",
         new AccountPrimaryContactPlugin());
 
@@ -145,7 +148,7 @@ public void CreateAccount_PluginCreatesContact()
 Images capture the entity state before and/or after the core operation. Configure them on the returned `PipelineStepRegistration`:
 
 ```csharp
-var reg = service.Pipeline.RegisterStep(
+var reg = env.Pipeline.RegisterStep(
     "Update", PipelineStage.PostOperation, "account",
     new AuditChangePlugin());
 
@@ -180,7 +183,7 @@ public void Execute(IServiceProvider serviceProvider)
 Fluent chaining is supported:
 
 ```csharp
-service.Pipeline
+env.Pipeline
     .RegisterStep("Update", PipelineStage.PostOperation, "account", new AuditChangePlugin())
     .AddPreImage("PreImage", "name", "revenue")
     .AddPostImage("PostImage", "name", "revenue");
@@ -209,8 +212,8 @@ service.Pipeline
 | `UserId` | `Guid` | `service.CallerId` |
 | `InitiatingUserId` | `Guid` | `service.InitiatingUserId` |
 | `BusinessUnitId` | `Guid` | `service.BusinessUnitId` |
-| `OrganizationId` | `Guid` | `service.OrganizationId` |
-| `OrganizationName` | `string` | `service.OrganizationName` |
+| `OrganizationId` | `Guid` | `env.OrganizationId` |
+| `OrganizationName` | `string` | `env.OrganizationName` |
 | `SharedVariables` | `ParameterCollection` | Shared across pipeline stages |
 | `CorrelationId` | `Guid` | Random per-execution `Guid` |
 | `OperationId` | `Guid` | Random per-execution `Guid` |
@@ -256,8 +259,8 @@ These are provided for plugins that use the array-of-images pattern (e.g. bulk o
 
 | Property | Type | Default | Service Property |
 |---|---|---|---|
-| `EnvironmentId` | `string` | `string.Empty` | `service.EnvironmentId` |
-| `TenantId` | `Guid` | `Guid.Empty` | `service.TenantId` |
+| `EnvironmentId` | `string` | `string.Empty` | `env.EnvironmentId` |
+| `TenantId` | `Guid` | `Guid.Empty` | `env.TenantId` |
 
 ### IPluginExecutionContext7
 
@@ -267,28 +270,29 @@ These are provided for plugins that use the array-of-images pattern (e.g. bulk o
 
 ### Configuring v2–v7 Properties
 
-Set any of these properties on `FakeOrganizationService` before running your test:
+Set session-level properties on `FakeOrganizationService` and environment-level properties on `FakeDataverseEnvironment` before running your test:
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
-// Simulate a Power Pages / portals call
+// Simulate a Power Pages / portals call (session-level)
 service.IsPortalsClientCall = true;
 service.PortalsContactId = Guid.NewGuid();
 
-// Provide AAD identity details
+// Provide AAD identity details (session-level)
 service.UserAzureActiveDirectoryObjectId = Guid.NewGuid();
 service.InitiatingUserAzureActiveDirectoryObjectId = Guid.NewGuid();
 service.InitiatingUserApplicationId = Guid.NewGuid();
 
-// Simulate a specific environment and tenant
-service.EnvironmentId = "unq1a2b3c4d5e6f";
-service.TenantId = new Guid("aaaabbbb-cccc-dddd-eeee-ffffgggghhhh");
+// Simulate a specific environment and tenant (environment-level)
+env.EnvironmentId = "unq1a2b3c4d5e6f";
+env.TenantId = new Guid("aaaabbbb-cccc-dddd-eeee-ffffgggghhhh");
 
-// Simulate an application user (service principal)
+// Simulate an application user (session-level)
 service.IsApplicationUser = true;
 
-// Set a custom caller user-agent
+// Set a custom caller user-agent (session-level)
 service.InitiatingUserAgent = "MyIntegration/3.0";
 ```
 
@@ -321,7 +325,7 @@ public void Execute(IServiceProvider serviceProvider)
 Mark a step as asynchronous to set `Mode = 1` on the execution context:
 
 ```csharp
-service.Pipeline
+env.Pipeline
     .RegisterStep("Create", PipelineStage.PostOperation, "account", new AsyncNotificationPlugin())
     .SetAsynchronous();
 ```
@@ -344,18 +348,19 @@ if (context.Mode == 1) // Asynchronous
 All calls to `ITracingService.Trace()` inside plugins are captured:
 
 ```csharp
-var service = new FakeOrganizationService();
-service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
 
 service.Create(new Entity("account") { ["name"] = "Contoso" });
 
 // Read traces
-Assert.Contains(service.Pipeline.Traces,
+Assert.Contains(env.Pipeline.Traces,
     t => t.Contains("Created primary contact for account"));
 
 // Clear for next test
-service.Pipeline.ClearTraces();
-Assert.Empty(service.Pipeline.Traces);
+env.Pipeline.ClearTraces();
+Assert.Empty(env.Pipeline.Traces);
 ```
 
 ---
@@ -371,8 +376,9 @@ dotnet add package Fake4Dataverse.Spkl
 ```csharp
 using Fake4Dataverse.Spkl;
 
-var service = new FakeOrganizationService();
-var result = service.RegisterSpklPluginsFromAssembly(typeof(MyPlugin).Assembly);
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+var result = env.RegisterSpklPluginsFromAssembly(typeof(MyPlugin).Assembly);
 
 // result is IDisposable — dispose to unregister all steps
 // result.Registrations contains the individual PipelineStepRegistration objects
@@ -388,7 +394,7 @@ This is particularly useful when your plugin project already uses SPKL-style att
 ### Explicit Dispose
 
 ```csharp
-var reg = service.Pipeline.RegisterPostOperation("Create", ctx => { });
+var reg = env.Pipeline.RegisterPostOperation("Create", ctx => { });
 // ... run tests ...
 reg.Dispose(); // step is removed
 ```
@@ -396,7 +402,7 @@ reg.Dispose(); // step is removed
 ### Using Statement
 
 ```csharp
-using (service.Pipeline.RegisterPreValidation("Create", "account", ctx =>
+using (env.Pipeline.RegisterPreValidation("Create", "account", ctx =>
 {
     throw new InvalidPluginExecutionException("Blocked!");
 }))
@@ -415,13 +421,14 @@ service.Create(new Entity("account")); // succeeds
 
 ### Combine with Scope
 
-`service.Scope()` snapshots and restores the **data store** on dispose, but pipeline registrations are **not** rolled back. This lets you register plugins once and test multiple data scenarios:
+`env.Scope()` snapshots and restores the **data store** on dispose, but pipeline registrations are **not** rolled back. This lets you register plugins once and test multiple data scenarios:
 
 ```csharp
-var service = new FakeOrganizationService();
-service.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
+env.Pipeline.RegisterStep("Create", PipelineStage.PostOperation, "account", new AccountPrimaryContactPlugin());
 
-using (service.Scope())
+using (env.Scope())
 {
     service.Create(new Entity("account") { ["name"] = "Test" });
     // contact was created by plugin
@@ -429,7 +436,7 @@ using (service.Scope())
 }
 // Data is rolled back — but the pipeline step is still registered
 
-using (service.Scope())
+using (env.Scope())
 {
     service.Create(new Entity("account") { ["name"] = "Another" });
     Assert.Single(service.RetrieveMultiple(new QueryExpression("contact")).Entities);
@@ -441,8 +448,8 @@ using (service.Scope())
 If you need per-test pipeline isolation, combine `Scope()` with `using` on the registration:
 
 ```csharp
-using (service.Scope())
-using (service.Pipeline.RegisterPreValidation("Create", "account", ctx =>
+using (env.Scope())
+using (env.Pipeline.RegisterPreValidation("Create", "account", ctx =>
 {
     throw new InvalidPluginExecutionException("Validation failed");
 }))
@@ -460,7 +467,7 @@ using (service.Pipeline.RegisterPreValidation("Create", "account", ctx =>
 **Use PreValidation for guard logic that should abort the operation:**
 
 ```csharp
-service.Pipeline.RegisterPreValidation("Create", "account", ctx =>
+env.Pipeline.RegisterPreValidation("Create", "account", ctx =>
 {
     var target = (Entity)ctx.InputParameters["Target"];
     if (!target.Contains("name"))
@@ -471,7 +478,7 @@ service.Pipeline.RegisterPreValidation("Create", "account", ctx =>
 **Use PreOperation for field manipulation before save:**
 
 ```csharp
-service.Pipeline.RegisterPreOperation("Create", "contact", ctx =>
+env.Pipeline.RegisterPreOperation("Create", "contact", ctx =>
 {
     var target = (Entity)ctx.InputParameters["Target"];
     var first = target.GetAttributeValue<string>("firstname") ?? "";
@@ -483,7 +490,7 @@ service.Pipeline.RegisterPreOperation("Create", "contact", ctx =>
 **Use PostOperation for side effects (create related records, update rollups):**
 
 ```csharp
-service.Pipeline.RegisterPostOperation("Create", "order", ctx =>
+env.Pipeline.RegisterPostOperation("Create", "order", ctx =>
 {
     var factory = (IOrganizationServiceFactory)ctx.GetType()  // for lambda-style:
         // use the outer 'service' variable directly
@@ -503,7 +510,7 @@ service.Pipeline.RegisterPostOperation("Create", "order", ctx =>
 **Throw `InvalidPluginExecutionException` to cancel operations** — this is the standard Dataverse pattern:
 
 ```csharp
-service.Pipeline.RegisterPreValidation("Delete", "account", ctx =>
+env.Pipeline.RegisterPreValidation("Delete", "account", ctx =>
 {
     throw new InvalidPluginExecutionException("Accounts cannot be deleted.");
 });
@@ -515,12 +522,12 @@ Assert.Throws<InvalidPluginExecutionException>(
 **Use SharedVariables to pass data between stages:**
 
 ```csharp
-service.Pipeline.RegisterPreValidation("Create", "account", ctx =>
+env.Pipeline.RegisterPreValidation("Create", "account", ctx =>
 {
     ctx.SharedVariables["ApprovedBy"] = "admin";
 });
 
-service.Pipeline.RegisterPostOperation("Create", "account", ctx =>
+env.Pipeline.RegisterPostOperation("Create", "account", ctx =>
 {
     var approver = (string)ctx.SharedVariables["ApprovedBy"];
 });

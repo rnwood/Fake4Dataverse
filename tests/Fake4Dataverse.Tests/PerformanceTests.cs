@@ -14,7 +14,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void BulkCreate_LargeDataSet_AllRetrievable()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var ids = new List<Guid>(EntityCount);
 
             for (int i = 0; i < EntityCount; i++)
@@ -35,7 +36,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void BulkUpdate_LargeDataSet_AllUpdated()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var ids = SeedAccounts(service, EntityCount);
 
             for (int i = 0; i < EntityCount; i++)
@@ -53,7 +55,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void BulkDelete_LargeDataSet_AllRemoved()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var ids = SeedAccounts(service, EntityCount);
 
             for (int i = 0; i < EntityCount; i++)
@@ -68,7 +71,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_LargeDataSet_ReturnsAllMatches()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             for (int i = 0; i < EntityCount; i++)
             {
                 service.Create(new Entity("account")
@@ -94,8 +98,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void IndexedQuery_ReturnsCorrectResults()
         {
-            var service = new FakeOrganizationService();
-            service.AddIndex("account", "industrycode");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.AddIndex("account", "industrycode");
 
             for (int i = 0; i < EntityCount; i++)
             {
@@ -122,9 +127,11 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void IndexedQuery_MatchesFullScanResults()
         {
-            var indexed = new FakeOrganizationService();
-            var plain = new FakeOrganizationService();
-            indexed.AddIndex("account", "industrycode");
+            var indexedEnv = new FakeDataverseEnvironment();
+            var indexed = indexedEnv.CreateOrganizationService();
+            var plainEnv = new FakeDataverseEnvironment();
+            var plain = plainEnv.CreateOrganizationService();
+            indexedEnv.AddIndex("account", "industrycode");
 
             for (int i = 0; i < EntityCount; i++)
             {
@@ -152,7 +159,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void AddIndex_AfterSeed_RetroactivelyIndexes()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             for (int i = 0; i < EntityCount; i++)
             {
                 service.Create(new Entity("account")
@@ -163,7 +171,7 @@ namespace Fake4Dataverse.Tests
             }
 
             // Add index AFTER entities already exist
-            service.AddIndex("account", "industrycode");
+            env.AddIndex("account", "industrycode");
 
             var query = new QueryExpression("account")
             {
@@ -181,9 +189,10 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void MultipleIndexedConditions_IntersectsResults()
         {
-            var service = new FakeOrganizationService();
-            service.AddIndex("account", "industrycode");
-            service.AddIndex("account", "region");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.AddIndex("account", "industrycode");
+            env.AddIndex("account", "region");
 
             for (int i = 0; i < EntityCount; i++)
             {
@@ -217,11 +226,12 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void BulkSeed_LargeDataSet_AllQueryable()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entities = Enumerable.Range(0, EntityCount).Select(i =>
                 new Entity("contact", Guid.NewGuid()) { ["firstname"] = $"First{i}", ["lastname"] = $"Last{i}" }).ToArray();
 
-            service.Seed(entities);
+            env.Seed(entities);
 
             var result = service.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet(true) });
             Assert.Equal(EntityCount, result.Entities.Count);
@@ -230,8 +240,9 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void IndexUpdated_OnUpdateAndDelete()
         {
-            var service = new FakeOrganizationService();
-            service.AddIndex("account", "industrycode");
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.AddIndex("account", "industrycode");
 
             var ids = new List<Guid>();
             for (int i = 0; i < 100; i++)

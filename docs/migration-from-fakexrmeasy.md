@@ -2,8 +2,6 @@
 
 This guide helps you migrate existing tests from [FakeXrmEasy](https://github.com/jordimontana82/fake-xrm-easy) to Fake4Dataverse.
 
-For a detailed feature comparison, see [Feature Comparison](../reference/comparison.md).
-
 ## Why Migrate?
 
 | Feature | FakeXrmEasy | Fake4Dataverse |
@@ -33,6 +31,8 @@ var service = context.GetOrganizationService();
 ```csharp
 var env = new FakeDataverseEnvironment();
 var service = env.CreateOrganizationService();
+// Environment owns shared state (metadata, security, pipeline, store).
+// Service is a lightweight session for a specific caller.
 ```
 
 ### Optional Companion Packages (Moq / FakeItEasy / Assertions)
@@ -136,9 +136,9 @@ the core package (no separate DataProviders package required):
 using Fake4Dataverse.DataProviders;
 
 var env = new FakeDataverseEnvironment();
-var service = env.CreateOrganizationService();
 env.SeedFromJsonFile("seed-data.json");
 env.SeedFromCsvFile("seed-data.csv");
+var service = env.CreateOrganizationService();
 ```
 
 ### Plugin Tests
@@ -187,20 +187,6 @@ env.Pipeline.RegisterPostOperation("Create", "account", ctx =>
     // inline logic here
 });
 ```
-
-> **Spkl users:** If your plugins are decorated with `[CrmPluginRegistration]` attributes
-> (the SPKL convention), install the `Fake4Dataverse.Spkl` adapter and auto-register all
-> decorated steps from an assembly:
->
-> ```csharp
-> using Fake4Dataverse.Spkl;
->
-> var env = new FakeDataverseEnvironment();
-> var service = env.CreateOrganizationService();
-> using var result = env.RegisterSpklPluginsFromAssembly(typeof(MyPlugin).Assembly);
-> // result.Registrations — steps that were registered
-> // result.SkippedRegistrations — unsupported forms (workflow, custom API)
-> ```
 
 ### Querying
 
@@ -258,7 +244,7 @@ env.RegisterCustomApi("my_CustomAction", (req, svc) =>
 
 | FakeXrmEasy | Fake4Dataverse |
 |---|---|
-| `new XrmFakedContext()` | `new FakeDataverseEnvironment()` |
+| `new XrmFakedContext()` | `new FakeDataverseEnvironment()` + `env.CreateOrganizationService()` |
 | `context.GetOrganizationService()` | `env.CreateOrganizationService()` |
 | `context.Initialize(entities)` | `env.Seed(entities)` |
 | file-based custom seeding helpers | `env.SeedFromJsonFile(...)` / `env.SeedFromCsvFile(...)` |
@@ -274,8 +260,7 @@ env.RegisterCustomApi("my_CustomAction", (req, svc) =>
 4. **Replace context creation**: Replace `new XrmFakedContext()` + `GetOrganizationService()` with `new FakeDataverseEnvironment()` + `env.CreateOrganizationService()`.
 5. **Replace `Initialize`**: Replace `context.Initialize(entities)` with `env.Seed(entities)`.
 6. **Update metadata setup**: Replace `InitializeMetadata` calls with `env.MetadataStore.AddEntity` / `AddAttribute`, or use built-in early-bound registration via `env.RegisterEarlyBoundEntities(...)`.
-7. **Adopt file-based seeding helpers (optional)**: Use built-in `Fake4Dataverse.DataProviders` extension methods (`SeedFromJsonFile`, `SeedFromCsvFile`) if your tests rely on seed files.
+7. **Adopt file-based seeding helpers (optional)**: Use built-in `Fake4Dataverse.DataProviders` extension methods (`SeedFromJsonFile`, `SeedFromCsvFile`) on the environment if your tests rely on seed files.
 8. **Update assertions**: Replace any FakeXrmEasy assertion helpers with operation log assertions or an assertion companion package (FluentAssertions/AwesomeAssertions/Shouldly).
 9. **Migrate framework adapters**: Replace direct framework fakes with `service.AsMock()` or `service.AsFake()` where needed.
-10. **Migrate Spkl plugin registrations (optional)**: If your plugins use `[CrmPluginRegistration]` attributes, add `Fake4Dataverse.Spkl` and call `env.RegisterSpklPluginsFromAssembly(assembly)` instead of manual pipeline step registration.
-11. **Run tests**: All standard `IOrganizationService` calls should work as-is.
+10. **Run tests**: All standard `IOrganizationService` calls should work as-is.

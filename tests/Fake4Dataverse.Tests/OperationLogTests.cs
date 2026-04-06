@@ -11,7 +11,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_IsLogged()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Contoso" };
 
             var id = service.Create(entity);
@@ -24,7 +25,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Update_IsLogged()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.OperationLog.Clear();
 
@@ -36,7 +38,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Delete_IsLogged()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.OperationLog.Clear();
 
@@ -48,7 +51,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Retrieve_IsLogged()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.OperationLog.Clear();
 
@@ -63,7 +67,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void RetrieveMultiple_IsLogged()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             service.OperationLog.Clear();
 
@@ -77,7 +82,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Execute_IsLogged_ByType()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Execute(new WhoAmIRequest());
 
@@ -88,7 +94,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Execute_IsLogged_ByName()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
 
             service.Execute(new WhoAmIRequest());
 
@@ -99,7 +106,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Associate_IsLogged()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
             service.OperationLog.Clear();
@@ -116,7 +124,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Disassociate_IsLogged()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
             var contactId = service.Create(new Entity("contact") { ["lastname"] = "Doe" });
             service.Associate("account", id, new Relationship("account_contacts"),
@@ -133,7 +142,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Clear_RemovesAllRecords()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
             Assert.NotEmpty(service.OperationLog.Records);
 
@@ -145,7 +155,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void GetOperations_FiltersByTypeAndEntity()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "A" });
             service.Create(new Entity("contact") { ["lastname"] = "B" });
             service.Create(new Entity("account") { ["name"] = "C" });
@@ -160,7 +171,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Create_RecordContainsEntitySnapshot()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var entity = new Entity("account") { ["name"] = "Contoso" };
 
             service.Create(entity);
@@ -174,7 +186,9 @@ namespace Fake4Dataverse.Tests
         public void Records_HaveTimestamps()
         {
             var clock = new FakeClock(new DateTime(2026, 6, 15, 10, 0, 0, DateTimeKind.Utc));
-            var service = new FakeOrganizationService { Clock = clock };
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            env.Clock = clock;
 
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
@@ -184,7 +198,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void Execute_RecordContainsRequest()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             var request = new WhoAmIRequest();
 
             service.Execute(request);
@@ -197,7 +212,8 @@ namespace Fake4Dataverse.Tests
         [Fact]
         public void HasCreated_IsCaseInsensitive()
         {
-            var service = new FakeOrganizationService();
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
             service.Create(new Entity("account") { ["name"] = "Contoso" });
 
             Assert.True(service.OperationLog.HasCreated("Account"));

@@ -21,7 +21,7 @@ namespace Fake4Dataverse.Handlers
             var attributeName = initRequest.FileAttributeName;
 
             var token = Guid.NewGuid().ToString("N");
-            fakeService.CreateUploadSession(token, target.LogicalName, target.Id, attributeName);
+            fakeService.Environment.CreateUploadSession(token, target.LogicalName, target.Id, attributeName);
 
             var response = new InitializeFileBlocksUploadResponse();
             response.Results["FileContinuationToken"] = token;

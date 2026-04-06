@@ -19,7 +19,8 @@ Fake4Dataverse ships with a built-in operation log and fluent assertions API. Fo
 The `OperationLog` records every service call when `EnableOperationLog = true` (the default).
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 
 // Query the log directly
@@ -36,6 +37,9 @@ bool byName    = service.OperationLog.HasExecuted("WhoAmI");
 // Filtered lists
 IReadOnlyList<OperationRecord> creates = service.OperationLog.GetOperations("Create");
 IReadOnlyList<OperationRecord> acctUpdates = service.OperationLog.GetOperations("Update", "account");
+
+// Global log also records all operations across sessions
+var globalCreates = env.OperationLog.GetOperations("Create");
 
 // Reset between tests
 service.OperationLog.Clear();
@@ -61,7 +65,8 @@ Each `OperationRecord` exposes:
 No extra package is needed. Call `Should()` on any `FakeOrganizationService` to start a chainable assertion:
 
 ```csharp
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 var id = service.Create(new Entity("account") { ["name"] = "Contoso" });
 service.Update(new Entity("account", id) { ["name"] = "Contoso Ltd" });
 
@@ -179,7 +184,8 @@ Wraps the fake engine behind a `Mock<IOrganizationService>`. All calls are deleg
 using Fake4Dataverse.Moq;
 using Moq;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 Mock<IOrganizationService> mock = service.AsMock();
 
 // Pass mock.Object to production code that expects IOrganizationService
@@ -195,7 +201,8 @@ For async-first code paths (`IOrganizationServiceAsync2`), use `AsMockAsync()`:
 ```csharp
 using Microsoft.PowerPlatform.Dataverse.Client;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 Mock<IOrganizationServiceAsync2> mockAsync = service.AsMockAsync();
 
 var id = await mockAsync.Object.CreateAsync(
@@ -226,7 +233,8 @@ Same concept as the Moq adapter, using [FakeItEasy](https://fakeiteasy.github.io
 using Fake4Dataverse.FakeItEasy;
 using FakeItEasy;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 IOrganizationService fake = service.AsFake();
 
 fake.Create(new Entity("account") { ["name"] = "Contoso" });
@@ -240,7 +248,8 @@ For async-first code paths (`IOrganizationServiceAsync2`), use `AsFakeAsync()`:
 ```csharp
 using Microsoft.PowerPlatform.Dataverse.Client;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 IOrganizationServiceAsync2 fakeAsync = service.AsFakeAsync();
 
 var id = await fakeAsync.CreateAsync(
@@ -271,9 +280,10 @@ Auto-registers plugins decorated with `[CrmPluginRegistration]` (the SPKL conven
 ```csharp
 using Fake4Dataverse.Spkl;
 
-var service = new FakeOrganizationService();
+var env = new FakeDataverseEnvironment();
+var service = env.CreateOrganizationService();
 
-using var reg = service.RegisterSpklPluginsFromAssembly(typeof(MyPlugin).Assembly);
+using var reg = env.RegisterSpklPluginsFromAssembly(typeof(MyPlugin).Assembly);
 // All [CrmPluginRegistration]-decorated IPlugin types are now registered
 
 // Trigger them through normal operations
@@ -289,7 +299,7 @@ foreach (var skip in reg.SkippedRegistrations)
 You can also register specific types instead of scanning a whole assembly:
 
 ```csharp
-using var reg = service.RegisterSpklPlugins(typeof(MyPlugin), typeof(AnotherPlugin));
+using var reg = env.RegisterSpklPlugins(typeof(MyPlugin), typeof(AnotherPlugin));
 ```
 
 ---
