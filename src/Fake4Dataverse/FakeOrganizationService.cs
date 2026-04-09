@@ -133,6 +133,33 @@ namespace Fake4Dataverse
                 AuthenticatedUserId = CallerId,
             };
 
+        /// <summary>
+        /// Starts an implicit transaction scope for a top-level operation.
+        /// If an outer transaction (e.g. ExecuteTransactionRequest) is already active,
+        /// the existing undo log is reused and <c>ownsLog</c> is <c>false</c>.
+        /// </summary>
+        private (TransactionUndoLog undoLog, bool ownsLog) BeginImplicitTransaction()
+        {
+            var existing = _environment.Store.ActiveUndoLog;
+            if (existing != null)
+                return (existing, false);
+
+            var undoLog = new TransactionUndoLog();
+            _environment.Store.ActiveUndoLog = undoLog;
+            return (undoLog, true);
+        }
+
+        /// <summary>
+        /// Ends an implicit transaction scope. On rollback, replays the undo log
+        /// to revert all mutations. On success, simply clears the active undo log.
+        /// </summary>
+        private void EndImplicitTransaction(TransactionUndoLog undoLog, bool rollback)
+        {
+            _environment.Store.ActiveUndoLog = null;
+            if (rollback)
+                undoLog.Rollback(_environment.Store);
+        }
+
         // ── IOrganizationService ─────────────────────────────────────────────
 
         /// <inheritdoc />
@@ -142,22 +169,37 @@ namespace Fake4Dataverse
             if (string.IsNullOrEmpty(entity.LogicalName)) throw new ArgumentException("Entity logical name must be specified.", nameof(entity));
 
             Guid id;
-            if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
+            var (undoLog, ownsLog) = BeginImplicitTransaction();
+            try
             {
-                id = CreateCore(entity);
-            }
-            else
-            {
-                var inputParams = new ParameterCollection { { "Target", entity } };
-                var context = _environment.Pipeline.Execute("Create", entity.LogicalName, inputParams, ctx =>
+                if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
                 {
-                    var target = (Entity)ctx.InputParameters["Target"];
-                    var resultId = CreateCore(target);
-                    return new ParameterCollection { { "id", resultId } };
-                }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
-                    BuildPipelineContextSettings());
-                id = (Guid)context.OutputParameters["id"];
+                    id = CreateCore(entity);
+                }
+                else
+                {
+                    var inputParams = new ParameterCollection { { "Target", entity } };
+                    var context = _environment.Pipeline.Execute("Create", entity.LogicalName, inputParams, ctx =>
+                    {
+                        var target = (Entity)ctx.InputParameters["Target"];
+                        var resultId = CreateCore(target);
+                        return new ParameterCollection { { "id", resultId } };
+                    }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
+                        BuildPipelineContextSettings());
+                    id = (Guid)context.OutputParameters["id"];
+                }
             }
+            catch when (ownsLog)
+            {
+                EndImplicitTransaction(undoLog, rollback: true);
+                throw;
+            }
+            finally
+            {
+                if (ownsLog)
+                    EndImplicitTransaction(undoLog, rollback: false);
+            }
+
             if (_environment.Options.EnableOperationLog)
             {
                 var record = new OperationRecord("Create", entity.LogicalName, id, _environment.Clock.UtcNow, InMemoryEntityStore.CloneEntity(entity), null);
@@ -316,21 +358,36 @@ namespace Fake4Dataverse
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (string.IsNullOrEmpty(entity.LogicalName)) throw new ArgumentException("Entity logical name must be specified.", nameof(entity));
 
-            if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
+            var (undoLog, ownsLog) = BeginImplicitTransaction();
+            try
             {
-                UpdateCore(entity);
-            }
-            else
-            {
-                var inputParams = new ParameterCollection { { "Target", entity } };
-                _environment.Pipeline.Execute("Update", entity.LogicalName, inputParams, ctx =>
+                if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
                 {
-                    var target = (Entity)ctx.InputParameters["Target"];
-                    UpdateCore(target);
-                    return new ParameterCollection();
-                }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
-                    BuildPipelineContextSettings());
+                    UpdateCore(entity);
+                }
+                else
+                {
+                    var inputParams = new ParameterCollection { { "Target", entity } };
+                    _environment.Pipeline.Execute("Update", entity.LogicalName, inputParams, ctx =>
+                    {
+                        var target = (Entity)ctx.InputParameters["Target"];
+                        UpdateCore(target);
+                        return new ParameterCollection();
+                    }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
+                        BuildPipelineContextSettings());
+                }
             }
+            catch when (ownsLog)
+            {
+                EndImplicitTransaction(undoLog, rollback: true);
+                throw;
+            }
+            finally
+            {
+                if (ownsLog)
+                    EndImplicitTransaction(undoLog, rollback: false);
+            }
+
             if (_environment.Options.EnableOperationLog)
             {
                 var record = new OperationRecord("Update", entity.LogicalName, entity.Id, _environment.Clock.UtcNow, InMemoryEntityStore.CloneEntity(entity), null);
@@ -373,6 +430,138 @@ namespace Fake4Dataverse
             }
         }
 
+        /// <summary>
+        /// Performs an update with optimistic concurrency checking. The update only succeeds
+        /// if the stored <c>versionnumber</c> matches <paramref name="expectedVersion"/>.
+        /// </summary>
+        internal void UpdateWithConcurrencyCheck(Entity entity, long expectedVersion)
+        {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            if (string.IsNullOrEmpty(entity.LogicalName)) throw new ArgumentException("Entity logical name must be specified.", nameof(entity));
+
+            var (undoLog, ownsLog) = BeginImplicitTransaction();
+            try
+            {
+                if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
+                {
+                    UpdateCoreWithConcurrencyCheck(entity, expectedVersion);
+                }
+                else
+                {
+                    var inputParams = new ParameterCollection { { "Target", entity } };
+                    _environment.Pipeline.Execute("Update", entity.LogicalName, inputParams, ctx =>
+                    {
+                        var target = (Entity)ctx.InputParameters["Target"];
+                        UpdateCoreWithConcurrencyCheck(target, expectedVersion);
+                        return new ParameterCollection();
+                    }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
+                        BuildPipelineContextSettings());
+                }
+            }
+            catch when (ownsLog)
+            {
+                EndImplicitTransaction(undoLog, rollback: true);
+                throw;
+            }
+            finally
+            {
+                if (ownsLog)
+                    EndImplicitTransaction(undoLog, rollback: false);
+            }
+
+            if (_environment.Options.EnableOperationLog)
+            {
+                var record = new OperationRecord("Update", entity.LogicalName, entity.Id, _environment.Clock.UtcNow, InMemoryEntityStore.CloneEntity(entity), null);
+                OperationLog.Add(record);
+                _environment.OperationLog.Add(record);
+            }
+        }
+
+        private void UpdateCoreWithConcurrencyCheck(Entity entity, long expectedVersion)
+        {
+            StripEmptyStrings(entity);
+
+            if (_environment.Options.ValidateWithMetadata)
+                _environment.MetadataStore.ValidateOnUpdate(entity);
+
+            ResolveAlternateKey(entity);
+            if (!UseSystemContext)
+                _environment.Security.CheckPrivilege(CallerId, entity.LogicalName, PrivilegeType.Write);
+
+            var now = _environment.Clock.UtcNow;
+            var callerRef = new EntityReference("systemuser", CallerId);
+
+            if (_environment.Options.AutoSetTimestamps)
+                entity["modifiedon"] = now;
+
+            if (_environment.Options.AutoSetOwner)
+                entity["modifiedby"] = callerRef;
+
+            if (_environment.Options.AutoSetVersionNumber)
+                entity["versionnumber"] = _environment.IncrementVersion();
+
+            if (_environment.Currency.IsConfigured)
+                _environment.Currency.ComputeBaseCurrencyFields(entity);
+
+            _environment.Store.Update(entity, expectedVersion);
+
+            if (entity.Contains("ownerid") && entity["ownerid"] is EntityReference newOwner)
+            {
+                ApplyCascadeAssign(entity.LogicalName, entity.Id, newOwner);
+            }
+        }
+
+        /// <summary>
+        /// Performs a delete with optimistic concurrency checking. The delete only succeeds
+        /// if the stored <c>versionnumber</c> matches <paramref name="expectedVersion"/>.
+        /// </summary>
+        internal void DeleteWithConcurrencyCheck(string entityName, Guid id, long expectedVersion)
+        {
+            if (!UseSystemContext)
+                _environment.Security.CheckPrivilege(CallerId, entityName, PrivilegeType.Delete);
+            ApplyCascadeDelete(entityName, id);
+
+            var (undoLog, ownsLog) = BeginImplicitTransaction();
+            try
+            {
+                if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
+                {
+                    _environment.Store.Delete(entityName, id, expectedVersion);
+                }
+                else
+                {
+                    var inputParams = new ParameterCollection
+                    {
+                        { "Target", new EntityReference(entityName, id) }
+                    };
+                    _environment.Pipeline.Execute("Delete", entityName, inputParams, ctx =>
+                    {
+                        var target = (EntityReference)ctx.InputParameters["Target"];
+                        _environment.Store.Delete(target.LogicalName, target.Id, expectedVersion);
+                        return new ParameterCollection();
+                    }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
+                        BuildPipelineContextSettings());
+                }
+            }
+            catch when (ownsLog)
+            {
+                EndImplicitTransaction(undoLog, rollback: true);
+                throw;
+            }
+            finally
+            {
+                if (ownsLog)
+                    EndImplicitTransaction(undoLog, rollback: false);
+            }
+
+            if (_environment.Options.EnableOperationLog)
+            {
+                var record = new OperationRecord("Delete", entityName, id, _environment.Clock.UtcNow, null, null);
+                OperationLog.Add(record);
+                _environment.OperationLog.Add(record);
+            }
+        }
+
         /// <inheritdoc />
         public void Delete(string entityName, Guid id)
         {
@@ -380,24 +569,39 @@ namespace Fake4Dataverse
                 _environment.Security.CheckPrivilege(CallerId, entityName, PrivilegeType.Delete);
             ApplyCascadeDelete(entityName, id);
 
-            if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
+            var (undoLog, ownsLog) = BeginImplicitTransaction();
+            try
             {
-                _environment.Store.Delete(entityName, id);
+                if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
+                {
+                    _environment.Store.Delete(entityName, id);
+                }
+                else
+                {
+                    var inputParams = new ParameterCollection
+                    {
+                        { "Target", new EntityReference(entityName, id) }
+                    };
+                    _environment.Pipeline.Execute("Delete", entityName, inputParams, ctx =>
+                    {
+                        var target = (EntityReference)ctx.InputParameters["Target"];
+                        _environment.Store.Delete(target.LogicalName, target.Id);
+                        return new ParameterCollection();
+                    }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
+                        BuildPipelineContextSettings());
+                }
             }
-            else
+            catch when (ownsLog)
             {
-                var inputParams = new ParameterCollection
-                {
-                    { "Target", new EntityReference(entityName, id) }
-                };
-                _environment.Pipeline.Execute("Delete", entityName, inputParams, ctx =>
-                {
-                    var target = (EntityReference)ctx.InputParameters["Target"];
-                    _environment.Store.Delete(target.LogicalName, target.Id);
-                    return new ParameterCollection();
-                }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
-                    BuildPipelineContextSettings());
+                EndImplicitTransaction(undoLog, rollback: true);
+                throw;
             }
+            finally
+            {
+                if (ownsLog)
+                    EndImplicitTransaction(undoLog, rollback: false);
+            }
+
             if (_environment.Options.EnableOperationLog)
             {
                 var record = new OperationRecord("Delete", entityName, id, _environment.Clock.UtcNow, null, null);
@@ -440,13 +644,28 @@ namespace Fake4Dataverse
                     throw DataverseFault.Create(DataverseFault.DuplicateRecord, "A record with the specified key values already exists.");
             }
 
-            foreach (var related in relatedEntities)
+            var (undoLogAssoc, ownsLogAssoc) = BeginImplicitTransaction();
+            try
             {
-                var association = new Entity(associationName);
-                association["sourceid"] = new EntityReference(entityName, entityId);
-                association["targetid"] = related;
-                _environment.Store.Create(association);
+                foreach (var related in relatedEntities)
+                {
+                    var association = new Entity(associationName);
+                    association["sourceid"] = new EntityReference(entityName, entityId);
+                    association["targetid"] = related;
+                    _environment.Store.Create(association);
+                }
             }
+            catch when (ownsLogAssoc)
+            {
+                EndImplicitTransaction(undoLogAssoc, rollback: true);
+                throw;
+            }
+            finally
+            {
+                if (ownsLogAssoc)
+                    EndImplicitTransaction(undoLogAssoc, rollback: false);
+            }
+
             if (_environment.Options.EnableOperationLog)
             {
                 var record = new OperationRecord("Associate", entityName, entityId, _environment.Clock.UtcNow, null, null);
@@ -465,7 +684,22 @@ namespace Fake4Dataverse
                 _environment.MetadataStore.ValidateRelationship(entityName, relationship, relatedEntities);
 
             var associationEntity = $"association_{relationship.SchemaName}";
-            _environment.Store.RemoveAssociations(associationEntity, entityName, entityId, relatedEntities);
+            var (undoLogDisassoc, ownsLogDisassoc) = BeginImplicitTransaction();
+            try
+            {
+                _environment.Store.RemoveAssociations(associationEntity, entityName, entityId, relatedEntities);
+            }
+            catch when (ownsLogDisassoc)
+            {
+                EndImplicitTransaction(undoLogDisassoc, rollback: true);
+                throw;
+            }
+            finally
+            {
+                if (ownsLogDisassoc)
+                    EndImplicitTransaction(undoLogDisassoc, rollback: false);
+            }
+
             if (_environment.Options.EnableOperationLog)
             {
                 var record = new OperationRecord("Disassociate", entityName, entityId, _environment.Clock.UtcNow, null, null);
@@ -478,7 +712,24 @@ namespace Fake4Dataverse
         public OrganizationResponse Execute(OrganizationRequest request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
-            var response = _environment.HandlerRegistry.Execute(request, this);
+
+            var (undoLog, ownsLog) = BeginImplicitTransaction();
+            OrganizationResponse response;
+            try
+            {
+                response = _environment.HandlerRegistry.Execute(request, this);
+            }
+            catch when (ownsLog)
+            {
+                EndImplicitTransaction(undoLog, rollback: true);
+                throw;
+            }
+            finally
+            {
+                if (ownsLog)
+                    EndImplicitTransaction(undoLog, rollback: false);
+            }
+
             if (_environment.Options.EnableOperationLog)
             {
                 var record = new OperationRecord("Execute", null, null, _environment.Clock.UtcNow, null, request);

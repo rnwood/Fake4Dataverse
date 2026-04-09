@@ -19,6 +19,7 @@ An in-memory fake `IOrganizationService` and `IOrganizationServiceAsync2` for un
 | **Metadata** | Entity/attribute metadata store, validation on Create/Update, auto-discovery |
 | **Security** | Security roles, privilege enforcement, record sharing (Grant/Modify/Revoke access) |
 | **Execute handlers** | WhoAmI, SetState, Assign, Upsert, ExecuteMultiple, ExecuteTransaction, and more |
+| **Concurrency** | Optimistic concurrency (`ConcurrencyBehavior.IfRowVersionMatches`), atomic transactions with undo-log rollback |
 | **Calculated fields** | Calculated and rollup field definitions evaluated on Retrieve |
 | **Currency** | Exchange rates and auto-computed base currency amounts |
 | **Activity parties** | ActivityParty entity support for from/to/cc/bcc fields |
@@ -144,6 +145,7 @@ dotnet add package Fake4Dataverse.AwesomeAssertions
 - [Currency & Exchange Rates](docs/guides/currency-exchange-rates.md)
 - [Binary & File Operations](docs/guides/binary-file-operations.md)
 - [Performance & Indexing](docs/guides/performance-indexing.md)
+- [Concurrency & Transactions](docs/guides/concurrency-transactions.md)
 - [Assertion Adapters](docs/guides/assertion-adapters.md)
 - [Cookbook — Common Patterns](docs/guides/cookbook.md)
 - [Migration from FakeXrmEasy](docs/guides/migration-from-fakexrmeasy.md)

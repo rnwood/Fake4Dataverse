@@ -165,10 +165,12 @@ Assert.Equal(userId, entity.GetAttributeValue<EntityReference>("createdby").Id);
 
 ### AutoSetVersionNumber
 
-On **Create**: sets `versionnumber` to `1`.
-On **Update**: increments `versionnumber` by `1`.
+On **Create**: sets `versionnumber` to the next global counter value.
+On **Update**: increments `versionnumber` to the next global counter value.
 
-The version number is a global counter across all entities in the store.
+The version number is a global counter across all entities in the store, incremented atomically via `Interlocked.Increment`. This value is used by **optimistic concurrency** — when `UpdateRequest.ConcurrencyBehavior` or `DeleteRequest.ConcurrencyBehavior` is set to `IfRowVersionMatches`, the stored version must match the request's `RowVersion` or a `ConcurrencyVersionMismatch` fault is thrown.
+
+See [Concurrency & Transactions](../guides/concurrency-transactions.md) for details.
 
 ### AutoSetStateCode
 
@@ -181,6 +183,7 @@ These values match the default Dataverse behavior for most entities. Use `SetSta
 ## See Also
 
 - [Getting Started](../guides/getting-started.md)
+- [Concurrency & Transactions](../guides/concurrency-transactions.md)
 - [Metadata Validation](../guides/metadata-validation.md)
 - [Security & Access Control](../guides/security-access-control.md)
 - [Pipeline & Plugin Testing](../guides/pipeline-plugin-testing.md)

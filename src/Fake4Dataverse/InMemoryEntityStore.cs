@@ -19,8 +19,19 @@ namespace Fake4Dataverse
     {
         private readonly Dictionary<string, ConcurrentDictionary<Guid, Entity>> _store = new Dictionary<string, ConcurrentDictionary<Guid, Entity>>(StringComparer.OrdinalIgnoreCase);
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+        private readonly AsyncLocal<TransactionUndoLog?> _activeUndoLog = new AsyncLocal<TransactionUndoLog?>();
 
         internal AttributeIndex? Index { get; set; }
+
+        /// <summary>
+        /// Gets or sets the active transaction undo log. When set, all Create/Update/Delete
+        /// operations automatically record their inverse so the transaction can be rolled back.
+        /// </summary>
+        internal TransactionUndoLog? ActiveUndoLog
+        {
+            get => _activeUndoLog.Value;
+            set => _activeUndoLog.Value = value;
+        }
 
         public Guid Create(Entity entity)
         {
@@ -39,6 +50,7 @@ namespace Fake4Dataverse
             if (!table.TryAdd(id, clone))
                 throw DataverseFault.DuplicateId(entity.LogicalName, id);
 
+            _activeUndoLog.Value?.RecordCreate(entity.LogicalName, id);
             Index?.OnCreate(clone);
             return id;
         }
@@ -79,6 +91,11 @@ namespace Fake4Dataverse
 
         public void Update(Entity entity)
         {
+            Update(entity, null);
+        }
+
+        public void Update(Entity entity, long? expectedVersion)
+        {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (string.IsNullOrEmpty(entity.LogicalName)) throw new ArgumentException("Entity logical name must be set.", nameof(entity));
             if (entity.Id == Guid.Empty) throw new ArgumentException("Entity id must be set for update.", nameof(entity));
@@ -89,6 +106,14 @@ namespace Fake4Dataverse
                 if (!_store.TryGetValue(entity.LogicalName, out var table) || !table.TryGetValue(entity.Id, out var existing))
                     throw DataverseFault.EntityNotFound(entity.LogicalName, entity.Id);
 
+                if (expectedVersion.HasValue)
+                {
+                    var storedVersion = existing.Contains("versionnumber") ? (long)existing["versionnumber"] : 0L;
+                    if (storedVersion != expectedVersion.Value)
+                        throw DataverseFault.ConcurrencyVersionMismatchFault(entity.LogicalName, entity.Id);
+                }
+
+                _activeUndoLog.Value?.RecordPreUpdateState(CloneEntity(existing));
                 Index?.OnUpdate(entity, existing);
 
                 foreach (var attr in entity.Attributes)
@@ -112,14 +137,33 @@ namespace Fake4Dataverse
 
         public void Delete(string entityName, Guid id)
         {
+            Delete(entityName, id, null);
+        }
+
+        public void Delete(string entityName, Guid id, long? expectedVersion)
+        {
             if (string.IsNullOrEmpty(entityName)) throw new ArgumentException("Entity name is required.", nameof(entityName));
 
             _lock.EnterReadLock();
             try
             {
-                if (!_store.TryGetValue(entityName, out var table) || !table.TryRemove(id, out var removed))
+                if (!_store.TryGetValue(entityName, out var table))
                     throw DataverseFault.EntityNotFound(entityName, id);
 
+                if (expectedVersion.HasValue)
+                {
+                    if (!table.TryGetValue(id, out var existing))
+                        throw DataverseFault.EntityNotFound(entityName, id);
+
+                    var storedVersion = existing.Contains("versionnumber") ? (long)existing["versionnumber"] : 0L;
+                    if (storedVersion != expectedVersion.Value)
+                        throw DataverseFault.ConcurrencyVersionMismatchFault(entityName, id);
+                }
+
+                if (!table.TryRemove(id, out var removed))
+                    throw DataverseFault.EntityNotFound(entityName, id);
+
+                _activeUndoLog.Value?.RecordPreDeleteState(CloneEntity(removed));
                 Index?.OnDelete(entityName, id, removed);
             }
             finally
@@ -156,7 +200,10 @@ namespace Fake4Dataverse
                     if (toRemove.HasValue)
                     {
                         if (table.TryRemove(toRemove.Value, out var removed))
+                        {
+                            _activeUndoLog.Value?.RecordPreDeleteState(CloneEntity(removed));
                             Index?.OnDelete(associationEntity, toRemove.Value, removed);
+                        }
                     }
                 }
             }
@@ -196,6 +243,75 @@ namespace Fake4Dataverse
         public void Dispose()
         {
             _lock.Dispose();
+        }
+
+        // ── Rollback Methods (bypass undo-log recording) ─────────────────────
+
+        /// <summary>
+        /// Removes an entity that was created during a rolled-back transaction.
+        /// Does not record an undo entry.
+        /// </summary>
+        internal void DeleteForRollback(string entityName, Guid id)
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                if (_store.TryGetValue(entityName, out var table) && table.TryRemove(id, out var removed))
+                    Index?.OnDelete(entityName, id, removed);
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+
+        /// <summary>
+        /// Replaces an entity's stored state with a previous snapshot, undoing an update.
+        /// Does not record an undo entry.
+        /// </summary>
+        internal void RestoreForRollback(Entity beforeState)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                if (!_store.TryGetValue(beforeState.LogicalName, out var table))
+                {
+                    table = new ConcurrentDictionary<Guid, Entity>();
+                    _store[beforeState.LogicalName] = table;
+                }
+                var clone = CloneEntity(beforeState);
+                if (table.TryGetValue(beforeState.Id, out var current))
+                    Index?.OnUpdate(beforeState, current);
+                table[beforeState.Id] = clone;
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        /// <summary>
+        /// Re-inserts an entity that was deleted during a rolled-back transaction.
+        /// Does not record an undo entry.
+        /// </summary>
+        internal void CreateForRollback(Entity entity)
+        {
+            _lock.EnterWriteLock();
+            try
+            {
+                if (!_store.TryGetValue(entity.LogicalName, out var table))
+                {
+                    table = new ConcurrentDictionary<Guid, Entity>();
+                    _store[entity.LogicalName] = table;
+                }
+                var clone = CloneEntity(entity);
+                table[entity.Id] = clone;
+                Index?.OnCreate(clone);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
         }
 
         /// <summary>

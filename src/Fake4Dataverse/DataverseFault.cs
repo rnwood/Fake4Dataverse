@@ -18,6 +18,12 @@ namespace Fake4Dataverse
         public const int InvalidArgument = unchecked((int)0x80040203);
         /// <summary>Unspecified error (0x80040216).</summary>
         public const int Unspecified = unchecked((int)0x80040216);
+        /// <summary>Concurrency version mismatch (0x80060882).</summary>
+        public const int ConcurrencyVersionMismatch = unchecked((int)0x80060882);
+        /// <summary>Concurrency version not provided (0x80060883).</summary>
+        public const int ConcurrencyVersionNotProvided = unchecked((int)0x80060883);
+        /// <summary>Optimistic concurrency not enabled (0x80060893).</summary>
+        public const int OptimisticConcurrencyNotEnabled = unchecked((int)0x80060893);
 
         /// <summary>Creates a fault for an entity not found by ID.</summary>
         public static FaultException<OrganizationServiceFault> EntityNotFound(string entityName, Guid id)
@@ -35,6 +41,20 @@ namespace Fake4Dataverse
         public static FaultException<OrganizationServiceFault> InvalidArgumentFault(string message)
         {
             return Create(InvalidArgument, message);
+        }
+
+        /// <summary>Creates a fault for a concurrency version mismatch.</summary>
+        public static FaultException<OrganizationServiceFault> ConcurrencyVersionMismatchFault(string entityName, Guid id)
+        {
+            return Create(ConcurrencyVersionMismatch,
+                $"The version of the existing record of entity '{entityName}' with id '{id:D}' does not match the RowVersion property provided.");
+        }
+
+        /// <summary>Creates a fault for a missing concurrency version.</summary>
+        public static FaultException<OrganizationServiceFault> ConcurrencyVersionNotProvidedFault()
+        {
+            return Create(ConcurrencyVersionNotProvided,
+                "The RowVersion property must be provided when the request property ConcurrencyBehavior is set to IfRowVersionMatches.");
         }
 
         /// <summary>Creates a <see cref="FaultException{OrganizationServiceFault}"/> with the specified error code and message.</summary>

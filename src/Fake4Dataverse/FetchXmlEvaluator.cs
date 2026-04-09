@@ -39,6 +39,8 @@ namespace Fake4Dataverse
             int? count = ParseOptionalInt(Attr(fetchEl, "count"));
             int? page = ParseOptionalInt(Attr(fetchEl, "page"));
             bool distinct = string.Equals(Attr(fetchEl, "distinct"), "true", StringComparison.OrdinalIgnoreCase);
+            string? noLockRaw = Attr(fetchEl, "no-lock");
+            bool noLock = noLockRaw == null || string.Equals(noLockRaw, "true", StringComparison.OrdinalIgnoreCase);
 
             string entityName = Attr(entityEl, "name")
                 ?? throw new ArgumentException("Entity element must have a 'name' attribute.");
@@ -88,6 +90,8 @@ namespace Fake4Dataverse
 
             if (distinct)
                 query.Distinct = true;
+
+            query.NoLock = noLock;
 
             var result = _queryEvaluator.Evaluate(query, store);
 
