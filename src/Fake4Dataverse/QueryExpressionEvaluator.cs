@@ -72,7 +72,6 @@ namespace Fake4Dataverse
         {
             var index = store.Index;
             if (index == null) return null;
-            if (store.HasActiveTransaction) return null;
             if (query.Criteria == null || query.Criteria.FilterOperator != LogicalOperator.And) return null;
             if (query.Criteria.Conditions.Count == 0) return null;
 
@@ -92,6 +91,16 @@ namespace Fake4Dataverse
             }
 
             if (candidateIds == null) return null;
+
+            var activeTransaction = store.ActiveTransaction;
+            if (activeTransaction != null)
+            {
+                foreach (var staged in activeTransaction.GetEntityChanges(query.EntityName))
+                {
+                    if (staged.Value.Entity != null)
+                        candidateIds.Add(staged.Key);
+                }
+            }
 
             return store.GetByIds(query.EntityName, candidateIds);
         }

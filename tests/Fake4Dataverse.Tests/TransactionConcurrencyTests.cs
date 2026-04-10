@@ -205,6 +205,47 @@ namespace Fake4Dataverse.Tests
         }
 
         [Fact]
+        public void ExecuteTransaction_RetrieveMultipleWithinTransaction_SeesStagedUpdateThatNowMatchesIndex()
+        {
+            var env = new FakeDataverseEnvironment();
+            env.AddIndex("account", "name");
+            var service = env.CreateOrganizationService();
+
+            var accountId = service.Create(new Entity("account") { ["name"] = "Before" });
+
+            var response = (ExecuteTransactionResponse)service.Execute(new ExecuteTransactionRequest
+            {
+                Requests = new OrganizationRequestCollection
+                {
+                    new UpdateRequest
+                    {
+                        Target = new Entity("account", accountId) { ["name"] = "After" }
+                    },
+                    new RetrieveMultipleRequest
+                    {
+                        Query = new QueryExpression("account")
+                        {
+                            ColumnSet = new ColumnSet("name"),
+                            Criteria =
+                            {
+                                Conditions =
+                                {
+                                    new ConditionExpression("name", ConditionOperator.Equal, "After")
+                                }
+                            }
+                        }
+                    }
+                },
+                ReturnResponses = true
+            });
+
+            var retrieveResponse = Assert.IsType<RetrieveMultipleResponse>(response.Responses[1]);
+            Assert.Single(retrieveResponse.EntityCollection.Entities);
+            Assert.Equal(accountId, retrieveResponse.EntityCollection.Entities[0].Id);
+            Assert.Equal("After", retrieveResponse.EntityCollection.Entities[0].GetAttributeValue<string>("name"));
+        }
+
+        [Fact]
         public void ExecuteTransaction_ReturnResponses_True_ReturnsAllResponses()
         {
             var env = new FakeDataverseEnvironment();
