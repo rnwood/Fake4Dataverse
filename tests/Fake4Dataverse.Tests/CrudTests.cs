@@ -408,5 +408,47 @@ namespace Fake4Dataverse.Tests
 
             Assert.Equal("Active", retrieved.FormattedValues["statecode"]);
         }
+
+        [Fact]
+        public void Create_MutatingOriginalMoneyAfterCreate_DoesNotAffectStoredEntity()
+        {
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            var revenue = new Money(1000m);
+
+            var id = service.Create(new Entity("account")
+            {
+                ["name"] = "Contoso",
+                ["revenue"] = revenue
+            });
+
+            revenue.Value = 9999m;
+
+            var retrieved = service.Retrieve("account", id, new ColumnSet("revenue"));
+            Assert.Equal(1000m, retrieved.GetAttributeValue<Money>("revenue").Value);
+        }
+
+        [Fact]
+        public void Update_MutatingOriginalMoneyAfterUpdate_DoesNotAffectStoredEntity()
+        {
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            var id = service.Create(new Entity("account")
+            {
+                ["name"] = "Contoso",
+                ["revenue"] = new Money(1000m)
+            });
+
+            var revenue = new Money(2500m);
+            service.Update(new Entity("account", id)
+            {
+                ["revenue"] = revenue
+            });
+
+            revenue.Value = 7777m;
+
+            var retrieved = service.Retrieve("account", id, new ColumnSet("revenue"));
+            Assert.Equal(2500m, retrieved.GetAttributeValue<Money>("revenue").Value);
+        }
     }
 }

@@ -104,7 +104,7 @@ namespace Fake4Dataverse
                     foreach (var col in aliasedColumns)
                     {
                         object? value = entity.Contains(col.Name) ? entity[col.Name] : null;
-                        entity[col.Alias!] = new AliasedValue(entityName, col.Name, value);
+                        entity[col.Alias!] = new AliasedValue(entityName, col.Name, InMemoryEntityStore.CloneAttributeValue(value));
                     }
                 }
             }
@@ -165,13 +165,13 @@ namespace Fake4Dataverse
                 for (int i = 0; i < groupByColumns.Count; i++)
                 {
                     var col = groupByColumns[i];
-                    entity[col.Alias ?? col.Name] = new AliasedValue(entityName, col.Name, group.Key.Values[i]);
+                    entity[col.Alias ?? col.Name] = new AliasedValue(entityName, col.Name, InMemoryEntityStore.CloneAttributeValue(group.Key.Values[i]));
                 }
 
                 foreach (var agg in aggregateColumns)
                 {
                     entity[agg.Alias ?? agg.Name] = new AliasedValue(entityName, agg.Name,
-                        ComputeAggregate(group.ToList(), agg.Name, agg.Aggregate!));
+                        InMemoryEntityStore.CloneAttributeValue(ComputeAggregate(group.ToList(), agg.Name, agg.Aggregate!)));
                 }
 
                 resultEntities.Add(entity);
@@ -265,22 +265,12 @@ namespace Fake4Dataverse
 
                 if (valueStr != null)
                 {
-                    // Try numeric parse first
-                    if (int.TryParse(valueStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intVal))
-                        filter.AddCondition(attrName, op, intVal);
-                    else if (decimal.TryParse(valueStr, NumberStyles.Number, CultureInfo.InvariantCulture, out var decVal))
-                        filter.AddCondition(attrName, op, decVal);
-                    else if (DateTime.TryParse(valueStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dtVal))
-                        filter.AddCondition(attrName, op, dtVal);
-                    else if (Guid.TryParse(valueStr, out var guidVal))
-                        filter.AddCondition(attrName, op, guidVal);
-                    else
-                        filter.AddCondition(attrName, op, valueStr);
+                    filter.AddCondition(attrName, op, ParseTypedValue(valueStr));
                 }
                 else
                 {
                     // Check for child <value> elements (for In, Between, etc.)
-                    var childValues = condEl.Elements("value").Select(v => (object)v.Value).ToArray();
+                    var childValues = condEl.Elements("value").Select(v => ParseTypedValue(v.Value)).ToArray();
                     if (childValues.Length > 0)
                         filter.AddCondition(attrName, op, childValues);
                     else
@@ -321,9 +311,7 @@ namespace Fake4Dataverse
                 var linkTypeStr = Attr(linkEl, "link-type");
                 var alias = Attr(linkEl, "alias");
 
-                var joinOp = string.Equals(linkTypeStr, "outer", StringComparison.OrdinalIgnoreCase)
-                    ? JoinOperator.LeftOuter
-                    : JoinOperator.Inner;
+                var joinOp = ParseJoinOperator(linkTypeStr);
 
                 var link = new LinkEntity
                 {
@@ -396,6 +384,12 @@ namespace Fake4Dataverse
                 case "next-x-days": return ConditionOperator.NextXDays;
                 case "last-x-hours": return ConditionOperator.LastXHours;
                 case "next-x-hours": return ConditionOperator.NextXHours;
+                case "last-x-weeks": return ConditionOperator.LastXWeeks;
+                case "next-x-weeks": return ConditionOperator.NextXWeeks;
+                case "last-x-months": return ConditionOperator.LastXMonths;
+                case "next-x-months": return ConditionOperator.NextXMonths;
+                case "last-x-years": return ConditionOperator.LastXYears;
+                case "next-x-years": return ConditionOperator.NextXYears;
                 case "this-week": return ConditionOperator.ThisWeek;
                 case "last-week": return ConditionOperator.LastWeek;
                 case "next-week": return ConditionOperator.NextWeek;
@@ -405,9 +399,54 @@ namespace Fake4Dataverse
                 case "this-year": return ConditionOperator.ThisYear;
                 case "last-year": return ConditionOperator.LastYear;
                 case "next-year": return ConditionOperator.NextYear;
+                case "older-than-x-minutes": return ConditionOperator.OlderThanXMinutes;
+                case "older-than-x-hours": return ConditionOperator.OlderThanXHours;
+                case "older-than-x-days": return ConditionOperator.OlderThanXDays;
+                case "older-than-x-weeks": return ConditionOperator.OlderThanXWeeks;
+                case "older-than-x-months": return ConditionOperator.OlderThanXMonths;
+                case "older-than-x-years": return ConditionOperator.OlderThanXYears;
+                case "eq-userid": return ConditionOperator.EqualUserId;
+                case "ne-userid": return ConditionOperator.NotEqualUserId;
+                case "eq-businessid": return ConditionOperator.EqualBusinessId;
+                case "ne-businessid": return ConditionOperator.NotEqualBusinessId;
+                case "contain-values": return ConditionOperator.ContainValues;
+                case "not-contain-values": return ConditionOperator.DoesNotContainValues;
                 default:
                     throw new NotSupportedException($"FetchXml condition operator '{op}' is not supported.");
             }
+        }
+
+        private static JoinOperator ParseJoinOperator(string? linkType)
+        {
+            if (string.IsNullOrEmpty(linkType))
+                return JoinOperator.Inner;
+
+            switch (linkType!.ToLowerInvariant())
+            {
+                case "inner": return JoinOperator.Inner;
+                case "outer": return JoinOperator.LeftOuter;
+                case "exists": return JoinOperator.Exists;
+                case "in": return JoinOperator.In;
+                case "any": return JoinOperator.Any;
+                case "not-any": return JoinOperator.NotAny;
+                case "not-all": return JoinOperator.NotAll;
+                case "natural": return JoinOperator.Natural;
+                default:
+                    throw new NotSupportedException($"FetchXml link-type '{linkType}' is not supported.");
+            }
+        }
+
+        private static object ParseTypedValue(string valueStr)
+        {
+            if (int.TryParse(valueStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intVal))
+                return intVal;
+            if (decimal.TryParse(valueStr, NumberStyles.Number, CultureInfo.InvariantCulture, out var decVal))
+                return decVal;
+            if (DateTime.TryParse(valueStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dtVal))
+                return dtVal;
+            if (Guid.TryParse(valueStr, out var guidVal))
+                return guidVal;
+            return valueStr;
         }
 
         private static string? Attr(XElement el, string name)

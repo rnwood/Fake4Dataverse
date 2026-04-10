@@ -10,7 +10,8 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Fake4Dataverse.Handlers
 {
     /// <summary>
-    /// Handles the FetchXmlToQueryExpression request by converting a FetchXml string to a <see cref="QueryExpression"/>.
+    /// Handles the <c>FetchXmlToQueryExpression</c> request by converting a
+    /// supported non-aggregate FetchXml string to a <see cref="QueryExpression"/>.
     /// </summary>
     internal sealed class FetchXmlToQueryExpressionRequestHandler : IOrganizationRequestHandler
     {

@@ -125,7 +125,7 @@ namespace Fake4Dataverse
                     }
                     else
                     {
-                        existing[attr.Key] = attr.Value;
+                        existing[attr.Key] = CloneAttributeValue(attr.Value);
                     }
                 }
             }
@@ -361,12 +361,92 @@ namespace Fake4Dataverse
             }
         }
 
+        internal static object? CloneAttributeValue(object? value)
+        {
+            if (value == null)
+                return null;
+
+            switch (value)
+            {
+                case Entity entity:
+                    return CloneEntity(entity);
+
+                case EntityReference entityReference:
+                    var entityReferenceClone = new EntityReference(entityReference.LogicalName, entityReference.Id)
+                    {
+                        Name = entityReference.Name,
+                        RowVersion = entityReference.RowVersion
+                    };
+
+                    foreach (var keyAttribute in entityReference.KeyAttributes)
+                        entityReferenceClone.KeyAttributes[keyAttribute.Key] = CloneAttributeValue(keyAttribute.Value);
+
+                    return entityReferenceClone;
+
+                case Money money:
+                    return new Money(money.Value);
+
+                case OptionSetValue optionSetValue:
+                    return new OptionSetValue(optionSetValue.Value);
+
+                case OptionSetValueCollection optionSetValues:
+                    var optionSetValuesClone = new OptionSetValueCollection();
+                    foreach (var option in optionSetValues)
+                        optionSetValuesClone.Add(new OptionSetValue(option.Value));
+                    return optionSetValuesClone;
+
+                case EntityReferenceCollection entityReferences:
+                    var entityReferenceCollectionClone = new EntityReferenceCollection();
+                    foreach (var entityReferenceItem in entityReferences)
+                        entityReferenceCollectionClone.Add((EntityReference)CloneAttributeValue(entityReferenceItem)!);
+                    return entityReferenceCollectionClone;
+
+                case EntityCollection entityCollection:
+                    var entityCollectionClone = new EntityCollection();
+                    foreach (var entityItem in entityCollection.Entities)
+                        entityCollectionClone.Entities.Add(CloneEntity(entityItem));
+                    entityCollectionClone.EntityName = entityCollection.EntityName;
+                    entityCollectionClone.MoreRecords = entityCollection.MoreRecords;
+                    entityCollectionClone.PagingCookie = entityCollection.PagingCookie;
+                    entityCollectionClone.TotalRecordCount = entityCollection.TotalRecordCount;
+                    return entityCollectionClone;
+
+                case BooleanManagedProperty booleanManagedProperty:
+                    return new BooleanManagedProperty(booleanManagedProperty.Value);
+
+                case AliasedValue aliasedValue:
+                    return new AliasedValue(
+                        aliasedValue.EntityLogicalName,
+                        aliasedValue.AttributeLogicalName,
+                        CloneAttributeValue(aliasedValue.Value));
+
+                case KeyAttributeCollection keyAttributes:
+                    var keyAttributesClone = new KeyAttributeCollection();
+                    foreach (var keyAttribute in keyAttributes)
+                        keyAttributesClone[keyAttribute.Key] = CloneAttributeValue(keyAttribute.Value);
+                    return keyAttributesClone;
+
+                case byte[] bytes:
+                    return (byte[])bytes.Clone();
+
+                case Array array when array.Rank == 1:
+                    var elementType = array.GetType().GetElementType() ?? typeof(object);
+                    var arrayClone = Array.CreateInstance(elementType, array.Length);
+                    for (var i = 0; i < array.Length; i++)
+                        arrayClone.SetValue(CloneAttributeValue(array.GetValue(i)), i);
+                    return arrayClone;
+
+                default:
+                    return value;
+            }
+        }
+
         internal static Entity CloneEntity(Entity source)
         {
             var clone = new Entity(source.LogicalName, source.Id);
             foreach (var attr in source.Attributes)
             {
-                clone[attr.Key] = attr.Value;
+                clone[attr.Key] = CloneAttributeValue(attr.Value);
             }
             foreach (var fv in source.FormattedValues)
             {
@@ -493,7 +573,7 @@ namespace Fake4Dataverse
             foreach (var col in columnSet.Columns)
             {
                 if (source.Contains(col))
-                    projected[col] = source[col];
+                    projected[col] = CloneAttributeValue(source[col]);
             }
             foreach (var fv in source.FormattedValues)
             {

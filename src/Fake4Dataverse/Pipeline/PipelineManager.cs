@@ -283,14 +283,14 @@ namespace Fake4Dataverse.Pipeline
             if (attributes.Length == 0)
             {
                 foreach (var attr in snapshot.Attributes)
-                    image[attr.Key] = attr.Value;
+                    image[attr.Key] = InMemoryEntityStore.CloneAttributeValue(attr.Value);
             }
             else
             {
                 foreach (var attr in attributes)
                 {
                     if (snapshot.Contains(attr))
-                        image[attr] = snapshot[attr];
+                        image[attr] = InMemoryEntityStore.CloneAttributeValue(snapshot[attr]);
                 }
             }
             return image;

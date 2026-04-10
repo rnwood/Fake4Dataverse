@@ -61,6 +61,78 @@ namespace Fake4Dataverse.Tests
         }
 
         [Fact]
+        public void RetrieveMultiple_LinkEntityAliasedFormattableValues_HaveFormattedValues()
+        {
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
+            var lastUsedOn = new DateTime(2026, 4, 9, 13, 5, 0, DateTimeKind.Utc);
+
+            service.Create(new Entity("contact")
+            {
+                ["parentcustomerid"] = new EntityReference("account", accountId),
+                ["annualincome"] = new Money(1234.5m),
+                ["preferredcontactmethodcode"] = new OptionSetValue(2),
+                ["donotemail"] = true,
+                ["lastusedincampaign"] = lastUsedOn
+            });
+
+            var query = new QueryExpression("account")
+            {
+                ColumnSet = new ColumnSet("name")
+            };
+
+            var link = query.AddLink("contact", "accountid", "parentcustomerid", JoinOperator.Inner);
+            link.EntityAlias = "primarycontact";
+            link.Columns = new ColumnSet("annualincome", "preferredcontactmethodcode", "donotemail", "lastusedincampaign");
+
+            var result = service.RetrieveMultiple(query);
+
+            Assert.Single(result.Entities);
+            var entity = result.Entities[0];
+
+            Assert.Equal("1,234.50", entity.FormattedValues["primarycontact.annualincome"]);
+            Assert.Equal("2", entity.FormattedValues["primarycontact.preferredcontactmethodcode"]);
+            Assert.Equal("Yes", entity.FormattedValues["primarycontact.donotemail"]);
+            Assert.Equal("4/9/2026 1:05 PM", entity.FormattedValues["primarycontact.lastusedincampaign"]);
+        }
+
+        [Fact]
+        public void RetrieveMultiple_FetchXmlColumnAliasedFormattableValues_HaveFormattedValues()
+        {
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            var lastUsedOn = new DateTime(2026, 4, 9, 13, 5, 0, DateTimeKind.Utc);
+
+            service.Create(new Entity("account")
+            {
+                ["revenue"] = new Money(1234.5m),
+                ["industrycode"] = new OptionSetValue(2),
+                ["donotphone"] = true,
+                ["lastusedincampaign"] = lastUsedOn
+            });
+
+            var fetchXml = @"<fetch>
+                <entity name='account'>
+                    <attribute name='revenue' alias='account_revenue' />
+                    <attribute name='industrycode' alias='account_industrycode' />
+                    <attribute name='donotphone' alias='account_donotphone' />
+                    <attribute name='lastusedincampaign' alias='account_lastusedincampaign' />
+                </entity>
+            </fetch>";
+
+            var result = service.RetrieveMultiple(new FetchExpression(fetchXml));
+
+            Assert.Single(result.Entities);
+            var entity = result.Entities[0];
+
+            Assert.Equal("1,234.50", entity.FormattedValues["account_revenue"]);
+            Assert.Equal("2", entity.FormattedValues["account_industrycode"]);
+            Assert.Equal("Yes", entity.FormattedValues["account_donotphone"]);
+            Assert.Equal("4/9/2026 1:05 PM", entity.FormattedValues["account_lastusedincampaign"]);
+        }
+
+        [Fact]
         public void Retrieve_ExistingFormattedValue_NotOverridden()
         {
             var env = new FakeDataverseEnvironment();

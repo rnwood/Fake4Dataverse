@@ -27,7 +27,7 @@ namespace Fake4Dataverse
             {
                 var key = (entityName, attributeName);
                 if (!_indexes.ContainsKey(key))
-                    _indexes[key] = new Dictionary<object, HashSet<Guid>>();
+                    _indexes[key] = new Dictionary<object, HashSet<Guid>>(AttributeValueComparer.Instance);
             }
         }
 
@@ -206,6 +206,27 @@ namespace Fake4Dataverse
                     return (StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Item1) * 397)
                          ^ StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Item2);
                 }
+            }
+        }
+
+        private sealed class AttributeValueComparer : IEqualityComparer<object>
+        {
+            public static readonly AttributeValueComparer Instance = new AttributeValueComparer();
+
+            public new bool Equals(object? x, object? y)
+            {
+                if (x is string xs && y is string ys)
+                    return string.Equals(xs, ys, StringComparison.OrdinalIgnoreCase);
+
+                return object.Equals(x, y);
+            }
+
+            public int GetHashCode(object obj)
+            {
+                if (obj is string s)
+                    return StringComparer.OrdinalIgnoreCase.GetHashCode(s);
+
+                return obj.GetHashCode();
             }
         }
     }

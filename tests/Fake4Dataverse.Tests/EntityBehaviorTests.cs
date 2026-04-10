@@ -148,5 +148,65 @@ namespace Fake4Dataverse.Tests
             var r2 = service.Retrieve("account", id, new ColumnSet(true));
             Assert.Equal("Contoso", r2.GetAttributeValue<string>("name"));
         }
+
+        [Fact]
+        public void Retrieve_WithProjectedEntityReferenceMutation_DoesNotAffectStoredEntity()
+        {
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            var originalContactId = Guid.NewGuid();
+            var id = service.Create(new Entity("account")
+            {
+                ["name"] = "Contoso",
+                ["primarycontactid"] = new EntityReference("contact", originalContactId) { Name = "Original Contact" }
+            });
+
+            var retrieved = service.Retrieve("account", id, new ColumnSet("primarycontactid"));
+            var lookup = retrieved.GetAttributeValue<EntityReference>("primarycontactid");
+            Assert.NotNull(lookup);
+
+            lookup.Id = Guid.NewGuid();
+            lookup.Name = "Mutated Contact";
+
+            var reread = service.Retrieve("account", id, new ColumnSet("primarycontactid"));
+            var storedLookup = reread.GetAttributeValue<EntityReference>("primarycontactid");
+            Assert.NotNull(storedLookup);
+            Assert.Equal(originalContactId, storedLookup.Id);
+            Assert.Equal("Original Contact", storedLookup.Name);
+        }
+
+        [Fact]
+        public void RetrieveMultiple_WithProjectedEntityReferenceMutation_DoesNotAffectStoredEntity()
+        {
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            var originalParentId = Guid.NewGuid();
+            service.Create(new Entity("contact")
+            {
+                ["fullname"] = "John Doe",
+                ["parentcustomerid"] = new EntityReference("account", originalParentId) { Name = "Contoso" }
+            });
+
+            var firstResult = service.RetrieveMultiple(new QueryExpression("contact")
+            {
+                ColumnSet = new ColumnSet("parentcustomerid")
+            });
+
+            var lookup = firstResult.Entities[0].GetAttributeValue<EntityReference>("parentcustomerid");
+            Assert.NotNull(lookup);
+
+            lookup.Id = Guid.NewGuid();
+            lookup.Name = "Mutated Parent";
+
+            var secondResult = service.RetrieveMultiple(new QueryExpression("contact")
+            {
+                ColumnSet = new ColumnSet("parentcustomerid")
+            });
+
+            var storedLookup = secondResult.Entities[0].GetAttributeValue<EntityReference>("parentcustomerid");
+            Assert.NotNull(storedLookup);
+            Assert.Equal(originalParentId, storedLookup.Id);
+            Assert.Equal("Contoso", storedLookup.Name);
+        }
     }
 }

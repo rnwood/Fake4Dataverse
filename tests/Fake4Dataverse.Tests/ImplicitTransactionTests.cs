@@ -1,4 +1,5 @@
 using System;
+using Fake4Dataverse.Metadata;
 using Fake4Dataverse.Pipeline;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -172,6 +173,39 @@ namespace Fake4Dataverse.Tests
             // Parent account must still exist
             var parent = service.Retrieve("account", accountId, new ColumnSet(true));
             Assert.NotNull(parent);
+        }
+
+        [Fact]
+        public void Delete_WithCascadeDelete_PostOperationThrows_RollsBackParentAndChildren()
+        {
+            var env = new FakeDataverseEnvironment();
+            env.MetadataStore.AddOneToManyRelationship(
+                "account_contacts",
+                "account", "accountid",
+                "contact", "parentcustomerid",
+                new CascadeConfiguration { Delete = CascadeType.Cascade });
+
+            var service = env.CreateOrganizationService();
+            var accountId = service.Create(new Entity("account") { ["name"] = "Contoso" });
+            var contactId = service.Create(new Entity("contact")
+            {
+                ["fullname"] = "John Doe",
+                ["parentcustomerid"] = new EntityReference("account", accountId)
+            });
+
+            env.Pipeline.RegisterPostOperation("Delete", "account", _ =>
+            {
+                throw new InvalidPluginExecutionException("PostOp failure");
+            });
+
+            Assert.Throws<InvalidPluginExecutionException>(() => service.Delete("account", accountId));
+
+            var parent = service.Retrieve("account", accountId, new ColumnSet(true));
+            Assert.Equal("Contoso", parent.GetAttributeValue<string>("name"));
+
+            var child = service.Retrieve("contact", contactId, new ColumnSet(true));
+            Assert.Equal("John Doe", child.GetAttributeValue<string>("fullname"));
+            Assert.Equal(accountId, child.GetAttributeValue<EntityReference>("parentcustomerid")?.Id);
         }
 
         [Fact]

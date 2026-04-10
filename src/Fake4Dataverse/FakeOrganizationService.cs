@@ -519,13 +519,13 @@ namespace Fake4Dataverse
         {
             if (!UseSystemContext)
                 _environment.Security.CheckPrivilege(CallerId, entityName, PrivilegeType.Delete);
-            ApplyCascadeDelete(entityName, id);
 
             var (undoLog, ownsLog) = BeginImplicitTransaction();
             try
             {
                 if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
                 {
+                    ApplyCascadeDelete(entityName, id);
                     _environment.Store.Delete(entityName, id, expectedVersion);
                 }
                 else
@@ -537,6 +537,7 @@ namespace Fake4Dataverse
                     _environment.Pipeline.Execute("Delete", entityName, inputParams, ctx =>
                     {
                         var target = (EntityReference)ctx.InputParameters["Target"];
+                        ApplyCascadeDelete(target.LogicalName, target.Id);
                         _environment.Store.Delete(target.LogicalName, target.Id, expectedVersion);
                         return new ParameterCollection();
                     }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
@@ -567,13 +568,13 @@ namespace Fake4Dataverse
         {
             if (!UseSystemContext)
                 _environment.Security.CheckPrivilege(CallerId, entityName, PrivilegeType.Delete);
-            ApplyCascadeDelete(entityName, id);
 
             var (undoLog, ownsLog) = BeginImplicitTransaction();
             try
             {
                 if (!_environment.Options.EnablePipeline || !_environment.Pipeline.HasSteps)
                 {
+                    ApplyCascadeDelete(entityName, id);
                     _environment.Store.Delete(entityName, id);
                 }
                 else
@@ -585,6 +586,7 @@ namespace Fake4Dataverse
                     _environment.Pipeline.Execute("Delete", entityName, inputParams, ctx =>
                     {
                         var target = (EntityReference)ctx.InputParameters["Target"];
+                        ApplyCascadeDelete(target.LogicalName, target.Id);
                         _environment.Store.Delete(target.LogicalName, target.Id);
                         return new ParameterCollection();
                     }, CallerId, InitiatingUserId, BusinessUnitId, _environment.OrganizationId, _environment.OrganizationName, _environment.Clock.UtcNow,
@@ -971,21 +973,33 @@ namespace Fake4Dataverse
                 if (entity.FormattedValues.ContainsKey(attr.Key))
                     continue;
 
-                switch (attr.Value)
-                {
-                    case OptionSetValue osv:
-                        entity.FormattedValues[attr.Key] = osv.Value.ToString(CultureInfo.InvariantCulture);
-                        break;
-                    case Money money:
-                        entity.FormattedValues[attr.Key] = money.Value.ToString("N2", CultureInfo.InvariantCulture);
-                        break;
-                    case bool b:
-                        entity.FormattedValues[attr.Key] = b ? "Yes" : "No";
-                        break;
-                    case DateTime dt:
-                        entity.FormattedValues[attr.Key] = dt.ToString("M/d/yyyy h:mm tt", CultureInfo.InvariantCulture);
-                        break;
-                }
+                string? formattedValue;
+                if (TryFormatValue(attr.Value, out formattedValue))
+                    entity.FormattedValues[attr.Key] = formattedValue!;
+            }
+        }
+
+        private static bool TryFormatValue(object? value, out string? formattedValue)
+        {
+            switch (value)
+            {
+                case AliasedValue aliasedValue:
+                    return TryFormatValue(aliasedValue.Value, out formattedValue);
+                case OptionSetValue optionSetValue:
+                    formattedValue = optionSetValue.Value.ToString(CultureInfo.InvariantCulture);
+                    return true;
+                case Money money:
+                    formattedValue = money.Value.ToString("N2", CultureInfo.InvariantCulture);
+                    return true;
+                case bool booleanValue:
+                    formattedValue = booleanValue ? "Yes" : "No";
+                    return true;
+                case DateTime dateTimeValue:
+                    formattedValue = dateTimeValue.ToString("M/d/yyyy h:mm tt", CultureInfo.InvariantCulture);
+                    return true;
+                default:
+                    formattedValue = null;
+                    return false;
             }
         }
 

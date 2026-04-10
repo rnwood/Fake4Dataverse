@@ -25,7 +25,7 @@ namespace Fake4Dataverse.Handlers
             foreach (var attr in original.Attributes)
             {
                 if (attr.Key != "quoteid" && attr.Key != "statecode" && attr.Key != "statuscode")
-                    revised[attr.Key] = attr.Value;
+                    revised[attr.Key] = InMemoryEntityStore.CloneAttributeValue(attr.Value);
             }
             revised["statecode"] = new OptionSetValue(0); // Draft
             revised["statuscode"] = new OptionSetValue(1); // Draft

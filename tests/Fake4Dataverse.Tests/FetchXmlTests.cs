@@ -148,6 +148,48 @@ namespace Fake4Dataverse.Tests
         }
 
         [Fact]
+        public void FetchXml_DirectEvaluation_NotAnyJoin_MatchesConvertedQueryResults()
+        {
+            var env = new FakeDataverseEnvironment();
+            var service = env.CreateOrganizationService();
+            var contosoId = service.Create(new Entity("account") { ["name"] = "Contoso" });
+            var fabrikamId = service.Create(new Entity("account") { ["name"] = "Fabrikam" });
+            service.Create(new Entity("account") { ["name"] = "Tailspin" });
+
+            service.Create(new Entity("contact")
+            {
+                ["fullname"] = "John",
+                ["parentcustomerid"] = new EntityReference("account", contosoId)
+            });
+            service.Create(new Entity("contact")
+            {
+                ["fullname"] = "Jane",
+                ["parentcustomerid"] = new EntityReference("account", fabrikamId)
+            });
+
+            var fetchXml = @"<fetch>
+                <entity name='account'>
+                    <attribute name='name' />
+                    <order attribute='name' />
+                    <link-entity name='contact' from='parentcustomerid' to='accountid' link-type='not-any'>
+                        <filter>
+                            <condition attribute='fullname' operator='eq' value='John' />
+                        </filter>
+                    </link-entity>
+                </entity>
+            </fetch>";
+
+            var convertedResult = service.RetrieveMultiple(ConvertFetchToQueryExpression(service, fetchXml));
+            Assert.Equal(new[] { "Fabrikam", "Tailspin" }, convertedResult.Entities.Select(e => e.GetAttributeValue<string>("name")).ToArray());
+
+            var directResult = service.RetrieveMultiple(new FetchExpression(fetchXml));
+
+            Assert.Equal(
+                convertedResult.Entities.Select(e => e.GetAttributeValue<string>("name")),
+                directResult.Entities.Select(e => e.GetAttributeValue<string>("name")));
+        }
+
+        [Fact]
         public void FetchXml_WithNestedFilter()
         {
             var env = new FakeDataverseEnvironment();
@@ -344,6 +386,44 @@ namespace Fake4Dataverse.Tests
         }
 
         [Fact]
+        public void FetchXml_DirectEvaluation_OlderThanXHours_MatchesConvertedQueryResults()
+        {
+            var env = new FakeDataverseEnvironment();
+            env.Clock = new FakeClock(new DateTime(2026, 3, 15, 12, 0, 0, DateTimeKind.Utc));
+
+            var service = env.CreateOrganizationService();
+            service.Create(new Entity("task")
+            {
+                ["subject"] = "Old enough",
+                ["scheduledend"] = new DateTime(2026, 3, 15, 8, 30, 0, DateTimeKind.Utc)
+            });
+            service.Create(new Entity("task")
+            {
+                ["subject"] = "Too recent",
+                ["scheduledend"] = new DateTime(2026, 3, 15, 10, 30, 0, DateTimeKind.Utc)
+            });
+
+            var fetchXml = @"<fetch>
+                <entity name='task'>
+                    <attribute name='subject' />
+                    <order attribute='subject' />
+                    <filter>
+                        <condition attribute='scheduledend' operator='older-than-x-hours' value='2' />
+                    </filter>
+                </entity>
+            </fetch>";
+
+            var convertedResult = service.RetrieveMultiple(ConvertFetchToQueryExpression(service, fetchXml));
+            Assert.Equal(new[] { "Old enough" }, convertedResult.Entities.Select(e => e.GetAttributeValue<string>("subject")).ToArray());
+
+            var directResult = service.RetrieveMultiple(new FetchExpression(fetchXml));
+
+            Assert.Equal(
+                convertedResult.Entities.Select(e => e.GetAttributeValue<string>("subject")),
+                directResult.Entities.Select(e => e.GetAttributeValue<string>("subject")));
+        }
+
+        [Fact]
         public void FetchXml_ColumnAlias_ReturnsAliasedValue()
         {
             var env = new FakeDataverseEnvironment();
@@ -401,6 +481,15 @@ namespace Fake4Dataverse.Tests
             var result = service.RetrieveMultiple(query);
             Assert.Single(result.Entities);
             Assert.Equal("Contoso", result.Entities[0].GetAttributeValue<string>("name"));
+        }
+
+        private static QueryExpression ConvertFetchToQueryExpression(IOrganizationService service, string fetchXml)
+        {
+            var request = new OrganizationRequest("FetchXmlToQueryExpression");
+            request["FetchXml"] = fetchXml;
+
+            var response = service.Execute(request);
+            return (QueryExpression)response["Query"];
         }
     }
 

@@ -34,7 +34,7 @@ namespace Fake4Dataverse.Handlers
                     || key == "statecode" || key == "statuscode" || key == "versionnumber")
                     continue;
 
-                target[key] = attr.Value;
+                target[key] = InMemoryEntityStore.CloneAttributeValue(attr.Value);
             }
 
             var response = new InitializeFromResponse();

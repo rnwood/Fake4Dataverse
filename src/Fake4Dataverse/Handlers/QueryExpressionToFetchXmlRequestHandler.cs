@@ -7,8 +7,9 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Fake4Dataverse.Handlers
 {
     /// <summary>
-    /// Handles <see cref="QueryExpressionToFetchXmlRequest"/> by converting a
-    /// <see cref="QueryExpression"/> to a FetchXML string.
+    /// Handles <see cref="QueryExpressionToFetchXmlRequest"/> by converting the
+    /// supported <see cref="QueryExpression"/> surface to a FetchXML string.
+    /// Unsupported operators and join types throw <see cref="NotSupportedException"/>.
     /// </summary>
     internal sealed class QueryExpressionToFetchXmlRequestHandler : IOrganizationRequestHandler
     {
@@ -116,10 +117,7 @@ namespace Fake4Dataverse.Handlers
                 new XAttribute("from", link.LinkToAttributeName),
                 new XAttribute("to", link.LinkFromAttributeName));
 
-            if (link.JoinOperator == JoinOperator.LeftOuter)
-                el.Add(new XAttribute("link-type", "outer"));
-            else
-                el.Add(new XAttribute("link-type", "inner"));
+            el.Add(new XAttribute("link-type", GetJoinOperatorString(link.JoinOperator)));
 
             if (!string.IsNullOrEmpty(link.EntityAlias))
                 el.Add(new XAttribute("alias", link.EntityAlias));
@@ -164,13 +162,70 @@ namespace Fake4Dataverse.Handlers
                 case ConditionOperator.NotNull: return "not-null";
                 case ConditionOperator.Between: return "between";
                 case ConditionOperator.NotBetween: return "not-between";
-                case ConditionOperator.Contains: return "like";
-                case ConditionOperator.DoesNotContain: return "not-like";
+                case ConditionOperator.Contains: return "contain";
+                case ConditionOperator.DoesNotContain: return "not-contain";
                 case ConditionOperator.BeginsWith: return "begins-with";
                 case ConditionOperator.DoesNotBeginWith: return "not-begin-with";
                 case ConditionOperator.EndsWith: return "ends-with";
                 case ConditionOperator.DoesNotEndWith: return "not-end-with";
-                default: return "eq";
+                case ConditionOperator.On: return "on";
+                case ConditionOperator.OnOrBefore: return "on-or-before";
+                case ConditionOperator.OnOrAfter: return "on-or-after";
+                case ConditionOperator.Yesterday: return "yesterday";
+                case ConditionOperator.Today: return "today";
+                case ConditionOperator.Tomorrow: return "tomorrow";
+                case ConditionOperator.Last7Days: return "last-seven-days";
+                case ConditionOperator.Next7Days: return "next-seven-days";
+                case ConditionOperator.LastXDays: return "last-x-days";
+                case ConditionOperator.NextXDays: return "next-x-days";
+                case ConditionOperator.LastXHours: return "last-x-hours";
+                case ConditionOperator.NextXHours: return "next-x-hours";
+                case ConditionOperator.LastXWeeks: return "last-x-weeks";
+                case ConditionOperator.NextXWeeks: return "next-x-weeks";
+                case ConditionOperator.LastXMonths: return "last-x-months";
+                case ConditionOperator.NextXMonths: return "next-x-months";
+                case ConditionOperator.LastXYears: return "last-x-years";
+                case ConditionOperator.NextXYears: return "next-x-years";
+                case ConditionOperator.ThisWeek: return "this-week";
+                case ConditionOperator.LastWeek: return "last-week";
+                case ConditionOperator.NextWeek: return "next-week";
+                case ConditionOperator.ThisMonth: return "this-month";
+                case ConditionOperator.LastMonth: return "last-month";
+                case ConditionOperator.NextMonth: return "next-month";
+                case ConditionOperator.ThisYear: return "this-year";
+                case ConditionOperator.LastYear: return "last-year";
+                case ConditionOperator.NextYear: return "next-year";
+                case ConditionOperator.OlderThanXMinutes: return "older-than-x-minutes";
+                case ConditionOperator.OlderThanXHours: return "older-than-x-hours";
+                case ConditionOperator.OlderThanXDays: return "older-than-x-days";
+                case ConditionOperator.OlderThanXWeeks: return "older-than-x-weeks";
+                case ConditionOperator.OlderThanXMonths: return "older-than-x-months";
+                case ConditionOperator.OlderThanXYears: return "older-than-x-years";
+                case ConditionOperator.EqualUserId: return "eq-userid";
+                case ConditionOperator.NotEqualUserId: return "ne-userid";
+                case ConditionOperator.EqualBusinessId: return "eq-businessid";
+                case ConditionOperator.NotEqualBusinessId: return "ne-businessid";
+                case ConditionOperator.ContainValues: return "contain-values";
+                case ConditionOperator.DoesNotContainValues: return "not-contain-values";
+                default:
+                    throw new NotSupportedException($"ConditionOperator '{op}' cannot be converted to FetchXml.");
+            }
+        }
+
+        private static string GetJoinOperatorString(JoinOperator joinOperator)
+        {
+            switch (joinOperator)
+            {
+                case JoinOperator.Inner: return "inner";
+                case JoinOperator.LeftOuter: return "outer";
+                case JoinOperator.Exists: return "exists";
+                case JoinOperator.In: return "in";
+                case JoinOperator.Any: return "any";
+                case JoinOperator.NotAny: return "not-any";
+                case JoinOperator.NotAll: return "not-all";
+                case JoinOperator.Natural: return "natural";
+                default:
+                    throw new NotSupportedException($"JoinOperator '{joinOperator}' cannot be converted to FetchXml.");
             }
         }
     }

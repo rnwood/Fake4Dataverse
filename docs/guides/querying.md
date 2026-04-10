@@ -1,7 +1,7 @@
 # Querying with QueryExpression & FetchXml
 
 Fake4Dataverse evaluates queries entirely in memory — no SQL database, no live Dataverse connection.
-This guide covers every query feature the library supports.
+This guide covers the supported in-memory query surface.
 
 ## Overview
 
@@ -326,6 +326,10 @@ var results = service.RetrieveMultiple(qba);
 
 ## FetchXml
 
+Direct FetchXml execution supports the same filter operator families documented
+above plus `link-type` values `inner`, `outer`, `exists`, `in`, `any`,
+`not-any`, `not-all`, and `natural`.
+
 ### Basic Query
 
 ```csharp
@@ -407,10 +411,13 @@ var results = service.RetrieveMultiple(new FetchExpression(fetchXml));
 ## FetchXml to QueryExpression
 
 Convert FetchXml to a `QueryExpression` using the built-in request handler.
+Aggregate FetchXml cannot be converted to `QueryExpression`.
 
 ```csharp
-var request = new OrganizationRequest("FetchXmlToQueryExpression");
-request["FetchXml"] = @"
+var response = (FetchXmlToQueryExpressionResponse)service.Execute(
+    new FetchXmlToQueryExpressionRequest
+    {
+        FetchXml = @"
 <fetch top='10'>
   <entity name='account'>
     <attribute name='name' />
@@ -418,11 +425,39 @@ request["FetchXml"] = @"
       <condition attribute='statecode' operator='eq' value='0' />
     </filter>
   </entity>
-</fetch>";
+</fetch>"
+    });
 
-var response = (OrganizationResponse)service.Execute(request);
 var queryExpression = (QueryExpression)response["Query"];
 ```
+
+## QueryExpression to FetchXml
+
+Convert a supported `QueryExpression` back to FetchXml using the built-in
+request handler.
+
+```csharp
+var query = new QueryExpression("account")
+{
+    ColumnSet = new ColumnSet("name"),
+    Distinct = true,
+    TopCount = 10
+};
+query.Criteria.AddCondition("name", ConditionOperator.BeginsWith, "Con");
+
+var response = (QueryExpressionToFetchXmlResponse)service.Execute(
+    new QueryExpressionToFetchXmlRequest
+    {
+        Query = query
+    });
+
+var fetchXml = (string)response.Results["FetchXml"];
+```
+
+The current serializer covers column projection / `all-attributes`, ordering,
+`TopCount`, `Distinct`, nested filters, and nested link-entities for the join
+and condition operators implemented by the handler. Unsupported operators or
+join types throw `NotSupportedException`, and paging / `NoLock` are not emitted.
 
 ---
 

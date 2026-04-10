@@ -13,12 +13,12 @@ An in-memory fake `IOrganizationService` and `IOrganizationServiceAsync2` for un
 | **CRUD** | Create, Retrieve, Update, Delete with auto-set fields (timestamps, owner, state, version number) |
 | **Service interfaces** | `IOrganizationService` and `IOrganizationServiceAsync2` (async + cancellation token support) |
 | **QueryExpression** | Filtering (40+ condition operators), ordering, column projection, TopCount, paging with cookies |
-| **FetchXml** | Full FetchXml parsing and evaluation, including aggregation (Count, Sum, Avg, Min, Max, GroupBy) |
-| **LinkEntity** | Inner/outer joins, nested joins, link criteria, aliased attributes |
+| **FetchXml** | FetchXml parsing and in-memory evaluation for the supported query surface, including aggregation (Count, Sum, Avg, Min, Max, GroupBy) |
+| **LinkEntity** | Inner/outer joins, nested joins, semi/anti joins (`exists`, `in`, `any`, `not-any`, `not-all`), link criteria, aliased attributes |
 | **Pipeline** | Pre-validation, pre-operation, and post-operation hooks (plugin-like) |
 | **Metadata** | Entity/attribute metadata store, validation on Create/Update, auto-discovery |
 | **Security** | Security roles, privilege enforcement, record sharing (Grant/Modify/Revoke access) |
-| **Execute handlers** | WhoAmI, SetState, Assign, Upsert, ExecuteMultiple, ExecuteTransaction, and more |
+| **Execute handlers** | WhoAmI, SetState, Assign, Upsert, FetchXml/QueryExpression conversion requests, ExecuteMultiple, ExecuteTransaction, and more |
 | **Concurrency** | Optimistic concurrency (`ConcurrencyBehavior.IfRowVersionMatches`), atomic transactions with undo-log rollback |
 | **Calculated fields** | Calculated and rollup field definitions evaluated on Retrieve |
 | **Currency** | Exchange rates and auto-computed base currency amounts |
@@ -31,6 +31,11 @@ An in-memory fake `IOrganizationService` and `IOrganizationServiceAsync2` for un
 | **Configuration** | `FakeOrganizationServiceOptions` with Strict/Lenient presets |
 | **Multi-user** | Multiple `FakeOrganizationService` sessions against the same `FakeDataverseEnvironment` |
 | **Multi-target** | .NET Framework 4.6.2 and .NET 10 |
+
+Built-in query conversion handlers are registered automatically:
+`FetchXmlToQueryExpressionRequest` converts supported non-aggregate FetchXml, and
+`QueryExpressionToFetchXmlRequest` serializes the supported `QueryExpression`
+surface without silently degrading unsupported operators or join types.
 
 ## Installation
 

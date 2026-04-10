@@ -1,6 +1,9 @@
 # Condition Operators Reference
 
-Fake4Dataverse supports 40+ `ConditionOperator` values for `QueryExpression` filtering. All operators behave the same as live Dataverse, so your test filters match production behavior.
+Fake4Dataverse supports 40+ `ConditionOperator` values for `QueryExpression`
+filtering. The same operator families are also implemented for direct FetchXml
+filtering and `FetchXmlToQueryExpressionRequest` where an equivalent FetchXml
+operator exists.
 
 ## Usage
 
@@ -161,4 +164,8 @@ query.Criteria.AddCondition("ownerid", ConditionOperator.EqualUserId);
 - **`In` / `NotIn`** accept arrays of any comparable type (int, string, Guid, etc.).
 - **`Between` / `NotBetween`** require exactly two values and the comparison is inclusive.
 - **`Like` wildcards** — use `%` to match any sequence of characters (e.g., `%corp%` matches "Contoso Corp Ltd").
-- All operators work identically in both `QueryExpression` and FetchXml queries.
+- Equivalent FetchXml operators are supported for direct FetchXml execution and
+	`FetchXmlToQueryExpressionRequest` conversion.
+- `QueryExpressionToFetchXmlRequest` serializes the operators implemented by its
+	handler and throws `NotSupportedException` for unsupported operators instead
+	of silently downgrading them.

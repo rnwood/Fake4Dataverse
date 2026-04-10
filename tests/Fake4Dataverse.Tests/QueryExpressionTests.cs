@@ -228,6 +228,72 @@ namespace Fake4Dataverse.Tests
         }
 
         [Fact]
+        public void RetrieveMultiple_IndexedEqualFilter_CaseInsensitiveStringMatch_MatchesFullScanResults()
+        {
+            var indexedEnv = new FakeDataverseEnvironment();
+            indexedEnv.AddIndex("account", "name");
+            var indexedService = indexedEnv.CreateOrganizationService();
+
+            var plainEnv = new FakeDataverseEnvironment();
+            var plainService = plainEnv.CreateOrganizationService();
+
+            var contosoId = Guid.NewGuid();
+            var fabrikamId = Guid.NewGuid();
+
+            indexedService.Create(new Entity("account", contosoId) { ["name"] = "Contoso" });
+            indexedService.Create(new Entity("account", fabrikamId) { ["name"] = "Fabrikam" });
+
+            plainService.Create(new Entity("account", contosoId) { ["name"] = "Contoso" });
+            plainService.Create(new Entity("account", fabrikamId) { ["name"] = "Fabrikam" });
+
+            var indexedQuery = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
+            indexedQuery.Criteria.AddCondition("name", ConditionOperator.Equal, "contoso");
+
+            var plainQuery = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
+            plainQuery.Criteria.AddCondition("name", ConditionOperator.Equal, "contoso");
+
+            var indexedResult = indexedService.RetrieveMultiple(indexedQuery);
+            var plainResult = plainService.RetrieveMultiple(plainQuery);
+
+            Assert.Single(plainResult.Entities);
+            Assert.Equal(plainResult.Entities.Count, indexedResult.Entities.Count);
+            Assert.Equal(plainResult.Entities[0].Id, indexedResult.Entities[0].Id);
+        }
+
+        [Fact]
+        public void RetrieveMultiple_AddIndexAfterSeed_CaseInsensitiveStringMatch_MatchesFullScanResults()
+        {
+            var indexedEnv = new FakeDataverseEnvironment();
+            var indexedService = indexedEnv.CreateOrganizationService();
+
+            var plainEnv = new FakeDataverseEnvironment();
+            var plainService = plainEnv.CreateOrganizationService();
+
+            var contosoId = Guid.NewGuid();
+            var fabrikamId = Guid.NewGuid();
+
+            indexedService.Create(new Entity("account", contosoId) { ["name"] = "Contoso" });
+            indexedService.Create(new Entity("account", fabrikamId) { ["name"] = "Fabrikam" });
+            indexedEnv.AddIndex("account", "name");
+
+            plainService.Create(new Entity("account", contosoId) { ["name"] = "Contoso" });
+            plainService.Create(new Entity("account", fabrikamId) { ["name"] = "Fabrikam" });
+
+            var indexedQuery = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
+            indexedQuery.Criteria.AddCondition("name", ConditionOperator.Equal, "CONTOSO");
+
+            var plainQuery = new QueryExpression("account") { ColumnSet = new ColumnSet(true) };
+            plainQuery.Criteria.AddCondition("name", ConditionOperator.Equal, "CONTOSO");
+
+            var indexedResult = indexedService.RetrieveMultiple(indexedQuery);
+            var plainResult = plainService.RetrieveMultiple(plainQuery);
+
+            Assert.Single(plainResult.Entities);
+            Assert.Equal(plainResult.Entities.Count, indexedResult.Entities.Count);
+            Assert.Equal(plainResult.Entities[0].Id, indexedResult.Entities[0].Id);
+        }
+
+        [Fact]
         public void RetrieveMultiple_NullOrCombination_ReturnsRecordsMatchingEitherCondition()
         {
             var env = new FakeDataverseEnvironment();

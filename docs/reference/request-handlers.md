@@ -200,10 +200,26 @@ overrides any built-in handler for the same request type.
 | `RetrieveEntityChangesRequest` | Change-tracking delta query |
 | `InitializeFromRequest` | Clone / template an entity record |
 | `FetchXmlToQueryExpressionRequest` | Convert FetchXml string to `QueryExpression` |
+| `QueryExpressionToFetchXmlRequest` | Convert a supported `QueryExpression` shape to FetchXml |
 | `CalculateRollupFieldRequest` | Calculate a rollup field value |
 | `PublishXmlRequest` | Publish customizations |
 | `ConvertDateAndTimeBehaviorRequest` | Convert datetime behavior |
 | `ExecuteAsyncRequest` | Submit a request for async execution |
+
+### Query Conversion Notes
+
+- `FetchXmlToQueryExpressionRequest` is registered by default and converts
+    supported **non-aggregate** FetchXml into a `QueryExpression`.
+- FetchXml parsing for this request supports the documented condition operators
+    plus `link-type` values `inner`, `outer`, `exists`, `in`, `any`,
+    `not-any`, `not-all`, and `natural`.
+- `QueryExpressionToFetchXmlRequest` is also registered by default. It currently
+    serializes column projection / `all-attributes`, ordering, `TopCount`,
+    `Distinct`, nested filters, and nested link-entities for the join/operator
+    set implemented by `QueryExpressionToFetchXmlRequestHandler`.
+- Unsupported condition operators or join operators throw
+    `NotSupportedException` rather than falling back to a lossy FetchXml form.
+- Paging and `NoLock` are not emitted by `QueryExpressionToFetchXmlRequest`.
 
 ### Fallback / Extensibility
 

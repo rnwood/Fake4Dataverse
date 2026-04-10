@@ -618,7 +618,7 @@ namespace Fake4Dataverse
                         {
                             if (!merged.Contains(attr.Key))
                             {
-                                merged[attr.Key] = attr.Value;
+                                merged[attr.Key] = InMemoryEntityStore.CloneAttributeValue(attr.Value);
                                 tempKeys.Add(attr.Key);
                             }
                         }
@@ -651,7 +651,7 @@ namespace Fake4Dataverse
         {
             var clone = new Entity(source.LogicalName, source.Id);
             foreach (var attr in source.Attributes)
-                clone[attr.Key] = attr.Value;
+                clone[attr.Key] = InMemoryEntityStore.CloneAttributeValue(attr.Value);
             return clone;
         }
 
@@ -664,7 +664,7 @@ namespace Fake4Dataverse
                     continue;
 
                 var aliasedKey = $"{alias}.{attr.Key}";
-                target[aliasedKey] = new AliasedValue(linked.LogicalName, attr.Key, attr.Value);
+                target[aliasedKey] = new AliasedValue(linked.LogicalName, attr.Key, InMemoryEntityStore.CloneAttributeValue(attr.Value));
             }
         }
 
@@ -699,7 +699,7 @@ namespace Fake4Dataverse
             {
                 var clone = new Entity(source.LogicalName, source.Id);
                 foreach (var attr in source.Attributes)
-                    clone[attr.Key] = attr.Value;
+                    clone[attr.Key] = InMemoryEntityStore.CloneAttributeValue(attr.Value);
                 return clone;
             }
 
@@ -707,14 +707,14 @@ namespace Fake4Dataverse
             foreach (var col in columnSet.Columns)
             {
                 if (source.Contains(col))
-                    projected[col] = source[col];
+                    projected[col] = InMemoryEntityStore.CloneAttributeValue(source[col]);
             }
 
             // Always preserve aliased attributes from linked entities
             foreach (var attr in source.Attributes)
             {
                 if (attr.Value is AliasedValue)
-                    projected[attr.Key] = attr.Value;
+                    projected[attr.Key] = InMemoryEntityStore.CloneAttributeValue(attr.Value);
             }
 
             return projected;

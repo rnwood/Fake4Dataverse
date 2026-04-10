@@ -192,7 +192,10 @@ env.Pipeline.RegisterPostOperation("Create", "account", ctx =>
 
 **FakeXrmEasy:** Uses the same `QueryExpression` / `FetchExpression` — no change needed.
 
-**Fake4Dataverse:** Same API. All 40+ condition operators, linkentity joins, and FetchXml work identically.
+**Fake4Dataverse:** Same API. QueryExpression supports 40+ condition operators
+plus inner/outer, semi-, and anti-join link types. FetchXml evaluation supports
+the documented operator/join surface, aggregates, and the built-in
+FetchXml/QueryExpression conversion requests.
 
 ### Metadata Registration
 
