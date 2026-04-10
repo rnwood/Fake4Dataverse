@@ -167,6 +167,44 @@ namespace Fake4Dataverse.Tests
         }
 
         [Fact]
+        public void ExecuteTransaction_RetrieveMultipleWithinTransaction_SeesStagedCreate()
+        {
+            var env = new FakeDataverseEnvironment();
+            env.AddIndex("account", "name"); // ensure indexed path does not hide transaction-local writes
+            var service = env.CreateOrganizationService();
+
+            var response = (ExecuteTransactionResponse)service.Execute(new ExecuteTransactionRequest
+            {
+                Requests = new OrganizationRequestCollection
+                {
+                    new CreateRequest
+                    {
+                        Target = new Entity("account") { ["name"] = "TxVisible" }
+                    },
+                    new RetrieveMultipleRequest
+                    {
+                        Query = new QueryExpression("account")
+                        {
+                            ColumnSet = new ColumnSet("name"),
+                            Criteria =
+                            {
+                                Conditions =
+                                {
+                                    new ConditionExpression("name", ConditionOperator.Equal, "TxVisible")
+                                }
+                            }
+                        }
+                    }
+                },
+                ReturnResponses = true
+            });
+
+            var retrieveResponse = Assert.IsType<RetrieveMultipleResponse>(response.Responses[1]);
+            Assert.Single(retrieveResponse.EntityCollection.Entities);
+            Assert.Equal("TxVisible", retrieveResponse.EntityCollection.Entities[0].GetAttributeValue<string>("name"));
+        }
+
+        [Fact]
         public void ExecuteTransaction_ReturnResponses_True_ReturnsAllResponses()
         {
             var env = new FakeDataverseEnvironment();

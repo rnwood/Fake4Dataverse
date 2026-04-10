@@ -19,19 +19,21 @@ namespace Fake4Dataverse
     {
         private readonly Dictionary<string, ConcurrentDictionary<Guid, Entity>> _store = new Dictionary<string, ConcurrentDictionary<Guid, Entity>>(StringComparer.OrdinalIgnoreCase);
         private readonly ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
-        private readonly AsyncLocal<TransactionUndoLog?> _activeUndoLog = new AsyncLocal<TransactionUndoLog?>();
+        private readonly AsyncLocal<TransactionCopyOnWriteState?> _activeTransaction = new AsyncLocal<TransactionCopyOnWriteState?>();
 
         internal AttributeIndex? Index { get; set; }
 
         /// <summary>
-        /// Gets or sets the active transaction undo log. When set, all Create/Update/Delete
-        /// operations automatically record their inverse so the transaction can be rolled back.
+        /// Gets or sets the active copy-on-write transaction context.
+        /// When set, mutations are staged in a transaction-local buffer and only applied on commit.
         /// </summary>
-        internal TransactionUndoLog? ActiveUndoLog
+        internal TransactionCopyOnWriteState? ActiveTransaction
         {
-            get => _activeUndoLog.Value;
-            set => _activeUndoLog.Value = value;
+            get => _activeTransaction.Value;
+            set => _activeTransaction.Value = value;
         }
+
+        internal bool HasActiveTransaction => _activeTransaction.Value != null;
 
         public Guid Create(Entity entity)
         {
@@ -46,11 +48,20 @@ namespace Fake4Dataverse
             clone.Id = id;
             clone[entity.LogicalName + "id"] = id;
 
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+            {
+                if (TryGetEffectiveEntity(entity.LogicalName, id, transaction, out var existing) && existing != null)
+                    throw DataverseFault.DuplicateId(entity.LogicalName, id);
+
+                transaction.StageUpsert(clone, clone.Attributes.Keys);
+                return id;
+            }
+
             var table = GetOrCreateTable(entity.LogicalName);
             if (!table.TryAdd(id, clone))
                 throw DataverseFault.DuplicateId(entity.LogicalName, id);
 
-            _activeUndoLog.Value?.RecordCreate(entity.LogicalName, id);
             Index?.OnCreate(clone);
             return id;
         }
@@ -58,6 +69,15 @@ namespace Fake4Dataverse
         public Entity Retrieve(string entityName, Guid id, ColumnSet? columnSet)
         {
             if (string.IsNullOrEmpty(entityName)) throw new ArgumentException("Entity name is required.", nameof(entityName));
+
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+            {
+                if (TryGetEffectiveEntity(entityName, id, transaction, out var stagedEntity) && stagedEntity != null)
+                    return ProjectEntity(stagedEntity, columnSet);
+
+                throw DataverseFault.EntityNotFound(entityName, id);
+            }
 
             _lock.EnterReadLock();
             try
@@ -75,6 +95,10 @@ namespace Fake4Dataverse
 
         public IReadOnlyList<Entity> GetAll(string entityName)
         {
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+                return BuildEffectiveTable(entityName, transaction).Values.Select(CloneEntity).ToList();
+
             _lock.EnterReadLock();
             try
             {
@@ -100,6 +124,37 @@ namespace Fake4Dataverse
             if (string.IsNullOrEmpty(entity.LogicalName)) throw new ArgumentException("Entity logical name must be set.", nameof(entity));
             if (entity.Id == Guid.Empty) throw new ArgumentException("Entity id must be set for update.", nameof(entity));
 
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+            {
+                if (!TryGetEffectiveEntity(entity.LogicalName, entity.Id, transaction, out var existing) || existing == null)
+                    throw DataverseFault.EntityNotFound(entity.LogicalName, entity.Id);
+
+                if (expectedVersion.HasValue)
+                {
+                    var storedVersion = existing.Contains("versionnumber") ? (long)existing["versionnumber"] : 0L;
+                    if (storedVersion != expectedVersion.Value)
+                        throw DataverseFault.ConcurrencyVersionMismatchFault(entity.LogicalName, entity.Id);
+                }
+
+                foreach (var attr in entity.Attributes)
+                {
+                    if (attr.Value == null)
+                    {
+                        existing.Attributes.Remove(attr.Key);
+                    }
+                    else
+                    {
+                        existing[attr.Key] = CloneAttributeValue(attr.Value);
+                    }
+                }
+
+                var touchedAttributes = entity.Attributes.Keys;
+                var clearedAttributes = entity.Attributes.Where(a => a.Value == null).Select(a => a.Key);
+                transaction.StageUpsert(existing, touchedAttributes, clearedAttributes);
+                return;
+            }
+
             _lock.EnterWriteLock();
             try
             {
@@ -113,7 +168,6 @@ namespace Fake4Dataverse
                         throw DataverseFault.ConcurrencyVersionMismatchFault(entity.LogicalName, entity.Id);
                 }
 
-                _activeUndoLog.Value?.RecordPreUpdateState(CloneEntity(existing));
                 Index?.OnUpdate(entity, existing);
 
                 foreach (var attr in entity.Attributes)
@@ -144,6 +198,23 @@ namespace Fake4Dataverse
         {
             if (string.IsNullOrEmpty(entityName)) throw new ArgumentException("Entity name is required.", nameof(entityName));
 
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+            {
+                if (!TryGetEffectiveEntity(entityName, id, transaction, out var existing) || existing == null)
+                    throw DataverseFault.EntityNotFound(entityName, id);
+
+                if (expectedVersion.HasValue)
+                {
+                    var storedVersion = existing.Contains("versionnumber") ? (long)existing["versionnumber"] : 0L;
+                    if (storedVersion != expectedVersion.Value)
+                        throw DataverseFault.ConcurrencyVersionMismatchFault(entityName, id);
+                }
+
+                transaction.StageDelete(entityName, id);
+                return;
+            }
+
             _lock.EnterReadLock();
             try
             {
@@ -163,7 +234,6 @@ namespace Fake4Dataverse
                 if (!table.TryRemove(id, out var removed))
                     throw DataverseFault.EntityNotFound(entityName, id);
 
-                _activeUndoLog.Value?.RecordPreDeleteState(CloneEntity(removed));
                 Index?.OnDelete(entityName, id, removed);
             }
             finally
@@ -177,6 +247,35 @@ namespace Fake4Dataverse
         /// </summary>
         public void RemoveAssociations(string associationEntity, string sourceEntityName, Guid sourceId, EntityReferenceCollection targets)
         {
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+            {
+                var effectiveAssociations = BuildEffectiveTable(associationEntity, transaction);
+                foreach (var target in targets)
+                {
+                    Guid? toRemove = null;
+                    foreach (var kvp in effectiveAssociations)
+                    {
+                        var source = kvp.Value.GetAttributeValue<EntityReference>("sourceid");
+                        var t = kvp.Value.GetAttributeValue<EntityReference>("targetid");
+                        if (source != null && source.Id == sourceId && source.LogicalName == sourceEntityName
+                            && t != null && t.Id == target.Id && t.LogicalName == target.LogicalName)
+                        {
+                            toRemove = kvp.Key;
+                            break;
+                        }
+                    }
+
+                    if (toRemove.HasValue)
+                    {
+                        transaction.StageDelete(associationEntity, toRemove.Value);
+                        effectiveAssociations.Remove(toRemove.Value);
+                    }
+                }
+
+                return;
+            }
+
             _lock.EnterReadLock();
             try
             {
@@ -201,7 +300,6 @@ namespace Fake4Dataverse
                     {
                         if (table.TryRemove(toRemove.Value, out var removed))
                         {
-                            _activeUndoLog.Value?.RecordPreDeleteState(CloneEntity(removed));
                             Index?.OnDelete(associationEntity, toRemove.Value, removed);
                         }
                     }
@@ -215,6 +313,10 @@ namespace Fake4Dataverse
 
         public bool Exists(string entityName, Guid id)
         {
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+                return TryGetEffectiveEntity(entityName, id, transaction, out var existing) && existing != null;
+
             _lock.EnterReadLock();
             try
             {
@@ -245,68 +347,80 @@ namespace Fake4Dataverse
             _lock.Dispose();
         }
 
-        // ── Rollback Methods (bypass undo-log recording) ─────────────────────
-
-        /// <summary>
-        /// Removes an entity that was created during a rolled-back transaction.
-        /// Does not record an undo entry.
-        /// </summary>
-        internal void DeleteForRollback(string entityName, Guid id)
+        internal void CommitTransaction(TransactionCopyOnWriteState transaction)
         {
-            _lock.EnterReadLock();
-            try
-            {
-                if (_store.TryGetValue(entityName, out var table) && table.TryRemove(id, out var removed))
-                    Index?.OnDelete(entityName, id, removed);
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
-        }
+            if (transaction == null) throw new ArgumentNullException(nameof(transaction));
 
-        /// <summary>
-        /// Replaces an entity's stored state with a previous snapshot, undoing an update.
-        /// Does not record an undo entry.
-        /// </summary>
-        internal void RestoreForRollback(Entity beforeState)
-        {
             _lock.EnterWriteLock();
             try
             {
-                if (!_store.TryGetValue(beforeState.LogicalName, out var table))
+                foreach (var entityChanges in transaction.GetAllEntityChanges())
                 {
-                    table = new ConcurrentDictionary<Guid, Entity>();
-                    _store[beforeState.LogicalName] = table;
-                }
-                var clone = CloneEntity(beforeState);
-                if (table.TryGetValue(beforeState.Id, out var current))
-                    Index?.OnUpdate(beforeState, current);
-                table[beforeState.Id] = clone;
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
-            }
-        }
+                    var entityName = entityChanges.Key;
+                    var changes = entityChanges.Value;
 
-        /// <summary>
-        /// Re-inserts an entity that was deleted during a rolled-back transaction.
-        /// Does not record an undo entry.
-        /// </summary>
-        internal void CreateForRollback(Entity entity)
-        {
-            _lock.EnterWriteLock();
-            try
-            {
-                if (!_store.TryGetValue(entity.LogicalName, out var table))
-                {
-                    table = new ConcurrentDictionary<Guid, Entity>();
-                    _store[entity.LogicalName] = table;
+                    if (!_store.TryGetValue(entityName, out var table))
+                    {
+                        bool hasUpserts = changes.Values.Any(v => v != null);
+                        if (!hasUpserts)
+                            continue;
+
+                        table = new ConcurrentDictionary<Guid, Entity>();
+                        _store[entityName] = table;
+                    }
+
+                    foreach (var change in changes)
+                    {
+                        var id = change.Key;
+                        var stagedEntity = change.Value.Entity;
+
+                        if (stagedEntity == null)
+                        {
+                            if (table.TryRemove(id, out var removed))
+                                Index?.OnDelete(entityName, id, removed);
+                            continue;
+                        }
+
+                        var clone = CloneEntity(stagedEntity);
+                        if (table.TryGetValue(id, out var existing))
+                        {
+                            var merged = CloneEntity(existing);
+
+                            foreach (var touchedAttribute in change.Value.TouchedAttributes)
+                            {
+                                if (change.Value.ClearedAttributes.Contains(touchedAttribute))
+                                {
+                                    merged.Attributes.Remove(touchedAttribute);
+                                    continue;
+                                }
+
+                                if (clone.Contains(touchedAttribute))
+                                    merged[touchedAttribute] = CloneAttributeValue(clone[touchedAttribute]);
+                            }
+
+                            var indexUpdate = new Entity(entityName, id);
+                            foreach (var touchedAttribute in change.Value.TouchedAttributes)
+                            {
+                                if (change.Value.ClearedAttributes.Contains(touchedAttribute))
+                                {
+                                    indexUpdate[touchedAttribute] = null;
+                                    continue;
+                                }
+
+                                if (merged.Contains(touchedAttribute))
+                                    indexUpdate[touchedAttribute] = CloneAttributeValue(merged[touchedAttribute]);
+                            }
+
+                            Index?.OnUpdate(indexUpdate, existing);
+                            table[id] = merged;
+                        }
+                        else
+                        {
+                            Index?.OnCreate(clone);
+                            table[id] = clone;
+                        }
+                    }
                 }
-                var clone = CloneEntity(entity);
-                table[entity.Id] = clone;
-                Index?.OnCreate(clone);
             }
             finally
             {
@@ -330,6 +444,28 @@ namespace Fake4Dataverse
         {
             if (keyAttributes == null || keyAttributes.Count == 0)
                 throw DataverseFault.InvalidArgumentFault("KeyAttributes must be provided for alternate key lookup.");
+
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+            {
+                var effective = BuildEffectiveTable(entityName, transaction);
+                foreach (var entity in effective.Values)
+                {
+                    bool match = true;
+                    foreach (var keyAttr in keyAttributes)
+                    {
+                        if (!entity.Contains(keyAttr.Key) || !Equals(entity[keyAttr.Key], keyAttr.Value))
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match) return entity.Id;
+                }
+
+                throw DataverseFault.Create(DataverseFault.ObjectDoesNotExist,
+                    $"Entity '{entityName}' with the specified alternate key values does not exist.");
+            }
 
             _lock.EnterReadLock();
             try
@@ -506,6 +642,19 @@ namespace Fake4Dataverse
         /// </summary>
         internal IReadOnlyList<Entity> GetByIds(string entityName, HashSet<Guid> ids)
         {
+            var transaction = _activeTransaction.Value;
+            if (transaction != null)
+            {
+                var result = new List<Entity>(ids.Count);
+                foreach (var id in ids)
+                {
+                    if (TryGetEffectiveEntity(entityName, id, transaction, out var entity) && entity != null)
+                        result.Add(CloneEntity(entity));
+                }
+
+                return result;
+            }
+
             _lock.EnterReadLock();
             try
             {
@@ -524,6 +673,61 @@ namespace Fake4Dataverse
             {
                 _lock.ExitReadLock();
             }
+        }
+
+        private bool TryGetEffectiveEntity(string entityName, Guid id, TransactionCopyOnWriteState transaction, out Entity? entity)
+        {
+            if (transaction.TryGetStagedEntity(entityName, id, out var stagedEntity))
+            {
+                entity = stagedEntity;
+                return true;
+            }
+
+            _lock.EnterReadLock();
+            try
+            {
+                if (_store.TryGetValue(entityName, out var table) && table.TryGetValue(id, out var existing))
+                {
+                    entity = CloneEntity(existing);
+                    return true;
+                }
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            entity = null;
+            return false;
+        }
+
+        private Dictionary<Guid, Entity> BuildEffectiveTable(string entityName, TransactionCopyOnWriteState transaction)
+        {
+            Dictionary<Guid, Entity> effective;
+            _lock.EnterReadLock();
+            try
+            {
+                effective = new Dictionary<Guid, Entity>();
+                if (_store.TryGetValue(entityName, out var table))
+                {
+                    foreach (var kvp in table)
+                        effective[kvp.Key] = CloneEntity(kvp.Value);
+                }
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+
+            foreach (var staged in transaction.GetEntityChanges(entityName))
+            {
+                if (staged.Value.Entity == null)
+                    effective.Remove(staged.Key);
+                else
+                    effective[staged.Key] = CloneEntity(staged.Value.Entity);
+            }
+
+            return effective;
         }
 
         private ConcurrentDictionary<Guid, Entity> GetOrCreateTable(string entityName)

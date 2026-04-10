@@ -136,28 +136,34 @@ namespace Fake4Dataverse
         /// <summary>
         /// Starts an implicit transaction scope for a top-level operation.
         /// If an outer transaction (e.g. ExecuteTransactionRequest) is already active,
-        /// the existing undo log is reused and <c>ownsLog</c> is <c>false</c>.
+        /// the existing transaction state is reused and <c>ownsTransaction</c> is <c>false</c>.
         /// </summary>
-        private (TransactionUndoLog undoLog, bool ownsLog) BeginImplicitTransaction()
+        private (TransactionCopyOnWriteState transaction, bool ownsTransaction) BeginImplicitTransaction()
         {
-            var existing = _environment.Store.ActiveUndoLog;
+            var existing = _environment.Store.ActiveTransaction;
             if (existing != null)
                 return (existing, false);
 
-            var undoLog = new TransactionUndoLog();
-            _environment.Store.ActiveUndoLog = undoLog;
-            return (undoLog, true);
+            var transaction = new TransactionCopyOnWriteState();
+            _environment.Store.ActiveTransaction = transaction;
+            return (transaction, true);
         }
 
         /// <summary>
-        /// Ends an implicit transaction scope. On rollback, replays the undo log
-        /// to revert all mutations. On success, simply clears the active undo log.
+        /// Ends an implicit transaction scope.
+        /// On success, staged copy-on-write mutations are atomically committed to the shared store.
+        /// On rollback, staged mutations are discarded.
         /// </summary>
-        private void EndImplicitTransaction(TransactionUndoLog undoLog, bool rollback)
+        private void EndImplicitTransaction(TransactionCopyOnWriteState transaction, bool rollback)
         {
-            _environment.Store.ActiveUndoLog = null;
-            if (rollback)
-                undoLog.Rollback(_environment.Store);
+            var ownsActiveTransaction = ReferenceEquals(_environment.Store.ActiveTransaction, transaction);
+            _environment.Store.ActiveTransaction = null;
+
+            if (!ownsActiveTransaction)
+                return;
+
+            if (!rollback)
+                _environment.Store.CommitTransaction(transaction);
         }
 
         // ── IOrganizationService ─────────────────────────────────────────────

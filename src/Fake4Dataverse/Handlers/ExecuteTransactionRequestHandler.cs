@@ -7,10 +7,9 @@ namespace Fake4Dataverse.Handlers
     /// <summary>
     /// Handles <see cref="ExecuteTransactionRequest"/> by executing all requests atomically
     /// within a single logical transaction. If any request fails, all changes made by preceding
-    /// requests in the batch are rolled back via an undo log that records the inverse of each
-    /// store mutation, matching real Dataverse all-or-nothing semantics. The undo-log approach
-    /// is concurrency-safe: rolling back one transaction only undoes its own changes, leaving
-    /// concurrent transactions' writes intact.
+    /// requests in the batch are discarded. Changes are staged in a transaction-local
+    /// copy-on-write buffer and only committed to the shared store when all requests succeed,
+    /// matching real Dataverse all-or-nothing semantics.
     /// </summary>
     internal sealed class ExecuteTransactionRequestHandler : IOrganizationRequestHandler
     {
@@ -36,15 +35,20 @@ namespace Fake4Dataverse.Handlers
                 }
             }
 
-            // Set up the undo log on the store so every Create/Update/Delete automatically
-            // records its inverse operation.
+            // Stage all writes in a dedicated copy-on-write transaction and commit only on success.
             InMemoryEntityStore? store = null;
             if (service is FakeOrganizationService fakeService)
                 store = fakeService.Environment.Store;
 
-            var undoLog = new TransactionUndoLog();
+            TransactionCopyOnWriteState? previousTransaction = null;
+            var transaction = new TransactionCopyOnWriteState();
             if (store != null)
-                store.ActiveUndoLog = undoLog;
+            {
+                previousTransaction = store.ActiveTransaction;
+                store.ActiveTransaction = transaction;
+            }
+
+            bool commit = false;
 
             try
             {
@@ -60,14 +64,6 @@ namespace Fake4Dataverse.Handlers
                     }
                     catch (Exception ex)
                     {
-                        // Roll back only this transaction's mutations, leaving other
-                        // concurrent writes intact.
-                        if (store != null)
-                        {
-                            store.ActiveUndoLog = null;
-                            undoLog.Rollback(store);
-                        }
-
                         response.Results["FaultedRequestIndex"] = i;
                         throw DataverseFault.Create(DataverseFault.Unspecified,
                             $"ExecuteTransaction failed at request index {i}: {ex.Message}");
@@ -75,12 +71,17 @@ namespace Fake4Dataverse.Handlers
                 }
 
                 response.Results["Responses"] = responses;
+                commit = true;
                 return response;
             }
             finally
             {
                 if (store != null)
-                    store.ActiveUndoLog = null;
+                {
+                    store.ActiveTransaction = previousTransaction;
+                    if (commit)
+                        store.CommitTransaction(transaction);
+                }
             }
         }
     }
