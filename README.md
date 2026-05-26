@@ -1,5 +1,5 @@
 # Fake4Dataverse
-![Fake4Dataverse](logo.png)
+<img src='logo.png' width='300'>
 
 An in-memory fake `IOrganizationService` and `IOrganizationServiceAsync2` for unit testing Dataverse / Dynamics 365 applications — no live connection required.
 
